@@ -1,3 +1,60 @@
+# Websys Project
+
+## Local Hosting & Device Connection
+
+To access this website from other devices (e.g., your mobile phone) on your local network:
+
+1. **Find your computer's local IP address:**
+   - Open Command Prompt and run: `ipconfig`
+   - Look for the IPv4 Address (e.g., `192.168.1.10`).
+
+2. **Connect your device to the same Wi-Fi/network.**
+
+3. **Open your browser on the device and enter:**
+   - `http://<your-ip-address>/Websys`
+   - Example: `http://192.168.1.10/Websys`
+
+4. **Make sure XAMPP (Apache) is running on your computer.**
+
+---
+
+## Website Setup Instructions
+
+1. **Install XAMPP:**
+   - Download and install XAMPP from [apachefriends.org](https://www.apachefriends.org/).
+
+2. **Start Apache and MySQL:**
+   - Open XAMPP Control Panel and click 'Start' for Apache and MySQL.
+
+3. **Place the project folder:**
+   - Copy the `Websys` folder to `C:/xampp/htdocs/`.
+
+4. **Import the database:**
+   - Open phpMyAdmin (`http://localhost/phpmyadmin`).
+   - Create a new database (e.g., `websys_db`).
+   - Import `schema.sql` from the project folder.
+
+5. **Configure database connection:**
+   - Edit `src/config.php` and update database credentials if needed.
+
+6. **Access the website:**
+   - Open your browser and go to `http://localhost/Websys`.
+
+---
+
+For network access, use your local IP address as described above.
+
+---
+
+## Troubleshooting
+- Ensure Apache and MySQL are running.
+- Make sure firewall allows incoming connections on port 80 (for Apache).
+- Devices must be on the same local network.
+
+---
+
+For further help, contact your project administrator.
+
 # Student Organization Management and Budget Transparency System
 
 Simple PHP + MySQL (XAMPP) + Tailwind CSS application with roles:
