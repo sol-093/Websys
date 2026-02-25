@@ -1,0 +1,220 @@
+:root {
+  --green-500: #34d399;
+  --green-700: #10b981;
+  --green-800: #0f766e;
+  --line: rgba(16, 185, 129, 0.28);
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+body {
+  background:
+    radial-gradient(1000px 500px at 0% 0%, rgba(16, 185, 129, 0.18), transparent 60%),
+    radial-gradient(1000px 560px at 100% 0%, rgba(52, 211, 153, 0.16), transparent 62%),
+    linear-gradient(180deg, #f7fffb 0%, #ecfdf5 100%);
+  color: #0f172a;
+}
+
+body.theme-dark {
+  background:
+    radial-gradient(900px 500px at 12% 8%, rgba(22, 163, 74, 0.24), transparent 60%),
+    radial-gradient(1000px 560px at 82% 0%, rgba(45, 212, 191, 0.22), transparent 62%),
+    linear-gradient(135deg, #011b16 0%, #022a21 46%, #01392c 100%);
+  color: #f0fdf4;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  max-width: 100%;
+}
+
+.grid > .glass {
+  min-width: 0;
+}
+
+body.theme-dark .glass {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #ecfdf5;
+}
+
+.modern-title {
+  color: #064e3b;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 14px rgba(16, 185, 129, 0.22);
+}
+
+body.theme-dark .modern-title {
+  color: #f3fff8;
+  text-shadow: 0 0 24px rgba(184, 243, 74, 0.28);
+}
+
+.nav-link {
+  color: #065f46;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+body.theme-dark .nav-link {
+  color: #d5fbe9;
+}
+
+.nav-link-active {
+  color: #059669;
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.28);
+}
+
+body.theme-dark .nav-link-active {
+  color: var(--green-500);
+  text-shadow: 0 0 16px rgba(184, 243, 74, 0.4);
+}
+
+.nav-link-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--green-500), transparent);
+}
+
+.theme-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+#themeToggle {
+  display: none;
+}
+
+body.theme-dark .theme-switch {
+  border-color: rgba(167, 243, 208, 0.5);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+body.theme-dark .theme-switch::after {
+  top: 19px;
+}
+
+.hamburger-btn {
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.14);
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hamburger-line {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: #065f46;
+  transition: all 0.2s ease;
+}
+
+.hamburger-line + .hamburger-line {
+  margin-top: 3px;
+}
+
+body.theme-dark .hamburger-line {
+  background: #d1fae5;
+}
+
+.mobile-nav-panel {
+  border-top: 1px solid rgba(16, 185, 129, 0.2);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+canvas {
+  max-width: 100% !important;
+}
+
+table {
+  max-width: 100%;
+}
+
+input,
+textarea,
+select {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(16, 185, 129, 0.32) !important;
+  color: #064e3b !important;
+}
+
+body.theme-dark input,
+body.theme-dark textarea,
+body.theme-dark select {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(110, 231, 183, 0.35) !important;
+  color: #f1fff7 !important;
+}
+
+body.theme-dark .text-slate-700,
+body.theme-dark .text-slate-600,
+body.theme-dark .text-gray-600,
+body.theme-dark .text-gray-500,
+body.theme-dark .text-slate-500,
+body.theme-dark .text-gray-700 {
+  color: #ecfdf5 !important;
+}
+
+body.theme-dark .border-slate-300 {
+  border-color: rgba(167, 243, 208, 0.45) !important;
+}
+
+.tag {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: 1px solid rgba(16, 185, 129, .35);
+  background: rgba(16, 185, 129, .14);
+  color: #065f46;
+}
+
+body.theme-dark .tag {
+  color: #d1fae5;
+}

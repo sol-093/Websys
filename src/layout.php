@@ -152,6 +152,29 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #d1fae5;
             }
 
+            body:not(.theme-dark) .snapshot-title {
+                color: #0f172a;
+            }
+
+            body:not(.theme-dark) .snapshot-list {
+                color: #1f2937;
+            }
+
+            body:not(.theme-dark) .snapshot-item {
+                background: rgba(255, 255, 255, 0.55) !important;
+                border-color: rgba(110, 231, 183, 0.55) !important;
+            }
+
+            body:not(.theme-dark) .snapshot-label {
+                color: #1f2937;
+                font-weight: 500;
+            }
+
+            body:not(.theme-dark) .snapshot-value {
+                color: #059669 !important;
+                text-shadow: none;
+            }
+
             .text-slate-800,
             .text-slate-600,
             .text-gray-600,
@@ -160,10 +183,17 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             body.theme-dark .text-slate-800,
+            body.theme-dark .text-slate-700,
             body.theme-dark .text-slate-600,
+            body.theme-dark .text-slate-500,
             body.theme-dark .text-gray-600,
+            body.theme-dark .text-gray-700,
             body.theme-dark .text-gray-500 {
                 color: #ecfdf5 !important;
+            }
+
+            body.theme-dark .border-slate-300 {
+                border-color: rgba(167, 243, 208, 0.45) !important;
             }
 
             body.theme-dark .text-green-700,
@@ -236,8 +266,31 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #ffffff;
             }
 
-            input::placeholder, textarea::placeholder {
-                color: rgba(6, 78, 59, 0.45) !important;
+            body:not(.theme-dark) input::placeholder,
+            body:not(.theme-dark) textarea::placeholder,
+            body:not(.theme-dark) select::placeholder {
+                color: rgba(6, 78, 59, 0.72) !important;
+                opacity: 1 !important;
+            }
+
+            body:not(.theme-dark) input::-webkit-input-placeholder,
+            body:not(.theme-dark) textarea::-webkit-input-placeholder {
+                color: rgba(6, 78, 59, 0.72) !important;
+                opacity: 1 !important;
+            }
+
+            body:not(.theme-dark) input::-moz-placeholder,
+            body:not(.theme-dark) textarea::-moz-placeholder {
+                color: rgba(6, 78, 59, 0.72) !important;
+                opacity: 1 !important;
+            }
+
+            .placeholder\:gray-400::placeholder,
+            .placeholder\:gray-500::placeholder,
+            .placeholder\:slate-400::placeholder,
+            .placeholder\:slate-500::placeholder {
+                color: rgba(6, 78, 59, 0.72) !important;
+                opacity: 1 !important;
             }
 
             body.theme-dark input::placeholder,
@@ -293,6 +346,44 @@ function renderHeader(string $title = 'Dashboard'): void
                 border-color: rgba(167, 243, 208, 0.5);
                 background: rgba(255, 255, 255, 0.14);
             }
+
+            body.theme-dark .theme-switch::after {
+                top: 19px;
+            }
+
+            .hamburger-btn {
+                border: 1px solid rgba(16, 185, 129, 0.45);
+                background: rgba(16, 185, 129, 0.14);
+                width: 2.3rem;
+                height: 2.3rem;
+                border-radius: 0.75rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .hamburger-line {
+                display: block;
+                width: 16px;
+                height: 2px;
+                border-radius: 999px;
+                background: #065f46;
+                transition: all 0.2s ease;
+            }
+
+            .hamburger-line + .hamburger-line {
+                margin-top: 3px;
+            }
+
+            body.theme-dark .hamburger-line {
+                background: #d1fae5;
+            }
+
+            .mobile-nav-panel {
+                border-top: 1px solid rgba(16, 185, 129, 0.2);
+                margin-top: 0.75rem;
+                padding-top: 0.75rem;
+            }
         </style>
     </head>
     <body class="min-h-screen">
@@ -305,30 +396,64 @@ function renderHeader(string $title = 'Dashboard'): void
             })();
         </script>
         <nav class="glass sticky top-3 z-20 mx-3 mt-3 text-slate-800">
-            <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-                <a href="?page=home" class="font-bold tracking-tight text-emerald-900 text-xl modern-title"><?= e($config['app_name']) ?></a>
-                <div class="flex gap-4 text-sm items-center">
-                    <a href="?page=home" class="nav-link <?= $currentPage === 'home' ? 'nav-link-active' : '' ?>">Home</a>
-                    <?php if ($user): ?>
-                        <a href="?page=dashboard" class="nav-link <?= $currentPage === 'dashboard' ? 'nav-link-active' : '' ?>">Dashboard</a>
-                        <?php if ($user['role'] === 'admin'): ?>
-                            <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
-                            <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
-                            <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+            <div class="max-w-7xl mx-auto px-4 py-3">
+                <div class="flex items-center justify-between gap-2">
+                    <a href="?page=home" class="font-bold tracking-tight text-emerald-900 text-xl modern-title\"><?= e($config['app_name']) ?></a>
+                    <div class="hidden md:flex gap-4 text-sm items-center">
+                        <a href="?page=home" class="nav-link <?= $currentPage === 'home' ? 'nav-link-active' : '' ?>">Home</a>
+                        <?php if ($user): ?>
+                            <a href="?page=dashboard" class="nav-link <?= $currentPage === 'dashboard' ? 'nav-link-active' : '' ?>">Dashboard</a>
+                            <?php if ($user['role'] === 'admin'): ?>
+                                <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
+                                <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
+                                <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+                            <?php endif; ?>
+                            <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
+                                <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
+                            <?php endif; ?>
+                            <span class="nav-greeting">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</span>
+                            <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
+                            <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
+                            <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-1 rounded hover:bg-indigo-950">Logout</a>
+                        <?php else: ?>
+                            <a href="?page=login" class="nav-link <?= $currentPage === 'login' ? 'nav-link-active' : '' ?>">Login</a>
+                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700 shadow-sm">Register</a>
+                            <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
+                            <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
                         <?php endif; ?>
-                        <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
-                            <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
+                    </div>
+                    <div class="md:hidden flex items-center gap-2">
+                        <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
+                        <button type="button" id="navMenuToggle" class="hamburger-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
+                            <span>
+                                <span class="hamburger-line"></span>
+                                <span class="hamburger-line"></span>
+                                <span class="hamburger-line"></span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="mobileNavMenu" class="mobile-nav-panel hidden md:hidden">
+                    <div class="flex flex-col gap-3 text-sm">
+                        <a href="?page=home" class="nav-link <?= $currentPage === 'home' ? 'nav-link-active' : '' ?>">Home</a>
+                        <?php if ($user): ?>
+                            <a href="?page=dashboard" class="nav-link <?= $currentPage === 'dashboard' ? 'nav-link-active' : '' ?>">Dashboard</a>
+                            <?php if ($user['role'] === 'admin'): ?>
+                                <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
+                                <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
+                                <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+                            <?php endif; ?>
+                            <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
+                                <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
+                            <?php endif; ?>
+                            <span class="nav-greeting">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</span>
+                            <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-2 rounded text-center hover:bg-indigo-950">Logout</a>
+                        <?php else: ?>
+                            <a href="?page=login" class="nav-link <?= $currentPage === 'login' ? 'nav-link-active' : '' ?>">Login</a>
+                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-2 rounded text-center hover:bg-emerald-700 shadow-sm">Register</a>
                         <?php endif; ?>
-                        <span class="nav-greeting">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</span>
-                        <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
-                        <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
-                        <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-1 rounded hover:bg-indigo-950">Logout</a>
-                    <?php else: ?>
-                        <a href="?page=login" class="nav-link <?= $currentPage === 'login' ? 'nav-link-active' : '' ?>">Login</a>
-                        <a href="?page=register" class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700 shadow-sm">Register</a>
-                        <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
-                        <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -357,6 +482,23 @@ function renderFooter(): void
                     root.classList.toggle('theme-dark', btn.checked);
                     localStorage.setItem(key, btn.checked ? 'dark' : 'light');
                 });
+
+                const navToggle = document.getElementById('navMenuToggle');
+                const mobileNavMenu = document.getElementById('mobileNavMenu');
+                if (navToggle && mobileNavMenu) {
+                    navToggle.addEventListener('click', function () {
+                        const isOpen = !mobileNavMenu.classList.contains('hidden');
+                        mobileNavMenu.classList.toggle('hidden', isOpen);
+                        navToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                    });
+
+                    window.addEventListener('resize', function () {
+                        if (window.innerWidth >= 768) {
+                            mobileNavMenu.classList.add('hidden');
+                            navToggle.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                }
             })();
         </script>
         </main>

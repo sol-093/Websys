@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Organization Management - Static Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="system-static-demo.css" />
+</head>
+<body class="min-h-screen">
+  <nav class="glass sticky top-3 z-20 mx-3 mt-3 text-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      <div class="flex items-center justify-between gap-2">
+        <a href="#" class="font-bold tracking-tight text-emerald-900 text-xl modern-title">Student Organization Management</a>
+
+        <div class="hidden md:flex gap-4 text-sm items-center" id="desktopNav"></div>
+
+        <div class="md:hidden flex items-center gap-2">
+          <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
+          <button type="button" id="navMenuToggle" class="hamburger-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
+            <span>
+              <span class="hamburger-line"></span>
+              <span class="hamburger-line"></span>
+              <span class="hamburger-line"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div id="mobileNavMenu" class="mobile-nav-panel hidden md:hidden">
+        <div class="flex flex-col gap-3 text-sm" id="mobileNav"></div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-4">
+    <div class="glass px-4 py-2 text-sm flex flex-wrap items-center gap-2" id="roleControls">
+      <span class="font-semibold text-slate-700">Demo Role:</span>
+      <button class="tag" data-role="guest">Guest</button>
+      <button class="tag" data-role="student">Student</button>
+      <button class="tag" data-role="owner">Owner</button>
+      <button class="tag" data-role="admin">Admin</button>
+      <span class="ml-auto text-xs text-slate-600">Static demo only (no backend, dummy data)</span>
+      <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode" />
+    </div>
+
+    <section id="page-home" class="page active">
+      <section class="grid lg:grid-cols-12 gap-4 lg:gap-5">
+        <div class="glass lg:col-span-8 p-6 md:p-8">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-300/20 text-xs font-semibold mb-4 border border-emerald-200/30">Budget Transparency • Student Organizations</div>
+          <h1 class="modern-title text-3xl md:text-6xl font-bold tracking-tight leading-tight">Modern Student Organization Management for Transparent Campus Finance</h1>
+          <p class="mt-4 text-slate-600 max-w-2xl text-base md:text-lg">Manage organizations, publish announcements, and track income and expenses in one shared platform. Students can join groups and view verified reports for accountability.</p>
+          <div class="mt-6 flex flex-wrap gap-3" id="homeActions"></div>
+        </div>
+
+        <div class="glass lg:col-span-4 p-6">
+          <h2 class="text-lg font-semibold mb-4 text-slate-900">Platform Snapshot</h2>
+          <div class="space-y-3 text-sm text-slate-800">
+            <div class="flex items-center justify-between p-3 rounded-xl bg-white/60 border border-emerald-300/60"><span>Organizations</span><span class="font-bold text-emerald-700">4</span></div>
+            <div class="flex items-center justify-between p-3 rounded-xl bg-white/60 border border-emerald-300/60"><span>Students & Owners</span><span class="font-bold text-emerald-700">28</span></div>
+            <div class="flex items-center justify-between p-3 rounded-xl bg-white/60 border border-emerald-300/60"><span>Announcements</span><span class="font-bold text-emerald-700">14</span></div>
+          </div>
+        </div>
+
+        <div class="glass lg:col-span-4 p-5">
+          <h3 class="font-semibold mb-2">For Admin</h3>
+          <p class="text-sm text-slate-600">Create organizations, assign owners, and review all requests.</p>
+        </div>
+        <div class="glass lg:col-span-4 p-5">
+          <h3 class="font-semibold mb-2">For Owners</h3>
+          <p class="text-sm text-slate-600">Manage profile, announcements, income and expense logs.</p>
+        </div>
+        <div class="glass lg:col-span-4 p-5">
+          <h3 class="font-semibold mb-2">For Students</h3>
+          <p class="text-sm text-slate-600">Join organizations and monitor transparent budget reports.</p>
+        </div>
+      </section>
+    </section>
+
+    <section id="page-login" class="page">
+      <div class="max-w-md mx-auto glass p-6 mt-8">
+        <h1 class="text-2xl font-semibold mb-1">Welcome back</h1>
+        <p class="text-sm text-slate-600 mb-4">Sign in to continue to your organization dashboard.</p>
+        <form class="space-y-3" onsubmit="event.preventDefault(); setRole('student'); showPage('dashboard');">
+          <input type="email" placeholder="Email" required class="w-full border rounded px-3 py-2" />
+          <input type="password" placeholder="Password" required class="w-full border rounded px-3 py-2" />
+          <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full">Login (Demo)</button>
+        </form>
+        <div class="my-3 text-center text-gray-500 text-sm">or</div>
+        <button class="block w-full border rounded px-4 py-2 text-center hover:bg-gray-50 font-medium">Continue with Google (Demo)</button>
+      </div>
+    </section>
+
+    <section id="page-register" class="page">
+      <div class="max-w-md mx-auto glass p-6 mt-8">
+        <h1 class="text-2xl font-semibold mb-4">Student Registration</h1>
+        <form id="registerForm" class="space-y-3">
+          <input placeholder="Full Name" required class="w-full border rounded px-3 py-2" />
+          <input type="email" placeholder="Email" required class="w-full border rounded px-3 py-2" />
+          <input type="password" placeholder="Password" required class="w-full border rounded px-3 py-2" />
+
+          <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
+            <div class="flex items-start gap-2">
+              <input id="privacyConsent" type="checkbox" value="1" required class="mt-1" />
+              <label for="privacyConsent" class="text-sm text-slate-700">
+                I agree to the
+                <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">Data Privacy Consent</button>.
+              </label>
+            </div>
+          </div>
+
+          <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full">Create Account (Demo)</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="page-dashboard" class="page">
+      <div class="space-y-4">
+        <div class="glass p-5 text-center md:text-left">
+          <h1 class="text-xl font-semibold text-slate-900">Welcome, <span id="dashboardWelcomeName">System Admin</span></h1>
+          <p class="text-gray-600">Budget transparency is visible to all students. You can review all income and expenses below.</p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-4">
+          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Total Income</div><div class="text-2xl font-semibold text-green-300">₱100,000.00</div></div>
+          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Total Expense</div><div class="text-2xl font-semibold text-red-300">₱50,000.00</div></div>
+          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Net Balance</div><div class="text-2xl font-semibold text-emerald-200">₱50,000.00</div></div>
+          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Organizations</div><div class="text-2xl font-semibold text-slate-900">4</div></div>
+        </div>
+
+        <div class="glass p-4">
+          <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Quick Actions</h2>
+          <div class="flex flex-wrap gap-2 justify-center md:justify-start" id="dashboardQuickActions"></div>
+        </div>
+
+        <div id="dashboardPendingAssignments" class="glass p-5 hidden">
+          <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organization Owner Assignments</h2>
+          <div class="space-y-3">
+            <div class="border border-emerald-200/30 rounded-lg p-3 flex flex-wrap items-center justify-center md:justify-between gap-3 text-center md:text-left">
+              <div class="w-full md:w-auto">
+                <div class="font-medium">Computer Society</div>
+                <div class="text-xs text-gray-500">Assigned on 2026-02-10 08:35:00</div>
+              </div>
+              <div class="flex gap-2">
+                <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs">Accept</button>
+                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">Decline</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-12 gap-4">
+          <div class="glass md:col-span-7 p-4">
+            <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organizations</h2>
+            <div class="space-y-3">
+              <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                <div><div class="font-medium">Computer Society</div><p class="text-sm text-gray-600">Tech events, workshops, and hackathons.</p><div class="text-xs text-gray-500 mt-1">Owner: John Cruz</div></div>
+                <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-emerald-500/25 border-emerald-300/50 text-white hover:bg-emerald-500/35">Request Join</button>
+              </div>
+              <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                <div><div class="font-medium">Debate Guild</div><p class="text-sm text-gray-600">Public speaking and debate competitions.</p><div class="text-xs text-gray-500 mt-1">Owner: Maria Santos</div></div>
+                <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-amber-500/25 border-amber-300/50 text-white/90" disabled>Requested</button>
+              </div>
+              <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                <div><div class="font-medium">Math Circle</div><p class="text-sm text-gray-600">Math contests and tutorials.</p><div class="text-xs text-gray-500 mt-1">Owner: Unassigned</div></div>
+                <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-white/10 border-emerald-200/30 text-white/85" disabled>Joined</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass md:col-span-5 p-4 overflow-auto">
+            <h2 class="text-lg font-semibold mb-3">Financial Summary by Organization</h2>
+            <table class="w-full text-sm min-w-[440px]">
+              <thead>
+                <tr class="border-b text-left">
+                  <th class="py-2">Organization</th>
+                  <th>Income</th>
+                  <th>Expense</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b"><td class="py-2">Computer Society</td><td class="text-green-700">₱40,000.00</td><td class="text-red-700">₱15,000.00</td><td class="text-green-800">₱25,000.00</td></tr>
+                <tr class="border-b"><td class="py-2">Debate Guild</td><td class="text-green-700">₱30,000.00</td><td class="text-red-700">₱20,000.00</td><td class="text-green-800">₱10,000.00</td></tr>
+                <tr class="border-b"><td class="py-2">Math Circle</td><td class="text-green-700">₱20,000.00</td><td class="text-red-700">₱10,000.00</td><td class="text-green-800">₱10,000.00</td></tr>
+                <tr class="border-b"><td class="py-2">Music Club</td><td class="text-green-700">₱10,000.00</td><td class="text-red-700">₱5,000.00</td><td class="text-green-800">₱5,000.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="glass md:col-span-5 p-4 overflow-auto">
+            <h2 class="text-lg font-semibold mb-3">Latest Announcements</h2>
+            <div class="space-y-2">
+              <div class="border rounded p-2"><div class="font-medium">Budget Orientation</div><div class="text-xs text-gray-500">Computer Society · 2026-02-18 09:00:00</div><div class="text-sm mt-1">Meeting this Friday, 3PM at AVR.</div></div>
+              <div class="border rounded p-2"><div class="font-medium">Project Grant Release</div><div class="text-xs text-gray-500">Debate Guild · 2026-02-16 10:30:00</div><div class="text-sm mt-1">Funds released for Q2 initiatives.</div></div>
+              <div class="border rounded p-2"><div class="font-medium">Training Session</div><div class="text-xs text-gray-500">Math Circle · 2026-02-12 14:45:00</div><div class="text-sm mt-1">Problem-solving camp every Wednesday.</div></div>
+            </div>
+          </div>
+
+          <div class="glass md:col-span-7 p-4 overflow-auto">
+            <h2 class="text-lg font-semibold mb-3">Recent Income & Expense Reports</h2>
+            <table class="w-full text-sm min-w-[680px]">
+              <thead>
+                <tr class="border-b text-left">
+                  <th class="py-2">Date</th>
+                  <th>Org</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b"><td class="py-2">2026-02-20</td><td>Computer Society</td><td class="text-green-700">income</td><td>₱12,500.00</td><td><a href="#" class="text-emerald-700 underline">Open</a></td></tr>
+                <tr class="border-b"><td class="py-2">2026-02-19</td><td>Debate Guild</td><td class="text-red-700">expense</td><td>₱3,000.00</td><td><span class="text-gray-400">-</span></td></tr>
+                <tr class="border-b"><td class="py-2">2026-02-17</td><td>Math Circle</td><td class="text-green-700">income</td><td>₱5,500.00</td><td><a href="#" class="text-emerald-700 underline">Open</a></td></tr>
+                <tr class="border-b"><td class="py-2">2026-02-16</td><td>Music Club</td><td class="text-red-700">expense</td><td>₱1,500.00</td><td><a href="#" class="text-emerald-700 underline">Open</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="glass md:col-span-7 p-4">
+            <h2 class="text-lg font-semibold mb-3">Monthly Trend (Income vs Expense)</h2>
+            <canvas id="trendChart" height="130"></canvas>
+          </div>
+
+          <div class="glass md:col-span-5 p-4 overflow-auto">
+            <h2 class="text-lg font-semibold mb-3">Activity Feed</h2>
+            <div class="space-y-2 text-sm">
+              <div class="border rounded p-2"><div class="font-medium">Budget Orientation</div><div class="text-xs text-gray-500">announcement · 2026-02-18 09:00:00</div></div>
+              <div class="border rounded p-2"><div class="font-medium">Mic and speaker rental</div><div class="text-xs text-gray-500">transaction · 2026-02-17 15:20:00</div></div>
+              <div class="border rounded p-2"><div class="font-medium">Registration fees</div><div class="text-xs text-gray-500">transaction · 2026-02-15 11:10:00</div></div>
+              <div class="border rounded p-2"><div class="font-medium">Training Session</div><div class="text-xs text-gray-500">announcement · 2026-02-12 14:45:00</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-admin_orgs" class="page">
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="glass p-4">
+          <h2 class="text-lg font-semibold mb-3">Create Organization</h2>
+          <form class="space-y-2" onsubmit="event.preventDefault()">
+            <input placeholder="Organization name" required class="w-full border rounded px-3 py-2" />
+            <textarea placeholder="Description" class="w-full border rounded px-3 py-2"></textarea>
+            <button class="bg-emerald-600 text-white px-4 py-2 rounded">Create</button>
+          </form>
+        </div>
+
+        <div class="md:col-span-2 glass p-4 overflow-auto">
+          <h2 class="text-lg font-semibold mb-3">All Organizations</h2>
+          <table class="w-full text-sm min-w-[700px]">
+            <thead><tr class="text-left border-b"><th class="py-2">Name</th><th>Description</th><th>Owner</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr class="border-b align-top"><td class="py-2 font-medium">Computer Society</td><td>Tech community org</td><td>John Cruz</td><td><button class="bg-slate-700 text-white text-xs px-2 py-1 rounded">Update</button></td></tr>
+              <tr class="border-b align-top"><td class="py-2 font-medium">Debate Guild</td><td>Debate and speaking</td><td>Maria Santos</td><td><button class="bg-red-600 text-white text-xs px-2 py-1 rounded">Delete</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-admin_students" class="page">
+      <div class="glass p-4 space-y-3">
+        <h2 class="text-lg font-semibold">Students</h2>
+        <div class="grid md:grid-cols-3 gap-3">
+          <input placeholder="Search by name or email" class="border rounded px-3 py-2 md:col-span-2" />
+          <button class="bg-emerald-600 text-white px-4 py-2 rounded">Filter</button>
+        </div>
+        <div class="overflow-auto">
+          <table class="w-full text-sm min-w-[640px]">
+            <thead><tr class="text-left border-b"><th class="py-2">Name</th><th>Email</th><th>Role</th></tr></thead>
+            <tbody>
+              <tr class="border-b"><td class="py-2">Alice Dela Cruz</td><td>alice@campus.edu</td><td>student</td></tr>
+              <tr class="border-b"><td class="py-2">John Cruz</td><td>john@campus.edu</td><td>owner</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-admin_requests" class="page">
+      <div class="glass p-4 space-y-3">
+        <h2 class="text-lg font-semibold">Pending Requests</h2>
+        <div class="border rounded p-3">
+          <div class="font-medium">Edit expense item: Transport allowance</div>
+          <div class="text-sm text-gray-600">Requested by: John Cruz • Organization: Computer Society</div>
+          <div class="mt-3 flex gap-2">
+            <button class="bg-emerald-600 text-white px-3 py-1 rounded text-sm">Approve</button>
+            <button class="bg-red-600 text-white px-3 py-1 rounded text-sm">Reject</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-my_org" class="page">
+      <div class="grid md:grid-cols-12 gap-4">
+        <div class="glass md:col-span-5 p-4 space-y-3">
+          <h2 class="text-lg font-semibold">My Organization</h2>
+          <select class="w-full border rounded px-3 py-2"><option>Computer Society</option><option>Debate Guild</option></select>
+          <input class="w-full border rounded px-3 py-2" value="Computer Society" />
+          <textarea class="w-full border rounded px-3 py-2">Tech events, workshops, and hackathons.</textarea>
+          <button class="bg-emerald-600 text-white px-4 py-2 rounded">Save Profile</button>
+        </div>
+
+        <div class="glass md:col-span-7 p-4 space-y-3">
+          <h2 class="text-lg font-semibold">Announcements</h2>
+          <input placeholder="Title" class="w-full border rounded px-3 py-2" />
+          <textarea placeholder="Announcement details" class="w-full border rounded px-3 py-2"></textarea>
+          <button class="bg-emerald-600 text-white px-4 py-2 rounded">Post Announcement</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="privacyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+    <div class="glass w-full max-w-xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Data Privacy Consent</h2>
+        <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
+      </div>
+      <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
+        <p>By creating an account, you agree that this system may collect and process your personal data, such as your name, email address, role, organization memberships, and activity records, for account management and transparency reporting.</p>
+        <p>Your data is used only for legitimate school organization operations, including authentication, organization management, announcement publishing, and finance report visibility.</p>
+        <p>Your information is stored securely and access is limited based on system roles (admin, owner, student). We do not intentionally share your personal data with unauthorized third parties.</p>
+        <p>You may request correction of inaccurate profile data through the system administrator. By proceeding, you confirm that the information you submit is accurate and that you consent to this processing.</p>
+      </div>
+      <div class="mt-4 flex justify-end gap-2">
+        <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700">Close</button>
+        <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="system-static-demo.js"></script>
+</body>
+</html>

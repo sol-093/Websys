@@ -194,9 +194,15 @@ if (isPost()) {
         $name = trim((string) ($_POST['name'] ?? ''));
         $email = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
+        $privacyConsent = (string) ($_POST['privacy_consent'] ?? '') === '1';
 
         if ($name === '' || $email === '' || $password === '') {
             setFlash('error', 'Please fill all registration fields.');
+            redirect('?page=register');
+        }
+
+        if (!$privacyConsent) {
+            setFlash('error', 'You must agree to the Data Privacy Consent before registering.');
             redirect('?page=register');
         }
 
@@ -692,7 +698,7 @@ if ($page === 'home') {
             <h1 class="modern-title text-3xl md:text-6xl font-bold tracking-tight leading-tight">
                 Modern Student Organization Management for Transparent Campus Finance
             </h1>
-            <p class="mt-4 text-emerald-50/85 max-w-2xl text-base md:text-lg">
+            <p class="mt-4 text-slate-600 max-w-2xl text-base md:text-lg">
                 Manage organizations, publish announcements, and track income and expenses in one shared platform. Students can join groups and view verified reports for accountability.
             </p>
             <div class="mt-6 flex flex-wrap gap-3">
@@ -700,25 +706,25 @@ if ($page === 'home') {
                     <a href="?page=dashboard" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]">Open Dashboard</a>
                 <?php else: ?>
                     <a href="?page=register" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]">Get Started</a>
-                    <a href="?page=login" class="border border-emerald-200/40 text-emerald-50 px-5 py-2.5 rounded-lg hover:bg-white/10">Login</a>
+                    <a href="?page=login" class="border border-emerald-200/50 text-emerald-800 px-5 py-2.5 rounded-lg hover:bg-white/30">Login</a>
                 <?php endif; ?>
             </div>
         </div>
 
-        <div class="glass lg:col-span-4 p-6">
-            <h2 class="text-lg font-semibold mb-4">Platform Snapshot</h2>
-            <div class="space-y-3 text-sm">
-                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25">
-                    <span>Organizations</span>
-                    <span class="font-semibold highlight-glow"><?= $orgCount ?></span>
+        <div class="glass lg:col-span-4 p-6 snapshot-panel">
+            <h2 class="text-lg font-semibold mb-4 snapshot-title">Platform Snapshot</h2>
+            <div class="space-y-3 text-sm snapshot-list">
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
+                    <span class="snapshot-label">Organizations</span>
+                    <span class="font-semibold highlight-glow snapshot-value"><?= $orgCount ?></span>
                 </div>
-                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25">
-                    <span>Students & Owners</span>
-                    <span class="font-semibold highlight-glow"><?= $memberCount ?></span>
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
+                    <span class="snapshot-label">Students & Owners</span>
+                    <span class="font-semibold highlight-glow snapshot-value"><?= $memberCount ?></span>
                 </div>
-                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25">
-                    <span>Announcements</span>
-                    <span class="font-semibold highlight-glow"><?= $announcementCount ?></span>
+                <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
+                    <span class="snapshot-label">Announcements</span>
+                    <span class="font-semibold highlight-glow snapshot-value"><?= $announcementCount ?></span>
                 </div>
             </div>
         </div>
@@ -779,9 +785,76 @@ if ($page === 'register') {
             <input name="name" placeholder="Full Name" required class="w-full border rounded px-3 py-2">
             <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
             <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
+            <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
+                <div class="flex items-start gap-2">
+                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="mt-1">
+                    <label for="privacyConsent" class="text-sm text-slate-700">
+                        I agree to the
+                        <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">Data Privacy Consent</button>.
+                    </label>
+                </div>
+            </div>
             <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full">Create Account</button>
         </form>
     </div>
+
+    <div id="privacyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+        <div class="glass w-full max-w-xl p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-semibold">Data Privacy Consent</h2>
+                <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
+            </div>
+            <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
+                <p>By creating an account, you agree that this system may collect and process your personal data, such as your name, email address, role, organization memberships, and activity records, for account management and transparency reporting.</p>
+                <p>Your data is used only for legitimate school organization operations, including authentication, organization management, announcement publishing, and finance report visibility.</p>
+                <p>Your information is stored securely and access is limited based on system roles (admin, owner, student). We do not intentionally share your personal data with unauthorized third parties.</p>
+                <p>You may request correction of inaccurate profile data through the system administrator. By proceeding, you confirm that the information you submit is accurate and that you consent to this processing.</p>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+                <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700">Close</button>
+                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('privacyModal');
+            const openBtn = document.getElementById('openPrivacyModal');
+            const closeBtn = document.getElementById('closePrivacyModal');
+            const declineBtn = document.getElementById('declinePrivacy');
+            const acceptBtn = document.getElementById('acceptPrivacy');
+            const checkbox = document.getElementById('privacyConsent');
+
+            if (!modal || !openBtn || !checkbox) return;
+
+            function openModal() {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            openBtn.addEventListener('click', openModal);
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (declineBtn) declineBtn.addEventListener('click', closeModal);
+            if (acceptBtn) {
+                acceptBtn.addEventListener('click', function () {
+                    checkbox.checked = true;
+                    closeModal();
+                });
+            }
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
     <?php
     renderFooter();
     exit;
@@ -1364,33 +1437,33 @@ if (in_array($user['role'], ['student', 'owner'], true)) {
 renderHeader('Dashboard');
 ?>
 <div class="space-y-4">
-    <div class="glass p-5">
+    <div class="glass p-5 text-center md:text-left">
         <h1 class="text-xl font-semibold text-slate-900">Welcome, <?= e($user['name']) ?></h1>
         <p class="text-gray-600">Budget transparency is visible to all students. You can review all income and expenses below.</p>
     </div>
 
     <div class="grid md:grid-cols-4 gap-4">
-        <div class="glass p-4">
+        <div class="glass p-4 text-center md:text-left">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Total Income</div>
             <div class="text-2xl font-semibold text-green-300">₱<?= number_format($kpiIncome, 2) ?></div>
         </div>
-        <div class="glass p-4">
+        <div class="glass p-4 text-center md:text-left">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Total Expense</div>
             <div class="text-2xl font-semibold text-red-300">₱<?= number_format($kpiExpense, 2) ?></div>
         </div>
-        <div class="glass p-4">
+        <div class="glass p-4 text-center md:text-left">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Net Balance</div>
             <div class="text-2xl font-semibold <?= $kpiBalance >= 0 ? 'text-emerald-200' : 'text-red-200' ?>">₱<?= number_format($kpiBalance, 2) ?></div>
         </div>
-        <div class="glass p-4">
+        <div class="glass p-4 text-center md:text-left">
             <div class="text-xs text-gray-500 uppercase tracking-wide">Organizations</div>
             <div class="text-2xl font-semibold text-slate-900"><?= count($orgs) ?></div>
         </div>
     </div>
 
     <div class="glass p-4">
-        <h2 class="text-lg font-semibold mb-3">Quick Actions</h2>
-        <div class="flex flex-wrap gap-2">
+        <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Quick Actions</h2>
+        <div class="flex flex-wrap gap-2 justify-center md:justify-start">
             <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Refresh Dashboard</a>
             <?php if ($user['role'] === 'admin'): ?>
                 <a href="?page=admin_orgs" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Manage Organizations</a>
@@ -1405,11 +1478,11 @@ renderHeader('Dashboard');
 
     <?php if (count($pendingAssignments) > 0): ?>
         <div class="glass p-5">
-            <h2 class="text-lg font-semibold mb-3">Organization Owner Assignments</h2>
+            <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organization Owner Assignments</h2>
             <div class="space-y-3">
                 <?php foreach ($pendingAssignments as $assignment): ?>
-                    <div class="border border-emerald-200/30 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3">
-                        <div>
+                    <div class="border border-emerald-200/30 rounded-lg p-3 flex flex-wrap items-center justify-center md:justify-between gap-3 text-center md:text-left">
+                        <div class="w-full md:w-auto">
                             <div class="font-medium"><?= e($assignment['organization_name']) ?></div>
                             <div class="text-xs text-gray-500">Assigned on <?= e($assignment['created_at']) ?></div>
                         </div>
@@ -1435,10 +1508,10 @@ renderHeader('Dashboard');
 
     <div class="grid md:grid-cols-12 gap-4">
         <div class="glass md:col-span-7 p-4">
-            <h2 class="text-lg font-semibold mb-3">Organizations</h2>
+            <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organizations</h2>
             <div class="space-y-3">
                 <?php foreach ($orgs as $org): ?>
-                    <div class="border rounded p-3 flex justify-between items-start gap-2">
+                    <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
                         <div>
                             <div class="font-medium"><?= e($org['name']) ?></div>
                             <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
