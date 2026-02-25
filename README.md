@@ -165,6 +165,30 @@ Tip: Use `--private` instead of `--public` if you want a private repo.
 - Improved light-mode readability and modal styling.
 - Expanded deterministic dummy seed data for broader testing coverage.
 
+## Previous System Updates
+- Added admin audit logs page and dashboard access for activity monitoring.
+- Fixed admin audit route/runtime issues (DB-compatible date filtering, auth check, and DB handle usage).
+- Refined dashboard pagination behavior per section to reduce clutter and improve navigation.
+- Updated activity feed to show 4 items per page and added section-specific “View All” flows.
+- Updated recent income/expense reports to show the latest 8 entries without pagination.
+- Removed outdated “Demo” wording from seeded/testing data.
+- Improved organization and financial summary visibility to reflect user-relevant organizations.
+- Fixed modal rendering issue that previously exposed broken PHP markup in the UI.
+- Removed “(CRUD)” wording from Transaction History labels.
+- Added fixed-date transaction seeding and improved sample date variety for realistic testing.
+- Added richer dummy dataset coverage across users, organizations, announcements, memberships, and transactions.
+- Converted “View All” navigation from separate pages into in-dashboard modal popups.
+- Removed “carousel” wording from announcements display and aligned section naming with dashboard UX.
+- Applied latest-to-oldest ordering for latest announcements.
+- Added 30-day automatic expiration cleanup for announcements.
+- Added admin ability to pin one Important announcement at a time, plus unpin control.
+- Improved light-mode contrast and readability for key dashboard text and cards.
+- Improved modal visual style (including light-mode glass treatment) and themed scrollbars.
+- Made organizations and financial summaries scrollable where needed to reduce dashboard clutter.
+- Added organization sorting/labeling by visibility category for clearer student browsing.
+- Filtered student-visible organizations based on profile eligibility (collegewide/institute/program rules).
+- Added server-side enforcement to block organization joins when institute/program does not match requirements.
+
 ## Notes
 - Uploaded receipts are stored in `public/uploads/`.
 - Schema reference is in `schema.sql`.
