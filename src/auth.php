@@ -8,11 +8,26 @@ function currentUser(): ?array
         return null;
     }
 
-    $stmt = db()->prepare('SELECT id, name, email, role FROM users WHERE id = ?');
+    $stmt = db()->prepare('SELECT id, name, email, role, institute, program FROM users WHERE id = ?');
     $stmt->execute([(int) $_SESSION['user_id']]);
     $user = $stmt->fetch();
+    if (!$user) {
+        return null;
+    }
 
-    return $user ?: null;
+    if (($user['role'] ?? '') === 'owner') {
+        $ownerCheck = db()->prepare('SELECT COUNT(*) FROM organizations WHERE owner_id = ?');
+        $ownerCheck->execute([(int) $user['id']]);
+        $ownedCount = (int) $ownerCheck->fetchColumn();
+
+        if ($ownedCount === 0) {
+            $downgrade = db()->prepare("UPDATE users SET role = 'student' WHERE id = ?");
+            $downgrade->execute([(int) $user['id']]);
+            $user['role'] = 'student';
+        }
+    }
+
+    return $user;
 }
 
 function requireLogin(): void

@@ -7,6 +7,8 @@ function renderHeader(string $title = 'Dashboard'): void
     $config = require __DIR__ . '/config.php';
     $user = currentUser();
     $flash = getFlash();
+    $loginUpdates = $_SESSION['login_updates_popup'] ?? [];
+    unset($_SESSION['login_updates_popup']);
     $currentPage = (string) ($_GET['page'] ?? ($user ? 'dashboard' : 'home'));
     ?>
     <!DOCTYPE html>
@@ -176,10 +178,12 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .text-slate-800,
+            .text-slate-700,
             .text-slate-600,
+            .text-gray-700,
             .text-gray-600,
             .text-gray-500 {
-                color: #334155 !important;
+                color: #1f2937 !important;
             }
 
             body.theme-dark .text-slate-800,
@@ -384,6 +388,96 @@ function renderHeader(string $title = 'Dashboard'): void
                 margin-top: 0.75rem;
                 padding-top: 0.75rem;
             }
+
+            .themed-scroll {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(16, 185, 129, 0.7) rgba(16, 185, 129, 0.16);
+            }
+
+            .themed-scroll::-webkit-scrollbar {
+                width: 10px;
+                height: 10px;
+            }
+
+            .themed-scroll::-webkit-scrollbar-track {
+                background: rgba(16, 185, 129, 0.16);
+                border-radius: 999px;
+            }
+
+            .themed-scroll::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.85));
+                border-radius: 999px;
+                border: 2px solid rgba(16, 185, 129, 0.16);
+            }
+
+            .themed-scroll::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(180deg, rgba(16, 185, 129, 1), rgba(4, 120, 87, 0.95));
+            }
+
+            body.theme-dark .themed-scroll {
+                scrollbar-color: rgba(110, 231, 183, 0.8) rgba(16, 185, 129, 0.2);
+            }
+
+            body.theme-dark .themed-scroll::-webkit-scrollbar-track {
+                background: rgba(16, 185, 129, 0.2);
+            }
+
+            body.theme-dark .themed-scroll::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(16, 185, 129, 0.9));
+                border: 2px solid rgba(16, 185, 129, 0.2);
+            }
+
+            .updates-modal-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 60;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+                background: linear-gradient(180deg, rgba(236, 253, 245, 0.74), rgba(209, 250, 229, 0.68));
+                backdrop-filter: blur(3px);
+                -webkit-backdrop-filter: blur(3px);
+            }
+
+            body.theme-dark .updates-modal-overlay {
+                background: rgba(2, 6, 23, 0.55);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+            }
+
+            .updates-modal-overlay.hidden {
+                display: none;
+            }
+
+            .updates-status {
+                font-size: 11px;
+                border-radius: 999px;
+                padding: 2px 8px;
+                font-weight: 600;
+            }
+
+            .updates-status-approved,
+            .updates-status-accepted {
+                background: rgba(16, 185, 129, 0.22);
+                color: #065f46;
+            }
+
+            .updates-status-rejected,
+            .updates-status-declined {
+                background: rgba(239, 68, 68, 0.2);
+                color: #991b1b;
+            }
+
+            body.theme-dark .updates-status-approved,
+            body.theme-dark .updates-status-accepted {
+                color: #bbf7d0;
+            }
+
+            body.theme-dark .updates-status-rejected,
+            body.theme-dark .updates-status-declined {
+                color: #fecaca;
+            }
         </style>
     </head>
     <body class="min-h-screen">
@@ -407,6 +501,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
                                 <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+                                <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                             <?php endif; ?>
                             <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
                                 <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
@@ -443,6 +538,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
                                 <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+                                <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                             <?php endif; ?>
                             <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
                                 <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
@@ -464,6 +560,39 @@ function renderHeader(string $title = 'Dashboard'): void
                     <?= e($flash['message']) ?>
                 </div>
             <?php endif; ?>
+
+            <?php if ($user && is_array($loginUpdates) && count($loginUpdates) > 0): ?>
+                <div id="loginUpdatesModal" class="updates-modal-overlay hidden">
+                    <div class="glass w-full max-w-2xl p-5">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <h2 class="text-lg font-semibold">Request Updates</h2>
+                                <p class="text-sm text-slate-600">Latest approval/rejection results related to your requests.</p>
+                            </div>
+                            <button type="button" id="closeLoginUpdatesModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
+                        </div>
+                        <div class="space-y-2 max-h-[55vh] overflow-auto pr-1">
+                            <?php foreach ($loginUpdates as $item): ?>
+                                <?php
+                                    $status = strtolower((string) ($item['status'] ?? ''));
+                                    $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
+                                ?>
+                                <div class="border border-emerald-200/30 rounded-lg p-3">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="font-medium"><?= e((string) ($item['kind'] ?? 'Update')) ?></div>
+                                        <span class="<?= e($statusClass) ?>"><?= e(ucfirst($status)) ?></span>
+                                    </div>
+                                    <div class="text-sm text-slate-600 mt-1"><?= e((string) ($item['message'] ?? '')) ?></div>
+                                    <div class="text-xs text-gray-500 mt-1"><?= e((string) ($item['event_at'] ?? '')) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button type="button" id="closeLoginUpdatesModalBtn" class="bg-indigo-900 text-white px-3 py-2 rounded hover:bg-indigo-950">Close</button>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
     <?php
 }
 
@@ -474,6 +603,19 @@ function renderFooter(): void
             (function () {
                 const root = document.body;
                 const key = 'websys-theme';
+                const csrfToken = <?= json_encode(csrfToken()) ?>;
+
+                const postForms = document.querySelectorAll('form[method="post"], form[method="POST"]');
+                postForms.forEach(function (form) {
+                    let csrfInput = form.querySelector('input[name="_csrf"]');
+                    if (!csrfInput) {
+                        csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_csrf';
+                        form.appendChild(csrfInput);
+                    }
+                    csrfInput.value = csrfToken;
+                });
 
                 const btn = document.getElementById('themeToggle');
                 if (!btn) return;
@@ -496,6 +638,31 @@ function renderFooter(): void
                         if (window.innerWidth >= 768) {
                             mobileNavMenu.classList.add('hidden');
                             navToggle.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                }
+
+                const updatesModal = document.getElementById('loginUpdatesModal');
+                const closeUpdatesBtn = document.getElementById('closeLoginUpdatesModal');
+                const closeUpdatesBtnFooter = document.getElementById('closeLoginUpdatesModalBtn');
+                if (updatesModal) {
+                    updatesModal.classList.remove('hidden');
+
+                    const closeUpdates = function () {
+                        updatesModal.classList.add('hidden');
+                    };
+
+                    if (closeUpdatesBtn) {
+                        closeUpdatesBtn.addEventListener('click', closeUpdates);
+                    }
+
+                    if (closeUpdatesBtnFooter) {
+                        closeUpdatesBtnFooter.addEventListener('click', closeUpdates);
+                    }
+
+                    updatesModal.addEventListener('click', function (event) {
+                        if (event.target === updatesModal) {
+                            closeUpdates();
                         }
                     });
                 }

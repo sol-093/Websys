@@ -83,6 +83,313 @@ function fetchJson(string $url, ?array $postFields = null): ?array
     return is_array($data) ? $data : null;
 }
 
+function collectUserRequestUpdates(int $userId): array
+{
+    $updates = [];
+    $db = db();
+
+    $joinStmt = $db->prepare("SELECT o.name AS organization_name, r.status, COALESCE(r.updated_at, r.created_at) AS event_at
+        FROM organization_join_requests r
+        JOIN organizations o ON o.id = r.organization_id
+        WHERE r.user_id = ? AND r.status IN ('approved', 'declined')
+        ORDER BY event_at DESC
+        LIMIT 5");
+    $joinStmt->execute([$userId]);
+    foreach ($joinStmt->fetchAll() as $row) {
+        $updates[] = [
+            'kind' => 'Join Request',
+            'status' => (string) $row['status'],
+            'message' => 'Organization: ' . (string) $row['organization_name'],
+            'event_at' => (string) $row['event_at'],
+        ];
+    }
+
+    $financeStmt = $db->prepare("SELECT o.name AS organization_name, r.status, r.action_type, COALESCE(r.updated_at, r.created_at) AS event_at
+        FROM transaction_change_requests r
+        JOIN organizations o ON o.id = r.organization_id
+        WHERE r.requested_by = ? AND r.status IN ('approved', 'rejected')
+        ORDER BY event_at DESC
+        LIMIT 5");
+    $financeStmt->execute([$userId]);
+    foreach ($financeStmt->fetchAll() as $row) {
+        $updates[] = [
+            'kind' => 'Finance ' . ucfirst((string) $row['action_type']) . ' Request',
+            'status' => (string) $row['status'],
+            'message' => 'Organization: ' . (string) $row['organization_name'],
+            'event_at' => (string) $row['event_at'],
+        ];
+    }
+
+    $assignmentStmt = $db->prepare("SELECT o.name AS organization_name, a.status, COALESCE(a.updated_at, a.created_at) AS event_at
+        FROM owner_assignments a
+        JOIN organizations o ON o.id = a.organization_id
+        WHERE a.student_id = ? AND a.status IN ('accepted', 'declined')
+        ORDER BY event_at DESC
+        LIMIT 5");
+    $assignmentStmt->execute([$userId]);
+    foreach ($assignmentStmt->fetchAll() as $row) {
+        $updates[] = [
+            'kind' => 'Organization Assignment',
+            'status' => (string) $row['status'],
+            'message' => 'Organization: ' . (string) $row['organization_name'],
+            'event_at' => (string) $row['event_at'],
+        ];
+    }
+
+    usort($updates, static function (array $a, array $b): int {
+        return strcmp((string) $b['event_at'], (string) $a['event_at']);
+    });
+
+    $cutoffTs = time() - (7 * 24 * 60 * 60);
+    $updates = array_values(array_filter($updates, static function (array $item) use ($cutoffTs): bool {
+        $eventAt = (string) ($item['event_at'] ?? '');
+        $eventTs = strtotime($eventAt);
+        return $eventTs !== false && $eventTs >= $cutoffTs;
+    }));
+
+    return array_slice($updates, 0, 8);
+}
+
+function buildUpdatesMarker(array $updates): string
+{
+    return sha1(json_encode($updates));
+}
+
+function queueLoginUpdatesPopup(int $userId): void
+{
+    $updates = collectUserRequestUpdates($userId);
+    if (count($updates) === 0) {
+        $_SESSION['login_updates_popup'] = [];
+        return;
+    }
+
+    $marker = buildUpdatesMarker($updates);
+    $cookieName = 'websys_updates_seen_' . $userId;
+    $seenMarker = (string) ($_COOKIE[$cookieName] ?? '');
+
+    if ($seenMarker !== '' && hash_equals($seenMarker, $marker)) {
+        $_SESSION['login_updates_popup'] = [];
+        return;
+    }
+
+    $_SESSION['login_updates_popup'] = $updates;
+    setcookie($cookieName, $marker, [
+        'expires' => time() + (60 * 60 * 24 * 30),
+        'path' => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+function paginateArray(array $items, string $queryKey, int $perPage = 10): array
+{
+    $totalItems = count($items);
+    $totalPages = max(1, (int) ceil($totalItems / max(1, $perPage)));
+    $page = max(1, (int) ($_GET[$queryKey] ?? 1));
+    if ($page > $totalPages) {
+        $page = $totalPages;
+    }
+
+    $offset = ($page - 1) * $perPage;
+    $slice = array_slice($items, $offset, $perPage);
+
+    return [
+        'items' => $slice,
+        'page' => $page,
+        'per_page' => $perPage,
+        'total_items' => $totalItems,
+        'total_pages' => $totalPages,
+        'query_key' => $queryKey,
+    ];
+}
+
+function renderPagination(array $pagination): void
+{
+    $totalPages = (int) ($pagination['total_pages'] ?? 1);
+    if ($totalPages <= 1) {
+        return;
+    }
+
+    $currentPage = (int) ($pagination['page'] ?? 1);
+    $queryKey = (string) ($pagination['query_key'] ?? 'p');
+    $startPage = max(1, $currentPage - 2);
+    $endPage = min($totalPages, $currentPage + 2);
+
+    $anchorId = 'pagination-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $queryKey);
+
+    $buildUrl = static function (int $targetPage) use ($queryKey, $anchorId): string {
+        $params = $_GET;
+        $params[$queryKey] = $targetPage;
+        return '?' . http_build_query($params) . '#' . $anchorId;
+    };
+
+    ?>
+    <div id="<?= e($anchorId) ?>" class="mt-3 flex items-center gap-2 text-xs scroll-mt-24">
+        <a class="px-2 py-1 rounded border <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>">Prev</a>
+        <?php for ($p = $startPage; $p <= $endPage; $p++): ?>
+            <a class="px-2 py-1 rounded border <?= $p === $currentPage ? 'bg-indigo-700 text-white border-indigo-700' : '' ?>" href="<?= e($buildUrl($p)) ?>"><?= $p ?></a>
+        <?php endfor; ?>
+        <a class="px-2 py-1 rounded border <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>">Next</a>
+        <span class="text-gray-500 ml-1">Page <?= $currentPage ?> of <?= $totalPages ?></span>
+    </div>
+    <?php
+}
+
+function purgeExpiredAnnouncements(PDO $db, int $days = 30): void
+{
+    $cutoff = (new DateTimeImmutable('now'))->modify('-' . $days . ' days')->format('Y-m-d H:i:s');
+    $stmt = $db->prepare('DELETE FROM announcements WHERE created_at < ?');
+    $stmt->execute([$cutoff]);
+}
+
+function getInstituteOptions(): array
+{
+    return [
+        'Institute of Computing and Digital Innovations',
+        'Institute of Nursing',
+        'Institute of Engineering',
+        'Institute of Midwifery',
+        'Institute of Science and Mathematics',
+        'Institute of Behavioral Science',
+    ];
+}
+
+function getProgramInstituteMap(): array
+{
+    return [
+        'BS Information Systems' => 'Institute of Computing and Digital Innovations',
+        'BS Data Science' => 'Institute of Computing and Digital Innovations',
+        'BS Computer Science' => 'Institute of Computing and Digital Innovations',
+        'BS Civil Engineering' => 'Institute of Engineering',
+        'BS Psychology' => 'Institute of Behavioral Science',
+        'BS Nursing' => 'Institute of Nursing',
+        'BS Midwifery' => 'Institute of Midwifery',
+        'BS Social Work' => 'Institute of Science and Mathematics',
+    ];
+}
+
+function getOrgCategoryOptions(): array
+{
+    return [
+        'collegewide' => 'Collegewide (Open to all students)',
+        'institutewide' => 'Institutewide (Per institute)',
+        'program_based' => 'Program-based',
+    ];
+}
+
+function normalizeAcademicValue(?string $value): string
+{
+    return strtolower(trim((string) $value));
+}
+
+function deriveInstituteFromProgram(string $program): ?string
+{
+    $map = getProgramInstituteMap();
+    return $map[$program] ?? null;
+}
+
+function sortOrganizationsByCategory(array $organizations): array
+{
+    $order = ['collegewide' => 1, 'institutewide' => 2, 'program_based' => 3];
+    usort($organizations, static function (array $a, array $b) use ($order): int {
+        $aCategory = (string) ($a['org_category'] ?? 'collegewide');
+        $bCategory = (string) ($b['org_category'] ?? 'collegewide');
+        $aRank = $order[$aCategory] ?? 99;
+        $bRank = $order[$bCategory] ?? 99;
+
+        if ($aRank !== $bRank) {
+            return $aRank <=> $bRank;
+        }
+
+        return strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+    });
+
+    return $organizations;
+}
+
+function applyOrganizationVisibilityForUser(array $organizations, array $user): array
+{
+    $role = (string) ($user['role'] ?? 'student');
+    if ($role !== 'student') {
+        return sortOrganizationsByCategory($organizations);
+    }
+
+    $userInstitute = normalizeAcademicValue((string) ($user['institute'] ?? ''));
+    $userProgram = normalizeAcademicValue((string) ($user['program'] ?? ''));
+
+    $filtered = array_values(array_filter($organizations, static function (array $org) use ($userInstitute, $userProgram): bool {
+        $category = (string) ($org['org_category'] ?? 'collegewide');
+        if ($category === 'collegewide') {
+            return true;
+        }
+
+        if ($category === 'institutewide') {
+            return $userInstitute !== '' && normalizeAcademicValue((string) ($org['target_institute'] ?? '')) === $userInstitute;
+        }
+
+        if ($category === 'program_based') {
+            return $userProgram !== '' && normalizeAcademicValue((string) ($org['target_program'] ?? '')) === $userProgram;
+        }
+
+        return true;
+    }));
+
+    return sortOrganizationsByCategory($filtered);
+}
+
+function getOrganizationVisibilityLabel(array $org): string
+{
+    $category = (string) ($org['org_category'] ?? 'collegewide');
+    if ($category === 'institutewide') {
+        $institute = trim((string) ($org['target_institute'] ?? ''));
+        return 'Institutewide' . ($institute !== '' ? ' • ' . $institute : '');
+    }
+
+    if ($category === 'program_based') {
+        $program = trim((string) ($org['target_program'] ?? ''));
+        return 'Program-based' . ($program !== '' ? ' • ' . $program : '');
+    }
+
+    return 'Collegewide';
+}
+
+function canUserJoinOrganization(array $org, array $user): bool
+{
+    $category = (string) ($org['org_category'] ?? 'collegewide');
+    if ($category === 'collegewide') {
+        return true;
+    }
+
+    $userInstitute = normalizeAcademicValue((string) ($user['institute'] ?? ''));
+    $userProgram = normalizeAcademicValue((string) ($user['program'] ?? ''));
+
+    if ($category === 'institutewide') {
+        $targetInstitute = normalizeAcademicValue((string) ($org['target_institute'] ?? ''));
+        return $targetInstitute !== '' && $userInstitute !== '' && $targetInstitute === $userInstitute;
+    }
+
+    if ($category === 'program_based') {
+        $targetProgram = normalizeAcademicValue((string) ($org['target_program'] ?? ''));
+        return $targetProgram !== '' && $userProgram !== '' && $targetProgram === $userProgram;
+    }
+
+    return false;
+}
+
+function getJoinRestrictionLabel(array $org): string
+{
+    $category = (string) ($org['org_category'] ?? 'collegewide');
+    if ($category === 'institutewide') {
+        return 'Restricted (Institute mismatch)';
+    }
+
+    if ($category === 'program_based') {
+        return 'Restricted (Program mismatch)';
+    }
+
+    return 'Restricted';
+}
+
 $user = currentUser();
 $page = $_GET['page'] ?? ($user ? 'dashboard' : 'home');
 
@@ -183,35 +490,74 @@ if ($page === 'google_callback') {
     }
 
     $_SESSION['user_id'] = $userId;
+    session_regenerate_id(true);
+    queueLoginUpdatesPopup($userId);
+    auditLog($userId, 'auth.google_login_success', 'user', $userId, 'Google OAuth login succeeded');
     setFlash('success', 'Welcome, ' . $userName . '!');
     redirect('?page=dashboard');
 }
 
 if (isPost()) {
+    if (!verifyCsrfToken((string) ($_POST['_csrf'] ?? ''))) {
+        setFlash('error', 'Invalid form session. Please try again.');
+        $fallbackPage = (string) ($_GET['page'] ?? ($user ? 'dashboard' : 'login'));
+        redirect('?page=' . urlencode($fallbackPage));
+    }
+
     $action = $_POST['action'] ?? '';
 
     if ($action === 'register') {
         $name = trim((string) ($_POST['name'] ?? ''));
         $email = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
+        $program = trim((string) ($_POST['program'] ?? ''));
         $privacyConsent = (string) ($_POST['privacy_consent'] ?? '') === '1';
+        $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $registerRateKey = 'register:' . strtolower($email) . ':' . $clientIp;
+        $programInstituteMap = getProgramInstituteMap();
 
-        if ($name === '' || $email === '' || $password === '') {
+        if (rateLimitIsBlocked($registerRateKey, 5, 300)) {
+            setFlash('error', 'Too many registration attempts. Please wait a few minutes and try again.');
+            redirect('?page=register');
+        }
+
+        if ($name === '' || $email === '' || $password === '' || $program === '') {
+            rateLimitIncrement($registerRateKey, 300);
             setFlash('error', 'Please fill all registration fields.');
             redirect('?page=register');
         }
 
+        if (!isset($programInstituteMap[$program])) {
+            rateLimitIncrement($registerRateKey, 300);
+            setFlash('error', 'Please select a valid program.');
+            redirect('?page=register');
+        }
+
+        $institute = (string) $programInstituteMap[$program];
+
         if (!$privacyConsent) {
+            rateLimitIncrement($registerRateKey, 300);
             setFlash('error', 'You must agree to the Data Privacy Consent before registering.');
             redirect('?page=register');
         }
 
+        $passwordStrengthError = validatePasswordStrength($password);
+        if ($passwordStrengthError !== null) {
+            rateLimitIncrement($registerRateKey, 300);
+            setFlash('error', $passwordStrengthError);
+            redirect('?page=register');
+        }
+
         try {
-            $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
-            $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), 'student']);
+            $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, institute, program) VALUES (?, ?, ?, ?, ?, ?)');
+            $stmt->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), 'student', $institute, $program]);
+            $newUserId = (int) $db->lastInsertId();
+            rateLimitClear($registerRateKey);
+            auditLog($newUserId, 'auth.register_success', 'user', $newUserId, 'Student registration completed');
             setFlash('success', 'Registration successful. You can now login.');
             redirect('?page=login');
         } catch (Throwable $e) {
+            rateLimitIncrement($registerRateKey, 300);
             setFlash('error', 'Email already exists.');
             redirect('?page=register');
         }
@@ -220,17 +566,29 @@ if (isPost()) {
     if ($action === 'login') {
         $email = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
+        $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $loginRateKey = 'login:' . strtolower($email) . ':' . $clientIp;
+
+        if (rateLimitIsBlocked($loginRateKey, 5, 300)) {
+            setFlash('error', 'Too many login attempts. Please wait a few minutes and try again.');
+            redirect('?page=login');
+        }
 
         $stmt = $db->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
         $candidate = $stmt->fetch();
 
         if (!$candidate || !password_verify($password, $candidate['password_hash'])) {
+            rateLimitIncrement($loginRateKey, 300);
             setFlash('error', 'Invalid credentials.');
             redirect('?page=login');
         }
 
+        rateLimitClear($loginRateKey);
         $_SESSION['user_id'] = (int) $candidate['id'];
+        session_regenerate_id(true);
+        queueLoginUpdatesPopup((int) $candidate['id']);
+        auditLog((int) $candidate['id'], 'auth.login_success', 'user', (int) $candidate['id'], 'Email login succeeded');
         setFlash('success', 'Welcome back, ' . $candidate['name'] . '!');
         redirect('?page=dashboard');
     }
@@ -242,15 +600,43 @@ if (isPost()) {
         requireRole(['admin']);
         $name = trim((string) ($_POST['name'] ?? ''));
         $description = trim((string) ($_POST['description'] ?? ''));
+        $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
+        $targetInstitute = trim((string) ($_POST['target_institute'] ?? ''));
+        $targetProgram = trim((string) ($_POST['target_program'] ?? ''));
+        $categoryOptions = getOrgCategoryOptions();
+        $programInstituteMap = getProgramInstituteMap();
 
         if ($name === '') {
             setFlash('error', 'Organization name is required.');
             redirect('?page=admin_orgs');
         }
 
+        if (!isset($categoryOptions[$orgCategory])) {
+            setFlash('error', 'Invalid organization category.');
+            redirect('?page=admin_orgs');
+        }
+
+        if ($orgCategory === 'institutewide') {
+            if (!in_array($targetInstitute, getInstituteOptions(), true)) {
+                setFlash('error', 'Please select a valid institute for institutewide organizations.');
+                redirect('?page=admin_orgs');
+            }
+            $targetProgram = '';
+        } elseif ($orgCategory === 'program_based') {
+            if (!isset($programInstituteMap[$targetProgram])) {
+                setFlash('error', 'Please select a valid program for program-based organizations.');
+                redirect('?page=admin_orgs');
+            }
+            $targetInstitute = (string) $programInstituteMap[$targetProgram];
+        } else {
+            $targetInstitute = '';
+            $targetProgram = '';
+        }
+
         try {
-            $stmt = $db->prepare('INSERT INTO organizations (name, description) VALUES (?, ?)');
-            $stmt->execute([$name, $description]);
+            $stmt = $db->prepare('INSERT INTO organizations (name, description, org_category, target_institute, target_program) VALUES (?, ?, ?, ?, ?)');
+            $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null]);
+            auditLog((int) $user['id'], 'organization.create', 'organization', (int) $db->lastInsertId(), 'Created organization: ' . $name);
             setFlash('success', 'Organization created.');
         } catch (Throwable $e) {
             setFlash('error', 'Organization name already exists.');
@@ -264,9 +650,37 @@ if (isPost()) {
         $orgId = (int) ($_POST['org_id'] ?? 0);
         $name = trim((string) ($_POST['name'] ?? ''));
         $description = trim((string) ($_POST['description'] ?? ''));
+        $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
+        $targetInstitute = trim((string) ($_POST['target_institute'] ?? ''));
+        $targetProgram = trim((string) ($_POST['target_program'] ?? ''));
+        $categoryOptions = getOrgCategoryOptions();
+        $programInstituteMap = getProgramInstituteMap();
 
-        $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ? WHERE id = ?');
-        $stmt->execute([$name, $description, $orgId]);
+        if (!isset($categoryOptions[$orgCategory])) {
+            setFlash('error', 'Invalid organization category.');
+            redirect('?page=admin_orgs');
+        }
+
+        if ($orgCategory === 'institutewide') {
+            if (!in_array($targetInstitute, getInstituteOptions(), true)) {
+                setFlash('error', 'Please select a valid institute for institutewide organizations.');
+                redirect('?page=admin_orgs');
+            }
+            $targetProgram = '';
+        } elseif ($orgCategory === 'program_based') {
+            if (!isset($programInstituteMap[$targetProgram])) {
+                setFlash('error', 'Please select a valid program for program-based organizations.');
+                redirect('?page=admin_orgs');
+            }
+            $targetInstitute = (string) $programInstituteMap[$targetProgram];
+        } else {
+            $targetInstitute = '';
+            $targetProgram = '';
+        }
+
+        $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, org_category = ?, target_institute = ?, target_program = ? WHERE id = ?');
+        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $orgId]);
+        auditLog((int) $user['id'], 'organization.update', 'organization', $orgId, 'Updated organization details');
         setFlash('success', 'Organization updated.');
         redirect('?page=admin_orgs');
     }
@@ -276,6 +690,7 @@ if (isPost()) {
         $orgId = (int) ($_POST['org_id'] ?? 0);
         $stmt = $db->prepare('DELETE FROM organizations WHERE id = ?');
         $stmt->execute([$orgId]);
+        auditLog((int) $user['id'], 'organization.delete', 'organization', $orgId, 'Deleted organization');
         setFlash('success', 'Organization deleted.');
         redirect('?page=admin_orgs');
     }
@@ -304,6 +719,7 @@ if (isPost()) {
             }
 
             $db->commit();
+            auditLog((int) $user['id'], 'organization.assign_owner', 'organization', $orgId, $ownerId > 0 ? 'Assignment set to pending' : 'Owner assignment cleared');
             setFlash('success', $ownerId > 0 ? 'Owner assignment sent. Student must accept first.' : 'Owner assignment cleared.');
         } catch (Throwable $e) {
             $db->rollBack();
@@ -353,10 +769,12 @@ if (isPost()) {
 
                 $stmt = $db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
                 $stmt->execute(['approved', $adminNote, $requestId]);
+                auditLog((int) $user['id'], 'finance.request_approve', 'transaction_change_request', $requestId, 'Approved transaction change request');
                 setFlash('success', 'Transaction change request approved.');
             } else {
                 $stmt = $db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
                 $stmt->execute(['rejected', $adminNote, $requestId]);
+                auditLog((int) $user['id'], 'finance.request_reject', 'transaction_change_request', $requestId, 'Rejected transaction change request');
                 setFlash('success', 'Transaction change request rejected.');
             }
 
@@ -400,10 +818,14 @@ if (isPost()) {
                 $stmt = $db->prepare("UPDATE users SET role = 'owner' WHERE id = ? AND role = 'student'");
                 $stmt->execute([(int) $user['id']]);
 
+                auditLog((int) $user['id'], 'assignment.accept', 'owner_assignment', $assignmentId, 'Accepted organization owner assignment');
+
                 setFlash('success', 'You accepted the owner assignment.');
             } else {
                 $stmt = $db->prepare('UPDATE owner_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
                 $stmt->execute(['declined', $assignmentId]);
+
+                auditLog((int) $user['id'], 'assignment.decline', 'owner_assignment', $assignmentId, 'Declined organization owner assignment');
 
                 setFlash('success', 'You declined the owner assignment.');
             }
@@ -421,6 +843,19 @@ if (isPost()) {
         requireRole(['student', 'owner']);
         $orgId = (int) ($_POST['org_id'] ?? 0);
 
+        $orgStmt = $db->prepare('SELECT id, org_category, target_institute, target_program FROM organizations WHERE id = ? LIMIT 1');
+        $orgStmt->execute([$orgId]);
+        $org = $orgStmt->fetch();
+        if (!$org) {
+            setFlash('error', 'Organization not found.');
+            redirect('?page=dashboard');
+        }
+
+        if (!canUserJoinOrganization($org, $user)) {
+            setFlash('error', 'You are not eligible to join this organization based on your institute/program.');
+            redirect('?page=dashboard');
+        }
+
         $stmt = $db->prepare('SELECT COUNT(*) FROM organization_members WHERE organization_id = ? AND user_id = ?');
         $stmt->execute([$orgId, (int) $user['id']]);
         if ((int) $stmt->fetchColumn() > 0) {
@@ -431,6 +866,7 @@ if (isPost()) {
         try {
             $stmt = $db->prepare('INSERT INTO organization_join_requests (organization_id, user_id, status) VALUES (?, ?, ?)');
             $stmt->execute([$orgId, (int) $user['id'], 'pending']);
+            auditLog((int) $user['id'], 'join_request.submit', 'organization', $orgId, 'Submitted join request');
             setFlash('success', 'Join request sent. Please wait for approval.');
         } catch (Throwable $e) {
             $stmt = $db->prepare('SELECT status FROM organization_join_requests WHERE organization_id = ? AND user_id = ? LIMIT 1');
@@ -439,6 +875,7 @@ if (isPost()) {
             if ($existingStatus === 'declined') {
                 $stmt = $db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ? AND user_id = ?');
                 $stmt->execute(['pending', $orgId, (int) $user['id']]);
+                auditLog((int) $user['id'], 'join_request.resubmit', 'organization', $orgId, 'Resubmitted join request');
                 setFlash('success', 'Join request sent again.');
             } elseif ($existingStatus === 'approved') {
                 setFlash('error', 'Your join request is already approved.');
@@ -484,10 +921,13 @@ if (isPost()) {
                 $stmt = $db->prepare('INSERT INTO organization_members (organization_id, user_id) VALUES (?, ?)');
                 $stmt->execute([$orgId, (int) $request['user_id']]);
 
+                auditLog((int) $user['id'], 'join_request.approve', 'organization_join_request', $requestId, 'Approved join request');
+
                 setFlash('success', 'Join request approved.');
             } else {
                 $stmt = $db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
                 $stmt->execute(['declined', $requestId]);
+                auditLog((int) $user['id'], 'join_request.decline', 'organization_join_request', $requestId, 'Declined join request');
                 setFlash('success', 'Join request declined.');
             }
 
@@ -557,6 +997,69 @@ if (isPost()) {
         redirect('?page=my_org&org_id=' . (int) ($org['id'] ?? 0));
     }
 
+    if ($action === 'pin_announcement_admin') {
+        requireRole(['admin']);
+        $announcementId = (int) ($_POST['announcement_id'] ?? 0);
+        $returnPage = (string) ($_POST['return_page'] ?? 'announcements');
+        if (!in_array($returnPage, ['announcements', 'dashboard'], true)) {
+            $returnPage = 'announcements';
+        }
+
+        if ($announcementId <= 0) {
+            setFlash('error', 'Invalid announcement selected.');
+            redirect('?page=' . $returnPage);
+        }
+
+        $db->beginTransaction();
+        try {
+            $existsStmt = $db->prepare('SELECT id FROM announcements WHERE id = ? LIMIT 1');
+            $existsStmt->execute([$announcementId]);
+            if (!$existsStmt->fetch()) {
+                throw new RuntimeException('Announcement not found.');
+            }
+
+            $db->exec('UPDATE announcements SET is_pinned = 0, pinned_at = NULL WHERE is_pinned = 1');
+            $pinStmt = $db->prepare('UPDATE announcements SET is_pinned = 1, pinned_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $pinStmt->execute([$announcementId]);
+
+            $db->commit();
+            auditLog((int) $user['id'], 'announcement.pin', 'announcement', $announcementId, 'Pinned announcement as important');
+            setFlash('success', 'Announcement pinned as important.');
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            setFlash('error', 'Unable to pin announcement.');
+        }
+
+        redirect('?page=' . $returnPage);
+    }
+
+    if ($action === 'unpin_announcement_admin') {
+        requireRole(['admin']);
+        $announcementId = (int) ($_POST['announcement_id'] ?? 0);
+        $returnPage = (string) ($_POST['return_page'] ?? 'announcements');
+        if (!in_array($returnPage, ['announcements', 'dashboard'], true)) {
+            $returnPage = 'announcements';
+        }
+
+        if ($announcementId <= 0) {
+            setFlash('error', 'Invalid announcement selected.');
+            redirect('?page=' . $returnPage);
+        }
+
+        try {
+            $stmt = $db->prepare('UPDATE announcements SET is_pinned = 0, pinned_at = NULL WHERE id = ?');
+            $stmt->execute([$announcementId]);
+            auditLog((int) $user['id'], 'announcement.unpin', 'announcement', $announcementId, 'Unpinned important announcement');
+            setFlash('success', 'Announcement unpinned.');
+        } catch (Throwable $e) {
+            setFlash('error', 'Unable to unpin announcement.');
+        }
+
+        redirect('?page=' . $returnPage);
+    }
+
     if ($action === 'add_transaction') {
         requireRole(['owner']);
         $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
@@ -577,17 +1080,14 @@ if (isPost()) {
             redirect('?page=my_org');
         }
 
-        if (!empty($_FILES['receipt']['name']) && is_uploaded_file($_FILES['receipt']['tmp_name'])) {
-            ensureUploadDir($config['upload_dir']);
-            $ext = strtolower(pathinfo((string) $_FILES['receipt']['name'], PATHINFO_EXTENSION));
-            $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
-            if (in_array($ext, $allowed, true)) {
-                $filename = uniqid('receipt_', true) . '.' . $ext;
-                $target = $config['upload_dir'] . '/' . $filename;
-                if (move_uploaded_file($_FILES['receipt']['tmp_name'], $target)) {
-                    $receiptPath = 'public/uploads/' . $filename;
-                }
+        if (!empty($_FILES['receipt']['name'])) {
+            $uploadResult = validateAndStoreReceiptUpload($_FILES['receipt'], (string) $config['upload_dir']);
+            if (!empty($uploadResult['error'])) {
+                setFlash('error', (string) $uploadResult['error']);
+                redirect('?page=my_org&org_id=' . (int) $org['id']);
             }
+
+            $receiptPath = (string) ($uploadResult['path'] ?? '') ?: null;
         }
 
         $stmt = $db->prepare('INSERT INTO financial_transactions (organization_id, type, amount, description, transaction_date, receipt_path) VALUES (?, ?, ?, ?, ?, ?)');
@@ -677,6 +1177,10 @@ if (isPost()) {
 }
 
 if ($page === 'logout') {
+    $logoutUserId = (int) ($_SESSION['user_id'] ?? 0);
+    if ($logoutUserId > 0) {
+        auditLog($logoutUserId, 'auth.logout', 'user', $logoutUserId, 'User logged out');
+    }
     session_destroy();
     session_start();
     setFlash('success', 'You are logged out.');
@@ -777,6 +1281,7 @@ if ($page === 'login') {
 
 if ($page === 'register') {
     renderHeader('Register');
+    $programInstituteMap = getProgramInstituteMap();
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
         <h1 class="text-2xl font-semibold mb-4">Student Registration</h1>
@@ -784,6 +1289,12 @@ if ($page === 'register') {
             <input type="hidden" name="action" value="register">
             <input name="name" placeholder="Full Name" required class="w-full border rounded px-3 py-2">
             <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
+            <select name="program" required class="w-full border rounded px-3 py-2">
+                <option value="">Select Program</option>
+                <?php foreach ($programInstituteMap as $programName => $instituteName): ?>
+                    <option value="<?= e($programName) ?>"><?= e($programName) ?> (<?= e($instituteName) ?>)</option>
+                <?php endforeach; ?>
+            </select>
             <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
             <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
                 <div class="flex items-start gap-2">
@@ -862,9 +1373,16 @@ if ($page === 'register') {
 
 requireLogin();
 $user = currentUser();
+$announcementCutoff = (new DateTimeImmutable('now'))->modify('-30 days')->format('Y-m-d H:i:s');
+$recentReportCutoffDate = (new DateTimeImmutable('now'))->modify('-30 days')->format('Y-m-d');
+purgeExpiredAnnouncements($db, 30);
 
 if ($page === 'admin_orgs') {
     requireRole(['admin']);
+    $instituteOptions = getInstituteOptions();
+    $programInstituteMap = getProgramInstituteMap();
+    $programOptions = array_keys($programInstituteMap);
+    $orgCategoryOptions = getOrgCategoryOptions();
 
     $orgs = $db->query("SELECT o.*, u.name AS owner_name, oa.status AS assignment_status, su.name AS assigned_student_name
         FROM organizations o
@@ -872,6 +1390,8 @@ if ($page === 'admin_orgs') {
         LEFT JOIN owner_assignments oa ON oa.organization_id = o.id AND oa.status = 'pending'
         LEFT JOIN users su ON su.id = oa.student_id
         ORDER BY o.id DESC")->fetchAll();
+    $orgsPagination = paginateArray($orgs, 'pg_admin_orgs', 8);
+    $orgs = $orgsPagination['items'];
     $students = $db->query("SELECT id, name, email FROM users WHERE role IN ('student','owner') ORDER BY name ASC")->fetchAll();
 
     renderHeader('Manage Organizations');
@@ -883,6 +1403,23 @@ if ($page === 'admin_orgs') {
                 <input type="hidden" name="action" value="create_org">
                 <input name="name" placeholder="Organization name" required class="w-full border rounded px-3 py-2">
                 <textarea name="description" placeholder="Description" class="w-full border rounded px-3 py-2"></textarea>
+                <select name="org_category" class="w-full border rounded px-3 py-2" required>
+                    <?php foreach ($orgCategoryOptions as $categoryKey => $categoryLabel): ?>
+                        <option value="<?= e($categoryKey) ?>"><?= e($categoryLabel) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="target_institute" class="w-full border rounded px-3 py-2">
+                    <option value="">Institute target (for institutewide)</option>
+                    <?php foreach ($instituteOptions as $institute): ?>
+                        <option value="<?= e($institute) ?>"><?= e($institute) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="target_program" class="w-full border rounded px-3 py-2">
+                    <option value="">Program target (for program-based)</option>
+                    <?php foreach ($programOptions as $programOption): ?>
+                        <option value="<?= e($programOption) ?>"><?= e($programOption) ?></option>
+                    <?php endforeach; ?>
+                </select>
                 <button class="bg-indigo-700 text-white px-4 py-2 rounded">Create</button>
             </form>
         </div>
@@ -894,6 +1431,7 @@ if ($page === 'admin_orgs') {
                 <tr class="text-left border-b">
                     <th class="py-2">Name</th>
                     <th>Description</th>
+                    <th>Visibility</th>
                     <th>Owner</th>
                     <th>Actions</th>
                 </tr>
@@ -903,6 +1441,9 @@ if ($page === 'admin_orgs') {
                     <tr class="border-b align-top">
                         <td class="py-2 font-medium"><?= e($org['name']) ?></td>
                         <td><?= e($org['description']) ?></td>
+                        <td>
+                            <span class="text-xs"><?= e(getOrganizationVisibilityLabel($org)) ?></span>
+                        </td>
                         <td>
                             <form method="post" class="flex gap-2 items-center">
                                 <input type="hidden" name="action" value="assign_owner">
@@ -928,6 +1469,23 @@ if ($page === 'admin_orgs') {
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <input name="name" value="<?= e($org['name']) ?>" class="w-full border rounded px-2 py-1 text-xs">
                                 <textarea name="description" class="w-full border rounded px-2 py-1 text-xs"><?= e($org['description']) ?></textarea>
+                                <select name="org_category" class="w-full border rounded px-2 py-1 text-xs">
+                                    <?php foreach ($orgCategoryOptions as $categoryKey => $categoryLabel): ?>
+                                        <option value="<?= e($categoryKey) ?>" <?= (string) ($org['org_category'] ?? 'collegewide') === $categoryKey ? 'selected' : '' ?>><?= e($categoryLabel) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <select name="target_institute" class="w-full border rounded px-2 py-1 text-xs">
+                                    <option value="">Institute target (for institutewide)</option>
+                                    <?php foreach ($instituteOptions as $institute): ?>
+                                        <option value="<?= e($institute) ?>" <?= (string) ($org['target_institute'] ?? '') === $institute ? 'selected' : '' ?>><?= e($institute) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <select name="target_program" class="w-full border rounded px-2 py-1 text-xs">
+                                    <option value="">Program target (for program-based)</option>
+                                    <?php foreach ($programOptions as $programOption): ?>
+                                        <option value="<?= e($programOption) ?>" <?= (string) ($org['target_program'] ?? '') === $programOption ? 'selected' : '' ?>><?= e($programOption) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                                 <button class="bg-blue-600 text-white text-xs px-2 py-1 rounded">Update</button>
                             </form>
                             <form method="post" onsubmit="return confirm('Delete this organization?')">
@@ -940,6 +1498,7 @@ if ($page === 'admin_orgs') {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php renderPagination($orgsPagination); ?>
         </div>
     </div>
     <?php
@@ -958,6 +1517,8 @@ if ($page === 'admin_students') {
     } else {
         $students = $db->query("SELECT id, name, email, role, created_at FROM users WHERE role IN ('student','owner') ORDER BY name")->fetchAll();
     }
+    $studentsPagination = paginateArray($students, 'pg_admin_students', 12);
+    $students = $studentsPagination['items'];
 
     renderHeader('Filter Students');
     ?>
@@ -990,6 +1551,7 @@ if ($page === 'admin_students') {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php renderPagination($studentsPagination); ?>
         </div>
     </div>
     <?php
@@ -1005,6 +1567,8 @@ if ($page === 'admin_requests') {
         JOIN organizations o ON o.id = r.organization_id
         JOIN users u ON u.id = r.requested_by
         ORDER BY CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END, r.created_at DESC")->fetchAll();
+    $requestsPagination = paginateArray($requests, 'pg_admin_requests', 10);
+    $requests = $requestsPagination['items'];
 
     renderHeader('Transaction Requests');
     ?>
@@ -1059,7 +1623,253 @@ if ($page === 'admin_requests') {
             <?php endforeach; ?>
             </tbody>
         </table>
+        <?php renderPagination($requestsPagination); ?>
     </div>
+    <?php
+    renderFooter();
+    exit;
+}
+
+if ($page === 'admin_audit') {
+    requireLogin();
+    if (($user['role'] ?? '') !== 'admin') {
+        setFlash('error', 'Admin access required.');
+        redirect('?page=dashboard');
+    }
+
+    $days = max(1, (int) ($_GET['days'] ?? 7));
+    $cutoff = (new DateTimeImmutable('now'))->modify('-' . $days . ' days')->format('Y-m-d H:i:s');
+    $stmt = $db->prepare(
+        "SELECT al.*, u.name AS actor_name
+         FROM audit_logs al
+         LEFT JOIN users u ON u.id = al.user_id
+         WHERE al.created_at >= ?
+         ORDER BY al.id DESC
+         LIMIT 300"
+    );
+    $stmt->execute([$cutoff]);
+    $logs = $stmt->fetchAll();
+    $logsPagination = paginateArray($logs, 'pg_admin_audit', 20);
+    $logs = $logsPagination['items'];
+
+    renderHeader('Audit Logs', $user);
+    ?>
+    <section class="bg-white rounded shadow p-4">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold">Audit Logs</h2>
+            <form method="get" class="flex items-center gap-2">
+                <input type="hidden" name="page" value="admin_audit" />
+                <label class="text-sm text-gray-600" for="days">Last</label>
+                <select name="days" id="days" class="border rounded px-2 py-1 text-sm" onchange="this.form.submit()">
+                    <?php foreach ([1, 3, 7, 14, 30, 90] as $opt): ?>
+                        <option value="<?= $opt ?>" <?= $days === $opt ? 'selected' : '' ?>><?= $opt ?> days</option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+        </div>
+
+        <?php if (!$logs): ?>
+            <p class="text-sm text-gray-600">No audit entries in the selected range.</p>
+        <?php else: ?>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 pr-3">Time</th>
+                            <th class="text-left py-2 pr-3">Actor</th>
+                            <th class="text-left py-2 pr-3">Action</th>
+                            <th class="text-left py-2 pr-3">Entity</th>
+                            <th class="text-left py-2 pr-3">Entity ID</th>
+                            <th class="text-left py-2 pr-3">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($logs as $log): ?>
+                            <tr class="border-b align-top">
+                                <td class="py-2 pr-3 whitespace-nowrap"><?= e($log['created_at']) ?></td>
+                                <td class="py-2 pr-3"><?= e($log['actor_name'] ?: ('User#' . (int)$log['user_id'])) ?></td>
+                                <td class="py-2 pr-3"><?= e($log['action']) ?></td>
+                                <td class="py-2 pr-3"><?= e($log['entity_type'] ?? '-') ?></td>
+                                <td class="py-2 pr-3"><?= $log['entity_id'] !== null ? (int)$log['entity_id'] : '-' ?></td>
+                                <td class="py-2 pr-3 break-words max-w-xl"><?= e($log['details'] ?? '') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php renderPagination($logsPagination); ?>
+            </div>
+        <?php endif; ?>
+    </section>
+    <?php
+    renderFooter();
+    exit;
+}
+
+if ($page === 'announcements') {
+    $stmt = $db->prepare('SELECT a.*, o.name AS organization_name
+        FROM announcements a
+        JOIN organizations o ON o.id = a.organization_id
+        WHERE a.created_at >= ?
+        ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC');
+    $stmt->execute([$announcementCutoff]);
+    $allAnnouncements = $stmt->fetchAll();
+    $slides = array_chunk($allAnnouncements, 3);
+    $slideCount = count($slides);
+
+    renderHeader('Announcements');
+    ?>
+    <section class="glass p-4">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-semibold">Latest Announcements</h1>
+            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Back to Dashboard</a>
+        </div>
+
+        <?php if ($slideCount === 0): ?>
+            <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
+        <?php else: ?>
+            <div class="relative">
+                <?php foreach ($slides as $index => $slideItems): ?>
+                    <div class="announcement-slide <?= $index === 0 ? '' : 'hidden' ?>" data-slide-index="<?= $index ?>">
+                        <div class="grid md:grid-cols-3 gap-3">
+                            <?php foreach ($slideItems as $item): ?>
+                                <article class="border rounded p-3">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <h2 class="font-semibold"><?= e($item['title']) ?></h2>
+                                        <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                                    <p class="text-sm mt-2"><?= e($item['content']) ?></p>
+                                    <?php if (($user['role'] ?? '') === 'admin'): ?>
+                                        <form method="post" class="mt-2">
+                                            <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
+                                            <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
+                                            <input type="hidden" name="return_page" value="announcements">
+                                            <button class="px-2 py-1 rounded text-xs border">
+                                                <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+
+                <div class="flex items-center justify-between mt-4">
+                    <button type="button" id="announcementPrev" class="px-3 py-1 rounded border text-sm">Prev</button>
+                    <div id="announcementDots" class="flex gap-1"></div>
+                    <button type="button" id="announcementNext" class="px-3 py-1 rounded border text-sm">Next</button>
+                </div>
+            </div>
+
+            <script>
+                (function () {
+                    const slides = Array.from(document.querySelectorAll('.announcement-slide'));
+                    const prevBtn = document.getElementById('announcementPrev');
+                    const nextBtn = document.getElementById('announcementNext');
+                    const dotsWrap = document.getElementById('announcementDots');
+                    if (!slides.length || !prevBtn || !nextBtn || !dotsWrap) return;
+
+                    let index = 0;
+                    const dots = slides.map(function (_, i) {
+                        const dot = document.createElement('button');
+                        dot.type = 'button';
+                        dot.className = 'w-2 h-2 rounded-full border border-emerald-400';
+                        dot.addEventListener('click', function () {
+                            show(i);
+                        });
+                        dotsWrap.appendChild(dot);
+                        return dot;
+                    });
+
+                    function show(target) {
+                        index = (target + slides.length) % slides.length;
+                        slides.forEach(function (slide, i) {
+                            slide.classList.toggle('hidden', i !== index);
+                        });
+                        dots.forEach(function (dot, i) {
+                            dot.classList.toggle('bg-emerald-500', i === index);
+                            dot.classList.toggle('bg-transparent', i !== index);
+                        });
+                    }
+
+                    prevBtn.addEventListener('click', function () {
+                        show(index - 1);
+                    });
+
+                    nextBtn.addEventListener('click', function () {
+                        show(index + 1);
+                    });
+
+                    show(0);
+                })();
+            </script>
+        <?php endif; ?>
+    </section>
+    <?php
+    renderFooter();
+    exit;
+}
+
+if ($page === 'organizations') {
+    $allOrgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
+    $allOrgs = applyOrganizationVisibilityForUser($allOrgs, $user);
+
+    $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
+    $membershipStmt->execute([(int) $user['id']]);
+    $joinedIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+
+    $requestStmt = $db->prepare('SELECT organization_id, status FROM organization_join_requests WHERE user_id = ?');
+    $requestStmt->execute([(int) $user['id']]);
+    $joinRequestStatus = [];
+    foreach ($requestStmt->fetchAll() as $req) {
+        $joinRequestStatus[(int) $req['organization_id']] = (string) $req['status'];
+    }
+
+    renderHeader('Organizations');
+    ?>
+    <section class="glass p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h1 class="text-xl font-semibold">All Organizations</h1>
+            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Back to Dashboard</a>
+        </div>
+
+        <div class="space-y-3 max-h-[36rem] overflow-y-auto themed-scroll pr-1">
+            <?php foreach ($allOrgs as $org): ?>
+                <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                    <div>
+                        <div class="font-medium"><?= e($org['name']) ?></div>
+                        <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
+                        <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                        <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                    </div>
+                    <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                        <form method="post">
+                            <input type="hidden" name="action" value="join_org">
+                            <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                            <?php
+                                $orgId = (int) $org['id'];
+                                $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                                $isJoined = in_array($orgId, $joinedIds, true);
+                                $disabled = $isJoined || $requestStatus === 'pending';
+                                $btnClass = $isJoined
+                                    ? 'bg-white/10 border-emerald-200/30 text-slate-700'
+                                    : ($requestStatus === 'pending'
+                                        ? 'bg-amber-500/25 border-amber-300/50 text-amber-900'
+                                        : 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35');
+                                $label = $isJoined ? 'Joined' : ($requestStatus === 'pending' ? 'Requested' : 'Request Join');
+                            ?>
+                            <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                <?= $label ?>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
     <?php
     renderFooter();
     exit;
@@ -1098,6 +1908,8 @@ if ($page === 'my_org') {
                 $txStmt = $db->prepare('SELECT * FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
                 $txStmt->execute([(int) $org['id']]);
                 $tx = $txStmt->fetchAll();
+                $adminTxPagination = paginateArray($tx, 'pg_myorg_admin_tx', 12);
+                $tx = $adminTxPagination['items'];
                 ?>
                 <h2 class="text-lg font-semibold"><?= e($org['name']) ?></h2>
                 <p class="text-gray-600 mb-3"><?= e($org['description']) ?></p>
@@ -1118,6 +1930,7 @@ if ($page === 'my_org') {
                     <?php endforeach; ?>
                     </tbody>
                 </table>
+                <?php renderPagination($adminTxPagination); ?>
             <?php endif; ?>
         </div>
         <?php
@@ -1143,8 +1956,8 @@ if ($page === 'my_org') {
         redirect('?page=my_org');
     }
 
-    $stmt = $db->prepare('SELECT * FROM announcements WHERE organization_id = ? ORDER BY id DESC');
-    $stmt->execute([(int) $org['id']]);
+    $stmt = $db->prepare('SELECT * FROM announcements WHERE organization_id = ? AND created_at >= ? ORDER BY id DESC');
+    $stmt->execute([(int) $org['id'], $announcementCutoff]);
     $announcements = $stmt->fetchAll();
 
     $stmt = $db->prepare('SELECT * FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
@@ -1162,6 +1975,15 @@ if ($page === 'my_org') {
         ORDER BY r.created_at DESC");
     $joinRequestStmt->execute([(int) $org['id']]);
     $pendingJoinRequests = $joinRequestStmt->fetchAll();
+
+    $pendingJoinPagination = paginateArray($pendingJoinRequests, 'pg_myorg_join', 5);
+    $pendingJoinRequests = $pendingJoinPagination['items'];
+    $announcementsPagination = paginateArray($announcements, 'pg_myorg_ann', 5);
+    $announcements = $announcementsPagination['items'];
+    $transactionsPagination = paginateArray($transactions, 'pg_myorg_tx', 10);
+    $transactions = $transactionsPagination['items'];
+    $myTxRequestsPagination = paginateArray($myTxRequests, 'pg_myorg_req', 8);
+    $myTxRequests = $myTxRequestsPagination['items'];
 
     renderHeader('My Organization');
     ?>
@@ -1197,6 +2019,7 @@ if ($page === 'my_org') {
                         </div>
                     <?php endforeach; ?>
                 </div>
+                <?php renderPagination($pendingJoinPagination); ?>
             <?php endif; ?>
         </div>
 
@@ -1255,6 +2078,7 @@ if ($page === 'my_org') {
                         </div>
                     <?php endforeach; ?>
                 </div>
+                <?php renderPagination($announcementsPagination); ?>
             </div>
 
             <div class="bg-white shadow rounded p-4">
@@ -1278,7 +2102,7 @@ if ($page === 'my_org') {
         </div>
 
         <div class="bg-white shadow rounded p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-2">Transaction History (CRUD)</h2>
+            <h2 class="text-lg font-semibold mb-2">Transaction History</h2>
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -1329,6 +2153,7 @@ if ($page === 'my_org') {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php renderPagination($transactionsPagination); ?>
         </div>
 
         <div class="bg-white shadow rounded p-4 overflow-auto">
@@ -1353,6 +2178,7 @@ if ($page === 'my_org') {
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php renderPagination($myTxRequestsPagination); ?>
         </div>
     </div>
     <?php
@@ -1362,6 +2188,7 @@ if ($page === 'my_org') {
 
 // Default Dashboard (all logged-in users)
 $orgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
+$orgs = applyOrganizationVisibilityForUser($orgs, $user);
 $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
 $membershipStmt->execute([(int) $user['id']]);
 $joinedIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
@@ -1373,16 +2200,34 @@ foreach ($requestStmt->fetchAll() as $req) {
     $joinRequestStatus[(int) $req['organization_id']] = (string) $req['status'];
 }
 
-$announcements = $db->query('SELECT a.*, o.name AS organization_name FROM announcements a JOIN organizations o ON o.id = a.organization_id ORDER BY a.id DESC LIMIT 12')->fetchAll();
-$transactions = $db->query('SELECT t.*, o.name AS organization_name FROM financial_transactions t JOIN organizations o ON o.id = t.organization_id ORDER BY t.transaction_date DESC, t.id DESC LIMIT 30')->fetchAll();
+$announcementsStmt = $db->prepare('SELECT a.*, o.name AS organization_name
+    FROM announcements a
+    JOIN organizations o ON o.id = a.organization_id
+    WHERE a.created_at >= ?
+    ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC
+    LIMIT 30');
+$announcementsStmt->execute([$announcementCutoff]);
+$announcements = $announcementsStmt->fetchAll();
 
-$summary = $db->query("SELECT o.id, o.name,
+$transactionsStmt = $db->prepare('SELECT t.*, o.name AS organization_name
+    FROM financial_transactions t
+    JOIN organizations o ON o.id = t.organization_id
+    WHERE t.transaction_date >= ?
+    ORDER BY t.transaction_date DESC, t.id DESC
+    LIMIT 8');
+$transactionsStmt->execute([$recentReportCutoffDate]);
+$transactions = $transactionsStmt->fetchAll();
+
+$summaryStmt = $db->prepare("SELECT o.id, o.name,
     COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
     COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
     FROM organizations o
+    JOIN organization_members om ON om.organization_id = o.id AND om.user_id = ?
     LEFT JOIN financial_transactions t ON t.organization_id = o.id
     GROUP BY o.id, o.name
-    ORDER BY o.name")->fetchAll();
+    ORDER BY o.name");
+$summaryStmt->execute([(int) $user['id']]);
+$summary = $summaryStmt->fetchAll();
 
 $kpi = $db->query("SELECT
     COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
@@ -1393,11 +2238,13 @@ $kpiIncome = (float) ($kpi['income'] ?? 0);
 $kpiExpense = (float) ($kpi['expense'] ?? 0);
 $kpiBalance = $kpiIncome - $kpiExpense;
 
-$activity = $db->query("SELECT 'announcement' AS type, title AS label, created_at, organization_id FROM announcements
+$activityStmt = $db->prepare("SELECT 'announcement' AS type, title AS label, created_at, organization_id FROM announcements WHERE created_at >= ?
     UNION ALL
-    SELECT 'transaction' AS type, description AS label, created_at, organization_id FROM financial_transactions
+    SELECT 'transaction' AS type, description AS label, created_at, organization_id FROM financial_transactions WHERE transaction_date >= ?
     ORDER BY created_at DESC
-    LIMIT 12")->fetchAll();
+    LIMIT 16");
+$activityStmt->execute([$announcementCutoff, $recentReportCutoffDate]);
+$activity = $activityStmt->fetchAll();
 
 $dbDriver = (string) (($config['db']['driver'] ?? 'sqlite'));
 if ($dbDriver === 'mysql') {
@@ -1434,6 +2281,15 @@ if (in_array($user['role'], ['student', 'owner'], true)) {
     $pendingAssignments = $stmt->fetchAll();
 }
 
+$pendingAssignmentsPagination = paginateArray($pendingAssignments, 'pg_dash_assign', 4);
+$pendingAssignments = $pendingAssignmentsPagination['items'];
+$dashboardOrganizationsPreview = array_slice($orgs, 0, 6);
+$summaryPagination = paginateArray($summary, 'pg_dash_summary', 8);
+$summary = $summaryPagination['items'];
+$activityPagination = paginateArray($activity, 'pg_dash_activity', 4);
+$activity = $activityPagination['items'];
+$latestAnnouncementsPreview = array_slice($announcements, 0, 3);
+
 renderHeader('Dashboard');
 ?>
 <div class="space-y-4">
@@ -1465,10 +2321,13 @@ renderHeader('Dashboard');
         <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Quick Actions</h2>
         <div class="flex flex-wrap gap-2 justify-center md:justify-start">
             <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Refresh Dashboard</a>
+            <button type="button" id="openAnnouncementsModalQuick" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">View All Announcements</button>
+            <button type="button" id="openOrganizationsModalQuick" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">View All Organizations</button>
             <?php if ($user['role'] === 'admin'): ?>
                 <a href="?page=admin_orgs" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Manage Organizations</a>
                 <a href="?page=admin_students" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Filter Students</a>
                 <a href="?page=admin_requests" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Review Requests</a>
+                <a href="?page=admin_audit" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Audit Logs</a>
             <?php endif; ?>
             <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
                 <a href="?page=my_org" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Go to My Organization</a>
@@ -1503,19 +2362,24 @@ renderHeader('Dashboard');
                     </div>
                 <?php endforeach; ?>
             </div>
+            <?php renderPagination($pendingAssignmentsPagination); ?>
         </div>
     <?php endif; ?>
 
     <div class="grid md:grid-cols-12 gap-4">
-        <div class="glass md:col-span-7 p-4">
-            <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organizations</h2>
+        <div class="glass md:col-span-7 p-4 max-h-[32rem] overflow-y-auto themed-scroll pr-1">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-semibold text-center md:text-left">Organizations</h2>
+                <button type="button" id="openOrganizationsModal" class="bg-indigo-700 text-white px-2 py-1 rounded text-xs">View All</button>
+            </div>
             <div class="space-y-3">
-                <?php foreach ($orgs as $org): ?>
+                <?php foreach ($dashboardOrganizationsPreview as $org): ?>
                     <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
                         <div>
                             <div class="font-medium"><?= e($org['name']) ?></div>
                             <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
                             <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
                         </div>
                         <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                             <form method="post">
@@ -1525,13 +2389,21 @@ renderHeader('Dashboard');
                                     $orgId = (int) $org['id'];
                                     $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
                                     $isJoined = in_array($orgId, $joinedIds, true);
-                                    $disabled = $isJoined || $requestStatus === 'pending';
-                                    $btnClass = $isJoined
-                                        ? 'bg-white/10 border-emerald-200/30 text-white/85'
-                                        : ($requestStatus === 'pending'
-                                            ? 'bg-amber-500/25 border-amber-300/50 text-white/90'
-                                            : 'bg-emerald-500/25 border-emerald-300/50 text-white hover:bg-emerald-500/35');
-                                    $label = $isJoined ? 'Joined' : ($requestStatus === 'pending' ? 'Requested' : 'Request Join');
+                                    $canJoin = canUserJoinOrganization($org, $user);
+                                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                    if (!$canJoin) {
+                                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                        $label = getJoinRestrictionLabel($org);
+                                    } elseif ($isJoined) {
+                                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                        $label = 'Joined';
+                                    } elseif ($requestStatus === 'pending') {
+                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                        $label = 'Requested';
+                                    } else {
+                                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                        $label = 'Request Join';
+                                    }
                                 ?>
                                 <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
                                     <?= $label ?>
@@ -1543,7 +2415,7 @@ renderHeader('Dashboard');
             </div>
         </div>
 
-        <div class="glass md:col-span-5 p-4 overflow-auto">
+        <div class="glass md:col-span-5 p-4 max-h-[32rem] overflow-y-auto themed-scroll pr-1">
             <h2 class="text-lg font-semibold mb-3">Financial Summary by Organization</h2>
             <table class="w-full text-sm">
                 <thead>
@@ -1566,18 +2438,40 @@ renderHeader('Dashboard');
                 <?php endforeach; ?>
                 </tbody>
             </table>
+            <?php renderPagination($summaryPagination); ?>
         </div>
 
         <div class="glass md:col-span-5 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Latest Announcements</h2>
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-semibold">Latest Announcements</h2>
+                <button type="button" id="openAnnouncementsModal" class="text-xs underline text-indigo-700">View All</button>
+            </div>
             <div class="space-y-2">
-                <?php foreach ($announcements as $item): ?>
+                <?php foreach ($latestAnnouncementsPreview as $item): ?>
                     <div class="border rounded p-2">
-                        <div class="font-medium"><?= e($item['title']) ?></div>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="font-medium"><?= e($item['title']) ?></div>
+                            <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                            <?php endif; ?>
+                        </div>
                         <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
                         <div class="text-sm mt-1"><?= e($item['content']) ?></div>
+                        <?php if (($user['role'] ?? '') === 'admin'): ?>
+                            <form method="post" class="mt-2">
+                                <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
+                                <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
+                                <input type="hidden" name="return_page" value="dashboard">
+                                <button class="px-2 py-1 rounded text-xs border">
+                                    <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
+                <?php if (count($latestAnnouncementsPreview) === 0): ?>
+                    <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -1629,6 +2523,93 @@ renderHeader('Dashboard');
                         </div>
                     </div>
                 <?php endforeach; ?>
+            </div>
+            <?php renderPagination($activityPagination); ?>
+        </div>
+    </div>
+
+    <div id="organizationsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="organizationsModalTitle">
+        <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
+            <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+                <h3 id="organizationsModalTitle" class="text-lg font-semibold">All Organizations</h3>
+                <button type="button" id="closeOrganizationsModal" class="px-2 py-1 rounded border text-sm">Close</button>
+            </div>
+            <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
+                <?php foreach ($orgs as $org): ?>
+                    <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                        <div>
+                            <div class="font-medium"><?= e($org['name']) ?></div>
+                            <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
+                            <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                        </div>
+                        <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                            <form method="post">
+                                <input type="hidden" name="action" value="join_org">
+                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                <?php
+                                    $orgId = (int) $org['id'];
+                                    $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                                    $isJoined = in_array($orgId, $joinedIds, true);
+                                    $canJoin = canUserJoinOrganization($org, $user);
+                                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                    if (!$canJoin) {
+                                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                        $label = getJoinRestrictionLabel($org);
+                                    } elseif ($isJoined) {
+                                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                        $label = 'Joined';
+                                    } elseif ($requestStatus === 'pending') {
+                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                        $label = 'Requested';
+                                    } else {
+                                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                        $label = 'Request Join';
+                                    }
+                                ?>
+                                <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                    <?= $label ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <div id="announcementsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="announcementsModalTitle">
+        <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
+            <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+                <h3 id="announcementsModalTitle" class="text-lg font-semibold">All Latest Announcements</h3>
+                <button type="button" id="closeAnnouncementsModal" class="px-2 py-1 rounded border text-sm">Close</button>
+            </div>
+            <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
+                <?php foreach ($announcements as $item): ?>
+                    <div class="border rounded p-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="font-medium"><?= e($item['title']) ?></div>
+                            <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                        <div class="text-sm mt-1"><?= e($item['content']) ?></div>
+                        <?php if (($user['role'] ?? '') === 'admin'): ?>
+                            <form method="post" class="mt-2">
+                                <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
+                                <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
+                                <input type="hidden" name="return_page" value="dashboard">
+                                <button class="px-2 py-1 rounded text-xs border">
+                                    <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (count($announcements) === 0): ?>
+                    <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -1696,6 +2677,69 @@ renderHeader('Dashboard');
                 chart.options.scales.x.grid.color = nextGrid;
                 chart.options.scales.y.grid.color = nextGrid;
                 chart.update();
+            });
+        }
+
+        const organizationsModal = document.getElementById('organizationsModal');
+        const announcementsModal = document.getElementById('announcementsModal');
+        const openOrganizations = [
+            document.getElementById('openOrganizationsModal'),
+            document.getElementById('openOrganizationsModalQuick'),
+        ].filter(Boolean);
+        const openAnnouncements = [
+            document.getElementById('openAnnouncementsModal'),
+            document.getElementById('openAnnouncementsModalQuick'),
+        ].filter(Boolean);
+        const closeOrganizationsModal = document.getElementById('closeOrganizationsModal');
+        const closeAnnouncementsModal = document.getElementById('closeAnnouncementsModal');
+
+        const showModal = function (modal) {
+            if (!modal) return;
+            modal.classList.remove('hidden');
+        };
+
+        const hideModal = function (modal) {
+            if (!modal) return;
+            modal.classList.add('hidden');
+        };
+
+        openOrganizations.forEach(function (button) {
+            button.addEventListener('click', function () {
+                showModal(organizationsModal);
+            });
+        });
+
+        openAnnouncements.forEach(function (button) {
+            button.addEventListener('click', function () {
+                showModal(announcementsModal);
+            });
+        });
+
+        if (closeOrganizationsModal) {
+            closeOrganizationsModal.addEventListener('click', function () {
+                hideModal(organizationsModal);
+            });
+        }
+
+        if (closeAnnouncementsModal) {
+            closeAnnouncementsModal.addEventListener('click', function () {
+                hideModal(announcementsModal);
+            });
+        }
+
+        if (organizationsModal) {
+            organizationsModal.addEventListener('click', function (event) {
+                if (event.target === organizationsModal) {
+                    hideModal(organizationsModal);
+                }
+            });
+        }
+
+        if (announcementsModal) {
+            announcementsModal.addEventListener('click', function (event) {
+                if (event.target === announcementsModal) {
+                    hideModal(announcementsModal);
+                }
             });
         }
     })();

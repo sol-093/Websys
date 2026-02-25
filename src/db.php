@@ -60,6 +60,8 @@ function initializeDatabaseSqlite(PDO $pdo): void
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('admin','student','owner')),
+        institute TEXT NULL,
+        program TEXT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -67,6 +69,9 @@ function initializeDatabaseSqlite(PDO $pdo): void
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
         description TEXT DEFAULT '',
+        org_category TEXT NOT NULL DEFAULT 'collegewide',
+        target_institute TEXT NULL,
+        target_program TEXT NULL,
         owner_id INTEGER NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
@@ -144,9 +149,24 @@ function initializeDatabaseSqlite(PDO $pdo): void
         FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
         FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NULL,
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER NULL,
+        details TEXT NULL,
+        ip_address TEXT NULL,
+        user_agent TEXT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    );
     SQL;
 
     $pdo->exec($schema);
+    ensureAcademicAndVisibilityColumns($pdo);
+    ensureAnnouncementPinColumns($pdo);
     ensureDefaultAdmin($pdo);
 }
 
@@ -159,6 +179,8 @@ function initializeDatabaseMySql(PDO $pdo): void
         email VARCHAR(191) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         role ENUM('admin','student','owner') NOT NULL DEFAULT 'student',
+        institute VARCHAR(191) NULL,
+        program VARCHAR(191) NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -166,6 +188,9 @@ function initializeDatabaseMySql(PDO $pdo): void
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(191) NOT NULL UNIQUE,
         description TEXT,
+        org_category VARCHAR(50) NOT NULL DEFAULT 'collegewide',
+        target_institute VARCHAR(191) NULL,
+        target_program VARCHAR(191) NULL,
         owner_id INT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_organizations_owner FOREIGN KEY (owner_id)
@@ -256,6 +281,22 @@ function initializeDatabaseMySql(PDO $pdo): void
         CONSTRAINT fk_txcr_requester FOREIGN KEY (requested_by)
             REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        action VARCHAR(100) NOT NULL,
+        entity_type VARCHAR(100) NOT NULL,
+        entity_id INT NULL,
+        details TEXT NULL,
+        ip_address VARCHAR(64) NULL,
+        user_agent VARCHAR(500) NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_audit_user FOREIGN KEY (user_id)
+            REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        INDEX idx_audit_created_at (created_at),
+        INDEX idx_audit_action (action)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     SQL;
 
     $statements = array_filter(array_map('trim', explode(';', $schema)));
@@ -263,7 +304,97 @@ function initializeDatabaseMySql(PDO $pdo): void
         $pdo->exec($statement);
     }
 
+    ensureAcademicAndVisibilityColumns($pdo);
+    ensureAnnouncementPinColumns($pdo);
     ensureDefaultAdmin($pdo);
+}
+
+function ensureAcademicAndVisibilityColumns(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if (!tableColumnExists($pdo, 'users', 'institute')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN institute VARCHAR(191) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN institute TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'program')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN program VARCHAR(191) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN program TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'org_category')) {
+        if ($driver === 'mysql') {
+            $pdo->exec("ALTER TABLE organizations ADD COLUMN org_category VARCHAR(50) NOT NULL DEFAULT 'collegewide'");
+        } else {
+            $pdo->exec("ALTER TABLE organizations ADD COLUMN org_category TEXT NOT NULL DEFAULT 'collegewide'");
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'target_institute')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE organizations ADD COLUMN target_institute VARCHAR(191) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE organizations ADD COLUMN target_institute TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'target_program')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE organizations ADD COLUMN target_program VARCHAR(191) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE organizations ADD COLUMN target_program TEXT NULL');
+        }
+    }
+}
+
+function ensureAnnouncementPinColumns(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if (!tableColumnExists($pdo, 'announcements', 'is_pinned')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN is_pinned TINYINT(1) NOT NULL DEFAULT 0');
+        } else {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'announcements', 'pinned_at')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN pinned_at TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN pinned_at TEXT NULL');
+        }
+    }
+}
+
+function tableColumnExists(PDO $pdo, string $table, string $column): bool
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if ($driver === 'mysql') {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+        $stmt->execute([$table, $column]);
+        return ((int) $stmt->fetchColumn()) > 0;
+    }
+
+    $stmt = $pdo->prepare('PRAGMA table_info(' . $table . ')');
+    $stmt->execute();
+    $columns = $stmt->fetchAll();
+    foreach ($columns as $col) {
+        if ((string) ($col['name'] ?? '') === $column) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function ensureDefaultAdmin(PDO $pdo): void
