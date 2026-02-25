@@ -156,6 +156,15 @@ The app auto-creates database `websys_db` and tables on first run.
 
 Tip: Use `--private` instead of `--public` if you want a private repo.
 
+## Updates (2026-02-25)
+- Added organization visibility categories: collegewide, institute-wide, and program-based.
+- Added student profile academic fields (`institute`, `program`) and registration program capture.
+- Enforced backend join restrictions so students can only join eligible organizations.
+- Added dashboard “View All” modal popups for organizations and latest announcements.
+- Added announcement controls: latest-first ordering, 30-day expiration purge, and admin pin/unpin for one Important announcement.
+- Improved light-mode readability and modal styling.
+- Expanded deterministic dummy seed data for broader testing coverage.
+
 ## Notes
 - Uploaded receipts are stored in `public/uploads/`.
 - Schema reference is in `schema.sql`.
