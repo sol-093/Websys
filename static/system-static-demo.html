@@ -115,62 +115,136 @@
     </section>
 
     <section id="page-dashboard" class="page">
-      <div class="space-y-4">
-        <div class="glass p-5 text-center md:text-left">
-          <h1 class="text-xl font-semibold text-slate-900">Welcome, <span id="dashboardWelcomeName">System Admin</span></h1>
-          <p class="text-gray-600">Budget transparency is visible to all students. You can review all income and expenses below.</p>
-        </div>
+      <div class="dashboard-shell space-y-3">
+        <section class="grid xl:grid-cols-12 gap-3">
+          <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-5">
+            <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div class="text-xs text-slate-600">Overview</div>
+                <h1 class="text-2xl md:text-4xl font-semibold text-slate-900 leading-tight">Operations are on track, budgets are transparent, and organizations are in sync.</h1>
+                <p class="mt-2 text-sm text-slate-600">Welcome, <span id="dashboardWelcomeName">System Admin</span>. Review finances, requests, and organization activity in one workspace.</p>
+              </div>
+              <div class="text-xs text-slate-600">Saturday, March 7, 2026 | 10:27 AM</div>
+            </div>
+            <div class="dashboard-metric-grid mt-3">
+              <div class="dashboard-metric-card">
+                <div class="text-xl font-semibold text-emerald-600">₱1,297,735.27</div>
+                <div class="text-xs text-slate-600">Total income recorded</div>
+              </div>
+              <div class="dashboard-metric-card">
+                <div class="text-xl font-semibold text-emerald-600">₱559,567.97</div>
+                <div class="text-xs text-slate-600">Current net balance</div>
+              </div>
+              <div class="dashboard-metric-card">
+                <div class="text-xl font-semibold text-slate-900">14</div>
+                <div class="text-xs text-slate-600">Organizations in view</div>
+              </div>
+            </div>
+          </div>
 
-        <div class="grid md:grid-cols-4 gap-4">
-          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Total Income</div><div class="text-2xl font-semibold text-green-300">₱100,000.00</div></div>
-          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Total Expense</div><div class="text-2xl font-semibold text-red-300">₱50,000.00</div></div>
-          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Net Balance</div><div class="text-2xl font-semibold text-emerald-200">₱50,000.00</div></div>
-          <div class="glass p-4 text-center md:text-left"><div class="text-xs text-gray-500 uppercase tracking-wide">Organizations</div><div class="text-2xl font-semibold text-slate-900">4</div></div>
-        </div>
+          <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-5">
+            <h2 class="text-base font-semibold text-slate-900">Finance status</h2>
+            <p class="text-xs text-slate-600 mt-1">Spend pressure and visibility based on latest records.</p>
+            <div class="mt-3 space-y-2 text-sm">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Expense share of income</span><span class="font-semibold">56%</span></div>
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Balance retained</span><span class="font-semibold">44%</span></div>
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Recent reports</span><span class="font-semibold">8</span></div>
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Latest announcements</span><span class="font-semibold">3</span></div>
+              <div class="flex items-center justify-between"><span>Pending assignments</span><span class="font-semibold">1</span></div>
+            </div>
+          </div>
+        </section>
 
         <div class="glass p-4">
           <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Quick Actions</h2>
           <div class="flex flex-wrap gap-2 justify-center md:justify-start" id="dashboardQuickActions"></div>
         </div>
 
-        <div id="dashboardPendingAssignments" class="glass p-5 hidden">
+        <div id="dashboardPendingAssignments" class="glass p-4 hidden">
           <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organization Owner Assignments</h2>
-          <div class="space-y-3">
-            <div class="border border-emerald-200/30 rounded-lg p-3 flex flex-wrap items-center justify-center md:justify-between gap-3 text-center md:text-left">
-              <div class="w-full md:w-auto">
-                <div class="font-medium">Computer Society</div>
-                <div class="text-xs text-gray-500">Assigned on 2026-02-10 08:35:00</div>
-              </div>
-              <div class="flex gap-2">
-                <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs">Accept</button>
-                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">Decline</button>
-              </div>
+          <div class="border border-emerald-200/30 rounded-lg p-3 flex flex-wrap items-center justify-center md:justify-between gap-3 text-center md:text-left">
+            <div class="w-full md:w-auto">
+              <div class="font-medium">Computer Society</div>
+              <div class="text-xs text-gray-500">Assigned on 2026-02-10 08:35:00</div>
+            </div>
+            <div class="flex gap-2">
+              <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs">Accept</button>
+              <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">Decline</button>
             </div>
           </div>
         </div>
 
-        <div class="grid md:grid-cols-12 gap-4">
-          <div class="glass md:col-span-7 p-4">
-            <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organizations</h2>
-            <div class="space-y-3">
+        <section class="grid xl:grid-cols-12 gap-3">
+          <div class="glass dashboard-panel xl:col-span-7 p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h2 class="text-base font-semibold text-slate-900">Monthly trend</h2>
+                <p class="text-xs text-slate-600">Income and expense totals by month.</p>
+              </div>
+              <div class="text-xs text-slate-600">8 recent reports tracked</div>
+            </div>
+            <canvas id="trendChart" height="130"></canvas>
+          </div>
+
+          <div class="glass xl:col-span-5 p-4">
+            <h2 class="text-base font-semibold mb-2">Live activity</h2>
+            <div class="space-y-2 text-sm">
+              <div class="dashboard-feed-item p-2"><div><div class="font-medium">Budget Orientation</div><div class="text-xs text-gray-500">announcement · 2026-03-07</div></div></div>
+              <div class="dashboard-feed-item p-2"><div><div class="font-medium">Workshop registration income</div><div class="text-xs text-gray-500">transaction · 2026-03-06</div></div></div>
+              <div class="dashboard-feed-item p-2"><div><div class="font-medium">Transport and logistics expense</div><div class="text-xs text-gray-500">transaction · 2026-03-05</div></div></div>
+            </div>
+          </div>
+
+          <div class="glass xl:col-span-5 p-4">
+            <h2 class="text-base font-semibold mb-2">Organizations</h2>
+            <div class="space-y-2">
               <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
                 <div><div class="font-medium">Computer Society</div><p class="text-sm text-gray-600">Tech events, workshops, and hackathons.</p><div class="text-xs text-gray-500 mt-1">Owner: John Cruz</div></div>
                 <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-emerald-500/25 border-emerald-300/50 text-white hover:bg-emerald-500/35">Request Join</button>
               </div>
               <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
-                <div><div class="font-medium">Debate Guild</div><p class="text-sm text-gray-600">Public speaking and debate competitions.</p><div class="text-xs text-gray-500 mt-1">Owner: Maria Santos</div></div>
+                <div><div class="font-medium">Debate Union</div><p class="text-sm text-gray-600">Debate and speaking competitions.</p><div class="text-xs text-gray-500 mt-1">Owner: Maria Santos</div></div>
                 <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-amber-500/25 border-amber-300/50 text-white/90" disabled>Requested</button>
-              </div>
-              <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
-                <div><div class="font-medium">Math Circle</div><p class="text-sm text-gray-600">Math contests and tutorials.</p><div class="text-xs text-gray-500 mt-1">Owner: Unassigned</div></div>
-                <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-white/10 border-emerald-200/30 text-white/85" disabled>Joined</button>
               </div>
             </div>
           </div>
 
-          <div class="glass md:col-span-5 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Financial Summary by Organization</h2>
-            <table class="w-full text-sm min-w-[440px]">
+          <div class="glass xl:col-span-7 p-4 overflow-hidden">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <h2 class="text-base font-semibold">Recent reports</h2>
+                <p class="text-xs text-slate-600">Latest income and expense entries with receipt visibility.</p>
+              </div>
+              <div class="text-xs text-slate-600">Showing 8 latest items</div>
+            </div>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b text-left">
+                  <th class="py-2">Date</th>
+                  <th>Organization</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b"><td class="py-2">2026-03-07</td><td>Science Guild</td><td class="text-green-700">income</td><td>₱13,486.66</td><td>-</td></tr>
+                <tr class="border-b"><td class="py-2">2026-03-07</td><td>Robotics Club</td><td class="text-green-700">income</td><td>₱13,359.57</td><td>-</td></tr>
+                <tr class="border-b"><td class="py-2">2026-03-07</td><td>Athletics Council</td><td class="text-red-700">expense</td><td>₱6,531.37</td><td>-</td></tr>
+                <tr class="border-b"><td class="py-2">2026-03-06</td><td>Gaming & Esports</td><td class="text-green-700">income</td><td>₱10,751.90</td><td>-</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="glass xl:col-span-12 p-4 overflow-hidden">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-2">
+              <div>
+                <h2 class="text-base font-semibold">Financial summary by organization</h2>
+                <p class="text-xs text-slate-600">Income, expense, and balance grouped by organization.</p>
+              </div>
+              <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-emerald-700">View charts</button>
+            </div>
+            <table class="w-full text-sm">
               <thead>
                 <tr class="border-b text-left">
                   <th class="py-2">Organization</th>
@@ -180,59 +254,13 @@
                 </tr>
               </thead>
               <tbody>
-                <tr class="border-b"><td class="py-2">Computer Society</td><td class="text-green-700">₱40,000.00</td><td class="text-red-700">₱15,000.00</td><td class="text-green-800">₱25,000.00</td></tr>
-                <tr class="border-b"><td class="py-2">Debate Guild</td><td class="text-green-700">₱30,000.00</td><td class="text-red-700">₱20,000.00</td><td class="text-green-800">₱10,000.00</td></tr>
-                <tr class="border-b"><td class="py-2">Math Circle</td><td class="text-green-700">₱20,000.00</td><td class="text-red-700">₱10,000.00</td><td class="text-green-800">₱10,000.00</td></tr>
-                <tr class="border-b"><td class="py-2">Music Club</td><td class="text-green-700">₱10,000.00</td><td class="text-red-700">₱5,000.00</td><td class="text-green-800">₱5,000.00</td></tr>
+                <tr class="border-b"><td class="py-2">Music Ensemble</td><td class="text-green-700">₱92,782.64</td><td class="text-red-700">₱52,504.51</td><td class="text-green-800">₱40,278.13</td></tr>
+                <tr class="border-b"><td class="py-2">Athletics Council</td><td class="text-green-700">₱93,103.44</td><td class="text-red-700">₱50,581.23</td><td class="text-green-800">₱42,522.21</td></tr>
+                <tr class="border-b"><td class="py-2">Computing Society</td><td class="text-green-700">₱98,599.49</td><td class="text-red-700">₱47,176.10</td><td class="text-green-800">₱51,423.39</td></tr>
               </tbody>
             </table>
           </div>
-
-          <div class="glass md:col-span-5 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Latest Announcements</h2>
-            <div class="space-y-2">
-              <div class="border rounded p-2"><div class="font-medium">Budget Orientation</div><div class="text-xs text-gray-500">Computer Society · 2026-02-18 09:00:00</div><div class="text-sm mt-1">Meeting this Friday, 3PM at AVR.</div></div>
-              <div class="border rounded p-2"><div class="font-medium">Project Grant Release</div><div class="text-xs text-gray-500">Debate Guild · 2026-02-16 10:30:00</div><div class="text-sm mt-1">Funds released for Q2 initiatives.</div></div>
-              <div class="border rounded p-2"><div class="font-medium">Training Session</div><div class="text-xs text-gray-500">Math Circle · 2026-02-12 14:45:00</div><div class="text-sm mt-1">Problem-solving camp every Wednesday.</div></div>
-            </div>
-          </div>
-
-          <div class="glass md:col-span-7 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Recent Income & Expense Reports</h2>
-            <table class="w-full text-sm min-w-[680px]">
-              <thead>
-                <tr class="border-b text-left">
-                  <th class="py-2">Date</th>
-                  <th>Org</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Receipt</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b"><td class="py-2">2026-02-20</td><td>Computer Society</td><td class="text-green-700">income</td><td>₱12,500.00</td><td><a href="#" class="text-emerald-700 underline">Open</a></td></tr>
-                <tr class="border-b"><td class="py-2">2026-02-19</td><td>Debate Guild</td><td class="text-red-700">expense</td><td>₱3,000.00</td><td><span class="text-gray-400">-</span></td></tr>
-                <tr class="border-b"><td class="py-2">2026-02-17</td><td>Math Circle</td><td class="text-green-700">income</td><td>₱5,500.00</td><td><a href="#" class="text-emerald-700 underline">Open</a></td></tr>
-                <tr class="border-b"><td class="py-2">2026-02-16</td><td>Music Club</td><td class="text-red-700">expense</td><td>₱1,500.00</td><td><a href="#" class="text-emerald-700 underline">Open</a></td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="glass md:col-span-7 p-4">
-            <h2 class="text-lg font-semibold mb-3">Monthly Trend (Income vs Expense)</h2>
-            <canvas id="trendChart" height="130"></canvas>
-          </div>
-
-          <div class="glass md:col-span-5 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Activity Feed</h2>
-            <div class="space-y-2 text-sm">
-              <div class="border rounded p-2"><div class="font-medium">Budget Orientation</div><div class="text-xs text-gray-500">announcement · 2026-02-18 09:00:00</div></div>
-              <div class="border rounded p-2"><div class="font-medium">Mic and speaker rental</div><div class="text-xs text-gray-500">transaction · 2026-02-17 15:20:00</div></div>
-              <div class="border rounded p-2"><div class="font-medium">Registration fees</div><div class="text-xs text-gray-500">transaction · 2026-02-15 11:10:00</div></div>
-              <div class="border rounded p-2"><div class="font-medium">Training Session</div><div class="text-xs text-gray-500">announcement · 2026-02-12 14:45:00</div></div>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </section>
 
@@ -313,10 +341,10 @@
     </section>
   </main>
 
-  <div id="privacyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+  <div id="privacyModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
     <div class="glass w-full max-w-xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold">Data Privacy Consent</h2>
+        <h2 id="privacyModalTitle" class="text-lg font-semibold">Data Privacy Consent</h2>
         <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
       </div>
       <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
@@ -328,6 +356,50 @@
       <div class="mt-4 flex justify-end gap-2">
         <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700">Close</button>
         <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="financialSummaryModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="financialSummaryModalTitle">
+    <div class="glass w-full max-w-6xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+        <h3 id="financialSummaryModalTitle" class="text-lg font-semibold">Financial Health Snapshot</h3>
+        <button type="button" id="closeFinancialSummaryModal" class="px-2 py-1 rounded border text-sm">Close</button>
+      </div>
+      <div class="p-3 space-y-2 max-h-[calc(100dvh-8.5rem)] overflow-y-auto themed-scroll pr-1">
+        <div class="grid md:grid-cols-3 gap-1">
+          <div class="dashboard-metric-card"><div class="text-xl font-semibold text-emerald-600">₱1,297,735.27</div><div class="text-xs text-slate-600">Total income (all organizations)</div></div>
+          <div class="dashboard-metric-card"><div class="text-xl font-semibold text-red-600">₱738,167.30</div><div class="text-xs text-slate-600">Total expense (all organizations)</div></div>
+          <div class="dashboard-metric-card"><div class="text-xl font-semibold text-emerald-600">₱559,567.97</div><div class="text-xs text-slate-600">Net balance (all organizations)</div></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-2">
+          <div class="glass p-2 w-full h-full flex flex-col">
+            <h4 class="font-semibold">Top Organizations by Net Balance</h4>
+            <p class="text-xs text-slate-600">Higher bars indicate stronger surplus after expenses.</p>
+            <canvas id="financialSummaryRankingChart" height="165"></canvas>
+            <div class="mt-2 grid sm:grid-cols-3 gap-1 text-xs">
+              <div class="dashboard-feed-item p-2"><div><div class="font-semibold">Top performer</div><div class="text-slate-600">Music Ensemble</div><div class="text-emerald-600 font-semibold">₱58,249.41</div></div></div>
+              <div class="dashboard-feed-item p-2"><div><div class="font-semibold">Highest spend pressure</div><div class="text-slate-600">Debate Union</div><div>73% expense ratio</div></div></div>
+              <div class="dashboard-feed-item p-2"><div><div class="font-semibold">Average net</div><div class="text-slate-600">Across 14 organizations</div><div class="text-emerald-600 font-semibold">₱39,969.14</div></div></div>
+            </div>
+          </div>
+          <div class="glass p-2 w-full h-full space-y-2">
+            <div>
+              <h4 class="font-semibold">Organization Priority List</h4>
+              <p class="text-xs text-slate-600">Status reflects spending pressure and current balance.</p>
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <div class="dashboard-feed-item p-2 flex items-center justify-between"><div><div class="font-semibold">Music Ensemble</div><div class="text-xs text-slate-600">Net: ₱58,249.41</div></div><span class="px-2 py-0.5 rounded-full border text-[11px] text-emerald-700 border-emerald-300/50">Healthy</span></div>
+              <div class="dashboard-feed-item p-2 flex items-center justify-between"><div><div class="font-semibold">Computing Society</div><div class="text-xs text-slate-600">Net: ₱51,423.39</div></div><span class="px-2 py-0.5 rounded-full border text-[11px] text-emerald-700 border-emerald-300/50">Healthy</span></div>
+              <div class="dashboard-feed-item p-2 flex items-center justify-between"><div><div class="font-semibold">Language Society</div><div class="text-xs text-slate-600">Net: ₱46,795.85</div></div><span class="px-2 py-0.5 rounded-full border text-[11px] text-emerald-700 border-emerald-300/50">Healthy</span></div>
+              <div class="dashboard-feed-item p-2 flex items-center justify-between"><div><div class="font-semibold">Volunteer Network</div><div class="text-xs text-slate-600">Net: ₱42,618.94</div></div><span class="px-2 py-0.5 rounded-full border text-[11px] text-emerald-700 border-emerald-300/50">Healthy</span></div>
+            </div>
+            <div>
+              <div class="font-semibold">Needs Attention</div>
+              <p class="text-xs text-slate-600">No organizations are currently flagged for risk or heavy spend pressure.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

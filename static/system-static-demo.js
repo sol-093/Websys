@@ -2,6 +2,7 @@ const pages = ['home', 'login', 'register', 'dashboard', 'admin_orgs', 'admin_st
 let role = 'guest';
 let currentPage = 'home';
 let trendChart = null;
+let financialRankingChart = null;
 
 function showPage(page) {
   currentPage = page;
@@ -113,6 +114,62 @@ function updateTrendChartTheme() {
   trendChart.options.scales.x.grid.color = gridColor;
   trendChart.options.scales.y.grid.color = gridColor;
   trendChart.update();
+}
+
+function initFinancialRankingChart() {
+  if (financialRankingChart) return;
+  const canvas = document.getElementById('financialSummaryRankingChart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const labels = ['Music Ensemble', 'Computing Society', 'Language Society', 'Environmental Advocates', 'Volunteer Network', 'Athletics Council', 'Entrepreneurship Circle', 'Arts Collective'];
+  const balances = [58249.41, 51423.39, 46795.85, 43078.36, 42618.94, 42522.21, 42190.63, 40278.13];
+
+  const isDark = document.body.classList.contains('theme-dark');
+  const axisColor = isDark ? '#a7f3d0' : '#065f46';
+  const legendColor = isDark ? '#d1fae5' : '#14532d';
+  const gridColor = isDark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
+
+  financialRankingChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Net Balance',
+          data: balances,
+          backgroundColor: 'rgba(52, 211, 153, 0.75)',
+          borderColor: 'rgba(16, 185, 129, 1)',
+          borderWidth: 1,
+          borderRadius: 6
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: { labels: { color: legendColor } }
+      },
+      scales: {
+        x: { ticks: { color: axisColor }, grid: { color: gridColor } },
+        y: { ticks: { color: axisColor }, grid: { color: 'rgba(0,0,0,0)' } }
+      }
+    }
+  });
+}
+
+function updateFinancialChartTheme() {
+  if (!financialRankingChart) return;
+  const isDark = document.body.classList.contains('theme-dark');
+  const axisColor = isDark ? '#a7f3d0' : '#065f46';
+  const legendColor = isDark ? '#d1fae5' : '#14532d';
+  const gridColor = isDark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
+
+  financialRankingChart.options.plugins.legend.labels.color = legendColor;
+  financialRankingChart.options.scales.x.ticks.color = axisColor;
+  financialRankingChart.options.scales.y.ticks.color = axisColor;
+  financialRankingChart.options.scales.x.grid.color = gridColor;
+  financialRankingChart.update();
 }
 
 function navLinksByRole() {
@@ -240,6 +297,7 @@ themeToggle.addEventListener('change', function () {
   document.body.classList.toggle('theme-dark', themeToggle.checked);
   localStorage.setItem('websys-theme', themeToggle.checked ? 'dark' : 'light');
   updateTrendChartTheme();
+  updateFinancialChartTheme();
 });
 
 const modal = document.getElementById('privacyModal');
@@ -251,12 +309,10 @@ const consent = document.getElementById('privacyConsent');
 
 function openModal() {
   modal.classList.remove('hidden');
-  modal.classList.add('flex');
 }
 
 function closeModal() {
   modal.classList.add('hidden');
-  modal.classList.remove('flex');
 }
 
 openBtn.addEventListener('click', openModal);
@@ -270,6 +326,32 @@ acceptBtn.addEventListener('click', function () {
 modal.addEventListener('click', function (event) {
   if (event.target === modal) closeModal();
 });
+
+const financialSummaryModal = document.getElementById('financialSummaryModal');
+const openFinancialSummaryModal = document.getElementById('openFinancialSummaryModal');
+const closeFinancialSummaryModal = document.getElementById('closeFinancialSummaryModal');
+
+if (openFinancialSummaryModal && financialSummaryModal) {
+  openFinancialSummaryModal.addEventListener('click', function () {
+    financialSummaryModal.classList.remove('hidden');
+    initFinancialRankingChart();
+    updateFinancialChartTheme();
+  });
+}
+
+if (closeFinancialSummaryModal && financialSummaryModal) {
+  closeFinancialSummaryModal.addEventListener('click', function () {
+    financialSummaryModal.classList.add('hidden');
+  });
+}
+
+if (financialSummaryModal) {
+  financialSummaryModal.addEventListener('click', function (event) {
+    if (event.target === financialSummaryModal) {
+      financialSummaryModal.classList.add('hidden');
+    }
+  });
+}
 
 document.getElementById('registerForm').addEventListener('submit', function (event) {
   event.preventDefault();

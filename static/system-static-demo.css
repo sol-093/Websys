@@ -161,6 +161,127 @@ body.theme-dark .hamburger-line {
   padding-top: 0.75rem;
 }
 
+.updates-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(236, 253, 245, 0.74), rgba(209, 250, 229, 0.68));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+body.theme-dark .updates-modal-overlay {
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.updates-modal-overlay.hidden {
+  display: none;
+}
+
+.updates-modal-overlay > .glass {
+  width: min(100%, 72rem);
+  max-height: calc(100dvh - 1.25rem);
+  overflow: hidden;
+}
+
+.themed-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.7) rgba(16, 185, 129, 0.16);
+}
+
+.themed-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.themed-scroll::-webkit-scrollbar-track {
+  background: rgba(16, 185, 129, 0.16);
+  border-radius: 999px;
+}
+
+.themed-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.85));
+  border-radius: 999px;
+}
+
+.dashboard-shell {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.dashboard-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dashboard-metric-card {
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+body.theme-dark .dashboard-metric-card {
+  border-color: rgba(110, 231, 183, 0.16);
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-feed-item {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 0.9rem;
+}
+
+body.theme-dark .dashboard-feed-item {
+  border-color: rgba(110, 231, 183, 0.14);
+  background: rgba(15, 23, 42, 0.12);
+}
+
+@media (max-width: 1023px) {
+  .updates-modal-overlay {
+    align-items: flex-start;
+    padding: 0.6rem;
+  }
+
+  .updates-modal-overlay > .glass {
+    width: 100%;
+    max-height: calc(100dvh - 0.75rem);
+    border-radius: 0.85rem;
+  }
+}
+
+@media (max-width: 767px) {
+  main {
+    padding-left: 0.6rem !important;
+    padding-right: 0.6rem !important;
+  }
+
+  .dashboard-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .glass table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 .page {
   display: none;
 }
@@ -195,11 +316,74 @@ body.theme-dark select {
 
 body.theme-dark .text-slate-700,
 body.theme-dark .text-slate-600,
+body.theme-dark .text-slate-800,
+body.theme-dark .text-slate-900,
 body.theme-dark .text-gray-600,
 body.theme-dark .text-gray-500,
 body.theme-dark .text-slate-500,
 body.theme-dark .text-gray-700 {
   color: #ecfdf5 !important;
+}
+
+body.theme-dark .hover\:text-slate-900:hover {
+  color: #f8fffb !important;
+}
+
+body:not(.theme-dark) .text-emerald-600,
+body:not(.theme-dark) .text-emerald-700,
+body:not(.theme-dark) .text-emerald-800,
+body:not(.theme-dark) .text-green-700,
+body:not(.theme-dark) .text-green-800 {
+  color: #047857 !important;
+}
+
+body:not(.theme-dark) .text-red-600,
+body:not(.theme-dark) .text-red-700,
+body:not(.theme-dark) .text-red-800 {
+  color: #b91c1c !important;
+}
+
+body.theme-dark .text-emerald-600,
+body.theme-dark .text-emerald-700,
+body.theme-dark .text-emerald-800,
+body.theme-dark .text-emerald-900,
+body.theme-dark .text-green-700,
+body.theme-dark .text-green-800 {
+  color: #bbf7d0 !important;
+}
+
+body.theme-dark .text-red-600,
+body.theme-dark .text-red-700,
+body.theme-dark .text-red-800 {
+  color: #fecaca !important;
+}
+
+body.theme-dark .text-emerald-900 {
+  color: #f0fdf4 !important;
+}
+
+body:not(.theme-dark) .dashboard-join-btn {
+  color: #065f46 !important;
+}
+
+body:not(.theme-dark) .dashboard-join-btn[disabled] {
+  color: #92400e !important;
+}
+
+body.theme-dark .dashboard-join-btn {
+  color: #ecfdf5 !important;
+}
+
+body.theme-dark .bg-white\/60 {
+  background-color: rgba(15, 23, 42, 0.36) !important;
+}
+
+body.theme-dark .border-emerald-300\/60 {
+  border-color: rgba(110, 231, 183, 0.35) !important;
+}
+
+body.theme-dark .hover\:bg-gray-50:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 body.theme-dark .border-slate-300 {

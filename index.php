@@ -214,22 +214,23 @@ function renderPagination(array $pagination): void
     $queryKey = (string) ($pagination['query_key'] ?? 'p');
     $startPage = max(1, $currentPage - 2);
     $endPage = min($totalPages, $currentPage + 2);
+    $isDashboardPage = (string) ($_GET['page'] ?? '') === 'dashboard';
+    $preserveScroll = $isDashboardPage && str_starts_with($queryKey, 'pg_dash_');
+    $preserveScrollAttr = $preserveScroll ? ' data-preserve-scroll="1"' : '';
 
-    $anchorId = 'pagination-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $queryKey);
-
-    $buildUrl = static function (int $targetPage) use ($queryKey, $anchorId): string {
+    $buildUrl = static function (int $targetPage) use ($queryKey): string {
         $params = $_GET;
         $params[$queryKey] = $targetPage;
-        return '?' . http_build_query($params) . '#' . $anchorId;
+        return '?' . http_build_query($params);
     };
 
     ?>
-    <div id="<?= e($anchorId) ?>" class="mt-3 flex items-center gap-2 text-xs scroll-mt-24">
-        <a class="px-2 py-1 rounded border <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>">Prev</a>
+    <div class="mt-3 flex items-center gap-2 text-xs">
+        <a class="px-2 py-1 rounded border <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Prev</span></span></a>
         <?php for ($p = $startPage; $p <= $endPage; $p++): ?>
-            <a class="px-2 py-1 rounded border <?= $p === $currentPage ? 'bg-indigo-700 text-white border-indigo-700' : '' ?>" href="<?= e($buildUrl($p)) ?>"><?= $p ?></a>
+            <a class="px-2 py-1 rounded border <?= $p === $currentPage ? 'bg-indigo-700 text-white border-indigo-700' : '' ?>" href="<?= e($buildUrl($p)) ?>"<?= $preserveScrollAttr ?>><?= $p ?></a>
         <?php endfor; ?>
-        <a class="px-2 py-1 rounded border <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>">Next</a>
+        <a class="px-2 py-1 rounded border <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label"><span>Next</span><?= uiIcon('next', 'ui-icon ui-icon-sm') ?></span></a>
         <span class="text-gray-500 ml-1">Page <?= $currentPage ?> of <?= $totalPages ?></span>
     </div>
     <?php
@@ -1197,6 +1198,7 @@ if ($page === 'home') {
     <section class="grid lg:grid-cols-12 gap-4 lg:gap-5">
         <div class="glass lg:col-span-8 p-6 md:p-8">
             <div class="hero-kicker inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-300/20 text-xs font-semibold mb-4 border border-emerald-200/30">
+                <?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?>
                 Budget Transparency • Student Organizations
             </div>
             <h1 class="modern-title text-3xl md:text-6xl font-bold tracking-tight leading-tight">
@@ -1207,42 +1209,42 @@ if ($page === 'home') {
             </p>
             <div class="mt-6 flex flex-wrap gap-3">
                 <?php if ($user): ?>
-                    <a href="?page=dashboard" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]">Open Dashboard</a>
+                    <a href="?page=dashboard" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]"><span class="icon-label"><?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?><span>Open Dashboard</span></span></a>
                 <?php else: ?>
-                    <a href="?page=register" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]">Get Started</a>
-                    <a href="?page=login" class="border border-emerald-200/50 text-emerald-800 px-5 py-2.5 rounded-lg hover:bg-white/30">Login</a>
+                    <a href="?page=register" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]"><span class="icon-label"><?= uiIcon('register', 'ui-icon ui-icon-sm') ?><span>Get Started</span></span></a>
+                    <a href="?page=login" class="border border-emerald-200/50 text-emerald-800 px-5 py-2.5 rounded-lg hover:bg-white/30"><span class="icon-label"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Login</span></span></a>
                 <?php endif; ?>
             </div>
         </div>
 
         <div class="glass lg:col-span-4 p-6 snapshot-panel">
-            <h2 class="text-lg font-semibold mb-4 snapshot-title">Platform Snapshot</h2>
+            <h2 class="text-lg font-semibold mb-4 snapshot-title icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Platform Snapshot</span></h2>
             <div class="space-y-3 text-sm snapshot-list">
                 <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
-                    <span class="snapshot-label">Organizations</span>
+                    <span class="snapshot-label icon-label"><?= uiIcon('orgs', 'ui-icon ui-icon-sm') ?><span>Organizations</span></span>
                     <span class="font-semibold highlight-glow snapshot-value"><?= $orgCount ?></span>
                 </div>
                 <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
-                    <span class="snapshot-label">Students & Owners</span>
+                    <span class="snapshot-label icon-label"><?= uiIcon('students', 'ui-icon ui-icon-sm') ?><span>Students & Owners</span></span>
                     <span class="font-semibold highlight-glow snapshot-value"><?= $memberCount ?></span>
                 </div>
                 <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
-                    <span class="snapshot-label">Announcements</span>
+                    <span class="snapshot-label icon-label"><?= uiIcon('announce', 'ui-icon ui-icon-sm') ?><span>Announcements</span></span>
                     <span class="font-semibold highlight-glow snapshot-value"><?= $announcementCount ?></span>
                 </div>
             </div>
         </div>
 
         <div class="glass lg:col-span-4 p-5">
-            <h3 class="font-semibold mb-2">For Admin</h3>
+            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>For Admin</span></h3>
             <p class="text-sm text-slate-600">Create organizations, assign one owner, and filter all student records.</p>
         </div>
         <div class="glass lg:col-span-4 p-5">
-            <h3 class="font-semibold mb-2">For Owners</h3>
+            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>For Owners</span></h3>
             <p class="text-sm text-slate-600">Update organization profile, post announcements, and maintain income/expense logs.</p>
         </div>
         <div class="glass lg:col-span-4 p-5">
-            <h3 class="font-semibold mb-2">For Students</h3>
+            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('students', 'ui-icon') ?><span>For Students</span></h3>
             <p class="text-sm text-slate-600">Join organizations and monitor complete budget reports with transparency.</p>
         </div>
     </section>
@@ -1256,23 +1258,22 @@ if ($page === 'login') {
     $googleLoginReady = googleOauthEnabled($config);
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
-        <h1 class="text-2xl font-semibold mb-1">Welcome back</h1>
+        <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('login', 'ui-icon') ?><span>Welcome back</span></h1>
         <p class="text-sm text-slate-600 mb-4">Sign in to continue to your organization dashboard.</p>
         <form method="post" class="space-y-3">
             <input type="hidden" name="action" value="login">
             <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
             <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full">Login</button>
+            <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full"><span class="icon-label justify-center"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Login</span></span></button>
         </form>
         <?php if ($googleLoginReady): ?>
             <div class="my-3 text-center text-gray-500 text-sm">or</div>
             <a href="?page=google_login" class="block w-full border rounded px-4 py-2 text-center hover:bg-gray-50 font-medium">
-                Continue with Google
+                <span class="icon-label justify-center"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Continue with Google</span></span>
             </a>
         <?php else: ?>
             <p class="text-xs text-amber-700 mt-3">Google login is disabled. Add Google keys in src/config.php.</p>
         <?php endif; ?>
-        <p class="text-sm text-gray-600 mt-4">Default admin: admin@campus.local / admin123</p>
     </div>
     <?php
     renderFooter();
@@ -1284,7 +1285,7 @@ if ($page === 'register') {
     $programInstituteMap = getProgramInstituteMap();
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
-        <h1 class="text-2xl font-semibold mb-4">Student Registration</h1>
+        <h1 class="text-2xl font-semibold mb-4 icon-label"><?= uiIcon('register', 'ui-icon') ?><span>Student Registration</span></h1>
         <form method="post" class="space-y-3">
             <input type="hidden" name="action" value="register">
             <input name="name" placeholder="Full Name" required class="w-full border rounded px-3 py-2">
@@ -1301,18 +1302,18 @@ if ($page === 'register') {
                     <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="mt-1">
                     <label for="privacyConsent" class="text-sm text-slate-700">
                         I agree to the
-                        <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">Data Privacy Consent</button>.
+                        <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline"><span class="icon-label"><?= uiIcon('audit', 'ui-icon ui-icon-sm') ?><span>Data Privacy Consent</span></span></button>.
                     </label>
                 </div>
             </div>
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full">Create Account</button>
+            <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full"><span class="icon-label justify-center"><?= uiIcon('register', 'ui-icon ui-icon-sm') ?><span>Create Account</span></span></button>
         </form>
     </div>
 
-    <div id="privacyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
+    <div id="privacyModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
         <div class="glass w-full max-w-xl p-5">
             <div class="flex items-center justify-between mb-3">
-                <h2 class="text-lg font-semibold">Data Privacy Consent</h2>
+                <h2 id="privacyModalTitle" class="text-lg font-semibold icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>Data Privacy Consent</span></h2>
                 <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
             </div>
             <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
@@ -1322,8 +1323,8 @@ if ($page === 'register') {
                 <p>You may request correction of inaccurate profile data through the system administrator. By proceeding, you confirm that the information you submit is accurate and that you consent to this processing.</p>
             </div>
             <div class="mt-4 flex justify-end gap-2">
-                <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700">Close</button>
-                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree</button>
+                <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Close</span></span></button>
+                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>I Agree</span></span></button>
             </div>
         </div>
     </div>
@@ -1341,12 +1342,10 @@ if ($page === 'register') {
 
             function openModal() {
                 modal.classList.remove('hidden');
-                modal.classList.add('flex');
             }
 
             function closeModal() {
                 modal.classList.add('hidden');
-                modal.classList.remove('flex');
             }
 
             openBtn.addEventListener('click', openModal);
@@ -1398,7 +1397,7 @@ if ($page === 'admin_orgs') {
     ?>
     <div class="grid md:grid-cols-3 gap-4">
         <div class="bg-white shadow rounded p-4">
-            <h2 class="text-lg font-semibold mb-3">Create Organization</h2>
+            <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Create Organization</span></h2>
             <form method="post" class="space-y-2">
                 <input type="hidden" name="action" value="create_org">
                 <input name="name" placeholder="Organization name" required class="w-full border rounded px-3 py-2">
@@ -1420,12 +1419,12 @@ if ($page === 'admin_orgs') {
                         <option value="<?= e($programOption) ?>"><?= e($programOption) ?></option>
                     <?php endforeach; ?>
                 </select>
-                <button class="bg-indigo-700 text-white px-4 py-2 rounded">Create</button>
+                <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('create', 'ui-icon ui-icon-sm') ?><span>Create</span></span></button>
             </form>
         </div>
 
         <div class="md:col-span-2 bg-white shadow rounded p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">All Organizations</h2>
+            <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>All Organizations</span></h2>
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -1456,7 +1455,7 @@ if ($page === 'admin_orgs') {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button class="bg-slate-700 text-white text-xs px-2 py-1 rounded">Save</button>
+                                <button class="bg-slate-700 text-white text-xs px-2 py-1 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save</span></span></button>
                             </form>
                             <span class="text-xs text-gray-500"><?= e($org['owner_name'] ?? 'Unassigned') ?></span>
                             <?php if (!empty($org['assignment_status'])): ?>
@@ -1486,12 +1485,12 @@ if ($page === 'admin_orgs') {
                                         <option value="<?= e($programOption) ?>" <?= (string) ($org['target_program'] ?? '') === $programOption ? 'selected' : '' ?>><?= e($programOption) ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button class="bg-blue-600 text-white text-xs px-2 py-1 rounded">Update</button>
+                                <button class="bg-blue-600 text-white text-xs px-2 py-1 rounded"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Update</span></span></button>
                             </form>
                             <form method="post" onsubmit="return confirm('Delete this organization?')">
                                 <input type="hidden" name="action" value="delete_org">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <button class="bg-red-600 text-white text-xs px-2 py-1 rounded">Delete</button>
+                                <button class="bg-red-600 text-white text-xs px-2 py-1 rounded"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Delete</span></span></button>
                             </form>
                         </td>
                     </tr>
@@ -1523,11 +1522,11 @@ if ($page === 'admin_students') {
     renderHeader('Filter Students');
     ?>
     <div class="bg-white shadow rounded p-4">
-        <h1 class="text-xl font-semibold mb-3">Filter All Student Information</h1>
+        <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Filter All Student Information</span></h1>
         <form method="get" class="flex gap-2 mb-4">
             <input type="hidden" name="page" value="admin_students">
             <input name="q" value="<?= e($q) ?>" placeholder="Search by name or email" class="border rounded px-3 py-2 w-full">
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded">Filter</button>
+            <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
         </form>
 
         <div class="overflow-auto">
@@ -1573,7 +1572,7 @@ if ($page === 'admin_requests') {
     renderHeader('Transaction Requests');
     ?>
     <div class="bg-white shadow rounded p-4 overflow-auto">
-        <h1 class="text-xl font-semibold mb-3">Owner Requests for Transaction Edit/Delete</h1>
+        <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
         <table class="w-full text-sm">
             <thead>
             <tr class="border-b text-left">
@@ -1602,7 +1601,15 @@ if ($page === 'admin_requests') {
                             <div class="text-xs">Delete transaction #<?= (int) $req['transaction_id'] ?></div>
                         <?php endif; ?>
                     </td>
-                    <td><?= e((string) $req['status']) ?></td>
+                    <td><span class="icon-label"><?php
+                        $requestStatus = strtolower((string) $req['status']);
+                        $requestStatusIcon = match ($requestStatus) {
+                            'approved', 'accepted' => 'approved',
+                            'rejected', 'declined' => 'rejected',
+                            'pending' => 'pending',
+                            default => 'default',
+                        };
+                        ?><?= uiIcon($requestStatusIcon, 'ui-icon ui-icon-sm') ?><?= e((string) $req['status']) ?></span></td>
                     <td><?= e((string) ($req['admin_note'] ?? '')) ?></td>
                     <td class="min-w-56">
                         <?php if ((string) $req['status'] === 'pending'): ?>
@@ -1611,8 +1618,8 @@ if ($page === 'admin_requests') {
                                 <input type="hidden" name="request_id" value="<?= (int) $req['id'] ?>">
                                 <input name="admin_note" placeholder="Optional note" class="w-full border rounded px-2 py-1 text-xs">
                                 <div class="flex gap-2">
-                                    <button name="decision" value="approve" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs">Approve</button>
-                                    <button name="decision" value="reject" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Reject</button>
+                                    <button name="decision" value="approve" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
+                                    <button name="decision" value="reject" class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
                                 </div>
                             </form>
                         <?php else: ?>
@@ -1720,8 +1727,8 @@ if ($page === 'announcements') {
     ?>
     <section class="glass p-4">
         <div class="flex items-center justify-between mb-4">
-            <h1 class="text-xl font-semibold">Latest Announcements</h1>
-            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Back to Dashboard</a>
+            <h1 class="text-xl font-semibold icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>Latest Announcements</span></h1>
+            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?><span>Back to Dashboard</span></span></a>
         </div>
 
         <?php if ($slideCount === 0): ?>
@@ -1736,7 +1743,7 @@ if ($page === 'announcements') {
                                     <div class="flex items-start justify-between gap-2">
                                         <h2 class="font-semibold"><?= e($item['title']) ?></h2>
                                         <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
-                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40 icon-label"><?= uiIcon('pin', 'ui-icon ui-icon-sm') ?><span>Important</span></span>
                                         <?php endif; ?>
                                     </div>
                                     <div class="text-xs text-gray-500 mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
@@ -1747,7 +1754,7 @@ if ($page === 'announcements') {
                                             <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
                                             <input type="hidden" name="return_page" value="announcements">
                                             <button class="px-2 py-1 rounded text-xs border">
-                                                <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
+                                                <span class="icon-label"><?= uiIcon('pin', 'ui-icon ui-icon-sm') ?><span><?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?></span></span>
                                             </button>
                                         </form>
                                     <?php endif; ?>
@@ -1758,9 +1765,9 @@ if ($page === 'announcements') {
                 <?php endforeach; ?>
 
                 <div class="flex items-center justify-between mt-4">
-                    <button type="button" id="announcementPrev" class="px-3 py-1 rounded border text-sm">Prev</button>
+                    <button type="button" id="announcementPrev" class="px-3 py-1 rounded border text-sm"><span class="icon-label"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Prev</span></span></button>
                     <div id="announcementDots" class="flex gap-1"></div>
-                    <button type="button" id="announcementNext" class="px-3 py-1 rounded border text-sm">Next</button>
+                    <button type="button" id="announcementNext" class="px-3 py-1 rounded border text-sm"><span class="icon-label"><span>Next</span><?= uiIcon('next', 'ui-icon ui-icon-sm') ?></span></button>
                 </div>
             </div>
 
@@ -1832,8 +1839,8 @@ if ($page === 'organizations') {
     ?>
     <section class="glass p-4">
         <div class="flex items-center justify-between mb-3">
-            <h1 class="text-xl font-semibold">All Organizations</h1>
-            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Back to Dashboard</a>
+            <h1 class="text-xl font-semibold icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>All Organizations</span></h1>
+            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?><span>Back to Dashboard</span></span></a>
         </div>
 
         <div class="space-y-3 max-h-[36rem] overflow-y-auto themed-scroll pr-1">
@@ -1860,9 +1867,10 @@ if ($page === 'organizations') {
                                         ? 'bg-amber-500/25 border-amber-300/50 text-amber-900'
                                         : 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35');
                                 $label = $isJoined ? 'Joined' : ($requestStatus === 'pending' ? 'Requested' : 'Request Join');
+                                $joinIcon = $isJoined ? 'approved' : ($requestStatus === 'pending' ? 'pending' : 'requests');
                             ?>
                             <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
-                                <?= $label ?>
+                                <span class="icon-label"><?= uiIcon($joinIcon, 'ui-icon ui-icon-sm') ?><span><?= $label ?></span></span>
                             </button>
                         </form>
                     <?php endif; ?>
@@ -1889,7 +1897,7 @@ if ($page === 'my_org') {
         renderHeader('Organization Overview');
         ?>
         <div class="bg-white shadow rounded p-4">
-            <h1 class="text-xl font-semibold mb-3">Organization Overview (Admin)</h1>
+            <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview (Admin)</span></h1>
             <form method="get" class="mb-4 flex gap-2">
                 <input type="hidden" name="page" value="my_org">
                 <select name="org_id" class="border rounded px-3 py-2">
@@ -1900,7 +1908,7 @@ if ($page === 'my_org') {
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <button class="bg-indigo-700 text-white px-4 py-2 rounded">Open</button>
+                <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
 
             <?php if ($org): ?>
@@ -1989,7 +1997,7 @@ if ($page === 'my_org') {
     ?>
     <div class="space-y-4">
         <div class="bg-white shadow rounded p-4">
-            <h2 class="text-lg font-semibold mb-3">Pending Membership Requests</h2>
+            <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Pending Membership Requests</span></h2>
             <?php if (count($pendingJoinRequests) === 0): ?>
                 <p class="text-sm text-gray-500">No pending join requests for this organization.</p>
             <?php else: ?>
@@ -2006,14 +2014,14 @@ if ($page === 'my_org') {
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                     <input type="hidden" name="decision" value="approve">
-                                    <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs">Approve</button>
+                                    <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
                                 </form>
                                 <form method="post">
                                     <input type="hidden" name="action" value="respond_join_request">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                     <input type="hidden" name="decision" value="decline">
-                                    <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">Decline</button>
+                                    <button class="bg-red-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Decline</span></span></button>
                                 </form>
                             </div>
                         </div>
@@ -2024,7 +2032,7 @@ if ($page === 'my_org') {
         </div>
 
         <div class="bg-white shadow rounded p-4">
-            <h1 class="text-xl font-semibold mb-3">My Organization</h1>
+            <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>My Organization</span></h1>
             <form method="get" class="mb-4 flex gap-2">
                 <input type="hidden" name="page" value="my_org">
                 <select name="org_id" class="border rounded px-3 py-2">
@@ -2034,7 +2042,7 @@ if ($page === 'my_org') {
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <button class="bg-indigo-700 text-white px-4 py-2 rounded">Open</button>
+                <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
             <form method="post" class="grid md:grid-cols-2 gap-3">
                 <input type="hidden" name="action" value="update_my_org">
@@ -2048,20 +2056,20 @@ if ($page === 'my_org') {
                     <textarea name="description" class="w-full border rounded px-3 py-2"><?= e($org['description']) ?></textarea>
                 </div>
                 <div class="md:col-span-2">
-                    <button class="bg-indigo-700 text-white px-4 py-2 rounded">Save Organization Info</button>
+                    <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Organization Info</span></span></button>
                 </div>
             </form>
         </div>
 
         <div class="grid md:grid-cols-2 gap-4">
             <div class="bg-white shadow rounded p-4">
-                <h2 class="text-lg font-semibold mb-2">Post Announcement</h2>
+                <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>Post Announcement</span></h2>
                 <form method="post" class="space-y-2">
                     <input type="hidden" name="action" value="add_announcement">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                     <input name="title" placeholder="Title" class="w-full border rounded px-3 py-2" required>
                     <textarea name="content" placeholder="Announcement details" class="w-full border rounded px-3 py-2" required></textarea>
-                    <button class="bg-indigo-700 text-white px-4 py-2 rounded">Post</button>
+                    <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('create', 'ui-icon ui-icon-sm') ?><span>Post</span></span></button>
                 </form>
 
                 <div class="mt-4 space-y-2 max-h-72 overflow-auto">
@@ -2073,7 +2081,7 @@ if ($page === 'my_org') {
                                 <input type="hidden" name="action" value="delete_announcement">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <input type="hidden" name="announcement_id" value="<?= (int) $announcement['id'] ?>">
-                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
+                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Delete</span></span></button>
                             </form>
                         </div>
                     <?php endforeach; ?>
@@ -2082,7 +2090,7 @@ if ($page === 'my_org') {
             </div>
 
             <div class="bg-white shadow rounded p-4">
-                <h2 class="text-lg font-semibold mb-2">Add Income / Expense</h2>
+                <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Add Income / Expense</span></h2>
                 <form method="post" enctype="multipart/form-data" class="space-y-2">
                     <input type="hidden" name="action" value="add_transaction">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -2096,13 +2104,13 @@ if ($page === 'my_org') {
                     <input type="date" name="transaction_date" value="<?= date('Y-m-d') ?>" class="w-full border rounded px-3 py-2" required>
                     <input name="description" placeholder="Description" class="w-full border rounded px-3 py-2" required>
                     <input type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="w-full border rounded px-3 py-2">
-                    <button class="bg-indigo-700 text-white px-4 py-2 rounded">Save Transaction</button>
+                    <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
                 </form>
             </div>
         </div>
 
         <div class="bg-white shadow rounded p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-2">Transaction History</h2>
+            <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -2123,7 +2131,7 @@ if ($page === 'my_org') {
                         <td><?= e($row['description']) ?></td>
                         <td>
                             <?php if (!empty($row['receipt_path'])): ?>
-                                <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="text-indigo-700 underline">View</a>
+                                <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="text-indigo-700 underline"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
                             <?php else: ?>
                                 <span class="text-gray-400">-</span>
                             <?php endif; ?>
@@ -2140,13 +2148,13 @@ if ($page === 'my_org') {
                                 <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs">
                                 <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1 text-xs">
                                 <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1 text-xs">
-                                <button class="bg-blue-600 text-white px-2 py-1 rounded text-xs">Request Update</button>
+                                <button class="bg-blue-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
                             </form>
                             <form method="post" onsubmit="return confirm('Delete transaction?')">
                                 <input type="hidden" name="action" value="delete_transaction">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs">Request Delete</button>
+                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
                             </form>
                         </td>
                     </tr>
@@ -2157,7 +2165,7 @@ if ($page === 'my_org') {
         </div>
 
         <div class="bg-white shadow rounded p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-2">My Pending/Recent Transaction Requests</h2>
+            <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>My Pending/Recent Transaction Requests</span></h2>
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -2218,16 +2226,21 @@ $transactionsStmt = $db->prepare('SELECT t.*, o.name AS organization_name
 $transactionsStmt->execute([$recentReportCutoffDate]);
 $transactions = $transactionsStmt->fetchAll();
 
-$summaryStmt = $db->prepare("SELECT o.id, o.name,
-    COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
-    COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
-    FROM organizations o
-    JOIN organization_members om ON om.organization_id = o.id AND om.user_id = ?
-    LEFT JOIN financial_transactions t ON t.organization_id = o.id
-    GROUP BY o.id, o.name
-    ORDER BY o.name");
-$summaryStmt->execute([(int) $user['id']]);
-$summary = $summaryStmt->fetchAll();
+$visibleOrganizationIds = array_values(array_unique(array_map(static fn(array $org): int => (int) $org['id'], $orgs)));
+$summary = [];
+if (count($visibleOrganizationIds) > 0) {
+    $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
+    $summaryStmt = $db->prepare("SELECT o.id, o.name,
+        COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
+        COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
+        FROM organizations o
+        LEFT JOIN financial_transactions t ON t.organization_id = o.id
+        WHERE o.id IN ($summaryPlaceholders)
+        GROUP BY o.id, o.name
+        ORDER BY o.name");
+    $summaryStmt->execute($visibleOrganizationIds);
+    $summary = $summaryStmt->fetchAll();
+}
 
 $kpi = $db->query("SELECT
     COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
@@ -2270,6 +2283,40 @@ $trendLabels = array_map(static fn(array $r): string => (string) $r['month'], $t
 $trendIncome = array_map(static fn(array $r): float => (float) $r['income'], $trendRows);
 $trendExpense = array_map(static fn(array $r): float => (float) $r['expense'], $trendRows);
 
+$trendPointCount = count($trendRows);
+$latestTrendNet = 0.0;
+$latestTrendDelta = null;
+$peakExpenseMonth = '-';
+$peakExpenseValue = 0.0;
+$healthyMonthCount = 0;
+
+if ($trendPointCount > 0) {
+    $latest = $trendRows[$trendPointCount - 1];
+    $latestTrendNet = (float) $latest['income'] - (float) $latest['expense'];
+
+    if ($trendPointCount > 1) {
+        $previous = $trendRows[$trendPointCount - 2];
+        $previousTrendNet = (float) $previous['income'] - (float) $previous['expense'];
+        $latestTrendDelta = $latestTrendNet - $previousTrendNet;
+    }
+
+    foreach ($trendRows as $row) {
+        $income = (float) $row['income'];
+        $expense = (float) $row['expense'];
+        if ($income >= $expense) {
+            $healthyMonthCount++;
+        }
+        if ($expense >= $peakExpenseValue) {
+            $peakExpenseValue = $expense;
+            $peakExpenseMonth = (string) $row['month'];
+        }
+    }
+}
+
+$latestTrendDirectionLabel = $latestTrendDelta === null
+    ? 'No prior month baseline'
+    : ($latestTrendDelta >= 0 ? 'Net improved vs previous month' : 'Net declined vs previous month');
+
 $pendingAssignments = [];
 if (in_array($user['role'], ['student', 'owner'], true)) {
     $stmt = $db->prepare("SELECT oa.id, oa.created_at, o.id AS organization_id, o.name AS organization_name
@@ -2281,105 +2328,301 @@ if (in_array($user['role'], ['student', 'owner'], true)) {
     $pendingAssignments = $stmt->fetchAll();
 }
 
-$pendingAssignmentsPagination = paginateArray($pendingAssignments, 'pg_dash_assign', 4);
+$pendingAssignmentsPagination = paginateArray($pendingAssignments, 'pg_dash_assign', 2);
 $pendingAssignments = $pendingAssignmentsPagination['items'];
-$dashboardOrganizationsPreview = array_slice($orgs, 0, 6);
-$summaryPagination = paginateArray($summary, 'pg_dash_summary', 8);
+$dashboardOrganizationsPreview = array_slice($orgs, 0, 3);
+$summaryAll = $summary;
+$summaryPagination = paginateArray($summaryAll, 'pg_dash_summary', 4);
 $summary = $summaryPagination['items'];
-$activityPagination = paginateArray($activity, 'pg_dash_activity', 4);
+$activityPagination = paginateArray($activity, 'pg_dash_activity', 2);
 $activity = $activityPagination['items'];
 $latestAnnouncementsPreview = array_slice($announcements, 0, 3);
+$activityPreview = array_slice($activity, 0, 2);
+$recentReportsDisplayLimit = 8;
+$transactions = array_slice($transactions, 0, $recentReportsDisplayLimit);
+$dashboardTimestamp = (new DateTimeImmutable('now'))->format('l, F j, Y | g:i A');
+$expenseRatio = $kpiIncome > 0 ? (int) min(100, round(($kpiExpense / $kpiIncome) * 100)) : 0;
+$balanceRatio = $kpiIncome > 0 ? (int) max(0, min(100, round((max($kpiBalance, 0) / $kpiIncome) * 100))) : 0;
+$recentReportCount = count($transactions);
+$latestAnnouncementCount = count($latestAnnouncementsPreview);
+$pendingAssignmentCount = count($pendingAssignments);
+
+$summaryChartRows = array_slice($summaryAll, 0, 8);
+$summaryIncomeTotal = (float) array_reduce(
+    $summaryAll,
+    static fn(float $carry, array $row): float => $carry + (float) $row['total_income'],
+    0.0
+);
+$summaryExpenseTotal = (float) array_reduce(
+    $summaryAll,
+    static fn(float $carry, array $row): float => $carry + (float) $row['total_expense'],
+    0.0
+);
+$summaryNetTotal = $summaryIncomeTotal - $summaryExpenseTotal;
+
+$summaryRankingRows = array_map(
+    static function (array $row): array {
+        $income = (float) $row['total_income'];
+        $expense = (float) $row['total_expense'];
+        $balance = $income - $expense;
+        $expenseRatio = $income > 0 ? ($expense / $income) : 1.0;
+
+        $status = 'Healthy';
+        $statusClass = 'text-emerald-300 border-emerald-300/40 bg-emerald-500/10';
+        if ($balance < 0) {
+            $status = 'Risk';
+            $statusClass = 'text-red-300 border-red-300/40 bg-red-500/10';
+        } elseif ($expenseRatio >= 0.9) {
+            $status = 'Watch';
+            $statusClass = 'text-amber-300 border-amber-300/40 bg-amber-500/10';
+        }
+
+        return [
+            'name' => (string) $row['name'],
+            'income' => $income,
+            'expense' => $expense,
+            'balance' => $balance,
+            'status' => $status,
+            'status_class' => $statusClass,
+            'expense_ratio' => $expenseRatio,
+        ];
+    },
+    $summaryAll
+);
+
+usort(
+    $summaryRankingRows,
+    static fn(array $a, array $b): int => $b['balance'] <=> $a['balance']
+);
+
+$summaryRankingTop = array_slice($summaryRankingRows, 0, 8);
+$summaryRankingLabels = array_map(static fn(array $row): string => (string) $row['name'], $summaryRankingTop);
+$summaryRankingBalances = array_map(static fn(array $row): float => (float) $row['balance'], $summaryRankingTop);
+
+$summaryAttentionRows = array_values(array_filter(
+    $summaryRankingRows,
+    static fn(array $row): bool => $row['balance'] < 0 || $row['expense_ratio'] >= 0.9
+));
+$summaryAttentionRows = array_slice($summaryAttentionRows, 0, 4);
+
+$topPerformer = $summaryRankingRows[0] ?? null;
+$highestPressure = null;
+foreach ($summaryRankingRows as $row) {
+    if ($highestPressure === null || $row['expense_ratio'] > $highestPressure['expense_ratio']) {
+        $highestPressure = $row;
+    }
+}
+$averageNet = count($summaryRankingRows) > 0
+    ? (float) (array_sum(array_map(static fn(array $row): float => (float) $row['balance'], $summaryRankingRows)) / count($summaryRankingRows))
+    : 0.0;
 
 renderHeader('Dashboard');
 ?>
-<div class="space-y-4">
-    <div class="glass p-5 text-center md:text-left">
-        <h1 class="text-xl font-semibold text-slate-900">Welcome, <?= e($user['name']) ?></h1>
-        <p class="text-gray-600">Budget transparency is visible to all students. You can review all income and expenses below.</p>
-    </div>
+<div class="dashboard-shell space-y-3">
+    <section class="grid xl:grid-cols-12 gap-3">
+        <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
+            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <div class="dashboard-kicker">Overview</div>
+                    <h1 class="dashboard-headline modern-title">Operations are on track, budgets are transparent, and every organization is in sync.</h1>
+                    <p class="dashboard-copy mt-3">Welcome, <?= e($user['name']) ?>. Track collections, spending, announcements, and ownership activity from one focused workspace.</p>
+                </div>
+                <div class="dashboard-stamp"><?= e($dashboardTimestamp) ?></div>
+            </div>
+            <div class="dashboard-metric-grid mt-4">
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value">₱<?= number_format($kpiIncome, 2) ?></div>
+                    <div class="dashboard-metric-label">Total income recorded</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value <?= $kpiBalance >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($kpiBalance, 2) ?></div>
+                    <div class="dashboard-metric-label">Current net balance</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value"><?= count($orgs) ?></div>
+                    <div class="dashboard-metric-label">Organizations in view</div>
+                </div>
+            </div>
+        </div>
 
-    <div class="grid md:grid-cols-4 gap-4">
-        <div class="glass p-4 text-center md:text-left">
-            <div class="text-xs text-gray-500 uppercase tracking-wide">Total Income</div>
-            <div class="text-2xl font-semibold text-green-300">₱<?= number_format($kpiIncome, 2) ?></div>
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+            <h2 class="dashboard-section-title">Finance status</h2>
+            <p class="dashboard-section-copy mt-1">A compact reading of spend, balance, and workload based on live records.</p>
+            <div class="mt-4 space-y-3">
+                <div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Expense share of income</span>
+                        <span class="dashboard-stat-value"><?= $expenseRatio ?>%</span>
+                    </div>
+                    <div class="dashboard-progress mt-3"><span style="width: <?= $expenseRatio ?>%"></span></div>
+                </div>
+                <div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Balance retained</span>
+                        <span class="dashboard-stat-value"><?= $balanceRatio ?>%</span>
+                    </div>
+                    <div class="dashboard-progress mt-3"><span style="width: <?= $balanceRatio ?>%"></span></div>
+                </div>
+                <div class="dashboard-stat-list pt-1">
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Recent reports</span>
+                        <span class="dashboard-stat-value"><?= $recentReportCount ?></span>
+                    </div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Latest announcements</span>
+                        <span class="dashboard-stat-value"><?= $latestAnnouncementCount ?></span>
+                    </div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Pending assignments</span>
+                        <span class="dashboard-stat-value"><?= $pendingAssignmentCount ?></span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="glass p-4 text-center md:text-left">
-            <div class="text-xs text-gray-500 uppercase tracking-wide">Total Expense</div>
-            <div class="text-2xl font-semibold text-red-300">₱<?= number_format($kpiExpense, 2) ?></div>
-        </div>
-        <div class="glass p-4 text-center md:text-left">
-            <div class="text-xs text-gray-500 uppercase tracking-wide">Net Balance</div>
-            <div class="text-2xl font-semibold <?= $kpiBalance >= 0 ? 'text-emerald-200' : 'text-red-200' ?>">₱<?= number_format($kpiBalance, 2) ?></div>
-        </div>
-        <div class="glass p-4 text-center md:text-left">
-            <div class="text-xs text-gray-500 uppercase tracking-wide">Organizations</div>
-            <div class="text-2xl font-semibold text-slate-900"><?= count($orgs) ?></div>
-        </div>
-    </div>
-
-    <div class="glass p-4">
-        <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Quick Actions</h2>
-        <div class="flex flex-wrap gap-2 justify-center md:justify-start">
-            <a href="?page=dashboard" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Refresh Dashboard</a>
-            <button type="button" id="openAnnouncementsModalQuick" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">View All Announcements</button>
-            <button type="button" id="openOrganizationsModalQuick" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">View All Organizations</button>
-            <?php if ($user['role'] === 'admin'): ?>
-                <a href="?page=admin_orgs" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Manage Organizations</a>
-                <a href="?page=admin_students" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Filter Students</a>
-                <a href="?page=admin_requests" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Review Requests</a>
-                <a href="?page=admin_audit" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Audit Logs</a>
-            <?php endif; ?>
-            <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
-                <a href="?page=my_org" class="bg-indigo-700 text-white px-3 py-2 rounded text-sm">Go to My Organization</a>
-            <?php endif; ?>
-        </div>
-    </div>
+    </section>
 
     <?php if (count($pendingAssignments) > 0): ?>
-        <div class="glass p-5">
-            <h2 class="text-lg font-semibold mb-3 text-center md:text-left">Organization Owner Assignments</h2>
-            <div class="space-y-3">
+        <section class="glass dashboard-panel p-4 md:p-4">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="dashboard-section-title">Pending assignments</h2>
+                    <p class="dashboard-section-copy mt-1">Assignments waiting for a student response.</p>
+                </div>
+                <div class="dashboard-stamp"><?= count($pendingAssignments) ?> awaiting action</div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-2 mt-3">
                 <?php foreach ($pendingAssignments as $assignment): ?>
-                    <div class="border border-emerald-200/30 rounded-lg p-3 flex flex-wrap items-center justify-center md:justify-between gap-3 text-center md:text-left">
-                        <div class="w-full md:w-auto">
+                    <div class="dashboard-feed-item flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div class="w-full sm:w-auto">
                             <div class="font-medium"><?= e($assignment['organization_name']) ?></div>
-                            <div class="text-xs text-gray-500">Assigned on <?= e($assignment['created_at']) ?></div>
+                            <div class="dashboard-feed-meta mt-1">Assigned on <?= e($assignment['created_at']) ?></div>
                         </div>
                         <div class="flex gap-2">
                             <form method="post">
                                 <input type="hidden" name="action" value="respond_owner_assignment">
                                 <input type="hidden" name="assignment_id" value="<?= (int) $assignment['id'] ?>">
                                 <input type="hidden" name="decision" value="accept">
-                                <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs">Accept</button>
+                                <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Accept</span></span></button>
                             </form>
                             <form method="post">
                                 <input type="hidden" name="action" value="respond_owner_assignment">
                                 <input type="hidden" name="assignment_id" value="<?= (int) $assignment['id'] ?>">
                                 <input type="hidden" name="decision" value="decline">
-                                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">Decline</button>
+                                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Decline</span></span></button>
                             </form>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
             <?php renderPagination($pendingAssignmentsPagination); ?>
-        </div>
+        </section>
     <?php endif; ?>
 
-    <div class="grid md:grid-cols-12 gap-4">
-        <div class="glass md:col-span-7 p-4 max-h-[32rem] overflow-y-auto themed-scroll pr-1">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-lg font-semibold text-center md:text-left">Organizations</h2>
-                <button type="button" id="openOrganizationsModal" class="bg-indigo-700 text-white px-2 py-1 rounded text-xs">View All</button>
+    <section class="grid xl:grid-cols-12 gap-3">
+        <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Monthly trend</h2>
+                    <p class="dashboard-section-copy mt-1">Income and expense totals by month.</p>
+                </div>
+                <div class="dashboard-stamp"><?= $recentReportCount ?> recent reports tracked</div>
             </div>
-            <div class="space-y-3">
-                <?php foreach ($dashboardOrganizationsPreview as $org): ?>
-                    <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+            <div class="dashboard-metric-grid mb-3">
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value text-red-300">₱<?= number_format($kpiExpense, 2) ?></div>
+                    <div class="dashboard-metric-label">Expense total</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value"><?= count($activityPreview) ?></div>
+                    <div class="dashboard-metric-label">Activity items loaded</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value"><?= $latestAnnouncementCount ?></div>
+                    <div class="dashboard-metric-label">Announcement highlights</div>
+                </div>
+            </div>
+            <canvas id="trendChart" height="112"></canvas>
+            <div class="trend-insight-grid mt-5 grid md:grid-cols-3 gap-2">
+                <div class="dashboard-feed-item trend-insight-card">
+                    <span class="dashboard-feed-dot"></span>
+                    <div>
+                        <div class="dashboard-feed-title">Current month net</div>
+                        <div class="dashboard-feed-meta mt-1 <?= $latestTrendNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">
+                            ₱<?= number_format($latestTrendNet, 2) ?>
+                        </div>
+                        <div class="dashboard-feed-body mt-1"><?= e($latestTrendDirectionLabel) ?></div>
+                    </div>
+                </div>
+                <div class="dashboard-feed-item trend-insight-card">
+                    <span class="dashboard-feed-dot warn"></span>
+                    <div>
+                        <div class="dashboard-feed-title">Peak expense month</div>
+                        <div class="dashboard-feed-meta mt-1"><?= e($peakExpenseMonth) ?></div>
+                        <div class="dashboard-feed-body mt-1">₱<?= number_format($peakExpenseValue, 2) ?> spent</div>
+                    </div>
+                </div>
+                <div class="dashboard-feed-item trend-insight-card">
+                    <span class="dashboard-feed-dot"></span>
+                    <div>
+                        <div class="dashboard-feed-title">Healthy months</div>
+                        <div class="dashboard-feed-meta mt-1"><?= $healthyMonthCount ?> of <?= $trendPointCount ?></div>
+                        <div class="dashboard-feed-body mt-1">Months where income met or exceeded expense.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Live activity</h2>
+                    <p class="dashboard-section-copy mt-1">Recent announcements and audit items.</p>
+                </div>
+                <button type="button" id="openAnnouncementsModalQuick" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
+            </div>
+            <div class="space-y-2">
+                <?php foreach ($latestAnnouncementsPreview as $item): ?>
+                    <?php $feedDotClass = (int) ($item['is_pinned'] ?? 0) === 1 ? 'dashboard-feed-dot warn' : 'dashboard-feed-dot'; ?>
+                    <div class="dashboard-feed-item">
+                        <span class="<?= e($feedDotClass) ?>"></span>
                         <div>
-                            <div class="font-medium"><?= e($org['name']) ?></div>
-                            <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
-                            <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
-                            <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                            <div class="dashboard-feed-title"><?= e($item['title']) ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                            <div class="dashboard-feed-body mt-1"><?= e($item['content']) ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <?php foreach ($activityPreview as $item): ?>
+                    <div class="dashboard-feed-item">
+                        <span class="dashboard-feed-dot"></span>
+                        <div>
+                            <div class="dashboard-feed-title"><?= e($item['label']) ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['type']) ?> · <?= e($item['created_at']) ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (count($latestAnnouncementsPreview) === 0 && count($activityPreview) === 0): ?>
+                    <p class="dashboard-section-copy">No recent announcements or activity items are available.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Organizations</h2>
+                    <p class="dashboard-section-copy mt-1">Current organizations and join eligibility.</p>
+                </div>
+                <button type="button" id="openOrganizationsModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
+            </div>
+            <div class="space-y-2">
+                <?php foreach ($dashboardOrganizationsPreview as $org): ?>
+                    <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <div class="dashboard-feed-title"><?= e($org['name']) ?></div>
+                            <div class="dashboard-feed-body mt-1"><?= e($org['description']) ?></div>
+                            <div class="dashboard-feed-meta mt-2">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
                         </div>
                         <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                             <form method="post">
@@ -2415,76 +2658,22 @@ renderHeader('Dashboard');
             </div>
         </div>
 
-        <div class="glass md:col-span-5 p-4 max-h-[32rem] overflow-y-auto themed-scroll pr-1">
-            <h2 class="text-lg font-semibold mb-3">Financial Summary by Organization</h2>
-            <table class="w-full text-sm">
+        <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4 overflow-hidden">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Recent reports</h2>
+                    <p class="dashboard-section-copy mt-1">Latest income and expense entries with receipt visibility.</p>
+                </div>
+                <div class="dashboard-stamp">Showing <?= $recentReportCount ?> latest items</div>
+            </div>
+            <table class="dashboard-table w-full text-sm table-fixed">
                 <thead>
                 <tr class="border-b text-left">
-                    <th class="py-2">Organization</th>
-                    <th>Income</th>
-                    <th>Expense</th>
-                    <th>Balance</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($summary as $row): ?>
-                    <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
-                    <tr class="border-b">
-                        <td class="py-2"><?= e($row['name']) ?></td>
-                        <td class="text-green-700">₱<?= number_format((float) $row['total_income'], 2) ?></td>
-                        <td class="text-red-700">₱<?= number_format((float) $row['total_expense'], 2) ?></td>
-                        <td class="<?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">₱<?= number_format($balance, 2) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-            <?php renderPagination($summaryPagination); ?>
-        </div>
-
-        <div class="glass md:col-span-5 p-4 overflow-auto">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-lg font-semibold">Latest Announcements</h2>
-                <button type="button" id="openAnnouncementsModal" class="text-xs underline text-indigo-700">View All</button>
-            </div>
-            <div class="space-y-2">
-                <?php foreach ($latestAnnouncementsPreview as $item): ?>
-                    <div class="border rounded p-2">
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="font-medium"><?= e($item['title']) ?></div>
-                            <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
-                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
-                        <div class="text-sm mt-1"><?= e($item['content']) ?></div>
-                        <?php if (($user['role'] ?? '') === 'admin'): ?>
-                            <form method="post" class="mt-2">
-                                <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
-                                <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
-                                <input type="hidden" name="return_page" value="dashboard">
-                                <button class="px-2 py-1 rounded text-xs border">
-                                    <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                <?php if (count($latestAnnouncementsPreview) === 0): ?>
-                    <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="glass md:col-span-7 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Recent Income & Expense Reports</h2>
-            <table class="w-full text-sm">
-                <thead>
-                <tr class="border-b text-left">
-                    <th class="py-2">Date</th>
-                    <th>Org</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Receipt</th>
+                    <th class="py-2 w-[20%]">Date</th>
+                    <th class="w-[30%]">Organization</th>
+                    <th class="w-[16%]">Type</th>
+                    <th class="w-[20%]">Amount</th>
+                    <th class="w-[14%]">Receipt</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -2496,7 +2685,7 @@ renderHeader('Dashboard');
                         <td>₱<?= number_format((float) $tx['amount'], 2) ?></td>
                         <td>
                             <?php if (!empty($tx['receipt_path'])): ?>
-                                <a class="text-indigo-700 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>">Open</a>
+                                <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
                             <?php else: ?>
                                 <span class="text-gray-400">-</span>
                             <?php endif; ?>
@@ -2507,26 +2696,42 @@ renderHeader('Dashboard');
             </table>
         </div>
 
-        <div class="glass md:col-span-7 p-4">
-            <h2 class="text-lg font-semibold mb-3">Monthly Trend (Income vs Expense)</h2>
-            <canvas id="trendChart" height="130"></canvas>
-        </div>
-
-        <div class="glass md:col-span-5 p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3">Activity Feed</h2>
-            <div class="space-y-2 text-sm">
-                <?php foreach ($activity as $item): ?>
-                    <div class="border rounded p-2">
-                        <div class="font-medium"><?= e($item['label']) ?></div>
-                        <div class="text-xs text-gray-500">
-                            <?= e($item['type']) ?> · <?= e($item['created_at']) ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+        <div class="glass dashboard-panel xl:col-span-12 p-4 md:p-4 overflow-hidden">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Financial summary by organization</h2>
+                    <p class="dashboard-section-copy mt-1">Income, expense, and balance grouped by organization.</p>
+                </div>
+                <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View charts</span></span></button>
             </div>
-            <?php renderPagination($activityPagination); ?>
+            <div>
+                <table class="dashboard-table w-full text-sm table-fixed">
+                    <thead>
+                    <tr class="border-b text-left">
+                        <th class="py-2 pr-4 w-[46%]">Organization</th>
+                        <th class="py-2 pr-3 w-[18%]">Income</th>
+                        <th class="py-2 pr-3 w-[18%]">Expense</th>
+                        <th class="py-2 w-[18%]">Balance</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($summary as $row): ?>
+                        <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
+                        <tr class="border-b">
+                            <td class="py-2 pr-4"><?= e($row['name']) ?></td>
+                            <td class="py-2 pr-3 text-green-700 whitespace-nowrap">₱<?= number_format((float) $row['total_income'], 2) ?></td>
+                            <td class="py-2 pr-3 text-red-700 whitespace-nowrap">₱<?= number_format((float) $row['total_expense'], 2) ?></td>
+                            <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">₱<?= number_format($balance, 2) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pt-3">
+                <?php renderPagination($summaryPagination); ?>
+            </div>
         </div>
-    </div>
+    </section>
 
     <div id="organizationsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="organizationsModalTitle">
         <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
@@ -2613,6 +2818,90 @@ renderHeader('Dashboard');
             </div>
         </div>
     </div>
+
+    <div id="financialSummaryModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="financialSummaryModalTitle">
+        <div class="glass w-full max-w-6xl overflow-hidden">
+            <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+                <h3 id="financialSummaryModalTitle" class="text-lg font-semibold">Financial Health Snapshot</h3>
+                <button type="button" id="closeFinancialSummaryModal" class="px-2 py-1 rounded border text-sm">Close</button>
+            </div>
+            <div class="p-3 space-y-2 max-h-[calc(100dvh-8.5rem)] overflow-y-auto themed-scroll pr-1">
+                <div class="grid md:grid-cols-3 gap-1">
+                    <div class="dashboard-metric-card">
+                        <div class="dashboard-metric-value text-green-300">₱<?= number_format($summaryIncomeTotal, 2) ?></div>
+                        <div class="dashboard-metric-label">Total income (all organizations)</div>
+                    </div>
+                    <div class="dashboard-metric-card">
+                        <div class="dashboard-metric-value text-red-300">₱<?= number_format($summaryExpenseTotal, 2) ?></div>
+                        <div class="dashboard-metric-label">Total expense (all organizations)</div>
+                    </div>
+                    <div class="dashboard-metric-card">
+                        <div class="dashboard-metric-value <?= $summaryNetTotal >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($summaryNetTotal, 2) ?></div>
+                        <div class="dashboard-metric-label">Net balance (all organizations)</div>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-2">
+                    <div class="glass p-2 w-full h-full flex flex-col">
+                        <h4 class="dashboard-section-title">Top Organizations by Net Balance</h4>
+                        <p class="dashboard-section-copy mt-1">Higher bars indicate stronger surplus after expenses.</p>
+                        <canvas id="financialSummaryRankingChart" height="165"></canvas>
+                        <div class="mt-2 grid sm:grid-cols-3 gap-1">
+                            <div class="dashboard-feed-item trend-insight-card">
+                                <div>
+                                    <div class="dashboard-feed-title">Top performer</div>
+                                    <div class="dashboard-feed-meta mt-1"><?= e((string) ($topPerformer['name'] ?? 'N/A')) ?></div>
+                                    <div class="dashboard-feed-body mt-1 text-green-300">₱<?= number_format((float) ($topPerformer['balance'] ?? 0), 2) ?></div>
+                                </div>
+                            </div>
+                            <div class="dashboard-feed-item trend-insight-card">
+                                <div>
+                                    <div class="dashboard-feed-title">Highest spend pressure</div>
+                                    <div class="dashboard-feed-meta mt-1"><?= e((string) ($highestPressure['name'] ?? 'N/A')) ?></div>
+                                    <div class="dashboard-feed-body mt-1"><?= (int) round(((float) ($highestPressure['expense_ratio'] ?? 0)) * 100) ?>% expense ratio</div>
+                                </div>
+                            </div>
+                            <div class="dashboard-feed-item trend-insight-card">
+                                <div>
+                                    <div class="dashboard-feed-title">Average net</div>
+                                    <div class="dashboard-feed-meta mt-1">Across <?= count($summaryRankingRows) ?> organizations</div>
+                                    <div class="dashboard-feed-body mt-1 <?= $averageNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($averageNet, 2) ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass p-2 w-full h-full space-y-2">
+                        <div>
+                            <h4 class="dashboard-section-title">Organization Priority List</h4>
+                            <p class="dashboard-section-copy mt-1">Status reflects spending pressure and current balance.</p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <?php foreach (array_slice($summaryRankingRows, 0, 4) as $row): ?>
+                                <div class="dashboard-feed-item trend-insight-card items-center justify-between">
+                                    <div>
+                                        <div class="dashboard-feed-title"><?= e($row['name']) ?></div>
+                                        <div class="dashboard-feed-meta mt-1">Net: ₱<?= number_format((float) $row['balance'], 2) ?></div>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full border text-[11px] font-medium <?= e($row['status_class']) ?>"><?= e($row['status']) ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div>
+                            <div class="dashboard-section-title">Needs Attention</div>
+                            <div class="mt-1 space-y-1">
+                                <?php if (count($summaryAttentionRows) === 0): ?>
+                                    <p class="dashboard-section-copy">No organizations are currently flagged for risk or heavy spend pressure.</p>
+                                <?php else: ?>
+                                    <?php foreach ($summaryAttentionRows as $row): ?>
+                                        <div class="dashboard-feed-meta"><?= e($row['name']) ?> · Expense ratio <?= (int) round($row['expense_ratio'] * 100) ?>%</div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -2623,6 +2912,8 @@ renderHeader('Dashboard');
         const labels = <?= json_encode($trendLabels) ?>;
         const income = <?= json_encode($trendIncome) ?>;
         const expense = <?= json_encode($trendExpense) ?>;
+        const summaryRankingLabels = <?= json_encode($summaryRankingLabels) ?>;
+        const summaryRankingBalances = <?= json_encode($summaryRankingBalances) ?>;
 
         const isDark = document.body.classList.contains('theme-dark');
         const axisColor = isDark ? '#a7f3d0' : '#065f46';
@@ -2664,34 +2955,104 @@ renderHeader('Dashboard');
             }
         });
 
-        const themeBtn = document.getElementById('themeToggle');
-        if (themeBtn) {
-            themeBtn.addEventListener('change', function () {
-                const willBeDark = !document.body.classList.contains('theme-dark');
-                const nextAxis = willBeDark ? '#a7f3d0' : '#065f46';
-                const nextLegend = willBeDark ? '#d1fae5' : '#14532d';
-                const nextGrid = willBeDark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
-                chart.options.plugins.legend.labels.color = nextLegend;
-                chart.options.scales.x.ticks.color = nextAxis;
-                chart.options.scales.y.ticks.color = nextAxis;
-                chart.options.scales.x.grid.color = nextGrid;
-                chart.options.scales.y.grid.color = nextGrid;
-                chart.update();
+        let financialRankingChart = null;
+
+        const createFinancialCharts = function () {
+            if (financialRankingChart) {
+                return;
+            }
+
+            const rankingCanvas = document.getElementById('financialSummaryRankingChart');
+            if (!rankingCanvas || summaryRankingLabels.length === 0) {
+                return;
+            }
+
+            financialRankingChart = new Chart(rankingCanvas, {
+                type: 'bar',
+                data: {
+                    labels: summaryRankingLabels,
+                    datasets: [
+                        {
+                            label: 'Net Balance',
+                            data: summaryRankingBalances,
+                            backgroundColor: summaryRankingBalances.map(function (value) {
+                                return value >= 0 ? 'rgba(52, 211, 153, 0.75)' : 'rgba(248, 113, 113, 0.72)';
+                            }),
+                            borderColor: summaryRankingBalances.map(function (value) {
+                                return value >= 0 ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)';
+                            }),
+                            borderWidth: 1,
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            labels: { color: legendColor }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: axisColor },
+                            grid: { color: gridColor }
+                        },
+                        y: {
+                            ticks: { color: axisColor },
+                            grid: { color: 'rgba(0,0,0,0)' }
+                        }
+                    }
+                }
+            });
+        };
+
+        const applyThemeToCharts = function () {
+            const dark = document.body.classList.contains('theme-dark');
+            const nextAxis = dark ? '#a7f3d0' : '#065f46';
+            const nextLegend = dark ? '#d1fae5' : '#14532d';
+            const nextGrid = dark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
+
+            chart.options.plugins.legend.labels.color = nextLegend;
+            chart.options.scales.x.ticks.color = nextAxis;
+            chart.options.scales.y.ticks.color = nextAxis;
+            chart.options.scales.x.grid.color = nextGrid;
+            chart.options.scales.y.grid.color = nextGrid;
+            chart.update();
+
+            if (financialRankingChart) {
+                financialRankingChart.options.plugins.legend.labels.color = nextLegend;
+                financialRankingChart.options.scales.x.ticks.color = nextAxis;
+                financialRankingChart.options.scales.y.ticks.color = nextAxis;
+                financialRankingChart.options.scales.x.grid.color = nextGrid;
+                financialRankingChart.update();
+            }
+        };
+
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('change', function () {
+                applyThemeToCharts();
             });
         }
 
         const organizationsModal = document.getElementById('organizationsModal');
         const announcementsModal = document.getElementById('announcementsModal');
+        const financialSummaryModal = document.getElementById('financialSummaryModal');
         const openOrganizations = [
             document.getElementById('openOrganizationsModal'),
             document.getElementById('openOrganizationsModalQuick'),
         ].filter(Boolean);
         const openAnnouncements = [
-            document.getElementById('openAnnouncementsModal'),
             document.getElementById('openAnnouncementsModalQuick'),
+        ].filter(Boolean);
+        const openFinancialSummary = [
+            document.getElementById('openFinancialSummaryModal'),
         ].filter(Boolean);
         const closeOrganizationsModal = document.getElementById('closeOrganizationsModal');
         const closeAnnouncementsModal = document.getElementById('closeAnnouncementsModal');
+        const closeFinancialSummaryModal = document.getElementById('closeFinancialSummaryModal');
 
         const showModal = function (modal) {
             if (!modal) return;
@@ -2715,6 +3076,14 @@ renderHeader('Dashboard');
             });
         });
 
+        openFinancialSummary.forEach(function (button) {
+            button.addEventListener('click', function () {
+                showModal(financialSummaryModal);
+                createFinancialCharts();
+                applyThemeToCharts();
+            });
+        });
+
         if (closeOrganizationsModal) {
             closeOrganizationsModal.addEventListener('click', function () {
                 hideModal(organizationsModal);
@@ -2724,6 +3093,12 @@ renderHeader('Dashboard');
         if (closeAnnouncementsModal) {
             closeAnnouncementsModal.addEventListener('click', function () {
                 hideModal(announcementsModal);
+            });
+        }
+
+        if (closeFinancialSummaryModal) {
+            closeFinancialSummaryModal.addEventListener('click', function () {
+                hideModal(financialSummaryModal);
             });
         }
 
@@ -2739,6 +3114,14 @@ renderHeader('Dashboard');
             announcementsModal.addEventListener('click', function (event) {
                 if (event.target === announcementsModal) {
                     hideModal(announcementsModal);
+                }
+            });
+        }
+
+        if (financialSummaryModal) {
+            financialSummaryModal.addEventListener('click', function (event) {
+                if (event.target === financialSummaryModal) {
+                    hideModal(financialSummaryModal);
                 }
             });
         }
