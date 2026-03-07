@@ -1,0 +1,355 @@
+<?php
+
+declare(strict_types=1);
+
+function handleCreateOrgAction(PDO $db, array $user): void
+{
+    requireRole(['admin']);
+    $name = trim((string) ($_POST['name'] ?? ''));
+    $description = trim((string) ($_POST['description'] ?? ''));
+    $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
+    $targetInstitute = trim((string) ($_POST['target_institute'] ?? ''));
+    $targetProgram = trim((string) ($_POST['target_program'] ?? ''));
+    $categoryOptions = getOrgCategoryOptions();
+    $programInstituteMap = getProgramInstituteMap();
+
+    if ($name === '') {
+        setFlash('error', 'Organization name is required.');
+        redirect('?page=admin_orgs');
+    }
+
+    if (!isset($categoryOptions[$orgCategory])) {
+        setFlash('error', 'Invalid organization category.');
+        redirect('?page=admin_orgs');
+    }
+
+    if ($orgCategory === 'institutewide') {
+        if (!in_array($targetInstitute, getInstituteOptions(), true)) {
+            setFlash('error', 'Please select a valid institute for institutewide organizations.');
+            redirect('?page=admin_orgs');
+        }
+        $targetProgram = '';
+    } elseif ($orgCategory === 'program_based') {
+        if (!isset($programInstituteMap[$targetProgram])) {
+            setFlash('error', 'Please select a valid program for program-based organizations.');
+            redirect('?page=admin_orgs');
+        }
+        $targetInstitute = (string) $programInstituteMap[$targetProgram];
+    } else {
+        $targetInstitute = '';
+        $targetProgram = '';
+    }
+
+    try {
+        $stmt = $db->prepare('INSERT INTO organizations (name, description, org_category, target_institute, target_program) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null]);
+        auditLog((int) $user['id'], 'organization.create', 'organization', (int) $db->lastInsertId(), 'Created organization: ' . $name);
+        setFlash('success', 'Organization created.');
+    } catch (Throwable $e) {
+        setFlash('error', 'Organization name already exists.');
+    }
+
+    redirect('?page=admin_orgs');
+}
+
+function handleUpdateOrgAdminAction(PDO $db, array $user): void
+{
+    requireRole(['admin']);
+    $orgId = (int) ($_POST['org_id'] ?? 0);
+    $name = trim((string) ($_POST['name'] ?? ''));
+    $description = trim((string) ($_POST['description'] ?? ''));
+    $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
+    $targetInstitute = trim((string) ($_POST['target_institute'] ?? ''));
+    $targetProgram = trim((string) ($_POST['target_program'] ?? ''));
+    $categoryOptions = getOrgCategoryOptions();
+    $programInstituteMap = getProgramInstituteMap();
+
+    if (!isset($categoryOptions[$orgCategory])) {
+        setFlash('error', 'Invalid organization category.');
+        redirect('?page=admin_orgs');
+    }
+
+    if ($orgCategory === 'institutewide') {
+        if (!in_array($targetInstitute, getInstituteOptions(), true)) {
+            setFlash('error', 'Please select a valid institute for institutewide organizations.');
+            redirect('?page=admin_orgs');
+        }
+        $targetProgram = '';
+    } elseif ($orgCategory === 'program_based') {
+        if (!isset($programInstituteMap[$targetProgram])) {
+            setFlash('error', 'Please select a valid program for program-based organizations.');
+            redirect('?page=admin_orgs');
+        }
+        $targetInstitute = (string) $programInstituteMap[$targetProgram];
+    } else {
+        $targetInstitute = '';
+        $targetProgram = '';
+    }
+
+    $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, org_category = ?, target_institute = ?, target_program = ? WHERE id = ?');
+    $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $orgId]);
+    auditLog((int) $user['id'], 'organization.update', 'organization', $orgId, 'Updated organization details');
+    setFlash('success', 'Organization updated.');
+    redirect('?page=admin_orgs');
+}
+
+function handleDeleteOrgAction(PDO $db, array $user): void
+{
+    requireRole(['admin']);
+    $orgId = (int) ($_POST['org_id'] ?? 0);
+    $stmt = $db->prepare('DELETE FROM organizations WHERE id = ?');
+    $stmt->execute([$orgId]);
+    auditLog((int) $user['id'], 'organization.delete', 'organization', $orgId, 'Deleted organization');
+    setFlash('success', 'Organization deleted.');
+    redirect('?page=admin_orgs');
+}
+
+function handleAssignOwnerAction(PDO $db, array $user): void
+{
+    requireRole(['admin']);
+    $orgId = (int) ($_POST['org_id'] ?? 0);
+    $ownerId = (int) ($_POST['owner_id'] ?? 0);
+
+    $db->beginTransaction();
+    try {
+        if ($ownerId <= 0) {
+            $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');
+            $stmt->execute([$orgId]);
+            $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ?');
+            $stmt->execute([$orgId]);
+        } else {
+            $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');
+            $stmt->execute([$orgId]);
+
+            $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ?');
+            $stmt->execute([$orgId]);
+
+            $stmt = $db->prepare('INSERT INTO owner_assignments (organization_id, student_id, status) VALUES (?, ?, ?)');
+            $stmt->execute([$orgId, $ownerId, 'pending']);
+        }
+
+        $db->commit();
+        auditLog((int) $user['id'], 'organization.assign_owner', 'organization', $orgId, $ownerId > 0 ? 'Assignment set to pending' : 'Owner assignment cleared');
+        setFlash('success', $ownerId > 0 ? 'Owner assignment sent. Student must accept first.' : 'Owner assignment cleared.');
+    } catch (Throwable $e) {
+        $db->rollBack();
+        setFlash('error', 'Could not assign owner.');
+    }
+
+    redirect('?page=admin_orgs');
+}
+
+function handleRespondOwnerAssignmentAction(PDO $db, array $user): void
+{
+    requireRole(['student', 'owner']);
+    $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
+    $decision = (string) ($_POST['decision'] ?? 'decline');
+
+    if (!in_array($decision, ['accept', 'decline'], true)) {
+        setFlash('error', 'Invalid assignment response.');
+        redirect('?page=dashboard');
+    }
+
+    $stmt = $db->prepare('SELECT * FROM owner_assignments WHERE id = ? AND student_id = ? AND status = ? LIMIT 1');
+    $stmt->execute([$assignmentId, (int) $user['id'], 'pending']);
+    $assignment = $stmt->fetch();
+
+    if (!$assignment) {
+        setFlash('error', 'Assignment is no longer available.');
+        redirect('?page=dashboard');
+    }
+
+    $db->beginTransaction();
+    try {
+        if ($decision === 'accept') {
+            $stmt = $db->prepare('UPDATE owner_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['accepted', $assignmentId]);
+
+            $stmt = $db->prepare('UPDATE organizations SET owner_id = ? WHERE id = ?');
+            $stmt->execute([(int) $user['id'], (int) $assignment['organization_id']]);
+
+            $stmt = $db->prepare("UPDATE users SET role = 'owner' WHERE id = ? AND role = 'student'");
+            $stmt->execute([(int) $user['id']]);
+
+            auditLog((int) $user['id'], 'assignment.accept', 'owner_assignment', $assignmentId, 'Accepted organization owner assignment');
+
+            setFlash('success', 'You accepted the owner assignment.');
+        } else {
+            $stmt = $db->prepare('UPDATE owner_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['declined', $assignmentId]);
+
+            auditLog((int) $user['id'], 'assignment.decline', 'owner_assignment', $assignmentId, 'Declined organization owner assignment');
+
+            setFlash('success', 'You declined the owner assignment.');
+        }
+
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        setFlash('error', 'Unable to update assignment response.');
+    }
+
+    redirect('?page=dashboard');
+}
+
+function handleJoinOrgAction(PDO $db, array $user): void
+{
+    requireRole(['student', 'owner']);
+    $orgId = (int) ($_POST['org_id'] ?? 0);
+
+    $orgStmt = $db->prepare('SELECT id, org_category, target_institute, target_program FROM organizations WHERE id = ? LIMIT 1');
+    $orgStmt->execute([$orgId]);
+    $org = $orgStmt->fetch();
+    if (!$org) {
+        setFlash('error', 'Organization not found.');
+        redirect('?page=dashboard');
+    }
+
+    if (!canUserJoinOrganization($org, $user)) {
+        setFlash('error', 'You are not eligible to join this organization based on your institute/program.');
+        redirect('?page=dashboard');
+    }
+
+    $stmt = $db->prepare('SELECT COUNT(*) FROM organization_members WHERE organization_id = ? AND user_id = ?');
+    $stmt->execute([$orgId, (int) $user['id']]);
+    if ((int) $stmt->fetchColumn() > 0) {
+        setFlash('error', 'You are already a member of this organization.');
+        redirect('?page=dashboard');
+    }
+
+    try {
+        $stmt = $db->prepare('INSERT INTO organization_join_requests (organization_id, user_id, status) VALUES (?, ?, ?)');
+        $stmt->execute([$orgId, (int) $user['id'], 'pending']);
+        auditLog((int) $user['id'], 'join_request.submit', 'organization', $orgId, 'Submitted join request');
+        setFlash('success', 'Join request sent. Please wait for approval.');
+    } catch (Throwable $e) {
+        $stmt = $db->prepare('SELECT status FROM organization_join_requests WHERE organization_id = ? AND user_id = ? LIMIT 1');
+        $stmt->execute([$orgId, (int) $user['id']]);
+        $existingStatus = (string) ($stmt->fetchColumn() ?: 'pending');
+        if ($existingStatus === 'declined') {
+            $stmt = $db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE organization_id = ? AND user_id = ?');
+            $stmt->execute(['pending', $orgId, (int) $user['id']]);
+            auditLog((int) $user['id'], 'join_request.resubmit', 'organization', $orgId, 'Resubmitted join request');
+            setFlash('success', 'Join request sent again.');
+        } elseif ($existingStatus === 'approved') {
+            setFlash('error', 'Your join request is already approved.');
+        } else {
+            setFlash('error', 'You already have a pending request for this organization.');
+        }
+    }
+    redirect('?page=dashboard');
+}
+
+function handleProcessTxChangeRequestAction(PDO $db, array $user): void
+{
+    requireRole(['admin']);
+    $requestId = (int) ($_POST['request_id'] ?? 0);
+    $decision = (string) ($_POST['decision'] ?? 'reject');
+    $adminNote = trim((string) ($_POST['admin_note'] ?? ''));
+
+    if (!in_array($decision, ['approve', 'reject'], true)) {
+        setFlash('error', 'Invalid request decision.');
+        redirect('?page=admin_requests');
+    }
+
+    $stmt = $db->prepare('SELECT * FROM transaction_change_requests WHERE id = ? AND status = ? LIMIT 1');
+    $stmt->execute([$requestId, 'pending']);
+    $request = $stmt->fetch();
+
+    if (!$request) {
+        setFlash('error', 'Request is no longer pending.');
+        redirect('?page=admin_requests');
+    }
+
+    $db->beginTransaction();
+    try {
+        if ($decision === 'approve') {
+            if ((string) $request['action_type'] === 'update') {
+                $stmt = $db->prepare('UPDATE financial_transactions SET type = ?, amount = ?, description = ?, transaction_date = ? WHERE id = ? AND organization_id = ?');
+                $stmt->execute([
+                    (string) $request['proposed_type'],
+                    (float) $request['proposed_amount'],
+                    (string) $request['proposed_description'],
+                    (string) $request['proposed_transaction_date'],
+                    (int) $request['transaction_id'],
+                    (int) $request['organization_id'],
+                ]);
+            } else {
+                $stmt = $db->prepare('DELETE FROM financial_transactions WHERE id = ? AND organization_id = ?');
+                $stmt->execute([(int) $request['transaction_id'], (int) $request['organization_id']]);
+            }
+
+            $stmt = $db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['approved', $adminNote, $requestId]);
+            auditLog((int) $user['id'], 'finance.request_approve', 'transaction_change_request', $requestId, 'Approved transaction change request');
+            setFlash('success', 'Transaction change request approved.');
+        } else {
+            $stmt = $db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['rejected', $adminNote, $requestId]);
+            auditLog((int) $user['id'], 'finance.request_reject', 'transaction_change_request', $requestId, 'Rejected transaction change request');
+            setFlash('success', 'Transaction change request rejected.');
+        }
+
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        setFlash('error', 'Unable to process transaction change request.');
+    }
+
+    redirect('?page=admin_requests');
+}
+
+function handleRespondJoinRequestAction(PDO $db, array $user): void
+{
+    requireRole(['owner']);
+    $orgId = (int) ($_POST['org_id'] ?? 0);
+    $requestId = (int) ($_POST['request_id'] ?? 0);
+    $decision = (string) ($_POST['decision'] ?? 'decline');
+
+    $org = getOwnedOrganizationById((int) $user['id'], $orgId);
+    if (!$org) {
+        setFlash('error', 'You are not allowed to manage this organization.');
+        redirect('?page=my_org');
+    }
+
+    if (!in_array($decision, ['approve', 'decline'], true)) {
+        setFlash('error', 'Invalid request action.');
+        redirect('?page=my_org&org_id=' . $orgId);
+    }
+
+    $stmt = $db->prepare('SELECT * FROM organization_join_requests WHERE id = ? AND organization_id = ? AND status = ? LIMIT 1');
+    $stmt->execute([$requestId, $orgId, 'pending']);
+    $request = $stmt->fetch();
+
+    if (!$request) {
+        setFlash('error', 'Request is no longer pending.');
+        redirect('?page=my_org&org_id=' . $orgId);
+    }
+
+    $db->beginTransaction();
+    try {
+        if ($decision === 'approve') {
+            $stmt = $db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['approved', $requestId]);
+
+            $stmt = $db->prepare('INSERT INTO organization_members (organization_id, user_id) VALUES (?, ?)');
+            $stmt->execute([$orgId, (int) $request['user_id']]);
+
+            auditLog((int) $user['id'], 'join_request.approve', 'organization_join_request', $requestId, 'Approved join request');
+
+            setFlash('success', 'Join request approved.');
+        } else {
+            $stmt = $db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['declined', $requestId]);
+            auditLog((int) $user['id'], 'join_request.decline', 'organization_join_request', $requestId, 'Declined join request');
+            setFlash('success', 'Join request declined.');
+        }
+
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        setFlash('error', 'Unable to update join request.');
+    }
+
+    redirect('?page=my_org&org_id=' . $orgId);
+}

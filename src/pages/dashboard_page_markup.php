@@ -1,0 +1,485 @@
+<div class="dashboard-shell space-y-3">
+    <section class="grid xl:grid-cols-12 gap-3">
+        <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
+            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <div class="dashboard-kicker">Overview</div>
+                    <h1 class="dashboard-headline modern-title">Operations are on track, budgets are transparent, and every organization is in sync.</h1>
+                    <p class="dashboard-copy mt-3">Welcome, <?= e($user['name']) ?>. Track collections, spending, announcements, and ownership activity from one focused workspace.</p>
+                </div>
+                <div class="dashboard-stamp"><?= e($dashboardTimestamp) ?></div>
+            </div>
+            <div class="dashboard-metric-grid mt-4">
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value">₱<?= number_format($kpiIncome, 2) ?></div>
+                    <div class="dashboard-metric-label">Total income recorded</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value <?= $kpiBalance >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($kpiBalance, 2) ?></div>
+                    <div class="dashboard-metric-label">Current net balance</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value"><?= count($orgs) ?></div>
+                    <div class="dashboard-metric-label">Organizations in view</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+            <h2 class="dashboard-section-title">Finance status</h2>
+            <p class="dashboard-section-copy mt-1">A compact reading of spend, balance, and workload based on live records.</p>
+            <div class="mt-4 space-y-3">
+                <div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Expense share of income</span>
+                        <span class="dashboard-stat-value"><?= $expenseRatio ?>%</span>
+                    </div>
+                    <div class="dashboard-progress mt-3"><span style="width: <?= $expenseRatio ?>%"></span></div>
+                </div>
+                <div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Balance retained</span>
+                        <span class="dashboard-stat-value"><?= $balanceRatio ?>%</span>
+                    </div>
+                    <div class="dashboard-progress mt-3"><span style="width: <?= $balanceRatio ?>%"></span></div>
+                </div>
+                <div class="dashboard-stat-list pt-1">
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Recent reports</span>
+                        <span class="dashboard-stat-value"><?= $recentReportCount ?></span>
+                    </div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Latest announcements</span>
+                        <span class="dashboard-stat-value"><?= $latestAnnouncementCount ?></span>
+                    </div>
+                    <div class="dashboard-stat-row">
+                        <span class="dashboard-stat-label">Pending assignments</span>
+                        <span class="dashboard-stat-value"><?= $pendingAssignmentCount ?></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <?php if (count($pendingAssignments) > 0): ?>
+        <section class="glass dashboard-panel p-4 md:p-4">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h2 class="dashboard-section-title">Pending assignments</h2>
+                    <p class="dashboard-section-copy mt-1">Assignments waiting for a student response.</p>
+                </div>
+                <div class="dashboard-stamp"><?= count($pendingAssignments) ?> awaiting action</div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-2 mt-3">
+                <?php foreach ($pendingAssignments as $assignment): ?>
+                    <div class="dashboard-feed-item flex-col sm:flex-row sm:items-center sm:justify-between">
+                        <div class="w-full sm:w-auto">
+                            <div class="font-medium"><?= e($assignment['organization_name']) ?></div>
+                            <div class="dashboard-feed-meta mt-1">Assigned on <?= e($assignment['created_at']) ?></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <form method="post">
+                                <input type="hidden" name="action" value="respond_owner_assignment">
+                                <input type="hidden" name="assignment_id" value="<?= (int) $assignment['id'] ?>">
+                                <input type="hidden" name="decision" value="accept">
+                                <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Accept</span></span></button>
+                            </form>
+                            <form method="post">
+                                <input type="hidden" name="action" value="respond_owner_assignment">
+                                <input type="hidden" name="assignment_id" value="<?= (int) $assignment['id'] ?>">
+                                <input type="hidden" name="decision" value="decline">
+                                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Decline</span></span></button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <?php renderPagination($pendingAssignmentsPagination); ?>
+        </section>
+    <?php endif; ?>
+
+    <section class="grid xl:grid-cols-12 gap-3">
+        <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Monthly trend</h2>
+                    <p class="dashboard-section-copy mt-1">Income and expense totals by month.</p>
+                </div>
+                <div class="dashboard-stamp"><?= $recentReportCount ?> recent reports tracked</div>
+            </div>
+            <div class="dashboard-metric-grid mb-3">
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value text-red-300">₱<?= number_format($kpiExpense, 2) ?></div>
+                    <div class="dashboard-metric-label">Expense total</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value"><?= count($activityPreview) ?></div>
+                    <div class="dashboard-metric-label">Activity items loaded</div>
+                </div>
+                <div class="dashboard-metric-card">
+                    <div class="dashboard-metric-value"><?= $latestAnnouncementCount ?></div>
+                    <div class="dashboard-metric-label">Announcement highlights</div>
+                </div>
+            </div>
+            <canvas id="trendChart" height="112"></canvas>
+            <div class="trend-insight-grid mt-5 grid md:grid-cols-3 gap-2">
+                <div class="dashboard-feed-item trend-insight-card">
+                    <span class="dashboard-feed-dot"></span>
+                    <div>
+                        <div class="dashboard-feed-title">Current month net</div>
+                        <div class="dashboard-feed-meta mt-1 <?= $latestTrendNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">
+                            ₱<?= number_format($latestTrendNet, 2) ?>
+                        </div>
+                        <div class="dashboard-feed-body mt-1"><?= e($latestTrendDirectionLabel) ?></div>
+                    </div>
+                </div>
+                <div class="dashboard-feed-item trend-insight-card">
+                    <span class="dashboard-feed-dot warn"></span>
+                    <div>
+                        <div class="dashboard-feed-title">Peak expense month</div>
+                        <div class="dashboard-feed-meta mt-1"><?= e($peakExpenseMonth) ?></div>
+                        <div class="dashboard-feed-body mt-1">₱<?= number_format($peakExpenseValue, 2) ?> spent</div>
+                    </div>
+                </div>
+                <div class="dashboard-feed-item trend-insight-card">
+                    <span class="dashboard-feed-dot"></span>
+                    <div>
+                        <div class="dashboard-feed-title">Healthy months</div>
+                        <div class="dashboard-feed-meta mt-1"><?= $healthyMonthCount ?> of <?= $trendPointCount ?></div>
+                        <div class="dashboard-feed-body mt-1">Months where income met or exceeded expense.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Live activity</h2>
+                    <p class="dashboard-section-copy mt-1">Recent announcements and audit items.</p>
+                </div>
+                <button type="button" id="openAnnouncementsModalQuick" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
+            </div>
+            <div class="space-y-2">
+                <?php foreach ($latestAnnouncementsPreview as $item): ?>
+                    <?php $feedDotClass = (int) ($item['is_pinned'] ?? 0) === 1 ? 'dashboard-feed-dot warn' : 'dashboard-feed-dot'; ?>
+                    <div class="dashboard-feed-item">
+                        <span class="<?= e($feedDotClass) ?>"></span>
+                        <div>
+                            <div class="dashboard-feed-title"><?= e($item['title']) ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                            <div class="dashboard-feed-body mt-1"><?= e($item['content']) ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <?php foreach ($activityPreview as $item): ?>
+                    <div class="dashboard-feed-item">
+                        <span class="dashboard-feed-dot"></span>
+                        <div>
+                            <div class="dashboard-feed-title"><?= e($item['label']) ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['type']) ?> · <?= e($item['created_at']) ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (count($latestAnnouncementsPreview) === 0 && count($activityPreview) === 0): ?>
+                    <p class="dashboard-section-copy">No recent announcements or activity items are available.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Organizations</h2>
+                    <p class="dashboard-section-copy mt-1">Current organizations and join eligibility.</p>
+                </div>
+                <button type="button" id="openOrganizationsModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
+            </div>
+            <div class="space-y-2">
+                <?php foreach ($dashboardOrganizationsPreview as $org): ?>
+                    <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                            <div class="dashboard-feed-title"><?= e($org['name']) ?></div>
+                            <div class="dashboard-feed-body mt-1"><?= e($org['description']) ?></div>
+                            <div class="dashboard-feed-meta mt-2">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                        </div>
+                        <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                            <form method="post">
+                                <input type="hidden" name="action" value="join_org">
+                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                <?php
+                                    $orgId = (int) $org['id'];
+                                    $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                                    $isJoined = in_array($orgId, $joinedIds, true);
+                                    $canJoin = canUserJoinOrganization($org, $user);
+                                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                    if (!$canJoin) {
+                                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                        $label = getJoinRestrictionLabel($org);
+                                    } elseif ($isJoined) {
+                                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                        $label = 'Joined';
+                                    } elseif ($requestStatus === 'pending') {
+                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                        $label = 'Requested';
+                                    } else {
+                                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                        $label = 'Request Join';
+                                    }
+                                ?>
+                                <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                    <?= $label ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4 overflow-hidden">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Recent reports</h2>
+                    <p class="dashboard-section-copy mt-1">Latest income and expense entries with receipt visibility.</p>
+                </div>
+                <div class="dashboard-stamp">Showing <?= $recentReportCount ?> latest items</div>
+            </div>
+            <table class="dashboard-table w-full text-sm table-fixed">
+                <thead>
+                <tr class="border-b text-left">
+                    <th class="py-2 w-[20%]">Date</th>
+                    <th class="w-[30%]">Organization</th>
+                    <th class="w-[16%]">Type</th>
+                    <th class="w-[20%]">Amount</th>
+                    <th class="w-[14%]">Receipt</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($transactions as $tx): ?>
+                    <tr class="border-b">
+                        <td class="py-2"><?= e($tx['transaction_date']) ?></td>
+                        <td><?= e($tx['organization_name']) ?></td>
+                        <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
+                        <td>₱<?= number_format((float) $tx['amount'], 2) ?></td>
+                        <td>
+                            <?php if (!empty($tx['receipt_path'])): ?>
+                                <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
+                            <?php else: ?>
+                                <span class="text-gray-400">-</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="glass dashboard-panel xl:col-span-12 p-4 md:p-4 overflow-hidden">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
+                <div>
+                    <h2 class="dashboard-section-title">Financial summary by organization</h2>
+                    <p class="dashboard-section-copy mt-1">Income, expense, and balance grouped by organization.</p>
+                </div>
+                <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View charts</span></span></button>
+            </div>
+            <div>
+                <table class="dashboard-table w-full text-sm table-fixed">
+                    <thead>
+                    <tr class="border-b text-left">
+                        <th class="py-2 pr-4 w-[46%]">Organization</th>
+                        <th class="py-2 pr-3 w-[18%]">Income</th>
+                        <th class="py-2 pr-3 w-[18%]">Expense</th>
+                        <th class="py-2 w-[18%]">Balance</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($summary as $row): ?>
+                        <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
+                        <tr class="border-b">
+                            <td class="py-2 pr-4"><?= e($row['name']) ?></td>
+                            <td class="py-2 pr-3 text-green-700 whitespace-nowrap">₱<?= number_format((float) $row['total_income'], 2) ?></td>
+                            <td class="py-2 pr-3 text-red-700 whitespace-nowrap">₱<?= number_format((float) $row['total_expense'], 2) ?></td>
+                            <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">₱<?= number_format($balance, 2) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pt-3">
+                <?php renderPagination($summaryPagination); ?>
+            </div>
+        </div>
+    </section>
+
+    <div id="organizationsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="organizationsModalTitle">
+        <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
+            <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+                <h3 id="organizationsModalTitle" class="text-lg font-semibold">All Organizations</h3>
+                <button type="button" id="closeOrganizationsModal" class="px-2 py-1 rounded border text-sm">Close</button>
+            </div>
+            <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
+                <?php foreach ($orgs as $org): ?>
+                    <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                        <div>
+                            <div class="font-medium"><?= e($org['name']) ?></div>
+                            <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
+                            <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                        </div>
+                        <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                            <form method="post">
+                                <input type="hidden" name="action" value="join_org">
+                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                <?php
+                                    $orgId = (int) $org['id'];
+                                    $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                                    $isJoined = in_array($orgId, $joinedIds, true);
+                                    $canJoin = canUserJoinOrganization($org, $user);
+                                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                    if (!$canJoin) {
+                                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                        $label = getJoinRestrictionLabel($org);
+                                    } elseif ($isJoined) {
+                                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                        $label = 'Joined';
+                                    } elseif ($requestStatus === 'pending') {
+                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                        $label = 'Requested';
+                                    } else {
+                                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                        $label = 'Request Join';
+                                    }
+                                ?>
+                                <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                    <?= $label ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <div id="announcementsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="announcementsModalTitle">
+        <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
+            <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+                <h3 id="announcementsModalTitle" class="text-lg font-semibold">All Latest Announcements</h3>
+                <button type="button" id="closeAnnouncementsModal" class="px-2 py-1 rounded border text-sm">Close</button>
+            </div>
+            <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
+                <?php foreach ($announcements as $item): ?>
+                    <div class="border rounded p-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="font-medium"><?= e($item['title']) ?></div>
+                            <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                        <div class="text-sm mt-1"><?= e($item['content']) ?></div>
+                        <?php if (($user['role'] ?? '') === 'admin'): ?>
+                            <form method="post" class="mt-2">
+                                <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
+                                <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
+                                <input type="hidden" name="return_page" value="dashboard">
+                                <button class="px-2 py-1 rounded text-xs border">
+                                    <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+                <?php if (count($announcements) === 0): ?>
+                    <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <div id="financialSummaryModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="financialSummaryModalTitle">
+        <div class="glass w-full max-w-6xl overflow-hidden">
+            <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+                <h3 id="financialSummaryModalTitle" class="text-lg font-semibold">Financial Health Snapshot</h3>
+                <button type="button" id="closeFinancialSummaryModal" class="px-2 py-1 rounded border text-sm">Close</button>
+            </div>
+            <div class="p-3 space-y-2 max-h-[calc(100dvh-8.5rem)] overflow-y-auto themed-scroll pr-1">
+                <div class="grid md:grid-cols-3 gap-1">
+                    <div class="dashboard-metric-card">
+                        <div class="dashboard-metric-value text-green-300">₱<?= number_format($summaryIncomeTotal, 2) ?></div>
+                        <div class="dashboard-metric-label">Total income (all organizations)</div>
+                    </div>
+                    <div class="dashboard-metric-card">
+                        <div class="dashboard-metric-value text-red-300">₱<?= number_format($summaryExpenseTotal, 2) ?></div>
+                        <div class="dashboard-metric-label">Total expense (all organizations)</div>
+                    </div>
+                    <div class="dashboard-metric-card">
+                        <div class="dashboard-metric-value <?= $summaryNetTotal >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($summaryNetTotal, 2) ?></div>
+                        <div class="dashboard-metric-label">Net balance (all organizations)</div>
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-2">
+                    <div class="glass p-2 w-full h-full flex flex-col">
+                        <h4 class="dashboard-section-title">Top Organizations by Net Balance</h4>
+                        <p class="dashboard-section-copy mt-1">Higher bars indicate stronger surplus after expenses.</p>
+                        <canvas id="financialSummaryRankingChart" height="165"></canvas>
+                        <div class="mt-2 grid sm:grid-cols-3 gap-1">
+                            <div class="dashboard-feed-item trend-insight-card">
+                                <div>
+                                    <div class="dashboard-feed-title">Top performer</div>
+                                    <div class="dashboard-feed-meta mt-1"><?= e((string) ($topPerformer['name'] ?? 'N/A')) ?></div>
+                                    <div class="dashboard-feed-body mt-1 text-green-300">₱<?= number_format((float) ($topPerformer['balance'] ?? 0), 2) ?></div>
+                                </div>
+                            </div>
+                            <div class="dashboard-feed-item trend-insight-card">
+                                <div>
+                                    <div class="dashboard-feed-title">Highest spend pressure</div>
+                                    <div class="dashboard-feed-meta mt-1"><?= e((string) ($highestPressure['name'] ?? 'N/A')) ?></div>
+                                    <div class="dashboard-feed-body mt-1"><?= (int) round(((float) ($highestPressure['expense_ratio'] ?? 0)) * 100) ?>% expense ratio</div>
+                                </div>
+                            </div>
+                            <div class="dashboard-feed-item trend-insight-card">
+                                <div>
+                                    <div class="dashboard-feed-title">Average net</div>
+                                    <div class="dashboard-feed-meta mt-1">Across <?= count($summaryRankingRows) ?> organizations</div>
+                                    <div class="dashboard-feed-body mt-1 <?= $averageNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($averageNet, 2) ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass p-2 w-full h-full space-y-2">
+                        <div>
+                            <h4 class="dashboard-section-title">Organization Priority List</h4>
+                            <p class="dashboard-section-copy mt-1">Status reflects spending pressure and current balance.</p>
+                        </div>
+                        <div class="space-y-1.5">
+                            <?php foreach (array_slice($summaryRankingRows, 0, 4) as $row): ?>
+                                <div class="dashboard-feed-item trend-insight-card items-center justify-between">
+                                    <div>
+                                        <div class="dashboard-feed-title"><?= e($row['name']) ?></div>
+                                        <div class="dashboard-feed-meta mt-1">Net: ₱<?= number_format((float) $row['balance'], 2) ?></div>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full border text-[11px] font-medium <?= e($row['status_class']) ?>"><?= e($row['status']) ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div>
+                            <div class="dashboard-section-title">Needs Attention</div>
+                            <div class="mt-1 space-y-1">
+                                <?php if (count($summaryAttentionRows) === 0): ?>
+                                    <p class="dashboard-section-copy">No organizations are currently flagged for risk or heavy spend pressure.</p>
+                                <?php else: ?>
+                                    <?php foreach ($summaryAttentionRows as $row): ?>
+                                        <div class="dashboard-feed-meta"><?= e($row['name']) ?> · Expense ratio <?= (int) round($row['expense_ratio'] * 100) ?>%</div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

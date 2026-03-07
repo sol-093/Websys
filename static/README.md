@@ -74,10 +74,10 @@ Key syntax used:
 ## How to run
 
 From XAMPP:
-- Open: `http://localhost/websys/static/system-static-demo.html`
+- Open: `http://localhost/websys/static/demo/system-static-demo.html`
 
 From file explorer (direct file open):
-- Open `static/system-static-demo.html` in a browser.
+- Open `static/demo/system-static-demo.html` in a browser.
 
 ## Notes
 
