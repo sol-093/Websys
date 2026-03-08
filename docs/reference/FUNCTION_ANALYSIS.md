@@ -40,6 +40,8 @@ This file returns the runtime configuration array.
 
 - **`ensureAcademicAndVisibilityColumns(PDO $pdo)`**: ensures `users.institute/program` and organization visibility columns exist.
 - **`ensureAnnouncementPinColumns(PDO $pdo)`**: ensures announcement pinning columns (`is_pinned`, `pinned_at`) exist.
+- **`ensureAuthEnhancementColumns(PDO $pdo)`**: ensures auth/security columns (verification, reset token, account status, login metadata) exist.
+- **`ensureAuthEnhancementTables(PDO $pdo)`**: ensures supporting auth tables (`user_sessions`, `login_history`, `password_history`, `security_notifications`) exist.
 - **`tableColumnExists(PDO $pdo, string $table, string $column)`**: checks for column existence in MySQL or SQLite.
 - **`ensureDefaultAdmin(PDO $pdo)`**: auto-creates default admin account when none exists.
 
@@ -51,7 +53,7 @@ Used by: the full application at startup (`index.php` includes `src/db.php`).
 
 ### Authentication and Authorization
 
-- **`currentUser()`**: returns current session user (`id`, `name`, `email`, `role`, `institute`, `program`) or `null`.
+- **`currentUser()`**: returns current session user (`id`, `name`, `email`, `role`, `institute`, `program`, `email_verified`, `account_status`, `created_at`) or `null`.
   - Includes role integrity check: owner users without owned orgs are downgraded to student.
 - **`requireLogin()`**: redirects to login page when user is not authenticated.
 - **`requireRole(array $roles)`**: enforces role whitelist, otherwise redirects with error flash.
@@ -66,8 +68,14 @@ Used by: admin and owner workflows throughout `index.php`.
 
 - **`handleGoogleLoginPage(array $config)`**: initiates Google OAuth flow and redirects to provider URL.
 - **`handleGoogleCallbackPage(PDO $db, array $config)`**: validates OAuth callback, upserts user, creates session, and redirects.
-- **`handleRegisterAction(PDO $db)`**: handles registration validation, throttling, and user creation.
-- **`handleLoginAction(PDO $db)`**: handles credential validation, throttling, and session login.
+- **`handleRegisterAction(PDO $db)`**: handles registration validation, creates user, and sends activation email.
+- **`handleLoginAction(PDO $db)`**: handles credentials, status checks, verification checks, throttling, and session login.
+- **`handleVerifyEmailAction(PDO $db)`**: verifies activation token and marks email as verified.
+- **`handleResendVerificationAction(PDO $db)`**: resends activation link with rate limiting.
+- **`handleForgotPasswordAction(PDO $db)`**: generates reset token and sends reset email.
+- **`handleResetPasswordAction(PDO $db)`**: validates reset token, updates password hash, clears token, logs reset.
+- **`handleChangePasswordAction(PDO $db, array $user)`**: validates current password and updates password hash for logged-in user.
+- **`handleUpdateProfileAction(PDO $db, array $user)`**: updates name/email; email changes trigger re-verification workflow.
 
 Used by: route/action dispatch in `index.php` to keep main controller concise.
 
@@ -254,8 +262,11 @@ Used by: POST action dispatch in `index.php`.
 
 - **`handleLogoutPage()`**: destroys session and redirects to home.
 - **`handleHomePage(PDO $db, ?array $user)`**: renders landing page with organization preview.
-- **`handleLoginPage(array $config)`**: renders login page (with Google OAuth button support).
+- **`handleLoginPage(array $config)`**: renders login page (Google OAuth and resend-verification support).
 - **`handleRegisterPage()`**: renders registration page.
+- **`handleVerifyEmailPage()`**: email verification result screen.
+- **`handleForgotPasswordPage()`**: forgot-password request screen.
+- **`handleResetPasswordPage()`**: password reset screen.
 
 Used by: GET page route dispatch in `index.php`.
 
@@ -281,6 +292,7 @@ Used by: GET page route dispatch in `index.php`.
 
 - **`handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff)`**: announcement feed with slider and pin controls.
 - **`handleOrganizationsPage(PDO $db, array $user)`**: all-organizations listing with join request status/action UI.
+- **`handleProfilePage(array $user)`**: profile settings page with account summary, organization info, and change-password modal.
 
 Used by: GET page route dispatch in `index.php`.
 
@@ -290,7 +302,7 @@ Used by: GET page route dispatch in `index.php`.
 
 ### Owner Page Handlers
 
-- **`handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff)`**: owner-facing `my_org` page renderer (pending join requests, org updates, announcements, transactions, and request history).
+- **`handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff)`**: owner-facing `my_org` page renderer (pending join requests, org updates, announcements, transactions, request history, plus transaction type/date filters).
 
 Used by: GET page route dispatch in `index.php`.
 

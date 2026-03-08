@@ -174,3 +174,299 @@ function handleOrganizationsPage(PDO $db, array $user): void
     renderFooter();
     exit;
 }
+
+function handleProfilePage(array $user): void
+{
+    global $db;
+    
+    // Get owned organization
+    $ownedOrg = null;
+    if ($user['role'] === 'owner' || $user['role'] === 'admin') {
+        $stmt = $db->prepare('SELECT name, org_category, created_at FROM organizations WHERE owner_id = ? LIMIT 1');
+        $stmt->execute([(int) $user['id']]);
+        $ownedOrg = $stmt->fetch();
+    }
+    
+    // Get joined organizations
+    $stmt = $db->prepare('
+        SELECT o.name, o.org_category, om.joined_at 
+        FROM organization_members om
+        JOIN organizations o ON o.id = om.organization_id
+        WHERE om.user_id = ?
+        ORDER BY om.joined_at DESC
+    ');
+    $stmt->execute([(int) $user['id']]);
+    $joinedOrgs = $stmt->fetchAll();
+    
+    renderHeader('My Profile');
+    ?>
+    <section class="glass p-6 max-w-4xl mx-auto">
+        <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('user', 'ui-icon') ?><span>My Profile</span></h1>
+        <p class="text-sm text-slate-600 mb-4">Manage your account settings and preferences</p>
+        
+        <?php $flash = getFlash(); if ($flash && $flash['type'] === 'success'): ?>
+            <div class="mb-3 p-4 bg-green-50 border border-green-200 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <?= uiIcon('approved', 'ui-icon ui-icon-sm text-green-500') ?>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-green-800"><?php echo htmlspecialchars((string) $flash['message']); ?></p>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($flash && $flash['type'] === 'error'): ?>
+            <div class="mb-3 p-4 bg-red-50 border border-red-200 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <?= uiIcon('rejected', 'ui-icon ui-icon-sm text-red-500') ?>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800"><?php echo htmlspecialchars((string) $flash['message']); ?></p>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+        
+        <form action="?page=profile" method="POST" class="space-y-5">
+                <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+                <input type="hidden" name="action" value="update_profile">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-slate-700">Full Name</label>
+                        <input type="text" 
+                               id="name" 
+                               name="name" 
+                               value="<?php echo htmlspecialchars($user['name']); ?>"
+                               required
+                               class="w-full border rounded px-3 py-2">
+                    </div>
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700">Email Address</label>
+                        <input type="email" 
+                               id="email" 
+                               name="email" 
+                               value="<?php echo htmlspecialchars($user['email']); ?>"
+                               required
+                               class="w-full border rounded px-3 py-2">
+                        <p class="mt-1 text-xs text-slate-600">Changing your email will require re-verification.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Role</label>
+                            <p class="mt-1 text-sm text-slate-900 capitalize font-medium"><?php echo htmlspecialchars($user['role']); ?></p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Account Status</label>
+                            <p class="mt-1 text-sm">
+                                <?php 
+                                $status = $user['account_status'] ?? 'active';
+                                $statusColors = [
+                                    'active' => 'text-white bg-emerald-700',
+                                    'pending' => 'text-slate-900 bg-amber-300',
+                                    'suspended' => 'text-white bg-red-600',
+                                    'banned' => 'text-white bg-red-800'
+                                ];
+                                $colorClass = $statusColors[$status] ?? 'text-white bg-slate-700';
+                                ?>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold <?php echo $colorClass; ?>">
+                                    <?php echo ucfirst($status); ?>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Email Verified</label>
+                            <p class="mt-1 text-sm">
+                                <?php if ((int)($user['email_verified'] ?? 0) === 1): ?>
+                                    <span class="inline-flex items-center text-emerald-700 icon-label">
+                                        <?= uiIcon('approved', 'ui-icon ui-icon-sm') ?>
+                                        <span>Verified</span>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="inline-flex items-center text-amber-700 icon-label">
+                                        <?= uiIcon('pending', 'ui-icon ui-icon-sm') ?>
+                                        <span>Not Verified</span>
+                                    </span>
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700">Member Since</label>
+                            <p class="mt-1 text-sm text-slate-900 font-medium">
+                                <?php 
+                                $createdAt = $user['created_at'] ?? 'Unknown';
+                                if ($createdAt !== 'Unknown') {
+                                    $date = new DateTime($createdAt);
+                                    echo htmlspecialchars($date->format('F j, Y'));
+                                } else {
+                                    echo 'Unknown';
+                                }
+                                ?>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Organization Information -->
+                    <div class="mt-6 pt-6 border-t border-emerald-200/40">
+                        <h3 class="text-sm font-semibold text-slate-900 mb-4 icon-label"><?= uiIcon('orgs', 'ui-icon ui-icon-sm') ?><span>Organization Information</span></h3>
+                        
+                        <?php if ($ownedOrg): ?>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Owned Organization</label>
+                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/50">
+                                    <p class="text-sm font-semibold text-emerald-900">
+                                        <?php echo htmlspecialchars($ownedOrg['name']); ?>
+                                    </p>
+                                    <p class="text-xs text-emerald-700 mt-1">
+                                        <?php echo htmlspecialchars($ownedOrg['org_category']); ?>
+                                        • Created <?php 
+                                            $orgDate = new DateTime($ownedOrg['created_at']);
+                                            echo htmlspecialchars($orgDate->format('F j, Y'));
+                                        ?>
+                                    </p>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Joined Organizations</label>
+                            <?php if (count($joinedOrgs) > 0): ?>
+                                <div class="space-y-2">
+                                    <?php foreach ($joinedOrgs as $org): ?>
+                                        <div class="p-3 rounded-xl bg-white/10 border border-emerald-100/25">
+                                            <p class="text-sm font-medium text-slate-900">
+                                                <?php echo htmlspecialchars($org['name']); ?>
+                                            </p>
+                                            <p class="text-xs text-slate-600 mt-1">
+                                                <?php echo htmlspecialchars($org['org_category']); ?>
+                                                • Joined <?php 
+                                                    $joinDate = new DateTime($org['joined_at']);
+                                                    echo htmlspecialchars($joinDate->format('F j, Y'));
+                                                ?>
+                                            </p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <p class="text-sm text-slate-600 italic">You haven't joined any organizations yet.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex flex-col sm:flex-row gap-3">
+                    <button type="submit"
+                            class="bg-emerald-600 text-white px-4 py-2 rounded font-semibold">
+                        <span class="icon-label justify-center"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Update Profile</span></span>
+                    </button>
+                    <button type="button"
+                            id="changePasswordBtn"
+                            class="border border-emerald-200/50 text-emerald-800 px-4 py-2 rounded hover:bg-white/30">
+                        <span class="icon-label justify-center"><?= uiIcon('security', 'ui-icon ui-icon-sm') ?><span>Change Password</span></span>
+                    </button>
+                </div>
+            </form>
+    </section>
+        
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="hidden fixed inset-0 bg-slate-900/50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto max-w-md">
+            <div class="glass p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-slate-900 icon-label"><?= uiIcon('security', 'ui-icon') ?><span>Change Password</span></h3>
+                    <button type="button" id="closeModalBtn" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
+                </div>
+                
+                <form action="?page=profile" method="POST">
+                    <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+                    <input type="hidden" name="action" value="change_password">
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label for="current_password" class="block text-sm font-medium text-slate-700">Current Password</label>
+                            <input type="password" 
+                                   id="current_password" 
+                                   name="current_password" 
+                                   required
+                                   class="w-full border rounded px-3 py-2">
+                        </div>
+                        
+                        <div>
+                            <label for="new_password" class="block text-sm font-medium text-slate-700">New Password</label>
+                            <input type="password" 
+                                   id="new_password" 
+                                   name="new_password" 
+                                   required
+                                   minlength="8"
+                                   class="w-full border rounded px-3 py-2">
+                            <p class="mt-1 text-xs text-slate-600">At least 8 characters</p>
+                        </div>
+                        
+                        <div>
+                            <label for="confirm_password" class="block text-sm font-medium text-slate-700">Confirm New Password</label>
+                            <input type="password" 
+                                   id="confirm_password" 
+                                   name="confirm_password" 
+                                   required
+                                   minlength="8"
+                                   class="w-full border rounded px-3 py-2">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex gap-2">
+                        <button type="submit"
+                                class="flex-1 bg-emerald-600 text-white px-3 py-2 rounded font-semibold">
+                            <span class="icon-label justify-center"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Change Password</span></span>
+                        </button>
+                        <button type="button"
+                                id="cancelModalBtn"
+                                class="flex-1 border border-slate-300 text-slate-700 px-3 py-2 rounded">
+                            <span class="icon-label justify-center"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Cancel</span></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+        
+        <script>
+        // Change Password Modal Handlers
+        const modal = document.getElementById('changePasswordModal');
+        const openBtn = document.getElementById('changePasswordBtn');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelModalBtn');
+        
+        openBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+        </script>
+    </section>
+    <?php
+    renderFooter();
+    exit;
+}

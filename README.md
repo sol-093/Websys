@@ -3,7 +3,7 @@
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
 Version: 1.0.0  
-Last Updated: March 7, 2026
+Last Updated: March 8, 2026
 
 Recent Updates:
 - Dashboard redesign with KPI cards, trend charts, and modal drill-downs
@@ -14,6 +14,10 @@ Recent Updates:
 - Announcement pin/unpin support for admin
 - Audit logging for critical actions
 - Google OAuth login option
+- Email verification flow (verify/resend) for newly registered users
+- Password recovery flow (forgot/reset) with token expiry and email notifications
+- Profile management page with modal change-password flow (non-admin accounts only)
+- Owner transaction history filter by type (all/income/expense) and date sort
 
 ---
 
@@ -240,6 +244,9 @@ Authentication
 - Email/password registration and login
 - Google OAuth login (optional)
 - Logout with session cleanup
+- Email verification requirement for unverified accounts
+- Forgot/reset password flow with secure reset tokens
+- Profile update and password change (owner/student accounts)
 
 Dashboard
 - KPI cards (income, expense, balance)
@@ -379,6 +386,7 @@ Authentication and Sessions
 - Password verification with `password_verify()`
 - Session ID regeneration after login
 - Role guards via `requireRole()`
+- Account status checks on login (`active`, `suspended`, `banned`)
 
 CSRF Protection
 
@@ -388,6 +396,8 @@ Rate Limiting
 
 - Login attempt throttling
 - Registration attempt throttling
+- Resend verification throttling
+- Forgot-password request throttling
 
 Validation and Upload Security
 
@@ -399,6 +409,7 @@ Validation and Upload Security
 Auditability
 
 - Important user and admin actions logged to `audit_logs`
+- Password changes and resets logged with notification support
 
 ---
 
@@ -409,6 +420,9 @@ Page Routes (`GET ?page=`)
 - `home`
 - `login`
 - `register`
+- `verify_email`
+- `forgot_password`
+- `reset_password`
 - `dashboard` (default after login)
 - `admin_orgs`
 - `admin_students`
@@ -417,6 +431,7 @@ Page Routes (`GET ?page=`)
 - `announcements`
 - `organizations`
 - `my_org`
+- `profile` (not available to admins)
 - `google_login`
 - `google_callback`
 - `logout`
@@ -426,6 +441,11 @@ Form Actions (`POST action=`)
 Authentication
 - `register`
 - `login`
+- `resend_verification`
+- `forgot_password`
+- `reset_password`
+- `change_password`
+- `update_profile`
 
 Admin
 - `create_org`

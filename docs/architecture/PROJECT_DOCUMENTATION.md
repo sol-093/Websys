@@ -147,7 +147,24 @@ Primary Tables
   - `id`, `name`, `email`, `password_hash`
   - `role` (`admin`, `student`, `owner`)
   - `institute`, `program`
+  - `email_verified`, `email_verified_at`
+  - `activation_token`, `activation_expires`
+  - `reset_token`, `reset_expires`
+  - `account_status`, `password_changed_at`
+  - `last_login_at`, `last_login_ip`
   - `created_at`
+
+`user_sessions`
+- Purpose: track active/remembered user sessions
+
+`login_history`
+- Purpose: record login successes/failures and context
+
+`password_history`
+- Purpose: track historical password hashes for audit/security controls
+
+`security_notifications`
+- Purpose: track generated account security notifications
 
 `organizations`
 - Purpose: organization profiles and ownership
@@ -220,6 +237,9 @@ Authentication and Access
 - Email/password login
 - Optional Google OAuth login
 - Logout and session reset
+- Email verification before first login
+- Password recovery (forgot/reset)
+- Profile management and change-password (non-admin users)
 
 Dashboard
 - KPI overview cards (income, expense, net)
@@ -260,6 +280,7 @@ Owner Features (`?page=my_org`)
 - Update organization profile
 - Create/delete announcements
 - Add transaction entries with optional receipt upload
+- Filter transaction history by `type` and sort by `transaction_date`
 - Request update/delete for existing transactions
 - Review request statuses
 - Process pending membership requests
@@ -280,6 +301,7 @@ Admin
 - Full administrative access in this project
 - Can manage organizations, owners, approval queues, and audit logs
 - Can pin/unpin announcements
+- Profile settings route is intentionally unavailable to admin accounts
 
 Owner
 - Can manage assigned organization content
@@ -302,6 +324,9 @@ Page Routes (GET `?page=`)
 - `home`
 - `login`
 - `register`
+- `verify_email`
+- `forgot_password`
+- `reset_password`
 - `dashboard`
 - `admin_orgs`
 - `admin_students`
@@ -310,6 +335,7 @@ Page Routes (GET `?page=`)
 - `announcements`
 - `organizations`
 - `my_org`
+- `profile` (owner/student only)
 - `google_login`
 - `google_callback`
 - `logout`
@@ -319,6 +345,11 @@ Form Actions (POST `action=`)
 Authentication:
 - `register`
 - `login`
+- `resend_verification`
+- `forgot_password`
+- `reset_password`
+- `change_password`
+- `update_profile`
 
 Admin:
 - `create_org`
@@ -530,4 +561,4 @@ Checks:
 ---
 
 Document Version: 1.0.0  
-Last Updated: March 7, 2026
+Last Updated: March 8, 2026

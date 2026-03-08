@@ -84,16 +84,33 @@ function handleLoginPage(array $config): void
 {
     renderHeader('Login');
     $googleLoginReady = googleOauthEnabled($config);
+    $showResend = isset($_GET['show_resend']);
+    $pendingEmail = (string) ($_SESSION['pending_verification_email'] ?? '');
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
         <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('login', 'ui-icon') ?><span>Welcome back</span></h1>
         <p class="text-sm text-slate-600 mb-4">Sign in to continue to your organization dashboard.</p>
         <form method="post" class="space-y-3">
             <input type="hidden" name="action" value="login">
+            <input type="hidden" name="_csrf" value="<?= csrfToken() ?>">
             <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
             <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
             <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full"><span class="icon-label justify-center"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Login</span></span></button>
         </form>
+        <?php if ($showResend): ?>
+            <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                <p class="text-sm text-amber-800 mb-2">Didn't receive the verification email?</p>
+                <form method="post" class="space-y-2">
+                    <input type="hidden" name="action" value="resend_verification">
+                    <input type="hidden" name="_csrf" value="<?= csrfToken() ?>">
+                    <input name="email" type="email" placeholder="Your email" value="<?= e($pendingEmail) ?>" required class="w-full border rounded px-3 py-2 text-sm">
+                    <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full text-sm"><span class="icon-label justify-center"><?= uiIcon('refresh', 'ui-icon ui-icon-sm') ?><span>Resend Verification Email</span></span></button>
+                </form>
+            </div>
+        <?php endif; ?>
+        <div class="mt-4 text-center">
+            <a href="?page=forgot_password" class="text-sm text-indigo-700 hover:underline">Forgot your password?</a>
+        </div>
         <?php if ($googleLoginReady): ?>
             <div class="my-3 text-center text-gray-500 text-sm">or</div>
             <a href="?page=google_login" class="block w-full border rounded px-4 py-2 text-center hover:bg-gray-50 font-medium">
@@ -131,7 +148,7 @@ function handleRegisterPage(): void
                     <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="mt-1">
                     <label for="privacyConsent" class="text-sm text-slate-700">
                         I agree to the
-                        <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline"><span class="icon-label"><?= uiIcon('audit', 'ui-icon ui-icon-sm') ?><span>Data Privacy Consent</span></span></button>.
+                        <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">Data Privacy Consent</button>.
                     </label>
                 </div>
             </div>
@@ -146,10 +163,12 @@ function handleRegisterPage(): void
                 <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
             </div>
             <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
-                <p>By creating an account, you agree that this system may collect and process your personal data, such as your name, email address, role, organization memberships, and activity records, for account management and transparency reporting.</p>
-                <p>Your data is used only for legitimate school organization operations, including authentication, organization management, announcement publishing, and finance report visibility.</p>
-                <p>Your information is stored securely and access is limited based on system roles (admin, owner, student). We do not intentionally share your personal data with unauthorized third parties.</p>
-                <p>You may request correction of inaccurate profile data through the system administrator. By proceeding, you confirm that the information you submit is accurate and that you consent to this processing.</p>
+                <p>By selecting "I Agree" and creating an account, you expressly provide your informed and voluntary consent to the collection, use, storage, and other processing of your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173), its Implementing Rules and Regulations, and related issuances of the National Privacy Commission.</p>
+                <p>The platform may collect and process personal information, including your full name, email address, academic program or institute, account role, organization memberships, submitted records, and system-generated activity logs. Such processing is undertaken for legitimate and specified purposes, including account registration and authentication, access control, platform security, organization administration, publication of authorized announcements, financial transparency reporting, and compliance with applicable institutional policies.</p>
+                <p>Personal data is processed only by authorized personnel and administrators on a strict need-to-know basis. Appropriate organizational, physical, and technical safeguards are implemented to protect information against unauthorized access, disclosure, alteration, misuse, accidental loss, or destruction.</p>
+                <p>Personal data is retained only for as long as necessary to fulfill the declared and lawful purposes, satisfy legal and regulatory obligations, resolve disputes, and enforce applicable terms and policies. Upon lapse of the applicable retention period, data shall be securely disposed of, anonymized, or archived, as permitted by law and institutional policy.</p>
+                <p>As a data subject, you may exercise your rights to be informed, to access, to object, to rectify, to erasure or blocking, to data portability, and to lodge a complaint with the National Privacy Commission, subject to lawful limitations and due process requirements. You may also withdraw your consent at any time; however, such withdrawal may affect your continued access to certain platform features or services.</p>
+                <p>For privacy-related inquiries, requests, or concerns, you may contact the system administrator or the institution's designated Data Protection Officer.</p>
             </div>
             <div class="mt-4 flex justify-end gap-2">
                 <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Close</span></span></button>
@@ -194,6 +213,156 @@ function handleRegisterPage(): void
             });
         })();
     </script>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function handleVerifyEmailPage(): void
+{
+    global $db;
+    
+    $token = $_GET['token'] ?? '';
+    $success = false;
+    $error = '';
+    
+    if ($token) {
+        $result = handleVerifyEmailAction($db, $token);
+        $success = $result['success'];
+        $error = $result['error'] ?? '';
+    } else {
+        $error = 'No verification token provided.';
+    }
+    
+    renderHeader('Email Verification');
+    ?>
+    <div class="max-w-md mx-auto glass p-6 mt-8">
+        <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('verify', 'ui-icon') ?><span>Email Verification</span></h1>
+        <p class="text-sm text-slate-600 mb-4">Verifying your email address...</p>
+        
+        <?php if ($success): ?>
+            <div class="mb-3 p-4 bg-green-50 border border-green-200 rounded">
+                <h3 class="text-sm font-semibold text-green-800 mb-2 icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Email Verified Successfully!</span></h3>
+                <p class="text-sm text-green-700 mb-3">Your email has been verified. You can now log in to your account.</p>
+                <a href="?page=login" class="text-sm font-medium text-green-800 hover:underline">
+                    Go to Login →
+                </a>
+            </div>
+        <?php else: ?>
+            <div class="mb-3 p-4 bg-red-50 border border-red-200 rounded">
+                <h3 class="text-sm font-semibold text-red-800 mb-2">Verification Failed</h3>
+                <p class="text-sm text-red-700 mb-3"><?php echo htmlspecialchars($error); ?></p>
+                <a href="?page=login&show_resend=1" class="text-sm font-medium text-red-800 hover:underline">
+                    Request New Verification Link →
+                </a>
+            </div>
+        <?php endif; ?>
+        
+        <div class="mt-4 text-center">
+            <a href="?page=login" class="text-sm text-indigo-700 hover:underline">Back to Login</a>
+        </div>
+    </div>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function handleForgotPasswordPage(): void
+{
+    renderHeader('Forgot Password');
+    ?>
+    <div class="max-w-md mx-auto glass p-6 mt-8">
+        <h1 class="text-2xl font-semibold mb-1">Reset your password</h1>
+        <p class="text-sm text-slate-600 mb-4">Enter your email address and we'll send you a link to reset your password.</p>
+        
+        <?php $errorFlash = getFlash(); if ($errorFlash && $errorFlash['type'] === 'error'): ?>
+            <div class="mb-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                <?php echo htmlspecialchars((string) $errorFlash['message']); ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method="post" class="space-y-3">
+            <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+            <input type="hidden" name="action" value="forgot_password">
+            <input id="email" name="email" type="email" placeholder="Email address" required class="w-full border rounded px-3 py-2">
+            <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded w-full">
+                <span class="icon-label justify-center"><?= uiIcon('requests', 'ui-icon ui-icon-sm') ?><span>Send Reset Link</span></span>
+            </button>
+        </form>
+        
+        <div class="mt-4 text-center">
+            <a href="?page=login" class="text-sm text-indigo-700 hover:underline">Back to Login</a>
+        </div>
+    </div>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function handleResetPasswordPage(): void
+{
+    global $db;
+    
+    $token = $_GET['token'] ?? '';
+    $tokenValid = false;
+    
+    if ($token) {
+        // Verify token exists and is not expired
+        $stmt = $db->prepare('SELECT id, email, reset_expires FROM users WHERE reset_token = ? LIMIT 1');
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
+        
+        if ($user && strtotime($user['reset_expires'] ?? '') >= time()) {
+            $tokenValid = true;
+        }
+    }
+    
+    renderHeader('Reset Password');
+    ?>
+    <div class="max-w-md mx-auto glass p-6 mt-8">
+        <h1 class="text-2xl font-semibold mb-1">Set new password</h1>
+        <p class="text-sm text-slate-600 mb-4">Create a strong password for your account.</p>
+        
+        <?php if (!$tokenValid): ?>
+            <div class="mb-3 p-4 bg-red-50 border border-red-200 rounded">
+                <h3 class="text-sm font-semibold text-red-800 mb-2">Invalid or Expired Link</h3>
+                <p class="text-sm text-red-700 mb-3">This password reset link is invalid or has expired. Reset links are valid for 1 hour.</p>
+                <a href="?page=forgot_password" class="text-sm font-medium text-red-800 hover:underline">
+                    Request New Reset Link →
+                </a>
+            </div>
+        <?php else: ?>
+            <?php $errorFlash = getFlash(); if ($errorFlash && $errorFlash['type'] === 'error'): ?>
+                <div class="mb-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                    <?php echo htmlspecialchars((string) $errorFlash['message']); ?>
+                </div>
+            <?php endif; ?>
+            
+            <form method="post" class="space-y-3">
+                <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrfToken()); ?>">
+                <input type="hidden" name="action" value="reset_password">
+                <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                    <input id="password" name="password" type="password" placeholder="At least 8 characters" required minlength="8" class="w-full border rounded px-3 py-2">
+                </div>
+                
+                <div>
+                    <label for="confirm_password" class="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
+                    <input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter password" required minlength="8" class="w-full border rounded px-3 py-2">
+                </div>
+                
+                <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded w-full">
+                    Reset Password
+                </button>
+            </form>
+        <?php endif; ?>
+        
+        <div class="mt-4 text-center">
+            <a href="?page=login" class="text-sm text-indigo-700 hover:underline">Back to Login</a>
+        </div>
+    </div>
     <?php
     renderFooter();
     exit;

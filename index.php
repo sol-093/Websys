@@ -12,6 +12,7 @@ require __DIR__ . '/src/lib/pagination.php';
 require __DIR__ . '/src/lib/organization.php';
 require __DIR__ . '/src/lib/notifications.php';
 require __DIR__ . '/src/lib/integrations.php';
+require __DIR__ . '/src/lib/email.php';
 require __DIR__ . '/src/lib/maintenance.php';
 require __DIR__ . '/src/actions/auth_flows.php';
 require __DIR__ . '/src/actions/workflows.php';
@@ -54,8 +55,36 @@ if (isPost()) {
         handleLoginAction($db);
     }
 
+    if ($action === 'resend_verification') {
+        handleResendVerificationAction($db);
+    }
+
+    if ($action === 'forgot_password') {
+        handleForgotPasswordAction($db);
+    }
+
+    if ($action === 'reset_password') {
+        handleResetPasswordAction($db);
+    }
+
     requireLogin();
     $user = currentUser();
+
+    if ($action === 'change_password') {
+        if (($user['role'] ?? '') === 'admin') {
+            setFlash('error', 'Profile settings are not available for admin accounts.');
+            redirect('?page=dashboard');
+        }
+        handleChangePasswordAction($db, $user);
+    }
+
+    if ($action === 'update_profile') {
+        if (($user['role'] ?? '') === 'admin') {
+            setFlash('error', 'Profile settings are not available for admin accounts.');
+            redirect('?page=dashboard');
+        }
+        handleUpdateProfileAction($db, $user);
+    }
 
     if ($action === 'create_org') {
         handleCreateOrgAction($db, $user);
@@ -138,11 +167,31 @@ if ($page === 'register') {
     handleRegisterPage();
 }
 
+if ($page === 'verify_email') {
+    handleVerifyEmailPage();
+}
+
+if ($page === 'forgot_password') {
+    handleForgotPasswordPage();
+}
+
+if ($page === 'reset_password') {
+    handleResetPasswordPage();
+}
+
 requireLogin();
 $user = currentUser();
 $announcementCutoff = (new DateTimeImmutable('now'))->modify('-30 days')->format('Y-m-d H:i:s');
 $recentReportCutoffDate = (new DateTimeImmutable('now'))->modify('-30 days')->format('Y-m-d');
 purgeExpiredAnnouncements($db, 30);
+
+if ($page === 'profile') {
+    if (($user['role'] ?? '') === 'admin') {
+        setFlash('error', 'Profile settings are not available for admin accounts.');
+        redirect('?page=dashboard');
+    }
+    handleProfilePage($user);
+}
 
 if ($page === 'admin_orgs') {
     handleAdminOrgsPage($db);

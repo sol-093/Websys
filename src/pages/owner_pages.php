@@ -26,8 +26,27 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
     $stmt->execute([(int) $org['id'], $announcementCutoff]);
     $announcements = $stmt->fetchAll();
 
-    $stmt = $db->prepare('SELECT * FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
-    $stmt->execute([(int) $org['id']]);
+    $txTypeFilter = (string) ($_GET['tx_type'] ?? 'all');
+    if (!in_array($txTypeFilter, ['all', 'income', 'expense'], true)) {
+        $txTypeFilter = 'all';
+    }
+
+    $txDateSort = strtolower((string) ($_GET['tx_sort'] ?? 'desc'));
+    if (!in_array($txDateSort, ['asc', 'desc'], true)) {
+        $txDateSort = 'desc';
+    }
+
+    $txSql = 'SELECT * FROM financial_transactions WHERE organization_id = ?';
+    $txParams = [(int) $org['id']];
+    if ($txTypeFilter !== 'all') {
+        $txSql .= ' AND type = ?';
+        $txParams[] = $txTypeFilter;
+    }
+    $txOrder = $txDateSort === 'asc' ? 'ASC' : 'DESC';
+    $txSql .= " ORDER BY transaction_date {$txOrder}, id {$txOrder}";
+
+    $stmt = $db->prepare($txSql);
+    $stmt->execute($txParams);
     $transactions = $stmt->fetchAll();
 
     $txRequestStmt = $db->prepare("SELECT * FROM transaction_change_requests WHERE organization_id = ? AND requested_by = ? ORDER BY created_at DESC LIMIT 20");
@@ -93,6 +112,8 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>My Organization</span></h1>
             <form method="get" class="mb-4 flex gap-2">
                 <input type="hidden" name="page" value="my_org">
+                <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
+                <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
                 <select name="org_id" class="border rounded px-3 py-2">
                     <?php foreach ($ownedOrganizations as $ownedOption): ?>
                         <option value="<?= (int) $ownedOption['id'] ?>" <?= (int) $org['id'] === (int) $ownedOption['id'] ? 'selected' : '' ?>>
@@ -167,8 +188,28 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             </div>
         </div>
 
-        <div class="bg-white shadow rounded p-4 overflow-auto">
+        <div id="tx-history" class="bg-white shadow rounded p-4 overflow-auto">
             <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
+            <form method="get" action="?page=my_org#tx-history" class="mb-3 flex flex-wrap items-end gap-2" onsubmit="const b=this.querySelector('[data-filter-submit]'); if(b){ b.disabled=true; b.textContent='Filtering...'; }">
+                <input type="hidden" name="page" value="my_org">
+                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">Type</label>
+                    <select name="tx_type" class="border rounded px-3 py-2 text-sm">
+                        <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
+                        <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
+                        <option value="expense" <?= $txTypeFilter === 'expense' ? 'selected' : '' ?>>Expense</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">Date</label>
+                    <select name="tx_sort" class="border rounded px-3 py-2 text-sm">
+                        <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
+                        <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
+                    </select>
+                </div>
+                <button data-filter-submit class="bg-indigo-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+            </form>
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">

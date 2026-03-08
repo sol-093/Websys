@@ -987,6 +987,9 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
                                 <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
+                            <?php if ($user['role'] !== 'admin'): ?>
+                                <a href="?page=profile" class="nav-link <?= $currentPage === 'profile' ? 'nav-link-active' : '' ?>">Profile</a>
+                            <?php endif; ?>
                             <span class="nav-greeting">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</span>
                             <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
                             <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
@@ -1023,6 +1026,9 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php endif; ?>
                             <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
                                 <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
+                            <?php endif; ?>
+                            <?php if ($user['role'] !== 'admin'): ?>
+                                <a href="?page=profile" class="nav-link <?= $currentPage === 'profile' ? 'nav-link-active' : '' ?>">Profile</a>
                             <?php endif; ?>
                             <div class="text-xs text-slate-600">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</div>
                             <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-2 rounded text-center hover:bg-indigo-950">Logout</a>

@@ -167,6 +167,8 @@ function initializeDatabaseSqlite(PDO $pdo): void
     $pdo->exec($schema);
     ensureAcademicAndVisibilityColumns($pdo);
     ensureAnnouncementPinColumns($pdo);
+    ensureAuthEnhancementColumns($pdo);
+    ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
 }
 
@@ -306,6 +308,8 @@ function initializeDatabaseMySql(PDO $pdo): void
 
     ensureAcademicAndVisibilityColumns($pdo);
     ensureAnnouncementPinColumns($pdo);
+    ensureAuthEnhancementColumns($pdo);
+    ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
 }
 
@@ -395,6 +399,215 @@ function tableColumnExists(PDO $pdo, string $table, string $column): bool
     }
 
     return false;
+}
+
+function ensureAuthEnhancementColumns(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if (!tableColumnExists($pdo, 'users', 'email_verified')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 1');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 1');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'email_verified_at')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN email_verified_at TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN email_verified_at TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'activation_token')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN activation_token VARCHAR(64) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN activation_token TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'activation_expires')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN activation_expires TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN activation_expires TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'reset_token')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN reset_token TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'reset_expires')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN reset_expires TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN reset_expires TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'account_status')) {
+        if ($driver === 'mysql') {
+            $pdo->exec("ALTER TABLE users ADD COLUMN account_status ENUM('active','suspended','banned') NOT NULL DEFAULT 'active'");
+        } else {
+            $pdo->exec("ALTER TABLE users ADD COLUMN account_status TEXT NOT NULL DEFAULT 'active'");
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'last_login_at')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN last_login_at TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN last_login_at TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'last_login_ip')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN last_login_ip VARCHAR(45) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN last_login_ip TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'password_changed_at')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN password_changed_at TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN password_changed_at TEXT NULL');
+        }
+    }
+}
+
+function ensureAuthEnhancementTables(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if ($driver === 'mysql') {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                session_token VARCHAR(64) NOT NULL UNIQUE,
+                ip_address VARCHAR(45) NULL,
+                user_agent VARCHAR(500) NULL,
+                device_fingerprint VARCHAR(64) NULL,
+                last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                expires_at DATETIME NOT NULL,
+                is_remembered TINYINT(1) NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_session_user FOREIGN KEY (user_id)
+                    REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_session_token (session_token),
+                INDEX idx_session_user (user_id),
+                INDEX idx_session_expires (expires_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS login_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                email VARCHAR(191) NOT NULL,
+                ip_address VARCHAR(45) NULL,
+                user_agent VARCHAR(500) NULL,
+                attempt_type ENUM('success','failed') NOT NULL,
+                failure_reason VARCHAR(255) NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_login_history_user FOREIGN KEY (user_id)
+                    REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+                INDEX idx_login_history_user (user_id),
+                INDEX idx_login_history_email (email),
+                INDEX idx_login_history_created (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS password_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_password_history_user FOREIGN KEY (user_id)
+                    REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_password_history_user (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS security_notifications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                event_type VARCHAR(50) NOT NULL,
+                event_data TEXT NULL,
+                sent_at TIMESTAMP NULL DEFAULT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_security_notif_user FOREIGN KEY (user_id)
+                    REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_security_notif_user (user_id),
+                INDEX idx_security_notif_sent (sent_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+    } else {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS user_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                session_token TEXT NOT NULL UNIQUE,
+                ip_address TEXT NULL,
+                user_agent TEXT NULL,
+                device_fingerprint TEXT NULL,
+                last_activity TEXT NOT NULL DEFAULT (datetime('now')),
+                expires_at TEXT NOT NULL,
+                is_remembered INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS login_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NULL,
+                email TEXT NOT NULL,
+                ip_address TEXT NULL,
+                user_agent TEXT NULL,
+                attempt_type TEXT NOT NULL CHECK(attempt_type IN ('success','failed')),
+                failure_reason TEXT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            )
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS password_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS security_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                event_type TEXT NOT NULL,
+                event_data TEXT NULL,
+                sent_at TEXT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            )
+        ");
+    }
 }
 
 function ensureDefaultAdmin(PDO $pdo): void
