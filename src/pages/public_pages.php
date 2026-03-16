@@ -117,7 +117,7 @@ function handleLoginPage(array $config): void
                 <span class="icon-label justify-center"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Continue with Google</span></span>
             </a>
         <?php else: ?>
-            <p class="text-xs text-amber-700 mt-3">Google login is disabled. Add Google keys in src/core/config.php.</p>
+            <p class="text-xs text-amber-700 mt-3"></p>
         <?php endif; ?>
     </div>
     <?php
