@@ -24,8 +24,28 @@ require __DIR__ . '/src/pages/owner_pages.php';
 require __DIR__ . '/src/services/dashboard_data.php';
 require __DIR__ . '/src/pages/dashboard_page.php';
 
-$db = db();
 $config = require __DIR__ . '/src/core/config.php';
+
+try {
+    $db = db();
+} catch (Throwable $e) {
+    error_log('[websys] Database bootstrap failed: ' . $e->getMessage());
+
+    http_response_code(500);
+    header('Content-Type: text/html; charset=UTF-8');
+
+    $debug = strtolower((string) getenv('APP_DEBUG'));
+    $showDetails = in_array($debug, ['1', 'true', 'yes', 'on'], true);
+    $detail = $showDetails ? htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') : 'Check Railway variables and service logs.';
+
+    echo '<!doctype html><html><head><meta charset="utf-8"><title>Websys Startup Error</title></head><body style="font-family:Arial,sans-serif;padding:24px">';
+    echo '<h1>Application startup error</h1>';
+    echo '<p>Database connection failed while starting the app.</p>';
+    echo '<p><strong>Details:</strong> ' . $detail . '</p>';
+    echo '<p>Expected environment variables for MySQL: DB_DRIVER=mysql, DB_HOST/MYSQLHOST, DB_PORT/MYSQLPORT, DB_DATABASE/MYSQLDATABASE, DB_USERNAME/MYSQLUSER, DB_PASSWORD/MYSQLPASSWORD.</p>';
+    echo '</body></html>';
+    exit;
+}
 
 $user = currentUser();
 $page = $_GET['page'] ?? ($user ? 'dashboard' : 'home');

@@ -26,7 +26,9 @@ function db(): PDO
         if ($bootstrapDatabase && $database !== '') {
             try {
                 $bootstrapDsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port);
-                $bootstrapPdo = new PDO($bootstrapDsn, $username, $password);
+                $bootstrapPdo = new PDO($bootstrapDsn, $username, $password, [
+                    PDO::ATTR_TIMEOUT => 5,
+                ]);
                 $bootstrapPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $bootstrapPdo->exec("CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             } catch (PDOException $e) {
@@ -37,7 +39,9 @@ function db(): PDO
         }
 
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $database);
-        $pdo = new PDO($dsn, $username, $password);
+        $pdo = new PDO($dsn, $username, $password, [
+            PDO::ATTR_TIMEOUT => 5,
+        ]);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
