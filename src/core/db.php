@@ -15,16 +15,26 @@ function db(): PDO
     $driver = (string) ($dbConfig['driver'] ?? 'sqlite');
 
     if ($driver === 'mysql') {
-        $host = (string) ($dbConfig['host'] ?? '127.0.0.1');
-        $port = (int) ($dbConfig['port'] ?? 3306);
-        $database = (string) ($dbConfig['database'] ?? 'websys_db');
-        $username = (string) ($dbConfig['username'] ?? 'root');
-        $password = (string) ($dbConfig['password'] ?? '');
+        $mysql = resolveMySqlConnectionConfig($dbConfig);
+        $host = (string) ($mysql['host'] ?? '127.0.0.1');
+        $port = (int) ($mysql['port'] ?? 3306);
+        $database = (string) ($mysql['database'] ?? 'websys_db');
+        $username = (string) ($mysql['username'] ?? 'root');
+        $password = (string) ($mysql['password'] ?? '');
+        $bootstrapDatabase = (bool) ($mysql['bootstrap_database'] ?? true);
 
-        $bootstrapDsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port);
-        $bootstrapPdo = new PDO($bootstrapDsn, $username, $password);
-        $bootstrapPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $bootstrapPdo->exec("CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        if ($bootstrapDatabase && $database !== '') {
+            try {
+                $bootstrapDsn = sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port);
+                $bootstrapPdo = new PDO($bootstrapDsn, $username, $password);
+                $bootstrapPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $bootstrapPdo->exec("CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            } catch (PDOException $e) {
+                if (!isCreateDatabasePermissionError($e)) {
+                    throw $e;
+                }
+            }
+        }
 
         $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $database);
         $pdo = new PDO($dsn, $username, $password);
@@ -49,6 +59,55 @@ function db(): PDO
     }
 
     return $pdo;
+}
+
+function resolveMySqlConnectionConfig(array $dbConfig): array
+{
+    $config = [
+        'host' => (string) ($dbConfig['host'] ?? '127.0.0.1'),
+        'port' => (int) ($dbConfig['port'] ?? 3306),
+        'database' => (string) ($dbConfig['database'] ?? 'websys_db'),
+        'username' => (string) ($dbConfig['username'] ?? 'root'),
+        'password' => (string) ($dbConfig['password'] ?? ''),
+        'bootstrap_database' => (bool) ($dbConfig['bootstrap_database'] ?? true),
+    ];
+
+    $dsn = getenv('DATABASE_URL');
+    if ($dsn === false || $dsn === '') {
+        $dsn = getenv('MYSQL_URL');
+    }
+
+    if (is_string($dsn) && $dsn !== '') {
+        $parts = parse_url($dsn);
+        if (is_array($parts) && (($parts['scheme'] ?? '') === 'mysql')) {
+            $config['host'] = (string) ($parts['host'] ?? $config['host']);
+            $config['port'] = (int) ($parts['port'] ?? $config['port']);
+            $config['username'] = (string) ($parts['user'] ?? $config['username']);
+            $config['password'] = (string) ($parts['pass'] ?? $config['password']);
+
+            $path = (string) ($parts['path'] ?? '');
+            $database = ltrim($path, '/');
+            if ($database !== '') {
+                $config['database'] = $database;
+            }
+        }
+    }
+
+    return $config;
+}
+
+function isCreateDatabasePermissionError(PDOException $e): bool
+{
+    $message = strtolower($e->getMessage());
+
+    if (!str_contains($message, 'create database')) {
+        return false;
+    }
+
+    return str_contains($message, 'access denied')
+        || str_contains($message, 'not allowed')
+        || str_contains($message, 'command denied')
+        || str_contains($message, 'permission');
 }
 
 function initializeDatabaseSqlite(PDO $pdo): void

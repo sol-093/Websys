@@ -2,23 +2,38 @@
 
 declare(strict_types=1);
 
+$env = static function (string $key, mixed $default = null): mixed {
+    $value = getenv($key);
+    return $value === false ? $default : $value;
+};
+
+$envBool = static function (string $key, bool $default = false) use ($env): bool {
+    $value = $env($key);
+    if ($value === null || $value === '') {
+        return $default;
+    }
+
+    $normalized = strtolower(trim((string) $value));
+    return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+};
+
 return [
     'db' => [
-        // Use mysql for XAMPP by default.
-        // Change to 'sqlite' if you prefer file-based DB.
-        'driver' => 'mysql',
-        'host' => '127.0.0.1',
-        'port' => 3306,
-        'database' => 'websys_db',
-        'username' => 'root',
-        'password' => '',
-        'sqlite_path' => __DIR__ . '/../storage/database.sqlite',
+        // Railway-compatible env override with local fallback defaults.
+        'driver' => (string) $env('DB_DRIVER', 'mysql'),
+        'host' => (string) $env('DB_HOST', (string) $env('MYSQLHOST', '127.0.0.1')),
+        'port' => (int) $env('DB_PORT', (int) $env('MYSQLPORT', 3306)),
+        'database' => (string) $env('DB_DATABASE', (string) $env('MYSQLDATABASE', 'websys_db')),
+        'username' => (string) $env('DB_USERNAME', (string) $env('MYSQLUSER', 'root')),
+        'password' => (string) $env('DB_PASSWORD', (string) $env('MYSQLPASSWORD', '')),
+        'bootstrap_database' => $envBool('DB_BOOTSTRAP_DATABASE', true),
+        'sqlite_path' => (string) $env('DB_SQLITE_PATH', dirname(__DIR__, 2) . '/storage/database.sqlite'),
     ],
-    'app_name' => 'Student Organization Management',
-    'upload_dir' => __DIR__ . '/../public/uploads',
+    'app_name' => (string) $env('APP_NAME', 'Student Organization Management'),
+    'upload_dir' => dirname(__DIR__, 2) . '/public/uploads',
     'google_oauth' => [
-        'client_id' => '',
-        'client_secret' => '',
+        'client_id' => (string) $env('GOOGLE_CLIENT_ID', ''),
+        'client_secret' => (string) $env('GOOGLE_CLIENT_SECRET', ''),
     ],
-    'base_url' => '',
+    'base_url' => (string) $env('BASE_URL', (string) $env('APP_URL', '')),
 ];
