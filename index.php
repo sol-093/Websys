@@ -39,7 +39,7 @@ try {
     $requiredEnvGroups = [
         ['DB_HOST', 'MYSQLHOST'],
         ['DB_PORT', 'MYSQLPORT'],
-        ['DB_DATABASE', 'MYSQLDATABASE'],
+        ['DB_DATABASE', 'MYSQLDATABASE', 'MYSQL_DATABASE'],
         ['DB_USERNAME', 'MYSQLUSER'],
         ['DB_PASSWORD', 'MYSQLPASSWORD'],
     ];
@@ -69,7 +69,7 @@ try {
     echo '<h1>Application startup error</h1>';
     echo '<p>Database connection failed while starting the app.</p>';
     echo '<p><strong>Details:</strong> ' . $detail . '</p>';
-    echo '<p>Expected environment variables for MySQL: DB_DRIVER=mysql, DB_HOST/MYSQLHOST, DB_PORT/MYSQLPORT, DB_DATABASE/MYSQLDATABASE, DB_USERNAME/MYSQLUSER, DB_PASSWORD/MYSQLPASSWORD.</p>';
+    echo '<p>Expected environment variables for MySQL: DB_DRIVER=mysql, DB_HOST/MYSQLHOST, DB_PORT/MYSQLPORT, DB_DATABASE/MYSQLDATABASE/MYSQL_DATABASE, DB_USERNAME/MYSQLUSER, DB_PASSWORD/MYSQLPASSWORD.</p>';
     echo '</body></html>';
     exit;
 }
