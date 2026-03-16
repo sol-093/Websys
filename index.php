@@ -36,7 +36,34 @@ try {
 
     $debug = strtolower((string) getenv('APP_DEBUG'));
     $showDetails = in_array($debug, ['1', 'true', 'yes', 'on'], true);
+    $requiredEnvGroups = [
+        ['DB_HOST', 'MYSQLHOST'],
+        ['DB_PORT', 'MYSQLPORT'],
+        ['DB_DATABASE', 'MYSQLDATABASE'],
+        ['DB_USERNAME', 'MYSQLUSER'],
+        ['DB_PASSWORD', 'MYSQLPASSWORD'],
+    ];
+
+    $missingGroups = [];
+    foreach ($requiredEnvGroups as $group) {
+        $hasAny = false;
+        foreach ($group as $name) {
+            $value = getenv($name);
+            if ($value !== false && $value !== '') {
+                $hasAny = true;
+                break;
+            }
+        }
+
+        if (!$hasAny) {
+            $missingGroups[] = implode(' or ', $group);
+        }
+    }
+
     $detail = $showDetails ? htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') : 'Check Railway variables and service logs.';
+    if (!$showDetails && !empty($missingGroups)) {
+        $detail .= ' Missing variable groups: ' . htmlspecialchars(implode(', ', $missingGroups), ENT_QUOTES, 'UTF-8') . '.';
+    }
 
     echo '<!doctype html><html><head><meta charset="utf-8"><title>Websys Startup Error</title></head><body style="font-family:Arial,sans-serif;padding:24px">';
     echo '<h1>Application startup error</h1>';
