@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 session_start();
 
+$config = require __DIR__ . '/src/core/config.php';
+$appTimezone = (string) ($config['timezone'] ?? 'Asia/Manila');
+if (!date_default_timezone_set($appTimezone)) {
+    date_default_timezone_set('Asia/Manila');
+}
+
 require __DIR__ . '/src/core/db.php';
 require __DIR__ . '/src/core/helpers.php';
 require __DIR__ . '/src/core/auth.php';
@@ -23,8 +29,6 @@ require __DIR__ . '/src/pages/community_pages.php';
 require __DIR__ . '/src/pages/owner_pages.php';
 require __DIR__ . '/src/services/dashboard_data.php';
 require __DIR__ . '/src/pages/dashboard_page.php';
-
-$config = require __DIR__ . '/src/core/config.php';
 
 try {
     $db = db();

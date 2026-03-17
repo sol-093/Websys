@@ -44,6 +44,7 @@ function db(): PDO
         ]);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        applyMySqlSessionTimezone($pdo, (string) ($config['timezone'] ?? 'Asia/Manila'));
 
         initializeDatabaseMySql($pdo);
     } else {
@@ -98,6 +99,25 @@ function resolveMySqlConnectionConfig(array $dbConfig): array
     }
 
     return $config;
+}
+
+function applyMySqlSessionTimezone(PDO $pdo, string $timezone): void
+{
+    try {
+        $stmt = $pdo->prepare('SET time_zone = ?');
+        $stmt->execute([$timezone]);
+        return;
+    } catch (Throwable) {
+        // Fallback to a numeric offset when timezone tables are unavailable.
+    }
+
+    try {
+        $offset = (new DateTimeImmutable('now', new DateTimeZone($timezone)))->format('P');
+        $stmt = $pdo->prepare('SET time_zone = ?');
+        $stmt->execute([$offset]);
+    } catch (Throwable) {
+        // Leave the server default unchanged if both strategies fail.
+    }
 }
 
 function isCreateDatabasePermissionError(PDOException $e): bool

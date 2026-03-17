@@ -18,6 +18,7 @@ $envBool = static function (string $key, bool $default = false) use ($env): bool
 };
 
 return [
+    'timezone' => (string) $env('APP_TIMEZONE', 'Asia/Manila'),
     'db' => [
         // Railway-compatible env override with local fallback defaults.
         'driver' => (string) $env('DB_DRIVER', 'mysql'),
