@@ -517,7 +517,7 @@ Core Development Files
 - `index.php` - routing, rendering, and action handling
 - `src/core/db.php` - DB bootstrap and migrations-like column checks
 - `src/core/helpers.php` - security helpers, flash messages, uploads, audit logging
-- `src/core/layout.php` - shared shell, styling, and UI behavior
+- `src/core/layout.php` - shared shell, styling, navigation, and role-aware footer behavior
 
 ---
 
@@ -612,3 +612,7 @@ Version 1.0.0 (March 7, 2026)
 
 Version 1.0.1 (March 28, 2026)
 - Updated the shared admin-facing icon (`uiIcon('audit')`) to use the new admin logo SVG across all pages where it appears
+
+Version 1.0.2 (March 28, 2026)
+- Added a shared multi-column footer in `renderFooter()` with platform, role-tool, governance, and support sections
+- Footer links now adapt by authentication state and role (admin, owner, student, guest)

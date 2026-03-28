@@ -135,7 +135,7 @@ Used by: almost every action flow in `index.php` (auth, admin actions, requests,
   - emits HTML document start, global styles, navigation, flash output, and route-aware shell
   - reads current user and pending update popup payload from session
 - **`renderFooter()`**:
-  - closes common layout wrappers and outputs shared scripts/footer markup
+  - closes common layout wrappers and outputs shared scripts and role-aware footer markup
 
 Used by: all route views rendered by `index.php`.
 

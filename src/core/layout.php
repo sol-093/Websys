@@ -259,6 +259,54 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #d1fae5;
             }
 
+            .app-footer {
+                margin-top: 2.25rem;
+                border-top: 1px solid rgba(16, 185, 129, 0.24);
+                background: rgba(255, 255, 255, 0.55);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+
+            .app-footer-link {
+                color: #065f46;
+                text-decoration: none;
+                transition: color 0.2s ease;
+            }
+
+            .app-footer-link:hover {
+                color: #047857;
+                text-decoration: underline;
+            }
+
+            .app-footer-muted {
+                color: #334155;
+            }
+
+            .app-footer-social {
+                color: #0f766e;
+                transition: color 0.2s ease;
+            }
+
+            .app-footer-social:hover {
+                color: #065f46;
+            }
+
+            body.theme-dark .app-footer {
+                border-top-color: rgba(110, 231, 183, 0.34);
+                background: rgba(0, 0, 0, 0.2);
+            }
+
+            body.theme-dark .app-footer-link,
+            body.theme-dark .app-footer-muted,
+            body.theme-dark .app-footer-social {
+                color: #d1fae5;
+            }
+
+            body.theme-dark .app-footer-link:hover,
+            body.theme-dark .app-footer-social:hover {
+                color: #bbf7d0;
+            }
+
             .hero-kicker {
                 color: #065f46;
             }
@@ -1091,7 +1139,118 @@ function renderHeader(string $title = 'Dashboard'): void
 
 function renderFooter(): void
 {
+    $config = require __DIR__ . '/config.php';
+    $user = currentUser();
+    $role = is_array($user) ? (string) ($user['role'] ?? '') : '';
+    $year = date('Y');
+
     ?>
+        </main>
+        <footer class="app-footer">
+            <div class="mx-auto w-full max-w-7xl">
+                <div class="grid grid-cols-2 gap-8 px-4 py-8 md:grid-cols-4 lg:py-10 text-sm">
+                    <div>
+                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</h2>
+                        <ul class="space-y-2 app-footer-muted font-medium">
+                            <li><a href="?page=home" class="app-footer-link">Home</a></li>
+                            <?php if ($user): ?>
+                                <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
+                                <li><a href="?page=announcements" class="app-footer-link">Announcements</a></li>
+                                <li><a href="?page=organizations" class="app-footer-link">Organizations</a></li>
+                            <?php else: ?>
+                                <li><a href="?page=login" class="app-footer-link">Login</a></li>
+                                <li><a href="?page=register" class="app-footer-link">Register</a></li>
+                                <li><a href="?page=home" class="app-footer-link">Public Overview</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Role Tools</h2>
+                        <ul class="space-y-2 app-footer-muted font-medium">
+                            <?php if ($user && $user['role'] === 'admin'): ?>
+                                <li><a href="?page=admin_orgs" class="app-footer-link">Manage Organizations</a></li>
+                                <li><a href="?page=admin_students" class="app-footer-link">Student Directory</a></li>
+                                <li><a href="?page=admin_requests" class="app-footer-link">Approval Requests</a></li>
+                                <li><a href="?page=admin_audit" class="app-footer-link">Audit Logs</a></li>
+                            <?php elseif ($user && $user['role'] === 'owner'): ?>
+                                <li><a href="?page=my_org" class="app-footer-link">My Organization</a></li>
+                                <li><a href="?page=dashboard" class="app-footer-link">Finance Dashboard</a></li>
+                                <li><a href="?page=announcements" class="app-footer-link">Post Announcements</a></li>
+                                <li><a href="?page=organizations" class="app-footer-link">Browse Organizations</a></li>
+                            <?php elseif ($user): ?>
+                                <li><a href="?page=organizations" class="app-footer-link">Join Organizations</a></li>
+                                <li><a href="?page=announcements" class="app-footer-link">Community Updates</a></li>
+                                <li><a href="?page=dashboard" class="app-footer-link">Budget Transparency</a></li>
+                                <li><a href="?page=profile" class="app-footer-link">My Profile</a></li>
+                            <?php else: ?>
+                                <li><a href="?page=home" class="app-footer-link">Role-based Access</a></li>
+                                <li><a href="?page=home" class="app-footer-link">Transparency Features</a></li>
+                                <li><a href="?page=home" class="app-footer-link">Announcements</a></li>
+                                <li><a href="?page=home" class="app-footer-link">Organization Directory</a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance</h2>
+                        <ul class="space-y-2 app-footer-muted font-medium">
+                            <li><span>Access is controlled by account role.</span></li>
+                            <li><span>Critical actions are recorded in audit logs.</span></li>
+                            <li><span>Transaction edits/deletes require approval workflow.</span></li>
+                            <li><span>CSRF tokens are enforced on POST forms.</span></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</h2>
+                        <ul class="space-y-2 app-footer-muted font-medium">
+                            <li><a href="mailto:admin@campus.local" class="app-footer-link">System Administrator</a></li>
+                            <?php if (!$user): ?>
+                                <li><a href="?page=login" class="app-footer-link">Account Access Help</a></li>
+                                <li><a href="?page=register" class="app-footer-link">New Account Setup</a></li>
+                            <?php elseif ($role !== 'admin'): ?>
+                                <li><a href="?page=profile" class="app-footer-link">Profile and Password</a></li>
+                                <li><a href="?page=logout" class="app-footer-link">Secure Logout</a></li>
+                            <?php else: ?>
+                                <li><a href="?page=admin_audit" class="app-footer-link">Security and Audit Review</a></li>
+                                <li><a href="?page=logout" class="app-footer-link">Secure Logout</a></li>
+                            <?php endif; ?>
+                            <li><a href="?page=home" class="app-footer-link">Data Privacy Notice</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="px-4 py-4 border-t border-emerald-200/40 md:flex md:items-center md:justify-between">
+                    <span class="text-sm app-footer-muted">&copy; <?= e($year) ?> <?= e((string) $config['app_name']) ?>. Student Organization Management and Budget Transparency System.</span>
+                    <div class="flex mt-3 md:mt-0 items-center gap-4">
+                        <a href="mailto:admin@campus.local" class="app-footer-social" aria-label="Email administrator" title="Email administrator">
+                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5v9h-16.5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 8.25l8.25 6 8.25-6" />
+                            </svg>
+                            <span class="sr-only">Email administrator</span>
+                        </a>
+                        <a href="?page=home" class="app-footer-social" aria-label="Go to home" title="Go to home">
+                            <?= uiIcon('home', 'w-5 h-5') ?>
+                            <span class="sr-only">Home</span>
+                        </a>
+                        <?php if ($user): ?>
+                            <a href="?page=dashboard" class="app-footer-social" aria-label="Open dashboard" title="Open dashboard">
+                                <?= uiIcon('dashboard', 'w-5 h-5') ?>
+                                <span class="sr-only">Dashboard</span>
+                            </a>
+                        <?php else: ?>
+                            <a href="?page=login" class="app-footer-social" aria-label="Open login" title="Open login">
+                                <?= uiIcon('login', 'w-5 h-5') ?>
+                                <span class="sr-only">Login</span>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
         <script>
             (function () {
                 const root = document.body;
@@ -1179,7 +1338,6 @@ function renderFooter(): void
                 }
             })();
         </script>
-        </main>
     </body>
     </html>
     <?php
