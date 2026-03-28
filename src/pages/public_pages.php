@@ -194,13 +194,12 @@ function handleRegisterPage(): void
             </div>
 
             <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
-                <label for="privacyConsent" class="inline-flex items-center gap-3 cursor-pointer select-none">
-                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="h-5 w-5 mt-0.5 rounded border-emerald-300 accent-emerald-600 cursor-pointer">
-                    <span class="text-sm md:text-base text-slate-800">
-                        I agree with the
-                        <button type="button" id="openPrivacyModal" class="font-semibold text-sky-600 hover:text-sky-500 underline underline-offset-2">terms and conditions</button>.
-                    </span>
-                </label>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="h-4 w-4 rounded border-emerald-300 accent-emerald-600 cursor-pointer shrink-0">
+                    <label for="privacyConsent" class="text-sm md:text-base text-slate-800 cursor-pointer">I agree with the</label>
+                    <button type="button" id="openPrivacyModal" class="text-sm md:text-base font-semibold text-sky-600 hover:text-sky-500 underline underline-offset-2">terms and conditions</button>
+                    <span class="text-sm md:text-base text-slate-800">.</span>
+                </div>
             </div>
 
             <div class="pt-1 text-center">
