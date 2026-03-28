@@ -194,13 +194,13 @@ function handleRegisterPage(): void
             </div>
 
             <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
-                <div class="flex items-start gap-2">
-                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="mt-1">
-                    <label for="privacyConsent" class="text-sm text-slate-700">
-                        I agree to the
-                        <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">Data Privacy Consent</button>.
-                    </label>
-                </div>
+                <label for="privacyConsent" class="inline-flex items-center gap-3 cursor-pointer select-none">
+                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="h-5 w-5 mt-0.5 rounded border-emerald-300 accent-emerald-600 cursor-pointer">
+                    <span class="text-sm md:text-base text-slate-800">
+                        I agree with the
+                        <button type="button" id="openPrivacyModal" class="font-semibold text-sky-600 hover:text-sky-500 underline underline-offset-2">terms and conditions</button>.
+                    </span>
+                </label>
             </div>
 
             <div class="pt-1 text-center">
@@ -212,20 +212,20 @@ function handleRegisterPage(): void
     <div id="privacyModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
         <div class="glass w-full max-w-xl p-5">
             <div class="flex items-center justify-between mb-3">
-                <h2 id="privacyModalTitle" class="text-lg font-semibold icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>Data Privacy Consent</span></h2>
+                <h2 id="privacyModalTitle" class="text-lg font-semibold icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>Terms and Conditions</span></h2>
                 <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
             </div>
             <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
-                <p>By selecting "I Agree" and creating an account, you expressly provide your informed and voluntary consent to the collection, use, storage, and other processing of your personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173), its Implementing Rules and Regulations, and related issuances of the National Privacy Commission.</p>
-                <p>The platform may collect and process personal information, including your full name, email address, academic program or institute, account role, organization memberships, submitted records, and system-generated activity logs. Such processing is undertaken for legitimate and specified purposes, including account registration and authentication, access control, platform security, organization administration, publication of authorized announcements, financial transparency reporting, and compliance with applicable institutional policies.</p>
-                <p>Personal data is processed only by authorized personnel and administrators on a strict need-to-know basis. Appropriate organizational, physical, and technical safeguards are implemented to protect information against unauthorized access, disclosure, alteration, misuse, accidental loss, or destruction.</p>
-                <p>Personal data is retained only for as long as necessary to fulfill the declared and lawful purposes, satisfy legal and regulatory obligations, resolve disputes, and enforce applicable terms and policies. Upon lapse of the applicable retention period, data shall be securely disposed of, anonymized, or archived, as permitted by law and institutional policy.</p>
-                <p>As a data subject, you may exercise your rights to be informed, to access, to object, to rectify, to erasure or blocking, to data portability, and to lodge a complaint with the National Privacy Commission, subject to lawful limitations and due process requirements. You may also withdraw your consent at any time; however, such withdrawal may affect your continued access to certain platform features or services.</p>
-                <p>For privacy-related inquiries, requests, or concerns, you may contact the system administrator or the institution's designated Data Protection Officer.</p>
+                <p>By selecting "I Agree" and creating an account, you confirm that you have read, understood, and accepted these Terms and Conditions for the Student Organization Management and Budget Transparency System.</p>
+                <p>This platform is provided to support student organization administration, governance workflows, and financial transparency. You agree to use the platform only for lawful, authorized, and school-related purposes and in compliance with institutional policies and applicable laws.</p>
+                <p>You are responsible for providing accurate and updated registration information and for maintaining the confidentiality of your account credentials. You must not share your account with others or attempt to access data, features, or records beyond your assigned role permissions.</p>
+                <p>The system records account activities and workflow actions for security, audit, and compliance purposes. Unauthorized access, data tampering, misuse of workflows, publication of false or misleading information, or any attempt to disrupt platform operations may result in account suspension, revocation of access, and referral for disciplinary or legal action.</p>
+                <p>The platform processes personal data in accordance with the Data Privacy Act of 2012 (Republic Act No. 10173), its implementing rules, and relevant National Privacy Commission issuances. Data is collected and used only for legitimate operational purposes, protected with reasonable safeguards, and retained according to legal and institutional requirements.</p>
+                <p>The institution may update these Terms and Conditions to reflect legal, policy, or operational changes. Continued use of the platform after updates are published constitutes acceptance of the revised terms. If you do not agree, you must discontinue use of the platform and contact the system administrator for account assistance.</p>
             </div>
             <div class="mt-4 flex justify-end gap-2">
                 <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Close</span></span></button>
-                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>I Agree</span></span></button>
+                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white"><span class="icon-label\"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>I Agree to the Terms</span></span></button>
             </div>
         </div>
     </div>

@@ -22,6 +22,7 @@ Recent Updates:
 - Dark theme follow-up: restored frosted glass blur on dark cards while retaining cleaner panel surfaces
 - Registration update: replaced the registration dropdown from class/program selection to institute selection
 - Registration UI update: rebuilt the registration form layout (class-registration style) while using institute in place of class/program
+- Registration compliance update: restyled the consent checkbox line and upgraded modal text to formal Terms and Conditions
 
 ---
 
