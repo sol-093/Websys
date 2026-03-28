@@ -130,19 +130,69 @@ function handleRegisterPage(): void
     renderHeader('Register');
     $instituteOptions = getInstituteOptions();
     ?>
-    <div class="max-w-md mx-auto glass p-6 mt-8">
-        <h1 class="text-2xl font-semibold mb-4 icon-label"><?= uiIcon('register', 'ui-icon') ?><span>Student Registration</span></h1>
-        <form method="post" class="space-y-3">
+    <div class="max-w-3xl mx-auto glass p-6 md:p-8 mt-8">
+        <h1 class="text-2xl md:text-3xl font-semibold mb-1 icon-label\"><?= uiIcon('register', 'ui-icon') ?><span>Student Registration</span></h1>
+        <p class="text-sm text-slate-600 mb-6">Fill out the form carefully for registration.</p>
+
+        <form method="post" id="registerForm" class="space-y-5">
             <input type="hidden" name="action" value="register">
-            <input name="name" placeholder="Full Name" required class="w-full border rounded px-3 py-2">
-            <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
-            <select name="institute" required class="w-full border rounded px-3 py-2">
-                <option value="">Select Institute</option>
-                <?php foreach ($instituteOptions as $instituteName): ?>
-                    <option value="<?= e($instituteName) ?>"><?= e($instituteName) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
+            <input type="hidden" name="name" id="registerFullName" value="">
+
+            <div>
+                <label class="block text-sm font-semibold mb-2">Student Name</label>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                        <input id="registerFirstName" type="text" placeholder="First Name" required class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div>
+                        <input id="registerMiddleName" type="text" placeholder="Middle Name" class="w-full border rounded px-3 py-2">
+                    </div>
+                    <div>
+                        <input id="registerLastName" type="text" placeholder="Last Name" required class="w-full border rounded px-3 py-2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="registerGender" class="block text-sm font-semibold mb-2">Gender</label>
+                    <select id="registerGender" class="w-full border rounded px-3 py-2">
+                        <option value="">Please Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer_not_say">Prefer not to say</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="registerEmail" class="block text-sm font-semibold mb-2">Student E-mail</label>
+                    <input id="registerEmail" name="email" type="email" placeholder="ex: myname@example.com" required class="w-full border rounded px-3 py-2">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="registerStudentId" class="block text-sm font-semibold mb-2">Student ID</label>
+                    <input id="registerStudentId" type="text" placeholder="Enter Student ID" class="w-full border rounded px-3 py-2">
+                </div>
+
+                <div>
+                    <label for="registerInstitute" class="block text-sm font-semibold mb-2">Institute</label>
+                    <select id="registerInstitute" name="institute" required class="w-full border rounded px-3 py-2">
+                        <option value="">Please Select</option>
+                        <?php foreach ($instituteOptions as $instituteName): ?>
+                            <option value="<?= e($instituteName) ?>"><?= e($instituteName) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label for="registerPassword" class="block text-sm font-semibold mb-2">Password</label>
+                <input id="registerPassword" name="password" type="password" placeholder="Create a secure password" required class="w-full border rounded px-3 py-2">
+            </div>
+
             <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
                 <div class="flex items-start gap-2">
                     <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="mt-1">
@@ -152,7 +202,10 @@ function handleRegisterPage(): void
                     </label>
                 </div>
             </div>
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full"><span class="icon-label justify-center"><?= uiIcon('register', 'ui-icon ui-icon-sm') ?><span>Create Account</span></span></button>
+
+            <div class="pt-1 text-center">
+                <button class="bg-indigo-700 text-white px-6 py-2.5 rounded min-w-[170px]"><span class="icon-label justify-center\"><?= uiIcon('register', 'ui-icon ui-icon-sm') ?><span>Create Account</span></span></button>
+            </div>
         </form>
     </div>
 
@@ -185,6 +238,11 @@ function handleRegisterPage(): void
             const declineBtn = document.getElementById('declinePrivacy');
             const acceptBtn = document.getElementById('acceptPrivacy');
             const checkbox = document.getElementById('privacyConsent');
+            const registerForm = document.getElementById('registerForm');
+            const fullNameInput = document.getElementById('registerFullName');
+            const firstNameInput = document.getElementById('registerFirstName');
+            const middleNameInput = document.getElementById('registerMiddleName');
+            const lastNameInput = document.getElementById('registerLastName');
 
             if (!modal || !openBtn || !checkbox) return;
 
@@ -216,6 +274,21 @@ function handleRegisterPage(): void
                     closeModal();
                 }
             });
+
+            if (registerForm && fullNameInput && firstNameInput && lastNameInput) {
+                registerForm.addEventListener('submit', function (event) {
+                    const first = firstNameInput.value.trim();
+                    const middle = middleNameInput ? middleNameInput.value.trim() : '';
+                    const last = lastNameInput.value.trim();
+
+                    if (first === '' || last === '') {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    fullNameInput.value = [first, middle, last].filter(Boolean).join(' ');
+                });
+            }
         })();
     </script>
     <?php

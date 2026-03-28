@@ -21,6 +21,7 @@ Recent Updates:
 - Dark theme polish: removed per-card dark gradient artifacts and increased background gradient visibility
 - Dark theme follow-up: restored frosted glass blur on dark cards while retaining cleaner panel surfaces
 - Registration update: replaced the registration dropdown from class/program selection to institute selection
+- Registration UI update: rebuilt the registration form layout (class-registration style) while using institute in place of class/program
 
 ---
 
