@@ -137,6 +137,7 @@ Used by: almost every action flow in `index.php` (auth, admin actions, requests,
 - **`renderFooter()`**:
   - closes common layout wrappers and outputs shared scripts and role-aware footer markup
   - works with shared shell flex layout so footer stays at bottom on short pages
+  - uses compact spacing and text-only bottom bar for reduced footer height
 
 Used by: all route views rendered by `index.php`.
 

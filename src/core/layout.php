@@ -268,7 +268,7 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .app-footer {
-                margin-top: 2.25rem;
+                margin-top: 1.25rem;
                 border-top: 1px solid rgba(16, 185, 129, 0.24);
                 background: rgba(255, 255, 255, 0.55);
                 backdrop-filter: blur(10px);
@@ -1156,10 +1156,10 @@ function renderFooter(): void
         </main>
         <footer class="app-footer">
             <div class="mx-auto w-full max-w-7xl">
-                <div class="grid grid-cols-2 gap-8 px-4 py-8 md:grid-cols-4 lg:py-10 text-sm">
+                <div class="grid grid-cols-2 gap-6 px-4 py-5 md:grid-cols-4 lg:py-6 text-sm">
                     <div>
-                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</h2>
-                        <ul class="space-y-2 app-footer-muted font-medium">
+                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</h2>
+                        <ul class="space-y-1 app-footer-muted font-medium">
                             <li><a href="?page=home" class="app-footer-link">Home</a></li>
                             <?php if ($user): ?>
                                 <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
@@ -1174,8 +1174,8 @@ function renderFooter(): void
                     </div>
 
                     <div>
-                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Role Tools</h2>
-                        <ul class="space-y-2 app-footer-muted font-medium">
+                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Role Tools</h2>
+                        <ul class="space-y-1 app-footer-muted font-medium">
                             <?php if ($user && $user['role'] === 'admin'): ?>
                                 <li><a href="?page=admin_orgs" class="app-footer-link">Manage Organizations</a></li>
                                 <li><a href="?page=admin_students" class="app-footer-link">Student Directory</a></li>
@@ -1201,8 +1201,8 @@ function renderFooter(): void
                     </div>
 
                     <div>
-                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance</h2>
-                        <ul class="space-y-2 app-footer-muted font-medium">
+                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance</h2>
+                        <ul class="space-y-1 app-footer-muted font-medium">
                             <li><span>Access is controlled by account role.</span></li>
                             <li><span>Critical actions are recorded in audit logs.</span></li>
                             <li><span>Transaction edits/deletes require approval workflow.</span></li>
@@ -1211,8 +1211,8 @@ function renderFooter(): void
                     </div>
 
                     <div>
-                        <h2 class="mb-4 text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</h2>
-                        <ul class="space-y-2 app-footer-muted font-medium">
+                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</h2>
+                        <ul class="space-y-1 app-footer-muted font-medium">
                             <li><a href="mailto:admin@campus.local" class="app-footer-link">System Administrator</a></li>
                             <?php if (!$user): ?>
                                 <li><a href="?page=login" class="app-footer-link">Account Access Help</a></li>
@@ -1229,32 +1229,8 @@ function renderFooter(): void
                     </div>
                 </div>
 
-                <div class="px-4 py-4 border-t border-emerald-200/40 md:flex md:items-center md:justify-between">
-                    <span class="text-sm app-footer-muted">&copy; <?= e($year) ?> <?= e((string) $config['app_name']) ?>. Student Organization Management and Budget Transparency System.</span>
-                    <div class="flex mt-3 md:mt-0 items-center gap-4">
-                        <a href="mailto:admin@campus.local" class="app-footer-social" aria-label="Email administrator" title="Email administrator">
-                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 7.5h16.5v9h-16.5z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 8.25l8.25 6 8.25-6" />
-                            </svg>
-                            <span class="sr-only">Email administrator</span>
-                        </a>
-                        <a href="?page=home" class="app-footer-social" aria-label="Go to home" title="Go to home">
-                            <?= uiIcon('home', 'w-5 h-5') ?>
-                            <span class="sr-only">Home</span>
-                        </a>
-                        <?php if ($user): ?>
-                            <a href="?page=dashboard" class="app-footer-social" aria-label="Open dashboard" title="Open dashboard">
-                                <?= uiIcon('dashboard', 'w-5 h-5') ?>
-                                <span class="sr-only">Dashboard</span>
-                            </a>
-                        <?php else: ?>
-                            <a href="?page=login" class="app-footer-social" aria-label="Open login" title="Open login">
-                                <?= uiIcon('login', 'w-5 h-5') ?>
-                                <span class="sr-only">Login</span>
-                            </a>
-                        <?php endif; ?>
-                    </div>
+                <div class="px-4 py-2 border-t border-emerald-200/40">
+                    <span class="text-xs app-footer-muted">&copy; <?= e($year) ?> <?= e((string) $config['app_name']) ?>. Student Organization Management and Budget Transparency System.</span>
                 </div>
             </div>
         </footer>

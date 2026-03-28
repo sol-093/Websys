@@ -623,3 +623,7 @@ Version 1.0.3 (March 28, 2026)
 
 Version 1.0.4 (March 28, 2026)
 - Updated shared layout shell so short pages keep the footer at the viewport bottom (including login page)
+
+Version 1.0.5 (March 28, 2026)
+- Simplified footer bottom bar by removing icon shortcuts
+- Reduced footer vertical spacing for a more compact layout
