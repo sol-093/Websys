@@ -24,6 +24,7 @@ Recent Updates:
 - Registration UI update: rebuilt the registration form layout (class-registration style) while using institute in place of class/program
 - Registration compliance update: restyled the consent checkbox line and upgraded modal text to formal Terms and Conditions
 - Registration consent refinement: positioned checkbox directly beside "I agree" text in horizontal layout
+- Registration checkbox visibility fix: enforced explicit checkbox rendering in light/dark themes so the consent box stays visible beside the terms text
 
 ---
 

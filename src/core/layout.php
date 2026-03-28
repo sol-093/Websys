@@ -410,12 +410,26 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #064e3b !important;
             }
 
+            input[type="checkbox"] {
+                appearance: auto !important;
+                -webkit-appearance: checkbox !important;
+                background: transparent !important;
+                border: 1px solid rgba(16, 185, 129, 0.58) !important;
+                accent-color: #059669;
+            }
+
             body.theme-dark input,
             body.theme-dark textarea,
             body.theme-dark select {
                 background: rgba(0, 0, 0, 0.2) !important;
                 border-color: rgba(110, 231, 183, 0.35) !important;
                 color: #f1fff7 !important;
+            }
+
+            body.theme-dark input[type="checkbox"] {
+                background: transparent !important;
+                border-color: rgba(167, 243, 208, 0.7) !important;
+                accent-color: #34d399;
             }
 
             select {
