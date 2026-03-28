@@ -113,30 +113,28 @@ function handleRegisterAction(PDO $db): void
     $name = trim((string) ($_POST['name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
-    $program = trim((string) ($_POST['program'] ?? ''));
+    $institute = trim((string) ($_POST['institute'] ?? ''));
     $privacyConsent = (string) ($_POST['privacy_consent'] ?? '') === '1';
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $registerRateKey = 'register:' . strtolower($email) . ':' . $clientIp;
-    $programInstituteMap = getProgramInstituteMap();
+    $instituteOptions = getInstituteOptions();
 
     if (rateLimitIsBlocked($registerRateKey, 5, 300)) {
         setFlash('error', 'Too many registration attempts. Please wait a few minutes and try again.');
         redirect('?page=register');
     }
 
-    if ($name === '' || $email === '' || $password === '' || $program === '') {
+    if ($name === '' || $email === '' || $password === '' || $institute === '') {
         rateLimitIncrement($registerRateKey, 300);
         setFlash('error', 'Please fill all registration fields.');
         redirect('?page=register');
     }
 
-    if (!isset($programInstituteMap[$program])) {
+    if (!in_array($institute, $instituteOptions, true)) {
         rateLimitIncrement($registerRateKey, 300);
-        setFlash('error', 'Please select a valid program.');
+        setFlash('error', 'Please select a valid institute.');
         redirect('?page=register');
     }
-
-    $institute = (string) $programInstituteMap[$program];
 
     if (!$privacyConsent) {
         rateLimitIncrement($registerRateKey, 300);
@@ -162,7 +160,7 @@ function handleRegisterAction(PDO $db): void
             password_hash($password, PASSWORD_DEFAULT), 
             'student', 
             $institute, 
-            $program,
+            null,
             0,
             $activationToken,
             $activationExpires,

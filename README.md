@@ -20,6 +20,7 @@ Recent Updates:
 - Owner transaction history filter by type (all/income/expense) and date sort
 - Dark theme polish: removed per-card dark gradient artifacts and increased background gradient visibility
 - Dark theme follow-up: restored frosted glass blur on dark cards while retaining cleaner panel surfaces
+- Registration update: replaced the registration dropdown from class/program selection to institute selection
 
 ---
 

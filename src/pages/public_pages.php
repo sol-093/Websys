@@ -128,7 +128,7 @@ function handleLoginPage(array $config): void
 function handleRegisterPage(): void
 {
     renderHeader('Register');
-    $programInstituteMap = getProgramInstituteMap();
+    $instituteOptions = getInstituteOptions();
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
         <h1 class="text-2xl font-semibold mb-4 icon-label"><?= uiIcon('register', 'ui-icon') ?><span>Student Registration</span></h1>
@@ -136,10 +136,10 @@ function handleRegisterPage(): void
             <input type="hidden" name="action" value="register">
             <input name="name" placeholder="Full Name" required class="w-full border rounded px-3 py-2">
             <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
-            <select name="program" required class="w-full border rounded px-3 py-2">
-                <option value="">Select Program</option>
-                <?php foreach ($programInstituteMap as $programName => $instituteName): ?>
-                    <option value="<?= e($programName) ?>"><?= e($programName) ?> (<?= e($instituteName) ?>)</option>
+            <select name="institute" required class="w-full border rounded px-3 py-2">
+                <option value="">Select Institute</option>
+                <?php foreach ($instituteOptions as $instituteName): ?>
+                    <option value="<?= e($instituteName) ?>"><?= e($instituteName) ?></option>
                 <?php endforeach; ?>
             </select>
             <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
