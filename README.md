@@ -19,6 +19,7 @@ Recent Updates:
 - Profile management page with modal change-password flow (non-admin accounts only)
 - Owner transaction history filter by type (all/income/expense) and date sort
 - Dark theme polish: removed per-card dark gradient artifacts and increased background gradient visibility
+- Dark theme follow-up: restored frosted glass blur on dark cards while retaining cleaner panel surfaces
 
 ---
 

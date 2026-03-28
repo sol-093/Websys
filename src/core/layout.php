@@ -84,11 +84,11 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             body.theme-dark .glass {
-                background: rgba(4, 24, 18, 0.78);
+                background: rgba(4, 24, 18, 0.52);
                 border-color: rgba(110, 231, 183, 0.2);
                 box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-                backdrop-filter: none;
-                -webkit-backdrop-filter: none;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 color: #ecfdf5;
             }
 
@@ -106,11 +106,11 @@ function renderHeader(string $title = 'Dashboard'): void
             body.theme-dark .bg-white.shadow.rounded,
             body.theme-dark .bg-white.shadow.rounded.p-4,
             body.theme-dark .bg-white.shadow.rounded.p-6 {
-                background: rgba(4, 24, 18, 0.78) !important;
+                background: rgba(4, 24, 18, 0.52) !important;
                 border-color: rgba(110, 231, 183, 0.2) !important;
                 box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28) !important;
-                backdrop-filter: none;
-                -webkit-backdrop-filter: none;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
             }
 
             .bg-indigo-700 { background-color: var(--green-700) !important; }
