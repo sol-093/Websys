@@ -43,6 +43,14 @@ function renderHeader(string $title = 'Dashboard'): void
                     radial-gradient(900px 460px at 100% 0%, rgba(45, 212, 191, 0.07), transparent 64%),
                     linear-gradient(180deg, #fcfefd 0%, #f4f8f7 100%);
                 color: #0f172a;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            main {
+                width: 100%;
+                flex: 1 0 auto;
             }
 
             body.theme-dark {

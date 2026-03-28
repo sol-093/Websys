@@ -620,3 +620,6 @@ Version 1.0.2 (March 28, 2026)
 Version 1.0.3 (March 28, 2026)
 - Fixed footer Data Privacy Notice link to open the registration privacy consent flow directly
 - Added query-parameter support on the register page so `privacy=1` auto-opens the privacy modal
+
+Version 1.0.4 (March 28, 2026)
+- Updated shared layout shell so short pages keep the footer at the viewport bottom (including login page)
