@@ -1216,7 +1216,7 @@ function renderFooter(): void
                                 <li><a href="?page=admin_audit" class="app-footer-link">Security and Audit Review</a></li>
                                 <li><a href="?page=logout" class="app-footer-link">Secure Logout</a></li>
                             <?php endif; ?>
-                            <li><a href="?page=home" class="app-footer-link">Data Privacy Notice</a></li>
+                            <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Data Privacy Notice</a></li>
                         </ul>
                     </div>
                 </div>

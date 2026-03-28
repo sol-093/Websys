@@ -206,6 +206,11 @@ function handleRegisterPage(): void
                 });
             }
 
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('privacy') === '1') {
+                openModal();
+            }
+
             modal.addEventListener('click', function (event) {
                 if (event.target === modal) {
                     closeModal();

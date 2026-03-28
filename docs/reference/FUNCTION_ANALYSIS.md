@@ -263,7 +263,7 @@ Used by: POST action dispatch in `index.php`.
 - **`handleLogoutPage()`**: destroys session and redirects to home.
 - **`handleHomePage(PDO $db, ?array $user)`**: renders landing page with organization preview.
 - **`handleLoginPage(array $config)`**: renders login page (Google OAuth and resend-verification support).
-- **`handleRegisterPage()`**: renders registration page.
+- **`handleRegisterPage()`**: renders registration page and privacy consent modal; supports `privacy=1` query to open the modal on load.
 - **`handleVerifyEmailPage()`**: email verification result screen.
 - **`handleForgotPasswordPage()`**: forgot-password request screen.
 - **`handleResetPasswordPage()`**: password reset screen.

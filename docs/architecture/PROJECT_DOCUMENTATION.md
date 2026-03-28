@@ -99,7 +99,7 @@ websys/
 |   |   |-- config.php           # Database, app, uploads, OAuth config
 |   |   |-- db.php               # PDO connection + auto-initialize schema/columns
 |   |   |-- helpers.php          # CSRF, uploads, flash, audit, icon registry, and utility helpers
-|   |   `-- layout.php           # Shared shell, UI chrome, dashboard styling, and role-aware footer
+|   |   `-- layout.php           # Shared shell, UI chrome, dashboard styling, role-aware footer, and privacy-notice footer link
 |   |-- lib/
 |   |   |-- integrations.php     # Base URL, OAuth checks, and external JSON fetch helper
 |   |   |-- maintenance.php      # Data lifecycle cleanup helpers
