@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "lean-ctx": {
+      "command": "C:/Users/Mark/.cargo/bin/lean-ctx.exe",
+      "args": []
+    }
+  }
+}

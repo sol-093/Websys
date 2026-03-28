@@ -3,7 +3,7 @@
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
 Version: 1.0.0  
-Last Updated: March 8, 2026
+Last Updated: March 28, 2026
 
 Recent Updates:
 - Dashboard redesign with KPI cards, trend charts, and modal drill-downs
@@ -18,6 +18,7 @@ Recent Updates:
 - Password recovery flow (forgot/reset) with token expiry and email notifications
 - Profile management page with modal change-password flow (non-admin accounts only)
 - Owner transaction history filter by type (all/income/expense) and date sort
+- Dark theme polish: removed per-card dark gradient artifacts and increased background gradient visibility
 
 ---
 

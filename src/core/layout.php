@@ -55,9 +55,9 @@ function renderHeader(string $title = 'Dashboard'): void
 
             body.theme-dark {
                 background:
-                    radial-gradient(900px 500px at 12% 8%, rgba(22, 163, 74, 0.24), transparent 60%),
-                    radial-gradient(1000px 560px at 82% 0%, rgba(45, 212, 191, 0.22), transparent 62%),
-                    linear-gradient(135deg, #011b16 0%, #022a21 46%, #01392c 100%);
+                    radial-gradient(980px 560px at 8% 6%, rgba(52, 211, 153, 0.34), transparent 62%),
+                    radial-gradient(1050px 620px at 88% 2%, rgba(20, 184, 166, 0.3), transparent 64%),
+                    linear-gradient(135deg, #011912 0%, #02261f 44%, #04372d 100%);
                 color: #f0fdf4;
             }
 
@@ -84,8 +84,11 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             body.theme-dark .glass {
-                background: rgba(255, 255, 255, 0.08);
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                background: rgba(4, 24, 18, 0.78);
+                border-color: rgba(110, 231, 183, 0.2);
+                box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
                 color: #ecfdf5;
             }
 
@@ -103,8 +106,11 @@ function renderHeader(string $title = 'Dashboard'): void
             body.theme-dark .bg-white.shadow.rounded,
             body.theme-dark .bg-white.shadow.rounded.p-4,
             body.theme-dark .bg-white.shadow.rounded.p-6 {
-                background: rgba(255, 255, 255, 0.08) !important;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+                background: rgba(4, 24, 18, 0.78) !important;
+                border-color: rgba(110, 231, 183, 0.2) !important;
+                box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28) !important;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
             }
 
             .bg-indigo-700 { background-color: var(--green-700) !important; }
@@ -740,6 +746,10 @@ function renderHeader(string $title = 'Dashboard'): void
                 border-radius: 999px;
                 background: radial-gradient(circle, rgba(52, 211, 153, 0.22) 0%, rgba(52, 211, 153, 0) 70%);
                 pointer-events: none;
+            }
+
+            body.theme-dark .dashboard-panel::after {
+                display: none;
             }
 
             .dashboard-kicker {
