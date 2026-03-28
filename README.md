@@ -609,3 +609,6 @@ Version 1.0.0 (March 7, 2026)
 - Added request-driven finance edits/deletes
 - Added owner assignment and join request flows
 - Added audit logs and Google OAuth support
+
+Version 1.0.1 (March 28, 2026)
+- Updated the shared admin-facing icon (`uiIcon('audit')`) to use the new admin logo SVG across all pages where it appears

@@ -1,5 +1,5 @@
 Student Organization Management and Budget Transparency System - Function Analysis
-Last Updated: March 8, 2026
+Last Updated: March 28, 2026
 
 ---
 
@@ -86,7 +86,7 @@ Used by: route/action dispatch in `index.php` to keep main controller concise.
 ### Rendering and Utility
 
 - **`e(?string $value)`**: HTML-escapes output (`htmlspecialchars`).
-- **`uiIcon(...)`**: returns SVG icon markup by icon key.
+- **`uiIcon(...)`**: returns SVG icon markup by icon key. The `audit` key is used for admin-facing labels and now maps to the updated admin logo SVG.
 
 ### Navigation and Flash Messaging
 
