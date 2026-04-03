@@ -20,7 +20,7 @@
 
     const isDark = document.body.classList.contains('theme-dark');
     const axisColor = isDark ? '#a7f3d0' : '#065f46';
-    const legendColor = isDark ? '#d1fae5' : '#14532d';
+    const legendColor = isDark ? '#a7f3d0' : '#065f46';
     const gridColor = isDark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
 
     const chart = new Chart(canvas, {
@@ -114,7 +114,7 @@
     const applyThemeToCharts = function () {
         const dark = document.body.classList.contains('theme-dark');
         const nextAxis = dark ? '#a7f3d0' : '#065f46';
-        const nextLegend = dark ? '#d1fae5' : '#14532d';
+        const nextLegend = dark ? '#a7f3d0' : '#065f46';
         const nextGrid = dark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
 
         chart.options.plugins.legend.labels.color = nextLegend;
@@ -138,6 +138,21 @@
         themeToggle.addEventListener('change', function () {
             applyThemeToCharts();
         });
+    }
+
+    // Listen to theme class changes so charts update instantly regardless of which toggle control changed it.
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function (mutations) {
+            const hasClassChange = mutations.some(function (mutation) {
+                return mutation.type === 'attributes' && mutation.attributeName === 'class';
+            });
+
+            if (hasClassChange) {
+                applyThemeToCharts();
+            }
+        });
+
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
 
     const organizationsModal = document.getElementById('organizationsModal');

@@ -18,7 +18,7 @@ function db(): PDO
         $mysql = resolveMySqlConnectionConfig($dbConfig);
         $host = (string) ($mysql['host'] ?? '127.0.0.1');
         $port = (int) ($mysql['port'] ?? 3306);
-        $database = (string) ($mysql['database'] ?? 'websys_db');
+        $database = (string) ($mysql['database'] ?? 'websysdb');
         $username = (string) ($mysql['username'] ?? 'root');
         $password = (string) ($mysql['password'] ?? '');
         $bootstrapDatabase = (bool) ($mysql['bootstrap_database'] ?? true);
@@ -71,7 +71,7 @@ function resolveMySqlConnectionConfig(array $dbConfig): array
     $config = [
         'host' => (string) ($dbConfig['host'] ?? '127.0.0.1'),
         'port' => (int) ($dbConfig['port'] ?? 3306),
-        'database' => (string) ($dbConfig['database'] ?? 'websys_db'),
+        'database' => (string) ($dbConfig['database'] ?? 'websysdb'),
         'username' => (string) ($dbConfig['username'] ?? 'root'),
         'password' => (string) ($dbConfig['password'] ?? ''),
         'bootstrap_database' => (bool) ($dbConfig['bootstrap_database'] ?? true),
@@ -145,6 +145,8 @@ function initializeDatabaseSqlite(PDO $pdo): void
         role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('admin','student','owner')),
         institute TEXT NULL,
         program TEXT NULL,
+        year_level INTEGER NULL,
+        section TEXT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -266,6 +268,8 @@ function initializeDatabaseMySql(PDO $pdo): void
         role ENUM('admin','student','owner') NOT NULL DEFAULT 'student',
         institute VARCHAR(191) NULL,
         program VARCHAR(191) NULL,
+        year_level TINYINT NULL,
+        section VARCHAR(50) NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -413,6 +417,22 @@ function ensureAcademicAndVisibilityColumns(PDO $pdo): void
             $pdo->exec('ALTER TABLE users ADD COLUMN program VARCHAR(191) NULL');
         } else {
             $pdo->exec('ALTER TABLE users ADD COLUMN program TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'year_level')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN year_level TINYINT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN year_level INTEGER NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'section')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN section VARCHAR(50) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN section TEXT NULL');
         }
     }
 
@@ -698,12 +718,16 @@ function ensureDefaultAdmin(PDO $pdo): void
 
     $exists = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
     if ($exists === 0) {
-        $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, year_level, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             'System Admin',
             'admin@campus.local',
             password_hash('admin123', PASSWORD_DEFAULT),
             'admin',
+            null,
+            null,
+            null,
+            null,
         ]);
     }
 }

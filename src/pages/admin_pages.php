@@ -224,19 +224,42 @@ function handleMyOrgAdminPage(PDO $db): void
     }
 
     renderHeader('Organization Overview');
+    $selectedOrgName = 'Select organization';
+    foreach ($orgs as $option) {
+        if ($orgId > 0 && (int) $option['id'] === $orgId) {
+            $selectedOrgName = (string) $option['name'];
+            break;
+        }
+    }
     ?>
+    <link rel="stylesheet" href="static/css/owner-org-switcher.css">
     <div class="bg-white shadow rounded p-4">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview (Admin)</span></h1>
-        <form method="get" class="mb-4 flex gap-2">
+        <form method="get" class="mb-4 flex gap-2 items-start relative my-org-switcher" data-dropdown-root>
             <input type="hidden" name="page" value="my_org">
-            <select name="org_id" class="border rounded px-3 py-2">
-                <option value="">Select organization</option>
-                <?php foreach ($orgs as $option): ?>
-                    <option value="<?= (int) $option['id'] ?>" <?= $orgId === (int) $option['id'] ? 'selected' : '' ?>>
-                        <?= e($option['name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+            <input type="hidden" name="org_id" data-dropdown-value value="<?= $orgId > 0 ? (int) $orgId : '' ?>">
+            <div class="relative min-w-[16rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                <button type="button" data-dropdown-toggle="adminOrgSwitcherMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+                    <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
+                    <span class="my-org-switcher-caret text-xs">▾</span>
+                </button>
+                <div id="adminOrgSwitcherMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
+                    <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                        <li>
+                            <button type="button" data-org-id="" data-org-name="Select organization" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $orgId <= 0 ? 'is-active' : '' ?>">
+                                Select organization
+                            </button>
+                        </li>
+                        <?php foreach ($orgs as $option): ?>
+                            <li>
+                                <button type="button" data-org-id="<?= (int) $option['id'] ?>" data-org-name="<?= e((string) $option['name']) ?>" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $orgId === (int) $option['id'] ? 'is-active' : '' ?>">
+                                    <?= e((string) $option['name']) ?>
+                                </button>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
             <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
         </form>
 
@@ -270,6 +293,114 @@ function handleMyOrgAdminPage(PDO $db): void
             <?php renderPagination($adminTxPagination); ?>
         <?php endif; ?>
     </div>
+    <script src="static/js/owner-org-switcher.js"></script>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function handleMyOrgUserOverviewPage(PDO $db, array $user): void
+{
+    requireRole(['owner', 'student']);
+
+    $orgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
+    $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
+    $membershipStmt->execute([(int) $user['id']]);
+    $memberOrganizationIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+    $orgs = applyOrganizationVisibilityForUser($orgs, $user, $memberOrganizationIds);
+
+    if (count($orgs) === 0) {
+        setFlash('error', 'No organizations are available for your account yet.');
+        redirect('?page=dashboard');
+    }
+
+    $selectedOrgId = (int) ($_GET['org_id'] ?? 0);
+    if ($selectedOrgId <= 0) {
+        $selectedOrgId = (int) $orgs[0]['id'];
+    }
+
+    $org = null;
+    foreach ($orgs as $candidate) {
+        if ((int) $candidate['id'] === $selectedOrgId) {
+            $org = $candidate;
+            break;
+        }
+    }
+
+    if (!$org) {
+        $org = $orgs[0];
+        $selectedOrgId = (int) $org['id'];
+    }
+
+    $txStmt = $db->prepare('SELECT * FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
+    $txStmt->execute([(int) $selectedOrgId]);
+    $transactions = $txStmt->fetchAll();
+    $userTxPagination = paginateArray($transactions, 'pg_myorg_user_tx', 12);
+    $transactions = $userTxPagination['items'];
+
+    $titleSuffix = ($user['role'] ?? '') === 'owner' ? ' (Owner)' : ' (Student)';
+
+    renderHeader('My Organization');
+    $selectedOrgName = (string) ($org['name'] ?? 'Select organization');
+    ?>
+    <link rel="stylesheet" href="static/css/owner-org-switcher.css">
+    <div class="bg-white shadow rounded p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview<?= e($titleSuffix) ?></span></h1>
+            <?php if (($user['role'] ?? '') === 'owner'): ?>
+                <a href="?page=my_org_manage&org_id=<?= (int) $selectedOrgId ?>" class="bg-emerald-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Manage Organization</span></span></a>
+            <?php endif; ?>
+        </div>
+
+        <form method="get" class="mb-4 flex gap-2 items-start flex-wrap relative my-org-switcher" data-dropdown-root>
+            <input type="hidden" name="page" value="my_org">
+            <input type="hidden" name="org_id" data-dropdown-value value="<?= (int) $selectedOrgId ?>">
+            <div class="relative min-w-[16rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+                    <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
+                    <span class="my-org-switcher-caret text-xs">▾</span>
+                </button>
+                <div id="userOrgSwitcherMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
+                    <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                        <?php foreach ($orgs as $option): ?>
+                            <li>
+                                <button type="button" data-org-id="<?= (int) $option['id'] ?>" data-org-name="<?= e((string) $option['name']) ?>" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $selectedOrgId === (int) $option['id'] ? 'is-active' : '' ?>">
+                                    <?= e((string) $option['name']) ?>
+                                </button>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+            <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+        </form>
+
+        <h2 class="text-lg font-semibold"><?= e((string) $org['name']) ?></h2>
+        <p class="text-gray-600 mb-3"><?= e((string) ($org['description'] ?? '')) ?></p>
+
+        <table class="w-full text-sm">
+            <thead>
+            <tr class="text-left border-b">
+                <th class="py-2">Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach ($transactions as $row): ?>
+                <tr class="border-b">
+                    <td class="py-2"><?= e((string) $row['transaction_date']) ?></td>
+                    <td class="<?= (string) $row['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e((string) $row['type']) ?></td>
+                    <td>₱<?= number_format((float) $row['amount'], 2) ?></td>
+                    <td><?= e((string) $row['description']) ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php renderPagination($userTxPagination); ?>
+    </div>
+    <script src="static/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;

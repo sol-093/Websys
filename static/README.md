@@ -1,85 +1,49 @@
-# Static Demo Folder Guide
+# Static Frontend Demo Guide
 
-This folder contains the frontend-only version of the system.
+This folder contains the synced static version of the current frontend UX, including dashboard visuals, modal flows, theme switching, and chart interactions.
 
 ## Files
 
-- `system-static-demo.html`
-- `system-static-demo.css`
-- `system-static-demo.js`
+- `demo/system-static-demo.html`
+- `demo/system-static-demo.css`
+- `demo/system-static-demo.js`
 
-## 1) `system-static-demo.html`
+## Synced Coverage
 
-Purpose:
-- Defines the page structure (navbar, sections, forms, dashboard panels, modal).
-- Loads Tailwind from CDN.
-- Loads local CSS and JS files.
+- Public pages: home, login, register.
+- Role-based dashboard navigation and quick actions.
+- Dashboard sections: overview, finance status, monthly trend, live activity, organizations, recent reports, and financial summary.
+- Modal interactions: terms and conditions, organizations list, announcements list, and financial health snapshot.
+- Light/dark theme persistence via localStorage.
+- Chart.js trend and financial ranking chart theme adaptation.
+- Footer blocks aligned with the live frontend information architecture.
 
-Key syntax used:
-- **External assets**
-  - `<link rel="stylesheet" href="system-static-demo.css">`
-  - `<script src="system-static-demo.js"></script>`
-- **Section switching**
-  - Each page block uses `class="page"`.
-  - Active view uses `class="page active"`.
-- **IDs for JS hooks**
-  - Example: `id="navMenuToggle"`, `id="mobileNavMenu"`, `id="themeToggle"`, `id="privacyModal"`.
-- **Role-based dynamic placeholders**
-  - Example containers populated by JS: `id="desktopNav"`, `id="mobileNav"`, `id="dashboardQuickActions"`.
+## Animation and UI Behavior
 
-## 2) `system-static-demo.css`
+- Glassmorphism card styling and themed color tokens.
+- Page panel entrance animation for active views.
+- Modal entrance animation for dashboard overlays.
+- Mobile navigation drawer behavior with responsive close handling.
+- Role toggle controls (`guest`, `student`, `owner`, `admin`) for frontend state simulation.
 
-Purpose:
-- Holds custom styling on top of Tailwind utilities.
-- Implements glassmorphism, dark mode overrides, navbar interactions, and control styling.
+## How to Run
 
-Key syntax used:
-- **CSS variables**
-  - `:root { --green-500: ... }`
-- **Dark mode selector**
-  - `body.theme-dark .className { ... }`
-- **Pseudo-elements**
-  - Toggle knob: `.theme-switch::after`
-- **State-specific classes**
-  - Hidden page: `.page { display: none; }`
-  - Visible page: `.page.active { display: block; }`
+Using XAMPP:
 
-## 3) `system-static-demo.js`
+- Open `http://localhost/websys/static/demo/system-static-demo.html`
 
-Purpose:
-- Adds all interactivity (navigation, role switching, mobile menu, dark/light mode, modal behavior, chart behavior).
+Direct file open:
 
-Key syntax used:
-- **State variables**
-  - `let role = 'guest'`
-  - `let currentPage = 'home'`
-- **DOM selection**
-  - `document.getElementById(...)`
-  - `document.querySelectorAll(...)`
-- **Event listeners**
-  - `element.addEventListener('click', handler)`
-  - `form.addEventListener('submit', handler)`
-- **Class toggling**
-  - `element.classList.toggle('hidden', condition)`
-  - `document.body.classList.toggle('theme-dark', isDark)`
-- **Template strings for dynamic HTML**
-  - `` `...${value}...` ``
-- **Local storage for theme persistence**
-  - `localStorage.setItem('websys-theme', 'dark')`
-  - `localStorage.getItem('websys-theme')`
-- **Chart.js initialization**
-  - `new Chart(canvas, { ... })`
-  - Updates chart colors on theme toggle.
-
-## How to run
-
-From XAMPP:
-- Open: `http://localhost/websys/static/demo/system-static-demo.html`
-
-From file explorer (direct file open):
 - Open `static/demo/system-static-demo.html` in a browser.
+
+## Validation Checklist
+
+- Toggle roles from the demo role chips and verify nav + actions update.
+- Toggle dark mode and confirm charts restyle correctly.
+- Open and close all modals (terms, organizations, announcements, financial summary).
+- Check responsive behavior on mobile widths (menu, cards, tables, modal scroll).
 
 ## Notes
 
-- This static demo uses dummy data only.
-- No PHP, no database, no backend APIs are used.
+- This is a frontend-only static simulation with seeded visual data.
+- No PHP runtime, database connection, or backend workflow is executed in this mode.

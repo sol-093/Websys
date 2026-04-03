@@ -273,6 +273,10 @@ if ($page === 'my_org') {
         handleMyOrgAdminPage($db);
     }
 
+    handleMyOrgUserOverviewPage($db, $user);
+}
+
+if ($page === 'my_org_manage') {
     handleMyOrgOwnerPage($db, $user, $announcementCutoff);
 }
 

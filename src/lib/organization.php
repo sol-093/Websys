@@ -45,6 +45,39 @@ function getProgramInstituteMap(): array
     ];
 }
 
+function getProgramOptions(): array
+{
+    return array_keys(getProgramInstituteMap());
+}
+
+function getInstituteForProgram(?string $program): ?string
+{
+    $program = trim((string) $program);
+    if ($program === '') {
+        return null;
+    }
+
+    $programInstituteMap = getProgramInstituteMap();
+
+    return $programInstituteMap[$program] ?? null;
+}
+
+function formatYearLevelLabel(?int $yearLevel): string
+{
+    $yearLevel = (int) $yearLevel;
+    if ($yearLevel <= 0) {
+        return 'Not set';
+    }
+
+    return match ($yearLevel) {
+        1 => '1st Year',
+        2 => '2nd Year',
+        3 => '3rd Year',
+        4 => '4th Year',
+        default => $yearLevel . 'th Year',
+    };
+}
+
 function getOrgCategoryOptions(): array
 {
     return [
@@ -78,17 +111,75 @@ function sortOrganizationsByCategory(array $organizations): array
     return $organizations;
 }
 
-function applyOrganizationVisibilityForUser(array $organizations, array $user): array
+function sortOrganizationsForDashboardPanel(array $organizations, array $user, array $memberOrganizationIds = []): array
+{
+    $order = ['collegewide' => 1, 'institutewide' => 2, 'program_based' => 3];
+    $memberOrganizationIds = array_map('intval', $memberOrganizationIds);
+    $userId = (int) ($user['id'] ?? 0);
+
+    $isEligible = static function (array $org) use ($user, $memberOrganizationIds, $userId): bool {
+        $orgId = (int) ($org['id'] ?? 0);
+        if ($orgId > 0 && in_array($orgId, $memberOrganizationIds, true)) {
+            return true;
+        }
+
+        if ($userId > 0 && (int) ($org['owner_id'] ?? 0) === $userId) {
+            return true;
+        }
+
+        $role = (string) ($user['role'] ?? 'student');
+        if ($role === 'admin') {
+            return true;
+        }
+
+        return canUserJoinOrganization($org, $user);
+    };
+
+    usort($organizations, static function (array $a, array $b) use ($order, $isEligible): int {
+        $aEligible = $isEligible($a) ? 1 : 0;
+        $bEligible = $isEligible($b) ? 1 : 0;
+
+        if ($aEligible !== $bEligible) {
+            return $bEligible <=> $aEligible;
+        }
+
+        $aCategory = (string) ($a['org_category'] ?? 'collegewide');
+        $bCategory = (string) ($b['org_category'] ?? 'collegewide');
+        $aRank = $order[$aCategory] ?? 99;
+        $bRank = $order[$bCategory] ?? 99;
+
+        if ($aRank !== $bRank) {
+            return $aRank <=> $bRank;
+        }
+
+        return strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+    });
+
+    return $organizations;
+}
+
+function applyOrganizationVisibilityForUser(array $organizations, array $user, array $memberOrganizationIds = []): array
 {
     $role = (string) ($user['role'] ?? 'student');
-    if ($role !== 'student') {
+    if ($role === 'admin') {
         return sortOrganizationsByCategory($organizations);
     }
 
+    $memberOrganizationIds = array_map('intval', $memberOrganizationIds);
+    $userId = (int) ($user['id'] ?? 0);
     $userInstitute = normalizeAcademicValue((string) ($user['institute'] ?? ''));
     $userProgram = normalizeAcademicValue((string) ($user['program'] ?? ''));
 
-    $filtered = array_values(array_filter($organizations, static function (array $org) use ($userInstitute, $userProgram): bool {
+    $filtered = array_values(array_filter($organizations, static function (array $org) use ($userInstitute, $userProgram, $memberOrganizationIds, $userId): bool {
+        $orgId = (int) ($org['id'] ?? 0);
+        if ($orgId > 0 && in_array($orgId, $memberOrganizationIds, true)) {
+            return true;
+        }
+
+        if ($userId > 0 && (int) ($org['owner_id'] ?? 0) === $userId) {
+            return true;
+        }
+
         $category = (string) ($org['org_category'] ?? 'collegewide');
         if ($category === 'collegewide') {
             return true;

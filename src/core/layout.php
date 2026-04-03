@@ -24,6 +24,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 --green-700: #10b981;
                 --green-800: #0f766e;
                 --line: rgba(16, 185, 129, 0.28);
+                --page-texture-image: url('public/uploads/kldbuilding.jpg');
             }
 
             html,
@@ -39,13 +40,32 @@ function renderHeader(string $title = 'Dashboard'): void
 
             body {
                 background:
+                    linear-gradient(180deg, rgba(252, 254, 253, 0.82) 0%, rgba(247, 251, 249, 0.88) 42%, rgba(244, 248, 247, 0.95) 74%, rgba(244, 248, 247, 0.99) 100%),
                     radial-gradient(900px 420px at 0% 0%, rgba(16, 185, 129, 0.08), transparent 62%),
                     radial-gradient(900px 460px at 100% 0%, rgba(45, 212, 191, 0.07), transparent 64%),
+                    var(--page-texture-image),
                     linear-gradient(180deg, #fcfefd 0%, #f4f8f7 100%);
+                background-size: auto, auto, auto, cover, auto;
+                background-position: center top, 0% 0%, 100% 0%, right center, center;
+                background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+                background-attachment: scroll, scroll, scroll, fixed, scroll;
                 color: #0f172a;
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
+            }
+
+            body.is-authenticated {
+                background:
+                    linear-gradient(180deg, rgba(224, 235, 230, 0.84) 0%, rgba(213, 227, 221, 0.88) 42%, rgba(203, 217, 212, 0.94) 74%, rgba(195, 211, 206, 0.97) 100%),
+                    radial-gradient(900px 420px at 0% 0%, rgba(15, 118, 110, 0.13), transparent 62%),
+                    radial-gradient(900px 460px at 100% 0%, rgba(5, 150, 105, 0.12), transparent 64%),
+                    var(--page-texture-image),
+                    linear-gradient(180deg, #e4efe9 0%, #c9d8d2 100%);
+                background-size: auto, auto, auto, cover, auto;
+                background-position: center top, 0% 0%, 100% 0%, right center, center;
+                background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+                background-attachment: scroll, scroll, scroll, fixed, scroll;
             }
 
             main {
@@ -55,10 +75,29 @@ function renderHeader(string $title = 'Dashboard'): void
 
             body.theme-dark {
                 background:
-                    radial-gradient(980px 560px at 8% 6%, rgba(52, 211, 153, 0.34), transparent 62%),
-                    radial-gradient(1050px 620px at 88% 2%, rgba(20, 184, 166, 0.3), transparent 64%),
+                    linear-gradient(145deg, rgba(1, 25, 18, 0.84) 0%, rgba(2, 38, 31, 0.9) 46%, rgba(4, 55, 45, 0.96) 100%),
+                    radial-gradient(980px 560px at 8% 6%, rgba(52, 211, 153, 0.18), transparent 62%),
+                    radial-gradient(1050px 620px at 88% 2%, rgba(20, 184, 166, 0.16), transparent 64%),
+                    var(--page-texture-image),
                     linear-gradient(135deg, #011912 0%, #02261f 44%, #04372d 100%);
+                background-size: auto, auto, auto, cover, auto;
+                background-position: center top, 8% 6%, 88% 2%, right center, center;
+                background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+                background-attachment: scroll, scroll, scroll, fixed, scroll;
                 color: #f0fdf4;
+            }
+
+            body.theme-dark.is-authenticated {
+                background:
+                    linear-gradient(145deg, rgba(0, 16, 12, 0.9) 0%, rgba(1, 28, 22, 0.94) 46%, rgba(2, 38, 31, 0.98) 100%),
+                    radial-gradient(980px 560px at 8% 6%, rgba(52, 211, 153, 0.14), transparent 62%),
+                    radial-gradient(1050px 620px at 88% 2%, rgba(20, 184, 166, 0.13), transparent 64%),
+                    var(--page-texture-image),
+                    linear-gradient(135deg, #00140f 0%, #012019 44%, #022d25 100%);
+                background-size: auto, auto, auto, cover, auto;
+                background-position: center top, 8% 6%, 88% 2%, right center, center;
+                background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+                background-attachment: scroll, scroll, scroll, fixed, scroll;
             }
 
             .glass {
@@ -321,6 +360,88 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #bbf7d0;
             }
 
+            .footer-section {
+                min-width: 0;
+            }
+
+            .footer-accordion-toggle {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.75rem;
+                background: transparent;
+                border: 0;
+                padding: 0;
+                text-align: left;
+                color: inherit;
+            }
+
+            .footer-accordion-toggle:focus-visible {
+                outline: 2px solid rgba(16, 185, 129, 0.7);
+                outline-offset: 3px;
+                border-radius: 0.35rem;
+            }
+
+            .footer-accordion-icon {
+                width: 0.5rem;
+                height: 0.5rem;
+                border-right: 2px solid #0f766e;
+                border-bottom: 2px solid #0f766e;
+                transform: rotate(45deg);
+                transition: transform 0.2s ease;
+                flex: 0 0 auto;
+                margin-right: 0.2rem;
+            }
+
+            .footer-accordion-toggle[aria-expanded="true"] .footer-accordion-icon {
+                transform: rotate(-135deg);
+            }
+
+            body.theme-dark .footer-accordion-icon {
+                border-color: #d1fae5;
+            }
+
+            .footer-accordion-panel {
+                display: none;
+                padding-top: 0.65rem;
+            }
+
+            .footer-accordion-panel.is-open {
+                display: block;
+            }
+
+            @media (max-width: 767px) {
+                .app-footer .grid {
+                    grid-template-columns: 1fr;
+                    gap: 0.4rem;
+                }
+
+                .footer-section {
+                    padding: 0.55rem 0;
+                    border-bottom: 1px solid rgba(16, 185, 129, 0.24);
+                }
+
+                .footer-section:last-child {
+                    border-bottom: 0;
+                }
+            }
+
+            @media (min-width: 768px) {
+                .footer-accordion-icon {
+                    display: none;
+                }
+
+                .footer-accordion-panel {
+                    display: block !important;
+                    padding-top: 0;
+                }
+
+                .footer-accordion-toggle {
+                    cursor: default;
+                }
+            }
+
             .hero-kicker {
                 color: #065f46;
             }
@@ -352,6 +473,19 @@ function renderHeader(string $title = 'Dashboard'): void
                 text-shadow: none;
             }
 
+            body:not(.theme-dark) .text-green-700,
+            body:not(.theme-dark) .text-green-800,
+            body:not(.theme-dark) .text-emerald-700,
+            body:not(.theme-dark) .text-emerald-800,
+            body:not(.theme-dark) .text-emerald-900 {
+                color: #059669 !important;
+            }
+
+            body:not(.theme-dark) .text-red-700,
+            body:not(.theme-dark) .text-red-800 {
+                color: #dc2626 !important;
+            }
+
             .text-slate-800,
             .text-slate-700,
             .text-slate-600,
@@ -380,12 +514,12 @@ function renderHeader(string $title = 'Dashboard'): void
             body.theme-dark .text-emerald-700,
             body.theme-dark .text-emerald-800,
             body.theme-dark .text-emerald-900 {
-                color: #bbf7d0 !important;
+                color: #34d399 !important;
             }
 
             body.theme-dark .text-red-700,
             body.theme-dark .text-red-800 {
-                color: #fecaca !important;
+                color: #f87171 !important;
             }
 
             body.theme-dark .text-amber-700 {
@@ -439,32 +573,42 @@ function renderHeader(string $title = 'Dashboard'): void
                 appearance: none;
                 -webkit-appearance: none;
                 padding-right: 2rem !important;
-                background-image: linear-gradient(45deg, transparent 50%, #059669 50%), linear-gradient(135deg, #059669 50%, transparent 50%);
+                background-image: linear-gradient(45deg, transparent 50%, #047857 50%), linear-gradient(135deg, #047857 50%, transparent 50%);
                 background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 10px) calc(50% - 2px);
                 background-size: 6px 6px, 6px 6px;
                 background-repeat: no-repeat;
             }
 
             select option {
-                background-color: #eafff4;
-                color: #14532d;
+                background-color: #ecfdf5;
+                color: #064e3b;
             }
 
             select option:checked,
             select option:hover {
-                background: linear-gradient(135deg, #6ee7b7, #34d399);
-                color: #064e3b;
+                background: linear-gradient(135deg, #059669, #047857);
+                color: #f0fdf4;
             }
 
             body.theme-dark select option {
-                background-color: #08372d;
-                color: #eafff4;
+                background-color: #021d17;
+                color: #d1fae5;
             }
 
             body.theme-dark select option:checked,
             body.theme-dark select option:hover {
-                background: linear-gradient(135deg, #0f766e, #14b8a6);
-                color: #ffffff;
+                background: linear-gradient(135deg, #047857, #065f46);
+                color: #ecfdf5;
+            }
+
+            select:hover {
+                border-color: rgba(5, 150, 105, 0.55) !important;
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+            }
+
+            body.theme-dark select:hover {
+                border-color: rgba(52, 211, 153, 0.65) !important;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
             }
 
             body:not(.theme-dark) input::placeholder,
@@ -758,7 +902,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 width: 9rem;
                 height: 9rem;
                 border-radius: 999px;
-                background: radial-gradient(circle, rgba(52, 211, 153, 0.22) 0%, rgba(52, 211, 153, 0) 70%);
+                background: radial-gradient(circle, rgba(60, 245, 177, 0.27) 0%, rgba(52, 211, 153, 0.18) 70%);
                 pointer-events: none;
             }
 
@@ -959,7 +1103,7 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             body:not(.theme-dark) .dashboard-panel {
-                background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 251, 0.98));
+                background: linear-gradient(145deg, rgba(244, 255, 238, 0.29), rgba(212, 245, 229, 0.18));
                 border: 1px solid rgba(15, 23, 42, 0.1);
                 color: #1f2937;
                 box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
@@ -994,7 +1138,7 @@ function renderHeader(string $title = 'Dashboard'): void
 
             body:not(.theme-dark) .dashboard-metric-card,
             body:not(.theme-dark) .dashboard-feed-item {
-                background: rgba(255, 255, 255, 0.94);
+                background: rgba(247, 255, 252, 0.34);
                 border-color: rgba(15, 23, 42, 0.1);
             }
 
@@ -1024,11 +1168,11 @@ function renderHeader(string $title = 'Dashboard'): void
 
             body:not(.theme-dark) .dashboard-shell .text-green-300,
             body:not(.theme-dark) .dashboard-shell .text-emerald-300 {
-                color: #059669 !important;
+                color: #035e41 !important;
             }
 
             body:not(.theme-dark) .dashboard-shell .text-red-300 {
-                color: #dc2626 !important;
+                color: #a71515 !important;
             }
 
             body:not(.theme-dark) .dashboard-shell .text-indigo-100 {
@@ -1041,7 +1185,7 @@ function renderHeader(string $title = 'Dashboard'): void
             }
         </style>
     </head>
-    <body class="min-h-screen">
+    <body class="min-h-screen <?= $user ? 'is-authenticated' : '' ?>">
         <script>
             (function () {
                 const saved = localStorage.getItem('websys-theme');
@@ -1050,7 +1194,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
             })();
         </script>
-        <nav class="glass sticky top-3 z-20 mx-2 sm:mx-3 mt-3 text-slate-800">
+        <nav class="glass fixed top-0 inset-x-0 z-50 mx-2 sm:mx-3 mt-2 text-slate-800">
             <div class="max-w-7xl mx-auto px-4 py-3">
                 <div class="flex items-center justify-between gap-2 min-w-0">
                     <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title"><?= e($config['app_name']) ?></a>
@@ -1064,7 +1208,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
                                 <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                             <?php endif; ?>
-                            <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
+                            <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
                                 <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
                             <?php if ($user['role'] !== 'admin'): ?>
@@ -1104,7 +1248,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
                                 <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                             <?php endif; ?>
-                            <?php if ($user['role'] === 'owner' || $user['role'] === 'admin'): ?>
+                            <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
                                 <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
                             <?php if ($user['role'] !== 'admin'): ?>
@@ -1121,7 +1265,7 @@ function renderHeader(string $title = 'Dashboard'): void
             </div>
         </nav>
 
-        <main class="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6">
+        <main class="max-w-7xl mx-auto p-3 pt-24 sm:p-4 sm:pt-28 lg:p-6 lg:pt-28">
             <?php if ($flash): ?>
                 <div class="glass mb-4 rounded px-4 py-3 text-white <?= $flash['type'] === 'error' ? 'border-red-300/60 bg-red-500/20' : 'border-emerald-300/60 bg-emerald-500/20' ?>">
                     <?= e($flash['message']) ?>
@@ -1171,90 +1315,60 @@ function renderHeader(string $title = 'Dashboard'): void
 
 function renderFooter(): void
 {
-    $config = require __DIR__ . '/config.php';
-    $user = currentUser();
-    $role = is_array($user) ? (string) ($user['role'] ?? '') : '';
-    $year = date('Y');
-
     ?>
         </main>
         <footer class="app-footer">
             <div class="mx-auto w-full max-w-7xl">
-                <div class="grid grid-cols-2 gap-6 px-4 py-5 md:grid-cols-4 lg:py-6 text-sm">
-                    <div>
+                <div class="grid grid-cols-1 gap-6 px-4 py-5 md:grid-cols-2 lg:grid-cols-4 lg:py-6 text-sm">
+                    <div class="footer-section">
                         <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</h2>
                         <ul class="space-y-1 app-footer-muted font-medium">
                             <li><a href="?page=home" class="app-footer-link">Home</a></li>
-                            <?php if ($user): ?>
-                                <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
-                                <li><a href="?page=announcements" class="app-footer-link">Announcements</a></li>
-                                <li><a href="?page=organizations" class="app-footer-link">Organizations</a></li>
-                            <?php else: ?>
-                                <li><a href="?page=login" class="app-footer-link">Login</a></li>
-                                <li><a href="?page=register" class="app-footer-link">Register</a></li>
-                                <li><a href="?page=home" class="app-footer-link">Public Overview</a></li>
-                            <?php endif; ?>
+                            <li><a href="?page=home" class="app-footer-link">Public Overview</a></li>
+                            <li><a href="?page=login" class="app-footer-link">Login</a></li>
+                            <li><a href="?page=register" class="app-footer-link">Register</a></li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Role Tools</h2>
+                    <div class="footer-section">
+                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Resources</h2>
                         <ul class="space-y-1 app-footer-muted font-medium">
-                            <?php if ($user && $user['role'] === 'admin'): ?>
-                                <li><a href="?page=admin_orgs" class="app-footer-link">Manage Organizations</a></li>
-                                <li><a href="?page=admin_students" class="app-footer-link">Student Directory</a></li>
-                                <li><a href="?page=admin_requests" class="app-footer-link">Approval Requests</a></li>
-                                <li><a href="?page=admin_audit" class="app-footer-link">Audit Logs</a></li>
-                            <?php elseif ($user && $user['role'] === 'owner'): ?>
-                                <li><a href="?page=my_org" class="app-footer-link">My Organization</a></li>
-                                <li><a href="?page=dashboard" class="app-footer-link">Finance Dashboard</a></li>
-                                <li><a href="?page=announcements" class="app-footer-link">Post Announcements</a></li>
-                                <li><a href="?page=organizations" class="app-footer-link">Browse Organizations</a></li>
-                            <?php elseif ($user): ?>
-                                <li><a href="?page=organizations" class="app-footer-link">Join Organizations</a></li>
-                                <li><a href="?page=announcements" class="app-footer-link">Community Updates</a></li>
-                                <li><a href="?page=dashboard" class="app-footer-link">Budget Transparency</a></li>
-                                <li><a href="?page=profile" class="app-footer-link">My Profile</a></li>
-                            <?php else: ?>
-                                <li><a href="?page=home" class="app-footer-link">Role-based Access</a></li>
-                                <li><a href="?page=home" class="app-footer-link">Transparency Features</a></li>
-                                <li><a href="?page=home" class="app-footer-link">Announcements</a></li>
-                                <li><a href="?page=home" class="app-footer-link">Organization Directory</a></li>
-                            <?php endif; ?>
+                            <li><a href="?page=organizations" class="app-footer-link">Organization Directory</a></li>
+                            <li><a href="?page=home" class="app-footer-link">Budgeting FAQ</a></li>
+                            <li><a href="?page=home" class="app-footer-link">User Documentation</a></li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance</h2>
+                    <div class="footer-section">
+                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance &amp; Security</h2>
                         <ul class="space-y-1 app-footer-muted font-medium">
-                            <li><span>Access is controlled by account role.</span></li>
-                            <li><span>Critical actions are recorded in audit logs.</span></li>
-                            <li><span>Transaction edits/deletes require approval workflow.</span></li>
-                            <li><span>CSRF tokens are enforced on POST forms.</span></li>
+                            <li><a href="?page=admin_audit" class="app-footer-link">Audit Log Policy</a></li>
+                            <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Data Privacy Notice</a></li>
+                            <li>
+                                <div class="flex items-center gap-2 app-footer-muted">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70"></span>
+                                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                                    </span>
+                                    <span>All Systems Operational</span>
+                                </div>
+                            </li>
                         </ul>
                     </div>
 
-                    <div>
+                    <div class="footer-section">
                         <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</h2>
                         <ul class="space-y-1 app-footer-muted font-medium">
-                            <li><a href="mailto:admin@campus.local" class="app-footer-link">System Administrator</a></li>
-                            <?php if (!$user): ?>
-                                <li><a href="?page=login" class="app-footer-link">Account Access Help</a></li>
-                                <li><a href="?page=register" class="app-footer-link">New Account Setup</a></li>
-                            <?php elseif ($role !== 'admin'): ?>
-                                <li><a href="?page=profile" class="app-footer-link">Profile and Password</a></li>
-                                <li><a href="?page=logout" class="app-footer-link">Secure Logout</a></li>
-                            <?php else: ?>
-                                <li><a href="?page=admin_audit" class="app-footer-link">Security and Audit Review</a></li>
-                                <li><a href="?page=logout" class="app-footer-link">Secure Logout</a></li>
-                            <?php endif; ?>
-                            <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Data Privacy Notice</a></li>
+                            <li>Student Affairs Office</li>
+                            <li><a href="mailto:studentaffairs@campus.local" class="app-footer-link">studentaffairs@campus.local</a></li>
+                            <li>2nd Floor, Student Services Building</li>
+                            <li>Main Campus, City 1000</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="px-4 py-2 border-t border-emerald-200/40">
-                    <span class="text-xs app-footer-muted">&copy; <?= e($year) ?> <?= e((string) $config['app_name']) ?>. Student Organization Management and Budget Transparency System.</span>
+                    <p class="text-xs app-footer-muted">&copy; 2026 Student Organization Management and Budget Transparency System. Built with PHP 8.2 &amp; Secure Session Enforcement.</p>
                 </div>
             </div>
         </footer>
@@ -1343,6 +1457,69 @@ function renderFooter(): void
                             closeUpdates();
                         }
                     });
+                }
+
+                const footerToggles = document.querySelectorAll('.footer-accordion-toggle');
+                const footerDesktopQuery = window.matchMedia('(min-width: 768px)');
+
+                const setFooterPanels = function () {
+                    const isDesktop = footerDesktopQuery.matches;
+                    footerToggles.forEach(function (toggle, index) {
+                        const panelId = toggle.getAttribute('aria-controls');
+                        if (!panelId) {
+                            return;
+                        }
+
+                        const panel = document.getElementById(panelId);
+                        if (!panel) {
+                            return;
+                        }
+
+                        const isOpen = isDesktop || index === 0;
+                        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                        panel.classList.toggle('is-open', isOpen);
+                    });
+                };
+
+                footerToggles.forEach(function (toggle) {
+                    toggle.addEventListener('click', function () {
+                        if (footerDesktopQuery.matches) {
+                            return;
+                        }
+
+                        const panelId = toggle.getAttribute('aria-controls');
+                        if (!panelId) {
+                            return;
+                        }
+
+                        const panel = document.getElementById(panelId);
+                        if (!panel) {
+                            return;
+                        }
+
+                        const currentlyOpen = toggle.getAttribute('aria-expanded') === 'true';
+
+                        footerToggles.forEach(function (itemToggle) {
+                            const itemPanelId = itemToggle.getAttribute('aria-controls');
+                            const itemPanel = itemPanelId ? document.getElementById(itemPanelId) : null;
+                            itemToggle.setAttribute('aria-expanded', 'false');
+                            if (itemPanel) {
+                                itemPanel.classList.remove('is-open');
+                            }
+                        });
+
+                        if (!currentlyOpen) {
+                            toggle.setAttribute('aria-expanded', 'true');
+                            panel.classList.add('is-open');
+                        }
+                    });
+                });
+
+                setFooterPanels();
+                if (typeof footerDesktopQuery.addEventListener === 'function') {
+                    footerDesktopQuery.addEventListener('change', setFooterPanels);
+                } else if (typeof footerDesktopQuery.addListener === 'function') {
+                    footerDesktopQuery.addListener(setFooterPanels);
                 }
             })();
         </script>

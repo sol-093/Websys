@@ -86,12 +86,16 @@ function handleGoogleCallbackPage(PDO $db, array $config): void
     $existing = $stmt->fetch();
 
     if (!$existing) {
-        $insert = $db->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
+        $insert = $db->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, year_level, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
         $insert->execute([
             $name,
             $email,
             password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT),
             'student',
+            null,
+            null,
+            null,
+            null,
         ]);
         $userId = (int) $db->lastInsertId();
         $userName = $name;
@@ -113,27 +117,40 @@ function handleRegisterAction(PDO $db): void
     $name = trim((string) ($_POST['name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
-    $institute = trim((string) ($_POST['institute'] ?? ''));
+    $program = trim((string) ($_POST['program'] ?? ''));
+    $section = trim((string) ($_POST['section'] ?? ''));
+    $yearLevel = null;
     $privacyConsent = (string) ($_POST['privacy_consent'] ?? '') === '1';
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $registerRateKey = 'register:' . strtolower($email) . ':' . $clientIp;
-    $instituteOptions = getInstituteOptions();
+    $programOptions = getProgramOptions();
+    $institute = getInstituteForProgram($program);
 
     if (rateLimitIsBlocked($registerRateKey, 5, 300)) {
         setFlash('error', 'Too many registration attempts. Please wait a few minutes and try again.');
         redirect('?page=register');
     }
 
-    if ($name === '' || $email === '' || $password === '' || $institute === '') {
+    if ($name === '' || $email === '' || $password === '' || $program === '' || $section === '') {
         rateLimitIncrement($registerRateKey, 300);
         setFlash('error', 'Please fill all registration fields.');
         redirect('?page=register');
     }
 
-    if (!in_array($institute, $instituteOptions, true)) {
+    if (!in_array($program, $programOptions, true) || $institute === null) {
         rateLimitIncrement($registerRateKey, 300);
-        setFlash('error', 'Please select a valid institute.');
+        setFlash('error', 'Please select a valid program.');
         redirect('?page=register');
+    }
+
+    if (!preg_match('/^[A-Za-z0-9\- ]{1,40}$/', $section)) {
+        rateLimitIncrement($registerRateKey, 300);
+        setFlash('error', 'Please enter a valid year and section.');
+        redirect('?page=register');
+    }
+
+    if (preg_match('/\b([1-4])(?:st|nd|rd|th)?\b/i', $section, $matches)) {
+        $yearLevel = (int) $matches[1];
     }
 
     if (!$privacyConsent) {
@@ -153,14 +170,16 @@ function handleRegisterAction(PDO $db): void
         $activationToken = bin2hex(random_bytes(32));
         $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
         
-        $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, email_verified, activation_token, activation_expires, account_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, year_level, section, email_verified, activation_token, activation_expires, account_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             $name, 
             $email, 
             password_hash($password, PASSWORD_DEFAULT), 
             'student', 
             $institute, 
-            null,
+            $program,
+            $yearLevel,
+            $section,
             0,
             $activationToken,
             $activationExpires,
@@ -480,11 +499,11 @@ function handleChangePasswordAction(PDO $db, array $user): void
 
 function handleUpdateProfileAction(PDO $db, array $user): void
 {
-    $name = trim((string) ($_POST['name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));
+    $name = (string) ($user['name'] ?? '');
     
-    if ($name === '' || $email === '') {
-        setFlash('error', 'Name and email are required.');
+    if ($email === '') {
+        setFlash('error', 'Email is required.');
         redirect('?page=profile');
     }
     
@@ -533,9 +552,9 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         session_destroy();
         redirect('?page=login');
     } else {
-        // Just update name
-        $updateStmt = $db->prepare('UPDATE users SET name = ? WHERE id = ?');
-        $updateStmt->execute([$name, (int) $user['id']]);
+        // No editable fields changed
+        $updateStmt = $db->prepare('UPDATE users SET email = ? WHERE id = ?');
+        $updateStmt->execute([$email, (int) $user['id']]);
         
         // Audit log
         auditLog((int) $user['id'], 'profile.update', 'user', (int) $user['id'], 'Profile updated');

@@ -16,6 +16,13 @@ body {
     radial-gradient(1000px 560px at 100% 0%, rgba(52, 211, 153, 0.16), transparent 62%),
     linear-gradient(180deg, #f7fffb 0%, #ecfdf5 100%);
   color: #0f172a;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 body.theme-dark {
@@ -221,6 +228,69 @@ body.theme-dark .updates-modal-overlay {
   overflow: hidden;
 }
 
+.dashboard-panel::after {
+  content: '';
+  position: absolute;
+  right: -3.5rem;
+  bottom: -3.5rem;
+  width: 9rem;
+  height: 9rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(60, 245, 177, 0.24) 0%, rgba(52, 211, 153, 0.14) 70%);
+  pointer-events: none;
+}
+
+body.theme-dark .dashboard-panel::after {
+  display: none;
+}
+
+.dashboard-progress {
+  height: 0.32rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+
+.dashboard-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(110, 231, 183, 0.96), rgba(16, 185, 129, 0.88));
+}
+
+.dashboard-feed-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  background: #34d399;
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.12);
+}
+
+.dashboard-feed-dot.warn {
+  background: #fbbf24;
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.14);
+}
+
+.dashboard-feed-title {
+  color: #1f2937;
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.dashboard-feed-meta,
+.dashboard-feed-body {
+  color: #4b5563;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.trend-insight-card {
+  padding: 0.55rem 0.65rem;
+  gap: 0.6rem;
+}
+
 .dashboard-metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -248,6 +318,19 @@ body.theme-dark .dashboard-metric-card {
 body.theme-dark .dashboard-feed-item {
   border-color: rgba(110, 231, 183, 0.14);
   background: rgba(15, 23, 42, 0.12);
+}
+
+body.theme-dark .dashboard-feed-title {
+  color: #f0fdf4;
+}
+
+body.theme-dark .dashboard-feed-meta,
+body.theme-dark .dashboard-feed-body {
+  color: rgba(236, 253, 245, 0.76);
+}
+
+body.theme-dark .dashboard-progress {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 1023px) {
@@ -290,6 +373,39 @@ body.theme-dark .dashboard-feed-item {
   display: block;
 }
 
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page.active > .grid > .glass,
+.page.active > .glass,
+.page.active .dashboard-panel,
+.page.active #dashboardPendingAssignments {
+  animation: pageEnter 0.35s ease-out both;
+}
+
+.updates-modal-overlay:not(.hidden) > .glass {
+  animation: modalEnter 0.25s ease-out both;
+}
+
 canvas {
   max-width: 100% !important;
 }
@@ -304,6 +420,16 @@ select {
   background: rgba(255, 255, 255, 0.72) !important;
   border-color: rgba(16, 185, 129, 0.32) !important;
   color: #064e3b !important;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 body.theme-dark input,
@@ -401,4 +527,39 @@ body.theme-dark .border-slate-300 {
 
 body.theme-dark .tag {
   color: #d1fae5;
+}
+
+.app-footer {
+  border-top: 1px solid rgba(16, 185, 129, 0.24);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-top: auto;
+}
+
+.footer-link {
+  color: #065f46;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+.footer-anchor {
+  color: #065f46;
+}
+
+body.theme-dark .app-footer {
+  border-top-color: rgba(110, 231, 183, 0.34);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+body.theme-dark .footer-link,
+body.theme-dark .footer-anchor,
+body.theme-dark .app-footer .text-slate-700 {
+  color: #d1fae5 !important;
 }

@@ -1,5 +1,17 @@
 Student Organization Management and Budget Transparency System - Function Analysis
-Last Updated: March 28, 2026
+Last Updated: April 3, 2026
+
+Recent Functional Updates
+
+- April 3, 2026: `static/js/dashboard-page.js`
+  - Added immediate chart recolor behavior on theme toggle.
+  - Added body class observer to re-apply chart presentation state without refresh.
+- April 3, 2026: `static/js/owner-org-switcher.js` (new shared component)
+  - Added multi-instance custom dropdown logic with click-open interaction.
+  - Added isolated hidden-input synchronization for independent filters/selectors.
+- April 3, 2026: `src/pages/owner_pages.php`
+  - Updated custom dropdown integration for organization/transaction controls.
+  - Fixed transaction filter submission wiring and improved transaction row readability.
 
 ---
 

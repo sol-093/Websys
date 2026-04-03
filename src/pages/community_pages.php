@@ -114,11 +114,12 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
 function handleOrganizationsPage(PDO $db, array $user): void
 {
     $allOrgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
-    $allOrgs = applyOrganizationVisibilityForUser($allOrgs, $user);
 
     $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
     $membershipStmt->execute([(int) $user['id']]);
-    $joinedIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+    $memberOrganizationIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+    $allOrgs = applyOrganizationVisibilityForUser($allOrgs, $user, $memberOrganizationIds);
+    $joinedIds = $memberOrganizationIds;
 
     $requestStmt = $db->prepare('SELECT organization_id, status FROM organization_join_requests WHERE user_id = ?');
     $requestStmt->execute([(int) $user['id']]);
@@ -152,16 +153,24 @@ function handleOrganizationsPage(PDO $db, array $user): void
                                 $orgId = (int) $org['id'];
                                 $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
                                 $isJoined = in_array($orgId, $joinedIds, true);
-                                $disabled = $isJoined || $requestStatus === 'pending';
-                                $btnClass = $isJoined
-                                    ? 'bg-white/10 border-emerald-200/30 text-slate-700'
-                                    : ($requestStatus === 'pending'
-                                        ? 'bg-amber-500/25 border-amber-300/50 text-amber-900'
-                                        : 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35');
-                                $label = $isJoined ? 'Joined' : ($requestStatus === 'pending' ? 'Requested' : 'Request Join');
-                                $joinIcon = $isJoined ? 'approved' : ($requestStatus === 'pending' ? 'pending' : 'requests');
+                                $canJoin = canUserJoinOrganization($org, $user);
+                                $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                if (!$canJoin) {
+                                    $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                    $label = getJoinRestrictionLabel($org);
+                                } elseif ($isJoined) {
+                                    $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                    $label = 'Joined';
+                                } elseif ($requestStatus === 'pending') {
+                                    $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                    $label = 'Requested';
+                                } else {
+                                    $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                    $label = 'Request Join';
+                                }
+                                $joinIcon = !$canJoin ? 'rejected' : ($isJoined ? 'approved' : ($requestStatus === 'pending' ? 'pending' : 'requests'));
                             ?>
-                            <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                            <button class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
                                 <span class="icon-label"><?= uiIcon($joinIcon, 'ui-icon ui-icon-sm') ?><span><?= $label ?></span></span>
                             </button>
                         </form>
@@ -237,12 +246,12 @@ function handleProfilePage(array $user): void
                 <div class="space-y-4">
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-700">Full Name</label>
-                        <input type="text" 
-                               id="name" 
-                               name="name" 
+                        <input type="text"
+                               id="name"
                                value="<?php echo htmlspecialchars($user['name']); ?>"
-                               required
-                               class="w-full border rounded px-3 py-2">
+                               readonly
+                               class="w-full border rounded px-3 py-2 bg-slate-100 text-slate-700 cursor-not-allowed">
+                        <p class="mt-1 text-xs text-slate-600">Full name cannot be changed.</p>
                     </div>
                     
                     <div>
@@ -255,65 +264,33 @@ function handleProfilePage(array $user): void
                                class="w-full border rounded px-3 py-2">
                         <p class="mt-1 text-xs text-slate-600">Changing your email will require re-verification.</p>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Role</label>
-                            <p class="mt-1 text-sm text-slate-900 capitalize font-medium"><?php echo htmlspecialchars($user['role']); ?></p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Account Status</label>
-                            <p class="mt-1 text-sm">
-                                <?php 
-                                $status = $user['account_status'] ?? 'active';
-                                $statusColors = [
-                                    'active' => 'text-white bg-emerald-700',
-                                    'pending' => 'text-slate-900 bg-amber-300',
-                                    'suspended' => 'text-white bg-red-600',
-                                    'banned' => 'text-white bg-red-800'
-                                ];
-                                $colorClass = $statusColors[$status] ?? 'text-white bg-slate-700';
-                                ?>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold <?php echo $colorClass; ?>">
-                                    <?php echo ucfirst($status); ?>
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Email Verified</label>
-                            <p class="mt-1 text-sm">
-                                <?php if ((int)($user['email_verified'] ?? 0) === 1): ?>
-                                    <span class="inline-flex items-center text-emerald-700 icon-label">
-                                        <?= uiIcon('approved', 'ui-icon ui-icon-sm') ?>
-                                        <span>Verified</span>
-                                    </span>
-                                <?php else: ?>
-                                    <span class="inline-flex items-center text-amber-700 icon-label">
-                                        <?= uiIcon('pending', 'ui-icon ui-icon-sm') ?>
-                                        <span>Not Verified</span>
-                                    </span>
-                                <?php endif; ?>
-                            </p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700">Member Since</label>
-                            <p class="mt-1 text-sm text-slate-900 font-medium">
-                                <?php 
-                                $createdAt = $user['created_at'] ?? 'Unknown';
-                                if ($createdAt !== 'Unknown') {
-                                    $date = new DateTime($createdAt);
-                                    echo htmlspecialchars($date->format('F j, Y'));
-                                } else {
-                                    echo 'Unknown';
-                                }
-                                ?>
-                            </p>
-                        </div>
+
+                    <div class="space-y-2 text-sm text-slate-800 border-t border-emerald-200/40 pt-4">
+                        <div><span class="font-semibold">Program:</span> <?= e((string) ($user['program'] ?? 'Not set')) ?></div>
+                        <div><span class="font-semibold">Institute:</span> <?= e((string) ($user['institute'] ?? 'Not set')) ?></div>
+                        <div><span class="font-semibold">Year and Section:</span> <?php
+                            $sectionValue = trim((string) ($user['section'] ?? ''));
+                            $yearLabel = formatYearLevelLabel(isset($user['year_level']) ? (int) $user['year_level'] : 0);
+                            if ($sectionValue !== '') {
+                                echo e($sectionValue);
+                            } elseif ($yearLabel !== 'Not set') {
+                                echo e($yearLabel);
+                            } else {
+                                echo 'Not set';
+                            }
+                        ?></div>
+                        <div><span class="font-semibold">Role:</span> <?= htmlspecialchars($user['role']) ?></div>
+                        <div><span class="font-semibold">Account Status:</span> <?= htmlspecialchars(ucfirst((string) ($user['account_status'] ?? 'active'))) ?></div>
+                        <div><span class="font-semibold">Email Verified:</span> <?= ((int) ($user['email_verified'] ?? 0) === 1) ? 'Verified' : 'Not Verified' ?></div>
+                        <div><span class="font-semibold">Member Since:</span> <?php
+                            $createdAt = $user['created_at'] ?? 'Unknown';
+                            if ($createdAt !== 'Unknown') {
+                                $date = new DateTime($createdAt);
+                                echo htmlspecialchars($date->format('F j, Y'));
+                            } else {
+                                echo 'Unknown';
+                            }
+                        ?></div>
                     </div>
                     
                     <!-- Organization Information -->

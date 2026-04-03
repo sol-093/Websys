@@ -4,6 +4,13 @@ let currentPage = 'home';
 let trendChart = null;
 let financialRankingChart = null;
 
+function bindPageNavButtons(scope) {
+  if (!scope) return;
+  scope.querySelectorAll('[data-page]').forEach((btn) => {
+    btn.addEventListener('click', () => showPage(btn.getAttribute('data-page')));
+  });
+}
+
 function showPage(page) {
   currentPage = page;
   pages.forEach((p) => {
@@ -240,7 +247,7 @@ function renderHomeActions() {
   } else {
     el.innerHTML = `<button class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition" data-page="dashboard">Open Dashboard</button>`;
   }
-  el.querySelectorAll('[data-page]').forEach((btn) => btn.addEventListener('click', () => showPage(btn.getAttribute('data-page'))));
+  bindPageNavButtons(el);
 }
 
 function renderQuickActions() {
@@ -256,7 +263,7 @@ function renderQuickActions() {
     base.push(`<button class="bg-emerald-700 text-white px-3 py-2 rounded text-sm" data-page="my_org">Go to My Organization</button>`);
   }
   el.innerHTML = base.join('');
-  el.querySelectorAll('[data-page]').forEach((btn) => btn.addEventListener('click', () => showPage(btn.getAttribute('data-page'))));
+  bindPageNavButtons(el);
 }
 
 function setActiveRoleTag() {
@@ -330,6 +337,12 @@ modal.addEventListener('click', function (event) {
 const financialSummaryModal = document.getElementById('financialSummaryModal');
 const openFinancialSummaryModal = document.getElementById('openFinancialSummaryModal');
 const closeFinancialSummaryModal = document.getElementById('closeFinancialSummaryModal');
+const organizationsModal = document.getElementById('organizationsModal');
+const openOrganizationsModal = document.getElementById('openOrganizationsModal');
+const closeOrganizationsModal = document.getElementById('closeOrganizationsModal');
+const announcementsModal = document.getElementById('announcementsModal');
+const openAnnouncementsModalQuick = document.getElementById('openAnnouncementsModalQuick');
+const closeAnnouncementsModal = document.getElementById('closeAnnouncementsModal');
 
 if (openFinancialSummaryModal && financialSummaryModal) {
   openFinancialSummaryModal.addEventListener('click', function () {
@@ -353,15 +366,123 @@ if (financialSummaryModal) {
   });
 }
 
+if (openOrganizationsModal && organizationsModal) {
+  openOrganizationsModal.addEventListener('click', function () {
+    organizationsModal.classList.remove('hidden');
+  });
+}
+
+if (closeOrganizationsModal && organizationsModal) {
+  closeOrganizationsModal.addEventListener('click', function () {
+    organizationsModal.classList.add('hidden');
+  });
+}
+
+if (organizationsModal) {
+  organizationsModal.addEventListener('click', function (event) {
+    if (event.target === organizationsModal) {
+      organizationsModal.classList.add('hidden');
+    }
+  });
+}
+
+if (openAnnouncementsModalQuick && announcementsModal) {
+  openAnnouncementsModalQuick.addEventListener('click', function () {
+    announcementsModal.classList.remove('hidden');
+  });
+}
+
+if (closeAnnouncementsModal && announcementsModal) {
+  closeAnnouncementsModal.addEventListener('click', function () {
+    announcementsModal.classList.add('hidden');
+  });
+}
+
+if (announcementsModal) {
+  announcementsModal.addEventListener('click', function (event) {
+    if (event.target === announcementsModal) {
+      announcementsModal.classList.add('hidden');
+    }
+  });
+}
+
 document.getElementById('registerForm').addEventListener('submit', function (event) {
   event.preventDefault();
-  if (!consent.checked) {
-    alert('You must agree to the Data Privacy Consent before registering.');
+  const firstName = document.getElementById('registerFirstName');
+  const middleName = document.getElementById('registerMiddleName');
+  const lastName = document.getElementById('registerLastName');
+  const first = firstName ? firstName.value.trim() : '';
+  const middle = middleName ? middleName.value.trim() : '';
+  const last = lastName ? lastName.value.trim() : '';
+
+  if (first === '' || last === '') {
+    alert('Please provide your first and last name.');
     return;
   }
-  alert('Demo registration successful. Redirecting to login.');
+
+  if (!consent.checked) {
+    alert('You must agree to the terms and conditions before registering.');
+    return;
+  }
+
+  const fullName = [first, middle, last].filter(Boolean).join(' ');
+  alert('Demo registration successful for ' + fullName + '. Redirecting to login.');
   showPage('login');
 });
+
+bindPageNavButtons(document);
+
+const myOrgBudgetForm = document.getElementById('myOrgBudgetForm');
+const myOrgBudgetList = document.getElementById('myOrgBudgetList');
+const myOrgBudgetDate = document.getElementById('myOrgBudgetDate');
+
+if (myOrgBudgetDate && !myOrgBudgetDate.value) {
+  myOrgBudgetDate.value = new Date().toISOString().slice(0, 10);
+}
+
+if (myOrgBudgetForm && myOrgBudgetList) {
+  myOrgBudgetForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const typeEl = document.getElementById('myOrgBudgetType');
+    const amountEl = document.getElementById('myOrgBudgetAmount');
+    const dateEl = document.getElementById('myOrgBudgetDate');
+    const descEl = document.getElementById('myOrgBudgetDesc');
+
+    if (!typeEl || !amountEl || !dateEl || !descEl) return;
+
+    const type = typeEl.value === 'income' ? 'income' : 'expense';
+    const amount = Number.parseFloat(amountEl.value || '0');
+    const date = dateEl.value || new Date().toISOString().slice(0, 10);
+    const description = descEl.value.trim();
+
+    if (!description || !Number.isFinite(amount) || amount <= 0) {
+      alert('Please enter a valid budget item.');
+      return;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'border rounded p-2 flex flex-wrap items-center justify-between gap-2';
+
+    const amountClass = type === 'income' ? 'text-green-700' : 'text-red-700';
+    row.innerHTML = `
+      <div>
+        <div class="font-medium"></div>
+        <div class="text-xs text-gray-500">${type} · ${date}</div>
+      </div>
+      <div class="font-semibold ${amountClass}">₱${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`;
+
+    const titleEl = row.querySelector('.font-medium');
+    if (titleEl) titleEl.textContent = description;
+
+    myOrgBudgetList.insertBefore(row, myOrgBudgetList.firstChild);
+    myOrgBudgetForm.reset();
+    if (myOrgBudgetDate) {
+      myOrgBudgetDate.value = new Date().toISOString().slice(0, 10);
+    }
+    alert('Budget entry saved in static demo.');
+  });
+}
 
 document.querySelectorAll('#roleControls [data-role]').forEach((btn) => {
   btn.addEventListener('click', () => setRole(btn.getAttribute('data-role')));

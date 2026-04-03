@@ -72,6 +72,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
 
     renderHeader('My Organization');
     ?>
+    <link rel="stylesheet" href="static/css/owner-org-switcher.css">
     <div class="space-y-4">
         <div class="bg-white shadow rounded p-4">
             <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Pending Membership Requests</span></h2>
@@ -109,18 +110,34 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
         </div>
 
         <div class="bg-white shadow rounded p-4">
-            <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>My Organization</span></h1>
-            <form method="get" class="mb-4 flex gap-2">
-                <input type="hidden" name="page" value="my_org">
+            <div class="flex items-start justify-between gap-3 mb-3">
+                <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>My Organization</span></h1>
+                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>" class="text-sm text-indigo-700 underline whitespace-nowrap mt-1"><span class="icon-label"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Back to My Organization</span></span></a>
+            </div>
+            <?php $selectedOrgName = (string) ($org['name'] ?? 'Select organization'); ?>
+            <form method="get" class="mb-4 flex gap-2 items-start relative my-org-switcher" id="myOrgSwitcherForm" data-dropdown-root>
+                <input type="hidden" name="page" value="my_org_manage">
                 <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
                 <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
-                <select name="org_id" class="border rounded px-3 py-2">
-                    <?php foreach ($ownedOrganizations as $ownedOption): ?>
-                        <option value="<?= (int) $ownedOption['id'] ?>" <?= (int) $org['id'] === (int) $ownedOption['id'] ? 'selected' : '' ?>>
-                            <?= e($ownedOption['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <input type="hidden" name="org_id" id="myOrgOrgId" data-dropdown-value value="<?= (int) $org['id'] ?>">
+                <div class="relative min-w-[16rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                    <button type="button" id="myOrgSwitcherButton" data-dropdown-toggle="myOrgSwitcherMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+                        <span id="myOrgSwitcherLabel" data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
+                        <span class="my-org-switcher-caret text-xs">▾</span>
+                    </button>
+                    <div id="myOrgSwitcherMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20" aria-labelledby="myOrgSwitcherButton">
+                        <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                            <?php foreach ($ownedOrganizations as $ownedOption): ?>
+                                <?php $isCurrentOrg = (int) $org['id'] === (int) $ownedOption['id']; ?>
+                                <li>
+                                    <button type="button" data-org-id="<?= (int) $ownedOption['id'] ?>" data-org-name="<?= e($ownedOption['name']) ?>" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $isCurrentOrg ? 'is-active' : '' ?>">
+                                        <?= e($ownedOption['name']) ?>
+                                    </button>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
                 <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
             <form method="post" class="grid md:grid-cols-2 gap-3">
@@ -155,7 +172,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <?php foreach ($announcements as $announcement): ?>
                         <div class="border rounded p-2">
                             <div class="font-medium"><?= e($announcement['title']) ?></div>
-                            <div class="text-sm text-gray-700"><?= e($announcement['content']) ?></div>
+                            <div class="text-sm text-emerald-950/80"><?= e($announcement['content']) ?></div>
                             <form method="post" class="mt-2">
                                 <input type="hidden" name="action" value="delete_announcement">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -173,11 +190,20 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <form method="post" enctype="multipart/form-data" class="space-y-2">
                     <input type="hidden" name="action" value="add_transaction">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                    <div class="grid grid-cols-2 gap-2">
-                        <select name="type" class="border rounded px-3 py-2">
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-2" data-dropdown-root>
+                        <input type="hidden" name="type" data-dropdown-value value="income">
+                        <div class="relative w-full my-org-switcher-wrap" data-dropdown-wrapper>
+                            <button type="button" data-dropdown-toggle="myOrgAddTypeMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+                                <span data-dropdown-label class="truncate text-left">Income</span>
+                                <span class="my-org-switcher-caret text-xs">▾</span>
+                            </button>
+                            <div id="myOrgAddTypeMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
+                                <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                                    <li><button type="button" data-option-value="income" data-option-label="Income" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left is-active">Income</button></li>
+                                    <li><button type="button" data-option-value="expense" data-option-label="Expense" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left">Expense</button></li>
+                                </ul>
+                            </div>
+                        </div>
                         <input type="number" step="0.01" name="amount" placeholder="Amount" class="border rounded px-3 py-2" required>
                     </div>
                     <input type="date" name="transaction_date" value="<?= date('Y-m-d') ?>" class="w-full border rounded px-3 py-2" required>
@@ -190,29 +216,47 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
 
         <div id="tx-history" class="bg-white shadow rounded p-4 overflow-auto">
             <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
-            <form method="get" action="?page=my_org#tx-history" class="mb-3 flex flex-wrap items-end gap-2" onsubmit="const b=this.querySelector('[data-filter-submit]'); if(b){ b.disabled=true; b.textContent='Filtering...'; }">
-                <input type="hidden" name="page" value="my_org">
+            <form method="get" action="?page=my_org_manage#tx-history" class="mb-3 flex flex-wrap items-end gap-2" data-dropdown-root onsubmit="const b=this.querySelector('[data-filter-submit]'); if(b){ b.disabled=true; b.textContent='Filtering...'; }">
+                <input type="hidden" name="page" value="my_org_manage">
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Type</label>
-                    <select name="tx_type" class="border rounded px-3 py-2 text-sm">
-                        <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
-                        <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
-                        <option value="expense" <?= $txTypeFilter === 'expense' ? 'selected' : '' ?>>Expense</option>
-                    </select>
+                    <div class="relative min-w-[10rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                        <input type="hidden" name="tx_type" data-dropdown-value value="<?= e($txTypeFilter) ?>">
+                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm">
+                            <span data-dropdown-label class="truncate text-left"><?= e($txTypeFilter === 'income' ? 'Income' : ($txTypeFilter === 'expense' ? 'Expense' : 'All')) ?></span>
+                            <span class="my-org-switcher-caret text-xs">▾</span>
+                        </button>
+                        <div id="myOrgTxTypeMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
+                            <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                                <li><button type="button" data-option-value="all" data-option-label="All" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txTypeFilter === 'all' ? 'is-active' : '' ?>">All</button></li>
+                                <li><button type="button" data-option-value="income" data-option-label="Income" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txTypeFilter === 'income' ? 'is-active' : '' ?>">Income</button></li>
+                                <li><button type="button" data-option-value="expense" data-option-label="Expense" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txTypeFilter === 'expense' ? 'is-active' : '' ?>">Expense</button></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Date</label>
-                    <select name="tx_sort" class="border rounded px-3 py-2 text-sm">
-                        <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
-                        <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
-                    </select>
+                    <div class="relative min-w-[10rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                        <input type="hidden" name="tx_sort" data-dropdown-value value="<?= e($txDateSort) ?>">
+                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm">
+                            <span data-dropdown-label class="truncate text-left"><?= e($txDateSort === 'asc' ? 'Oldest first' : 'Newest first') ?></span>
+                            <span class="my-org-switcher-caret text-xs">▾</span>
+                        </button>
+                        <div id="myOrgTxSortMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
+                            <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                                <li><button type="button" data-option-value="desc" data-option-label="Newest first" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txDateSort === 'desc' ? 'is-active' : '' ?>">Newest first</button></li>
+                                <li><button type="button" data-option-value="asc" data-option-label="Oldest first" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txDateSort === 'asc' ? 'is-active' : '' ?>">Oldest first</button></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <button data-filter-submit class="bg-indigo-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
             </form>
             <table class="w-full text-sm">
                 <thead>
-                <tr class="text-left border-b">
+                <tr class="text-left border-b border-emerald-400">
                     <th class="py-2">Date</th>
                     <th>Type</th>
                     <th>Amount</th>
@@ -223,19 +267,19 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 </thead>
                 <tbody>
                 <?php foreach ($transactions as $row): ?>
-                    <tr class="border-b align-top">
-                        <td class="py-2"><?= e($row['transaction_date']) ?></td>
-                        <td><?= e($row['type']) ?></td>
-                        <td>₱<?= number_format((float) $row['amount'], 2) ?></td>
-                        <td><?= e($row['description']) ?></td>
-                        <td>
+                    <tr class="border-b border-emerald-300 align-top">
+                        <td class="py-3"><?= e($row['transaction_date']) ?></td>
+                        <td class="py-3"><?= e($row['type']) ?></td>
+                        <td class="py-3">₱<?= number_format((float) $row['amount'], 2) ?></td>
+                        <td class="py-3"><?= e($row['description']) ?></td>
+                        <td class="py-3">
                             <?php if (!empty($row['receipt_path'])): ?>
                                 <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="text-indigo-700 underline"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
                             <?php else: ?>
                                 <span class="text-gray-400">-</span>
                             <?php endif; ?>
                         </td>
-                        <td class="space-y-1 min-w-56">
+                        <td class="py-3 space-y-1 min-w-56">
                             <form method="post" class="grid grid-cols-2 gap-1">
                                 <input type="hidden" name="action" value="update_transaction">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -288,6 +332,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <?php renderPagination($myTxRequestsPagination); ?>
         </div>
     </div>
+    <script src="static/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;

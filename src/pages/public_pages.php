@@ -128,7 +128,8 @@ function handleLoginPage(array $config): void
 function handleRegisterPage(): void
 {
     renderHeader('Register');
-    $instituteOptions = getInstituteOptions();
+    $programOptions = getProgramOptions();
+    $programInstituteMap = getProgramInstituteMap();
     ?>
     <div class="max-w-3xl mx-auto glass p-6 md:p-8 mt-8">
         <h1 class="text-2xl md:text-3xl font-semibold mb-1 icon-label\"><?= uiIcon('register', 'ui-icon') ?><span>Student Registration</span></h1>
@@ -155,14 +156,14 @@ function handleRegisterPage(): void
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="registerGender" class="block text-sm font-semibold mb-2">Gender</label>
-                    <select id="registerGender" class="w-full border rounded px-3 py-2">
+                    <label for="registerProgram" class="block text-sm font-semibold mb-2">Program</label>
+                    <select id="registerProgram" name="program" required class="w-full border rounded px-3 py-2">
                         <option value="">Please Select</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                        <option value="prefer_not_say">Prefer not to say</option>
+                        <?php foreach ($programOptions as $programName): ?>
+                            <option value="<?= e($programName) ?>"><?= e($programName) ?></option>
+                        <?php endforeach; ?>
                     </select>
+                    <p id="registerInstitutePreview" class="mt-1 text-xs text-slate-600">Institute will be assigned from the selected program.</p>
                 </div>
 
                 <div>
@@ -173,18 +174,9 @@ function handleRegisterPage(): void
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="registerStudentId" class="block text-sm font-semibold mb-2">Student ID</label>
-                    <input id="registerStudentId" type="text" placeholder="Enter Student ID" class="w-full border rounded px-3 py-2">
-                </div>
-
-                <div>
-                    <label for="registerInstitute" class="block text-sm font-semibold mb-2">Institute</label>
-                    <select id="registerInstitute" name="institute" required class="w-full border rounded px-3 py-2">
-                        <option value="">Please Select</option>
-                        <?php foreach ($instituteOptions as $instituteName): ?>
-                            <option value="<?= e($instituteName) ?>"><?= e($instituteName) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <label for="registerSection" class="block text-sm font-semibold mb-2">Year and Section</label>
+                    <input id="registerSection" name="section" type="text" placeholder="e.g. 3A, 2nd Year - B" required class="w-full border rounded px-3 py-2">
+                    <p class="mt-1 text-xs text-slate-600">Enter your combined year and section format.</p>
                 </div>
             </div>
 
@@ -211,7 +203,7 @@ function handleRegisterPage(): void
     <div id="privacyModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
         <div class="glass w-full max-w-xl p-5">
             <div class="flex items-center justify-between mb-3">
-                <h2 id="privacyModalTitle" class="text-lg font-semibold icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>Terms and Conditions</span></h2>
+                <h2 id="privacyModalTitle" class="text-lg font-semibold">Terms and Conditions</h2>
                 <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
             </div>
             <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
@@ -223,8 +215,8 @@ function handleRegisterPage(): void
                 <p>The institution may update these Terms and Conditions to reflect legal, policy, or operational changes. Continued use of the platform after updates are published constitutes acceptance of the revised terms. If you do not agree, you must discontinue use of the platform and contact the system administrator for account assistance.</p>
             </div>
             <div class="mt-4 flex justify-end gap-2">
-                <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Close</span></span></button>
-                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white"><span class="icon-label\"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>I Agree to the Terms</span></span></button>
+                <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700">Close</button>
+                <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree to the Terms</button>
             </div>
         </div>
     </div>
@@ -242,6 +234,9 @@ function handleRegisterPage(): void
             const firstNameInput = document.getElementById('registerFirstName');
             const middleNameInput = document.getElementById('registerMiddleName');
             const lastNameInput = document.getElementById('registerLastName');
+            const programInput = document.getElementById('registerProgram');
+            const institutePreview = document.getElementById('registerInstitutePreview');
+            const programInstituteMap = <?= json_encode($programInstituteMap, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
             if (!modal || !openBtn || !checkbox) return;
 
@@ -287,6 +282,19 @@ function handleRegisterPage(): void
 
                     fullNameInput.value = [first, middle, last].filter(Boolean).join(' ');
                 });
+            }
+
+            if (programInput && institutePreview) {
+                const updateInstitutePreview = function () {
+                    const selectedProgram = programInput.value;
+                    const instituteName = programInstituteMap[selectedProgram];
+                    institutePreview.textContent = instituteName
+                        ? 'Institute: ' + instituteName + ' (assigned automatically)'
+                        : 'Institute will be assigned from the selected program.';
+                };
+
+                programInput.addEventListener('change', updateInstitutePreview);
+                updateInstitutePreview();
             }
         })();
     </script>

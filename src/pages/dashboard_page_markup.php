@@ -221,15 +221,15 @@
                                         $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
                                         $label = 'Joined';
                                     } elseif ($requestStatus === 'pending') {
-                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-white-900';
                                         $label = 'Requested';
                                     } else {
                                         $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
                                         $label = 'Request Join';
                                     }
                                 ?>
-                                <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
-                                    <?= $label ?>
+                                <button class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                    <span><?= $label ?></span>
                                 </button>
                             </form>
                         <?php endif; ?>

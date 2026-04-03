@@ -5,10 +5,10 @@ declare(strict_types=1);
 function buildDashboardViewData(PDO $db, array $user, array $config, string $announcementCutoff, string $recentReportCutoffDate): array
 {
     $orgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
-    $orgs = applyOrganizationVisibilityForUser($orgs, $user);
     $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
     $membershipStmt->execute([(int) $user['id']]);
     $joinedIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+    $orgs = sortOrganizationsForDashboardPanel($orgs, $user, $joinedIds);
 
     $requestStmt = $db->prepare('SELECT organization_id, status FROM organization_join_requests WHERE user_id = ?');
     $requestStmt->execute([(int) $user['id']]);

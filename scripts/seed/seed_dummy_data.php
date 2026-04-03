@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/../../src/core/db.php';
+require __DIR__ . '/../../src/lib/organization.php';
 
 $pdo = db();
 $now = new DateTimeImmutable('now');
@@ -16,19 +17,20 @@ function findUserIdByEmail(PDO $pdo, string $email): ?int
     return $id !== false ? (int) $id : null;
 }
 
-function upsertUser(PDO $pdo, string $name, string $email, string $role, string $password): int
+function upsertUser(PDO $pdo, string $name, string $email, string $role, string $password, ?string $program = null, ?int $yearLevel = null, ?string $section = null): int
 {
     $existingId = findUserIdByEmail($pdo, $email);
+    $institute = getInstituteForProgram($program);
 
     if ($existingId !== null) {
-        $update = $pdo->prepare('UPDATE users SET name = ?, role = ?, password_hash = ? WHERE id = ?');
-        $update->execute([$name, $role, password_hash($password, PASSWORD_DEFAULT), $existingId]);
+        $update = $pdo->prepare('UPDATE users SET name = ?, role = ?, password_hash = ?, institute = ?, program = ?, year_level = ?, section = ? WHERE id = ?');
+        $update->execute([$name, $role, password_hash($password, PASSWORD_DEFAULT), $institute, $program, $yearLevel, $section, $existingId]);
 
         return $existingId;
     }
 
-    $insert = $pdo->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
-    $insert->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), $role]);
+    $insert = $pdo->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, year_level, section) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $insert->execute([$name, $email, password_hash($password, PASSWORD_DEFAULT), $role, $institute, $program, $yearLevel, $section]);
 
     return (int) $pdo->lastInsertId();
 }
@@ -42,19 +44,19 @@ function findOrganizationIdByName(PDO $pdo, string $name): ?int
     return $id !== false ? (int) $id : null;
 }
 
-function upsertOrganization(PDO $pdo, string $name, string $description, ?int $ownerId): int
+function upsertOrganization(PDO $pdo, string $name, string $description, ?int $ownerId, string $orgCategory = 'collegewide', ?string $targetInstitute = null, ?string $targetProgram = null): int
 {
     $existingId = findOrganizationIdByName($pdo, $name);
 
     if ($existingId !== null) {
-        $update = $pdo->prepare('UPDATE organizations SET description = ?, owner_id = ? WHERE id = ?');
-        $update->execute([$description, $ownerId, $existingId]);
+        $update = $pdo->prepare('UPDATE organizations SET description = ?, owner_id = ?, org_category = ?, target_institute = ?, target_program = ? WHERE id = ?');
+        $update->execute([$description, $ownerId, $orgCategory, $targetInstitute, $targetProgram, $existingId]);
 
         return $existingId;
     }
 
-    $insert = $pdo->prepare('INSERT INTO organizations (name, description, owner_id) VALUES (?, ?, ?)');
-    $insert->execute([$name, $description, $ownerId]);
+    $insert = $pdo->prepare('INSERT INTO organizations (name, description, owner_id, org_category, target_institute, target_program) VALUES (?, ?, ?, ?, ?, ?)');
+    $insert->execute([$name, $description, $ownerId, $orgCategory, $targetInstitute, $targetProgram]);
 
     return (int) $pdo->lastInsertId();
 }
@@ -190,7 +192,7 @@ function upsertTransactionChangeRequest(
 
 function resetDemoTransactions(PDO $pdo): void
 {
-    $stmt = $pdo->query("SELECT id FROM financial_transactions WHERE description LIKE '[DEMO]%' OR description LIKE '% seed income' OR description LIKE '% seed expense' OR description LIKE 'Membership dues collection' OR description LIKE 'Hackathon materials' OR description LIKE 'Event sponsorship' OR description LIKE 'Stage and lighting rental' OR description LIKE 'Fundraising proceeds' OR description LIKE 'Sensor and controller kits' ");
+    $stmt = $pdo->query("SELECT id FROM financial_transactions WHERE description LIKE '[DEMO]%' OR description LIKE '% seed income' OR description LIKE '% seed expense' OR description LIKE 'Membership dues collection' OR description LIKE 'Workshop kits and snacks' OR description LIKE 'Community outreach sponsorship' OR description LIKE 'Outreach supplies and transport' OR description LIKE 'Skills fair sponsorship' OR description LIKE 'Site safety and survey kits' ");
     $ids = array_map(static fn($value): int => (int) $value, $stmt->fetchAll(PDO::FETCH_COLUMN));
 
     if (count($ids) === 0) {
@@ -228,21 +230,29 @@ $pdo->beginTransaction();
 
 try {
     $accounts = [
-        ['name' => 'Demo Admin', 'email' => 'demo.admin@campus.local', 'role' => 'admin'],
-        ['name' => 'Lia Santos', 'email' => 'demo.lia@campus.local', 'role' => 'owner'],
-        ['name' => 'Noah Cruz', 'email' => 'demo.noah@campus.local', 'role' => 'owner'],
-        ['name' => 'Zoe Tan', 'email' => 'demo.zoe@campus.local', 'role' => 'owner'],
-        ['name' => 'Ian Velasco', 'email' => 'demo.ian@campus.local', 'role' => 'owner'],
-        ['name' => 'Pat Lopez', 'email' => 'demo.pat@campus.local', 'role' => 'owner'],
-        ['name' => 'Aira Gomez', 'email' => 'demo.aira@campus.local', 'role' => 'student'],
-        ['name' => 'Evan Ramos', 'email' => 'demo.evan@campus.local', 'role' => 'student'],
-        ['name' => 'Mia Flores', 'email' => 'demo.mia@campus.local', 'role' => 'student'],
-        ['name' => 'Kai Dela Cruz', 'email' => 'demo.kai@campus.local', 'role' => 'student'],
-        ['name' => 'Tess Lim', 'email' => 'demo.tess@campus.local', 'role' => 'student'],
-        ['name' => 'Rin Navarro', 'email' => 'demo.rin@campus.local', 'role' => 'student'],
-        ['name' => 'Jules Mercado', 'email' => 'demo.jules@campus.local', 'role' => 'student'],
-        ['name' => 'Sara Ong', 'email' => 'demo.sara@campus.local', 'role' => 'student'],
-        ['name' => 'Theo Bautista', 'email' => 'demo.theo@campus.local', 'role' => 'student'],
+        ['name' => 'Demo Admin', 'email' => 'demo.admin@campus.local', 'role' => 'admin', 'program' => null, 'year_level' => null, 'section' => null],
+        ['name' => 'Grace Navarro', 'email' => 'demo.grace@campus.local', 'role' => 'owner', 'program' => 'BS Information Systems', 'year_level' => 4, 'section' => 'A'],
+        ['name' => 'Marco Reyes', 'email' => 'demo.marco@campus.local', 'role' => 'owner', 'program' => 'BS Civil Engineering', 'year_level' => 4, 'section' => 'B'],
+        ['name' => 'Lina Bautista', 'email' => 'demo.lina@campus.local', 'role' => 'owner', 'program' => 'BS Psychology', 'year_level' => 4, 'section' => 'A'],
+        ['name' => 'Noel Santos', 'email' => 'demo.noel@campus.local', 'role' => 'owner', 'program' => 'BS Nursing', 'year_level' => 4, 'section' => 'C'],
+        ['name' => 'Hazel Mendez', 'email' => 'demo.hazel@campus.local', 'role' => 'owner', 'program' => 'BS Midwifery', 'year_level' => 3, 'section' => 'A'],
+        ['name' => 'Ariana Flores', 'email' => 'demo.ariana@campus.local', 'role' => 'owner', 'program' => 'BS Social Work', 'year_level' => 4, 'section' => 'A'],
+        ['name' => 'Paolo Cruz', 'email' => 'demo.paolo@campus.local', 'role' => 'student', 'program' => 'BS Information Systems', 'year_level' => 2, 'section' => 'A'],
+        ['name' => 'Mika Tan', 'email' => 'demo.mika@campus.local', 'role' => 'student', 'program' => 'BS Data Science', 'year_level' => 3, 'section' => 'B'],
+        ['name' => 'Jasper Lim', 'email' => 'demo.jasper@campus.local', 'role' => 'student', 'program' => 'BS Computer Science', 'year_level' => 1, 'section' => 'C'],
+        ['name' => 'Camille Dela Rosa', 'email' => 'demo.camille@campus.local', 'role' => 'student', 'program' => 'BS Civil Engineering', 'year_level' => 2, 'section' => 'A'],
+        ['name' => 'Nina Ramos', 'email' => 'demo.nina@campus.local', 'role' => 'student', 'program' => 'BS Psychology', 'year_level' => 2, 'section' => 'B'],
+        ['name' => 'Iris Mercado', 'email' => 'demo.iris@campus.local', 'role' => 'student', 'program' => 'BS Nursing', 'year_level' => 3, 'section' => 'A'],
+        ['name' => 'Benj Ortiz', 'email' => 'demo.benj@campus.local', 'role' => 'student', 'program' => 'BS Midwifery', 'year_level' => 2, 'section' => 'B'],
+        ['name' => 'Sofia Palma', 'email' => 'demo.sofia@campus.local', 'role' => 'student', 'program' => 'BS Social Work', 'year_level' => 1, 'section' => 'A'],
+        ['name' => 'Troy Ventura', 'email' => 'demo.troy@campus.local', 'role' => 'student', 'program' => 'BS Information Systems', 'year_level' => 1, 'section' => 'B'],
+        ['name' => 'Lea Soriano', 'email' => 'demo.lea@campus.local', 'role' => 'student', 'program' => 'BS Psychology', 'year_level' => 1, 'section' => 'C'],
+        ['name' => 'Ramon Delgado', 'email' => 'demo.ramon@campus.local', 'role' => 'student', 'program' => 'BS Civil Engineering', 'year_level' => 4, 'section' => 'A'],
+        ['name' => 'Mara Escueta', 'email' => 'demo.mara@campus.local', 'role' => 'student', 'program' => 'BS Nursing', 'year_level' => 1, 'section' => 'B'],
+        ['name' => 'Eli Castro', 'email' => 'demo.eli@campus.local', 'role' => 'student', 'program' => 'BS Data Science', 'year_level' => 4, 'section' => 'A'],
+        ['name' => 'Jade Molina', 'email' => 'demo.jade@campus.local', 'role' => 'student', 'program' => 'BS Social Work', 'year_level' => 2, 'section' => 'B'],
+        ['name' => 'Owen Pineda', 'email' => 'demo.owen@campus.local', 'role' => 'student', 'program' => 'BS Computer Science', 'year_level' => 2, 'section' => 'A'],
+        ['name' => 'Legacy Student', 'email' => 'demo.legacy@campus.local', 'role' => 'student', 'program' => null, 'year_level' => null, 'section' => null],
     ];
 
     $userIdsByEmail = [];
@@ -254,160 +264,272 @@ try {
             $normalizedName,
             $normalizedEmail,
             $account['role'],
-            'SeedPass123!'
+            'SeedPass123!',
+            $account['program'],
+            $account['year_level'],
+            $account['section']
         );
     }
 
     $orgs = [
         [
-            'name' => 'Demo Computing Society',
-            'description' => 'Testing group for software and web activities.',
-            'owner_email' => 'demo.lia@campus.local',
+            'name' => 'Horizon Computing Guild',
+            'description' => 'Computing student association for coding clinics, UI demos, and peer mentoring.',
+            'owner_email' => 'demo.grace@campus.local',
+            'org_category' => 'institutewide',
+            'target_institute' => 'Institute of Computing and Digital Innovations',
+            'target_program' => null,
         ],
         [
-            'name' => 'Demo Arts Collective',
-            'description' => 'Testing group for visual and performing arts.',
-            'owner_email' => 'demo.noah@campus.local',
+            'name' => 'Code Atelier Society',
+            'description' => 'Information systems guild for app builds, systems analysis, and product demos.',
+            'owner_email' => 'demo.grace@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Computing and Digital Innovations',
+            'target_program' => 'BS Information Systems',
         ],
         [
-            'name' => 'Demo Robotics Club',
-            'description' => 'Testing group for robotics workshops and demos.',
-            'owner_email' => 'demo.noah@campus.local',
+            'name' => 'Data & AI Society',
+            'description' => 'Data science group for analytics workshops, machine learning labs, and showcase talks.',
+            'owner_email' => 'demo.grace@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Computing and Digital Innovations',
+            'target_program' => 'BS Data Science',
         ],
         [
-            'name' => 'Demo Debate Union',
-            'description' => 'Testing group for public speaking and debate events.',
-            'owner_email' => 'demo.zoe@campus.local',
+            'name' => 'Software Engineering Circle',
+            'description' => 'Peer group for software architecture, testing practices, and agile retrospectives.',
+            'owner_email' => 'demo.grace@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Computing and Digital Innovations',
+            'target_program' => 'BS Computer Science',
         ],
         [
-            'name' => 'Demo Music Ensemble',
-            'description' => 'Testing group for band rehearsals and recitals.',
-            'owner_email' => 'demo.ian@campus.local',
+            'name' => 'Engineering Leaders Association',
+            'description' => 'Institute-wide engineering forum for leadership, design reviews, and field exposure.',
+            'owner_email' => 'demo.marco@campus.local',
+            'org_category' => 'institutewide',
+            'target_institute' => 'Institute of Engineering',
+            'target_program' => null,
         ],
         [
-            'name' => 'Demo Science Guild',
-            'description' => 'Testing group for science fair and research exhibits.',
-            'owner_email' => 'demo.pat@campus.local',
+            'name' => 'Civil Engineers Forum',
+            'description' => 'Program-based group for surveying, design critiques, and site visits.',
+            'owner_email' => 'demo.marco@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Engineering',
+            'target_program' => 'BS Civil Engineering',
         ],
         [
-            'name' => 'Demo Entrepreneurship Circle',
-            'description' => 'Testing group for startup pitch and business events.',
-            'owner_email' => 'demo.lia@campus.local',
+            'name' => 'Wellness and Care Council',
+            'description' => 'Institute-wide nursing group for wellness drives, leadership, and service events.',
+            'owner_email' => 'demo.noel@campus.local',
+            'org_category' => 'institutewide',
+            'target_institute' => 'Institute of Nursing',
+            'target_program' => null,
         ],
         [
-            'name' => 'Demo Environmental Advocates',
-            'description' => 'Testing group for sustainability and campus drives.',
-            'owner_email' => 'demo.noah@campus.local',
+            'name' => 'Nursing Student Alliance',
+            'description' => 'Program-based nursing circle for clinical skills reviews and volunteer care.',
+            'owner_email' => 'demo.noel@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Nursing',
+            'target_program' => 'BS Nursing',
         ],
         [
-            'name' => 'Demo Photography Club',
-            'description' => 'Testing group for media coverage and photo walks.',
-            'owner_email' => 'demo.zoe@campus.local',
+            'name' => 'Midwifery Scholars Network',
+            'description' => 'Program-based group for maternal health learning, case studies, and outreach.',
+            'owner_email' => 'demo.hazel@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Midwifery',
+            'target_program' => 'BS Midwifery',
         ],
         [
-            'name' => 'Demo Volunteer Network',
-            'description' => 'Testing group for outreach and community service.',
-            'owner_email' => 'demo.ian@campus.local',
+            'name' => 'Behavioral Science Forum',
+            'description' => 'Institute-wide group for psychology, counseling, and behavioral research.',
+            'owner_email' => 'demo.lina@campus.local',
+            'org_category' => 'institutewide',
+            'target_institute' => 'Institute of Behavioral Science',
+            'target_program' => null,
         ],
         [
-            'name' => 'Demo Language Society',
-            'description' => 'Testing group for language exchange sessions.',
-            'owner_email' => 'demo.pat@campus.local',
+            'name' => 'Psychology Peer Group',
+            'description' => 'Program-based psychology circle for case discussions and peer support sessions.',
+            'owner_email' => 'demo.lina@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Behavioral Science',
+            'target_program' => 'BS Psychology',
         ],
         [
-            'name' => 'Demo Athletics Council',
-            'description' => 'Testing group for sports tournaments and clinics.',
-            'owner_email' => 'demo.lia@campus.local',
+            'name' => 'Community Service Alliance',
+            'description' => 'Collegewide volunteering network for outreach, relief drives, and campus service.',
+            'owner_email' => 'demo.ariana@campus.local',
+            'org_category' => 'collegewide',
+            'target_institute' => null,
+            'target_program' => null,
         ],
         [
-            'name' => 'Demo Gaming & Esports',
-            'description' => 'Testing group for esports leagues and game nights.',
-            'owner_email' => 'demo.noah@campus.local',
+            'name' => 'Student Activities Assembly',
+            'description' => 'Collegewide council coordinating events, fairs, and student participation.',
+            'owner_email' => 'demo.ariana@campus.local',
+            'org_category' => 'collegewide',
+            'target_institute' => null,
+            'target_program' => null,
+        ],
+        [
+            'name' => 'Science and Research Forum',
+            'description' => 'Institute-wide group for research methods, lab showcases, and seminar talks.',
+            'owner_email' => 'demo.ariana@campus.local',
+            'org_category' => 'institutewide',
+            'target_institute' => 'Institute of Science and Mathematics',
+            'target_program' => null,
+        ],
+        [
+            'name' => 'Social Work Advocates Circle',
+            'description' => 'Program-based group for advocacy, case work, and community immersion.',
+            'owner_email' => 'demo.ariana@campus.local',
+            'org_category' => 'program_based',
+            'target_institute' => 'Institute of Science and Mathematics',
+            'target_program' => 'BS Social Work',
+        ],
+        [
+            'name' => 'Media and Creators Guild',
+            'description' => 'Collegewide group for photography, content production, and design support.',
+            'owner_email' => 'demo.lina@campus.local',
+            'org_category' => 'collegewide',
+            'target_institute' => null,
+            'target_program' => null,
         ],
     ];
 
     $orgIdsByName = [];
     foreach ($orgs as $organization) {
         $normalizedName = normalizeSeedName((string) $organization['name']);
-        $normalizedDescription = str_replace('demos.', 'activities.', (string) $organization['description']);
-        $normalizedOwnerEmail = normalizeSeedEmail((string) $organization['owner_email']);
+        $normalizedDescription = trim((string) $organization['description']);
         $ownerId = $userIdsByEmail[$organization['owner_email']] ?? null;
         $orgIdsByName[$organization['name']] = upsertOrganization(
             $pdo,
             $normalizedName,
             $normalizedDescription,
-            $ownerId
+            $ownerId,
+            (string) $organization['org_category'],
+            $organization['target_institute'],
+            $organization['target_program']
         );
         $orgIdsByName[$normalizedName] = $orgIdsByName[$organization['name']];
     }
 
     $membershipMatrix = [
-        'Demo Computing Society' => [
-            'demo.lia@campus.local',
-            'demo.aira@campus.local',
-            'demo.evan@campus.local',
-            'demo.tess@campus.local',
+        'Horizon Computing Guild' => [
+            'demo.grace@campus.local',
+            'demo.paolo@campus.local',
+            'demo.mika@campus.local',
+            'demo.jasper@campus.local',
+            'demo.troy@campus.local',
+            'demo.eli@campus.local',
+            'demo.owen@campus.local',
+            'demo.legacy@campus.local',
         ],
-        'Demo Arts Collective' => [
-            'demo.noah@campus.local',
-            'demo.mia@campus.local',
-            'demo.kai@campus.local',
+        'Code Atelier Society' => [
+            'demo.grace@campus.local',
+            'demo.paolo@campus.local',
+            'demo.troy@campus.local',
         ],
-        'Demo Robotics Club' => [
-            'demo.noah@campus.local',
-            'demo.aira@campus.local',
-            'demo.kai@campus.local',
-            'demo.tess@campus.local',
+        'Data & AI Society' => [
+            'demo.grace@campus.local',
+            'demo.mika@campus.local',
+            'demo.eli@campus.local',
         ],
-        'Demo Debate Union' => [
-            'demo.zoe@campus.local',
-            'demo.rin@campus.local',
-            'demo.jules@campus.local',
+        'Software Engineering Circle' => [
+            'demo.grace@campus.local',
+            'demo.jasper@campus.local',
+            'demo.owen@campus.local',
         ],
-        'Demo Music Ensemble' => [
-            'demo.ian@campus.local',
-            'demo.sara@campus.local',
-            'demo.theo@campus.local',
+        'Engineering Leaders Association' => [
+            'demo.marco@campus.local',
+            'demo.camille@campus.local',
+            'demo.ramon@campus.local',
         ],
-        'Demo Science Guild' => [
-            'demo.pat@campus.local',
-            'demo.aira@campus.local',
-            'demo.rin@campus.local',
+        'Civil Engineers Forum' => [
+            'demo.marco@campus.local',
+            'demo.camille@campus.local',
+            'demo.ramon@campus.local',
         ],
-        'Demo Entrepreneurship Circle' => [
-            'demo.lia@campus.local',
-            'demo.evan@campus.local',
-            'demo.sara@campus.local',
+        'Wellness and Care Council' => [
+            'demo.noel@campus.local',
+            'demo.iris@campus.local',
+            'demo.mara@campus.local',
         ],
-        'Demo Environmental Advocates' => [
-            'demo.noah@campus.local',
-            'demo.mia@campus.local',
-            'demo.theo@campus.local',
+        'Nursing Student Alliance' => [
+            'demo.noel@campus.local',
+            'demo.iris@campus.local',
+            'demo.mara@campus.local',
         ],
-        'Demo Photography Club' => [
-            'demo.zoe@campus.local',
-            'demo.kai@campus.local',
-            'demo.jules@campus.local',
+        'Midwifery Scholars Network' => [
+            'demo.hazel@campus.local',
+            'demo.benj@campus.local',
         ],
-        'Demo Volunteer Network' => [
-            'demo.ian@campus.local',
-            'demo.tess@campus.local',
-            'demo.rin@campus.local',
+        'Behavioral Science Forum' => [
+            'demo.lina@campus.local',
+            'demo.nina@campus.local',
+            'demo.lea@campus.local',
         ],
-        'Demo Language Society' => [
-            'demo.pat@campus.local',
-            'demo.sara@campus.local',
-            'demo.jules@campus.local',
+        'Psychology Peer Group' => [
+            'demo.lina@campus.local',
+            'demo.nina@campus.local',
+            'demo.lea@campus.local',
         ],
-        'Demo Athletics Council' => [
-            'demo.lia@campus.local',
-            'demo.theo@campus.local',
-            'demo.kai@campus.local',
+        'Community Service Alliance' => [
+            'demo.ariana@campus.local',
+            'demo.paolo@campus.local',
+            'demo.mika@campus.local',
+            'demo.camille@campus.local',
+            'demo.nina@campus.local',
+            'demo.iris@campus.local',
+            'demo.benj@campus.local',
+            'demo.sofia@campus.local',
+            'demo.troy@campus.local',
+            'demo.lea@campus.local',
+            'demo.ramon@campus.local',
+            'demo.mara@campus.local',
+            'demo.eli@campus.local',
+            'demo.jade@campus.local',
+            'demo.owen@campus.local',
         ],
-        'Demo Gaming & Esports' => [
-            'demo.noah@campus.local',
-            'demo.evan@campus.local',
-            'demo.tess@campus.local',
+        'Student Activities Assembly' => [
+            'demo.ariana@campus.local',
+            'demo.paolo@campus.local',
+            'demo.mika@campus.local',
+            'demo.jasper@campus.local',
+            'demo.camille@campus.local',
+            'demo.nina@campus.local',
+            'demo.iris@campus.local',
+            'demo.benj@campus.local',
+            'demo.sofia@campus.local',
+            'demo.troy@campus.local',
+            'demo.lea@campus.local',
+            'demo.ramon@campus.local',
+            'demo.mara@campus.local',
+            'demo.eli@campus.local',
+            'demo.jade@campus.local',
+            'demo.owen@campus.local',
+        ],
+        'Science and Research Forum' => [
+            'demo.ariana@campus.local',
+            'demo.sofia@campus.local',
+            'demo.jade@campus.local',
+        ],
+        'Social Work Advocates Circle' => [
+            'demo.ariana@campus.local',
+            'demo.sofia@campus.local',
+            'demo.jade@campus.local',
+        ],
+        'Media and Creators Guild' => [
+            'demo.grace@campus.local',
+            'demo.lina@campus.local',
+            'demo.marco@campus.local',
+            'demo.nina@campus.local',
+            'demo.owen@campus.local',
         ],
     ];
 
@@ -420,26 +542,32 @@ try {
 
     ensureAnnouncement(
         $pdo,
-        $orgIdsByName['Demo Computing Society'],
-        'Welcome to Computing Society',
-        'This is test content for announcement rendering and listing.'
+        $orgIdsByName['Horizon Computing Guild'],
+        'Welcome to the Horizon Computing Guild',
+        'Kickoff meeting, code clinic, and peer mentoring schedule for new and continuing members.'
     );
     ensureAnnouncement(
         $pdo,
-        $orgIdsByName['Demo Arts Collective'],
-        'Arts Week Schedule',
-        'Testing schedule announcement for cards and detail views.'
+        $orgIdsByName['Engineering Leaders Association'],
+        'Engineering field exposure schedule',
+        'Site visit reminders, safety notes, and clearance deadlines for the next activity.'
     );
     ensureAnnouncement(
         $pdo,
-        $orgIdsByName['Demo Robotics Club'],
-        'Build Session Invite',
-        'Testing robotics invite announcement and timeline order.'
+        $orgIdsByName['Wellness and Care Council'],
+        'Clinical duty briefing',
+        'Updated volunteer roster, reporting time, and uniform reminders for the next rotation.'
+    );
+    ensureAnnouncement(
+        $pdo,
+        $orgIdsByName['Community Service Alliance'],
+        'Campus outreach drive',
+        'Collection points, transport schedule, and packing instructions for the weekend outreach.'
     );
 
     foreach ($orgs as $organization) {
         $orgName = $organization['name'];
-        if (in_array($orgName, ['Demo Computing Society', 'Demo Arts Collective', 'Demo Robotics Club'], true)) {
+        if (in_array($orgName, ['Horizon Computing Guild', 'Engineering Leaders Association', 'Wellness and Care Council', 'Community Service Alliance'], true)) {
             continue;
         }
 
@@ -455,66 +583,69 @@ try {
 
     $tx1 = ensureTransaction(
         $pdo,
-        $orgIdsByName['Demo Computing Society'],
+        $orgIdsByName['Horizon Computing Guild'],
         'income',
-        12000.00,
+        14250.00,
         'Membership dues collection',
         '2025-12-12'
     );
     $tx2 = ensureTransaction(
         $pdo,
-        $orgIdsByName['Demo Computing Society'],
+        $orgIdsByName['Horizon Computing Guild'],
         'expense',
-        3200.50,
-        'Hackathon materials',
+        3850.50,
+        'Workshop kits and snacks',
         '2026-01-09'
     );
     $tx3 = ensureTransaction(
         $pdo,
-        $orgIdsByName['Demo Arts Collective'],
+        $orgIdsByName['Community Service Alliance'],
         'income',
-        8500.00,
-        'Event sponsorship',
+        9800.00,
+        'Community outreach sponsorship',
         '2026-01-18'
     );
     $tx4 = ensureTransaction(
         $pdo,
-        $orgIdsByName['Demo Arts Collective'],
+        $orgIdsByName['Community Service Alliance'],
         'expense',
-        4100.75,
-        'Stage and lighting rental',
+        4200.75,
+        'Outreach supplies and transport',
         '2026-02-01'
     );
     $tx5 = ensureTransaction(
         $pdo,
-        $orgIdsByName['Demo Robotics Club'],
+        $orgIdsByName['Engineering Leaders Association'],
         'income',
-        15000.00,
-        'Fundraising proceeds',
+        16800.00,
+        'Skills fair sponsorship',
         '2025-11-24'
     );
     $tx6 = ensureTransaction(
         $pdo,
-        $orgIdsByName['Demo Robotics Club'],
+        $orgIdsByName['Engineering Leaders Association'],
         'expense',
-        6800.00,
-        'Sensor and controller kits',
+        7300.00,
+        'Site safety and survey kits',
         '2026-02-23'
     );
 
-    $extraIncomeDates = ['2026-01-05', '2026-01-12', '2026-01-19', '2026-01-26', '2026-02-02', '2026-02-09', '2026-02-16', '2026-02-20', '2026-02-22', '2026-02-24'];
-    $extraExpenseDates = ['2026-01-08', '2026-01-15', '2026-01-22', '2026-01-29', '2026-02-05', '2026-02-11', '2026-02-18', '2026-02-21', '2026-02-23', '2026-02-25'];
+    $extraIncomeDates = ['2026-01-05', '2026-01-06', '2026-01-12', '2026-01-13', '2026-01-19', '2026-01-20', '2026-01-26', '2026-01-27', '2026-02-02', '2026-02-03', '2026-02-09', '2026-02-10', '2026-02-16'];
+    $extraExpenseDates = ['2026-01-08', '2026-01-09', '2026-01-15', '2026-01-16', '2026-01-22', '2026-01-23', '2026-01-29', '2026-01-30', '2026-02-05', '2026-02-06', '2026-02-11', '2026-02-18', '2026-02-25'];
     $extraOrgNames = [
-        'Demo Debate Union',
-        'Demo Music Ensemble',
-        'Demo Science Guild',
-        'Demo Entrepreneurship Circle',
-        'Demo Environmental Advocates',
-        'Demo Photography Club',
-        'Demo Volunteer Network',
-        'Demo Language Society',
-        'Demo Athletics Council',
-        'Demo Gaming & Esports',
+        'Code Atelier Society',
+        'Data & AI Society',
+        'Software Engineering Circle',
+        'Civil Engineers Forum',
+        'Wellness and Care Council',
+        'Nursing Student Alliance',
+        'Midwifery Scholars Network',
+        'Behavioral Science Forum',
+        'Psychology Peer Group',
+        'Science and Research Forum',
+        'Social Work Advocates Circle',
+        'Student Activities Assembly',
+        'Media and Creators Guild',
     ];
 
     foreach ($extraOrgNames as $index => $orgName) {
@@ -539,80 +670,104 @@ try {
 
     upsertOwnerAssignment(
         $pdo,
-        $orgIdsByName['Demo Computing Society'],
-        $userIdsByEmail['demo.aira@campus.local'],
+        $orgIdsByName['Horizon Computing Guild'],
+        $userIdsByEmail['demo.paolo@campus.local'],
         'accepted'
     );
     upsertOwnerAssignment(
         $pdo,
-        $orgIdsByName['Demo Arts Collective'],
-        $userIdsByEmail['demo.mia@campus.local'],
+        $orgIdsByName['Engineering Leaders Association'],
+        $userIdsByEmail['demo.camille@campus.local'],
         'pending'
     );
     upsertOwnerAssignment(
         $pdo,
-        $orgIdsByName['Demo Robotics Club'],
-        $userIdsByEmail['demo.kai@campus.local'],
+        $orgIdsByName['Wellness and Care Council'],
+        $userIdsByEmail['demo.mara@campus.local'],
         'declined'
+    );
+    upsertOwnerAssignment(
+        $pdo,
+        $orgIdsByName['Psychology Peer Group'],
+        $userIdsByEmail['demo.lea@campus.local'],
+        'accepted'
     );
 
     upsertJoinRequest(
         $pdo,
-        $orgIdsByName['Demo Computing Society'],
-        $userIdsByEmail['demo.mia@campus.local'],
+        $orgIdsByName['Code Atelier Society'],
+        $userIdsByEmail['demo.paolo@campus.local'],
         'approved'
     );
     upsertJoinRequest(
         $pdo,
-        $orgIdsByName['Demo Arts Collective'],
-        $userIdsByEmail['demo.tess@campus.local'],
+        $orgIdsByName['Data & AI Society'],
+        $userIdsByEmail['demo.mika@campus.local'],
         'pending'
     );
     upsertJoinRequest(
         $pdo,
-        $orgIdsByName['Demo Robotics Club'],
-        $userIdsByEmail['demo.evan@campus.local'],
+        $orgIdsByName['Civil Engineers Forum'],
+        $userIdsByEmail['demo.ramon@campus.local'],
         'declined'
+    );
+    upsertJoinRequest(
+        $pdo,
+        $orgIdsByName['Wellness and Care Council'],
+        $userIdsByEmail['demo.mara@campus.local'],
+        'approved'
+    );
+    upsertJoinRequest(
+        $pdo,
+        $orgIdsByName['Social Work Advocates Circle'],
+        $userIdsByEmail['demo.jade@campus.local'],
+        'pending'
+    );
+    upsertJoinRequest(
+        $pdo,
+        $orgIdsByName['Community Service Alliance'],
+        $userIdsByEmail['demo.legacy@campus.local'],
+        'approved'
     );
 
     upsertTransactionChangeRequest(
         $pdo,
         $tx2,
-        $orgIdsByName['Demo Computing Society'],
-        $userIdsByEmail['demo.aira@campus.local'],
+        $orgIdsByName['Horizon Computing Guild'],
+        $userIdsByEmail['demo.paolo@campus.local'],
         'update',
         'pending',
         'expense',
         3000.00,
-        'Updated hackathon materials budget',
+        'Updated workshop budget',
         $now->modify('-7 days')->format('Y-m-d'),
         null
     );
     upsertTransactionChangeRequest(
         $pdo,
         $tx4,
-        $orgIdsByName['Demo Arts Collective'],
-        $userIdsByEmail['demo.mia@campus.local'],
+        $orgIdsByName['Community Service Alliance'],
+        $userIdsByEmail['demo.mika@campus.local'],
         'delete',
         'approved',
         null,
         null,
         null,
         null,
-        'Approved for testing of processed requests.'
+        'Approved for the seeded review workflow.'
     );
     upsertTransactionChangeRequest(
         $pdo,
         $tx6,
-        $orgIdsByName['Demo Robotics Club'],
-        $userIdsByEmail['demo.kai@campus.local'],
+        $orgIdsByName['Engineering Leaders Association'],
+        $userIdsByEmail['demo.camille@campus.local'],
         'update',
         'rejected',
         'expense',
         7200.00,
-        'Revised robotics components cost',
+        'Revised field kit cost',
         $now->modify('-4 days')->format('Y-m-d'),
-        'Rejected for over budget in test scenario.'
+        'Rejected because the request exceeded the current budget ceiling.'
     );
 
     $pdo->commit();
@@ -621,7 +776,7 @@ try {
     echo "Seed login password for seeded users: SeedPass123!" . PHP_EOL;
     echo "Seeded users: " . count($accounts) . PHP_EOL;
     echo "Seeded organizations: " . count($orgs) . PHP_EOL;
-    $seedTransactionCount = (int) $pdo->query("SELECT COUNT(*) FROM financial_transactions WHERE description LIKE '%seed income' OR description LIKE '%seed expense' OR description IN ('Membership dues collection','Hackathon materials','Event sponsorship','Stage and lighting rental','Fundraising proceeds','Sensor and controller kits')")->fetchColumn();
+    $seedTransactionCount = (int) $pdo->query("SELECT COUNT(*) FROM financial_transactions WHERE description LIKE '%seed income' OR description LIKE '%seed expense' OR description IN ('Membership dues collection','Workshop kits and snacks','Community outreach sponsorship','Outreach supplies and transport','Skills fair sponsorship','Site safety and survey kits')")->fetchColumn();
     echo "Seeded transactions: " . $seedTransactionCount . PHP_EOL;
 } catch (Throwable $exception) {
     if ($pdo->inTransaction()) {

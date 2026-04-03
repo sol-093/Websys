@@ -91,24 +91,28 @@
     </section>
 
     <section id="page-register" class="page">
-      <div class="max-w-md mx-auto glass p-6 mt-8">
+      <div class="max-w-3xl mx-auto glass p-6 md:p-8 mt-8">
         <h1 class="text-2xl font-semibold mb-4">Student Registration</h1>
-        <form id="registerForm" class="space-y-3">
-          <input placeholder="Full Name" required class="w-full border rounded px-3 py-2" />
-          <input type="email" placeholder="Email" required class="w-full border rounded px-3 py-2" />
-          <input type="password" placeholder="Password" required class="w-full border rounded px-3 py-2" />
+        <form id="registerForm" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <input id="registerFirstName" placeholder="First Name" required class="w-full border rounded px-3 py-2" />
+            <input id="registerMiddleName" placeholder="Middle Name" class="w-full border rounded px-3 py-2" />
+            <input id="registerLastName" placeholder="Last Name" required class="w-full border rounded px-3 py-2" />
+          </div>
+          <input type="email" placeholder="Student Email" required class="w-full border rounded px-3 py-2" />
+          <input type="password" placeholder="Create Password" required class="w-full border rounded px-3 py-2" />
 
           <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
             <div class="flex items-start gap-2">
               <input id="privacyConsent" type="checkbox" value="1" required class="mt-1" />
               <label for="privacyConsent" class="text-sm text-slate-700">
-                I agree to the
-                <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">Data Privacy Consent</button>.
+                I agree with the
+                <button type="button" id="openPrivacyModal" class="font-medium text-emerald-700 underline">terms and conditions</button>.
               </label>
             </div>
           </div>
 
-          <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full">Create Account (Demo)</button>
+          <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full">Create Account</button>
         </form>
       </div>
     </section>
@@ -145,8 +149,14 @@
             <h2 class="text-base font-semibold text-slate-900">Finance status</h2>
             <p class="text-xs text-slate-600 mt-1">Spend pressure and visibility based on latest records.</p>
             <div class="mt-3 space-y-2 text-sm">
-              <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Expense share of income</span><span class="font-semibold">56%</span></div>
-              <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Balance retained</span><span class="font-semibold">44%</span></div>
+              <div>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Expense share of income</span><span class="font-semibold">56%</span></div>
+                <div class="dashboard-progress mt-2"><span style="width: 56%"></span></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Balance retained</span><span class="font-semibold">44%</span></div>
+                <div class="dashboard-progress mt-2"><span style="width: 44%"></span></div>
+              </div>
               <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Recent reports</span><span class="font-semibold">8</span></div>
               <div class="flex items-center justify-between border-b border-slate-200 pb-2"><span>Latest announcements</span><span class="font-semibold">3</span></div>
               <div class="flex items-center justify-between"><span>Pending assignments</span><span class="font-semibold">1</span></div>
@@ -182,11 +192,54 @@
               </div>
               <div class="text-xs text-slate-600">8 recent reports tracked</div>
             </div>
+            <div class="dashboard-metric-grid mb-3">
+              <div class="dashboard-metric-card">
+                <div class="text-xl font-semibold text-red-600">₱738,167.30</div>
+                <div class="text-xs text-slate-600">Expense total</div>
+              </div>
+              <div class="dashboard-metric-card">
+                <div class="text-xl font-semibold text-slate-900">6</div>
+                <div class="text-xs text-slate-600">Activity items loaded</div>
+              </div>
+              <div class="dashboard-metric-card">
+                <div class="text-xl font-semibold text-slate-900">3</div>
+                <div class="text-xs text-slate-600">Announcement highlights</div>
+              </div>
+            </div>
             <canvas id="trendChart" height="130"></canvas>
+            <div class="trend-insight-grid mt-5 grid md:grid-cols-3 gap-2">
+              <div class="dashboard-feed-item trend-insight-card">
+                <span class="dashboard-feed-dot"></span>
+                <div>
+                  <div class="dashboard-feed-title">Current month net</div>
+                  <div class="dashboard-feed-meta mt-1 text-green-700">₱8,000.00</div>
+                  <div class="dashboard-feed-body mt-1">Income is still ahead of expense this month.</div>
+                </div>
+              </div>
+              <div class="dashboard-feed-item trend-insight-card">
+                <span class="dashboard-feed-dot warn"></span>
+                <div>
+                  <div class="dashboard-feed-title">Peak expense month</div>
+                  <div class="dashboard-feed-meta mt-1">2026-02</div>
+                  <div class="dashboard-feed-body mt-1">₱13,000.00 spent</div>
+                </div>
+              </div>
+              <div class="dashboard-feed-item trend-insight-card">
+                <span class="dashboard-feed-dot"></span>
+                <div>
+                  <div class="dashboard-feed-title">Healthy months</div>
+                  <div class="dashboard-feed-meta mt-1">6 of 6</div>
+                  <div class="dashboard-feed-body mt-1">Months where income met or exceeded expense.</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="glass xl:col-span-5 p-4">
-            <h2 class="text-base font-semibold mb-2">Live activity</h2>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-base font-semibold">Live activity</h2>
+              <button type="button" id="openAnnouncementsModalQuick" class="text-xs underline text-emerald-700">View all</button>
+            </div>
             <div class="space-y-2 text-sm">
               <div class="dashboard-feed-item p-2"><div><div class="font-medium">Budget Orientation</div><div class="text-xs text-gray-500">announcement · 2026-03-07</div></div></div>
               <div class="dashboard-feed-item p-2"><div><div class="font-medium">Workshop registration income</div><div class="text-xs text-gray-500">transaction · 2026-03-06</div></div></div>
@@ -195,7 +248,10 @@
           </div>
 
           <div class="glass xl:col-span-5 p-4">
-            <h2 class="text-base font-semibold mb-2">Organizations</h2>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-base font-semibold">Organizations</h2>
+              <button type="button" id="openOrganizationsModal" class="text-xs underline text-emerald-700">View all</button>
+            </div>
             <div class="space-y-2">
               <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
                 <div><div class="font-medium">Computer Society</div><p class="text-sm text-gray-600">Tech events, workshops, and hackathons.</p><div class="text-xs text-gray-500 mt-1">Owner: John Cruz</div></div>
@@ -336,25 +392,166 @@
           <textarea placeholder="Announcement details" class="w-full border rounded px-3 py-2"></textarea>
           <button class="bg-emerald-600 text-white px-4 py-2 rounded">Post Announcement</button>
         </div>
+
+        <div class="glass md:col-span-12 p-4 space-y-3">
+          <h2 class="text-lg font-semibold">Enter Budget (Income / Expense)</h2>
+          <form id="myOrgBudgetForm" class="space-y-2">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+              <select id="myOrgBudgetType" class="border rounded px-3 py-2">
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+              <input id="myOrgBudgetAmount" type="number" step="0.01" min="0.01" placeholder="Amount" required class="border rounded px-3 py-2" />
+              <input id="myOrgBudgetDate" type="date" class="border rounded px-3 py-2" />
+              <input id="myOrgBudgetReceipt" type="file" accept=".jpg,.jpeg,.png,.pdf" class="border rounded px-3 py-2" />
+            </div>
+            <input id="myOrgBudgetDesc" placeholder="Description" required class="w-full border rounded px-3 py-2" />
+            <button class="bg-emerald-600 text-white px-4 py-2 rounded">Save Budget Entry (Demo)</button>
+          </form>
+
+          <div>
+            <h3 class="font-medium mb-2">Recent Budget Entries</h3>
+            <div id="myOrgBudgetList" class="space-y-2 text-sm">
+              <div class="border rounded p-2 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div class="font-medium">Workshop registration fee</div>
+                  <div class="text-xs text-gray-500">income · 2026-03-06</div>
+                </div>
+                <div class="font-semibold text-green-700">₱10,751.90</div>
+              </div>
+              <div class="border rounded p-2 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div class="font-medium">Transportation for outreach</div>
+                  <div class="text-xs text-gray-500">expense · 2026-03-05</div>
+                </div>
+                <div class="font-semibold text-red-700">₱6,531.37</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
 
+  <footer class="app-footer mt-6">
+    <div class="mx-auto w-full max-w-7xl">
+      <div class="grid grid-cols-1 gap-6 px-4 py-5 md:grid-cols-2 lg:grid-cols-4 lg:py-6 text-sm">
+        <div>
+          <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase text-slate-700">Platform</h2>
+          <ul class="space-y-1 text-slate-700 font-medium">
+            <li><button class="footer-link" data-page="home">Home</button></li>
+            <li><button class="footer-link" data-page="home">Public Overview</button></li>
+            <li><button class="footer-link" data-page="login">Login</button></li>
+            <li><button class="footer-link" data-page="register">Register</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase text-slate-700">Resources</h2>
+          <ul class="space-y-1 text-slate-700 font-medium">
+            <li><button class="footer-link" data-page="dashboard">Dashboard</button></li>
+            <li><button class="footer-link" data-page="my_org">Organization Workspace</button></li>
+            <li><button class="footer-link" data-page="admin_requests">Workflow Queue</button></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase text-slate-700">Governance & Security</h2>
+          <ul class="space-y-1 text-slate-700 font-medium">
+            <li><button class="footer-link" data-page="admin_requests">Audit Log Policy</button></li>
+            <li><button class="footer-link" data-page="register">Data Privacy Notice</button></li>
+            <li>
+              <span class="inline-flex items-center gap-2 text-slate-700">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70"></span>
+                  <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                </span>
+                <span>All Systems Operational</span>
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase text-slate-700">Support</h2>
+          <ul class="space-y-1 text-slate-700 font-medium">
+            <li>Student Affairs Office</li>
+            <li><a href="mailto:studentaffairs@campus.local" class="footer-anchor">studentaffairs@campus.local</a></li>
+            <li>2nd Floor, Student Services Building</li>
+            <li>Main Campus, City 1000</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 border-t border-emerald-200/40">
+        <p class="text-xs text-slate-700">&copy; 2026 Student Organization Management and Budget Transparency System. Static frontend demo sync.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="organizationsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="organizationsModalTitle">
+    <div class="glass w-full max-w-5xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+        <h3 id="organizationsModalTitle" class="text-lg font-semibold">All Organizations</h3>
+        <button type="button" id="closeOrganizationsModal" class="px-2 py-1 rounded border text-sm">Close</button>
+      </div>
+      <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
+        <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+          <div>
+            <div class="font-medium">Computer Society</div>
+            <p class="text-sm text-gray-600">Tech events, workshops, and hackathons.</p>
+            <div class="text-xs text-gray-500 mt-1">Owner: John Cruz</div>
+          </div>
+          <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-emerald-500/25 border-emerald-300/50 text-white hover:bg-emerald-500/35">Request Join</button>
+        </div>
+        <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+          <div>
+            <div class="font-medium">Debate Union</div>
+            <p class="text-sm text-gray-600">Debate and speaking competitions.</p>
+            <div class="text-xs text-gray-500 mt-1">Owner: Maria Santos</div>
+          </div>
+          <button class="dashboard-join-btn px-3 py-1 rounded text-xs border bg-amber-500/25 border-amber-300/50 text-white/90" disabled>Requested</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="announcementsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="announcementsModalTitle">
+    <div class="glass w-full max-w-5xl overflow-hidden">
+      <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
+        <h3 id="announcementsModalTitle" class="text-lg font-semibold">All Latest Announcements</h3>
+        <button type="button" id="closeAnnouncementsModal" class="px-2 py-1 rounded border text-sm">Close</button>
+      </div>
+      <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
+        <div class="border rounded p-3">
+          <div class="font-medium">Budget Orientation</div>
+          <div class="text-xs text-gray-500">Computer Society · 2026-03-07</div>
+          <div class="text-sm mt-1">Guidelines for expense recording and monthly transparency reporting were published.</div>
+        </div>
+        <div class="border rounded p-3">
+          <div class="font-medium">Workshop Registration Open</div>
+          <div class="text-xs text-gray-500">Computing Society · 2026-03-06</div>
+          <div class="text-sm mt-1">Registration is now available for the inter-organization technical workshop.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="privacyModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle">
     <div class="glass w-full max-w-xl p-5">
       <div class="flex items-center justify-between mb-3">
-        <h2 id="privacyModalTitle" class="text-lg font-semibold">Data Privacy Consent</h2>
+        <h2 id="privacyModalTitle" class="text-lg font-semibold">Terms and Conditions</h2>
         <button type="button" id="closePrivacyModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
       </div>
       <div class="text-sm text-slate-700 space-y-2 max-h-[60vh] overflow-auto pr-1">
-        <p>By creating an account, you agree that this system may collect and process your personal data, such as your name, email address, role, organization memberships, and activity records, for account management and transparency reporting.</p>
-        <p>Your data is used only for legitimate school organization operations, including authentication, organization management, announcement publishing, and finance report visibility.</p>
-        <p>Your information is stored securely and access is limited based on system roles (admin, owner, student). We do not intentionally share your personal data with unauthorized third parties.</p>
-        <p>You may request correction of inaccurate profile data through the system administrator. By proceeding, you confirm that the information you submit is accurate and that you consent to this processing.</p>
+        <p>By selecting I Agree and creating an account, you confirm that you have read, understood, and accepted these Terms and Conditions for the Student Organization Management and Budget Transparency System.</p>
+        <p>This platform is provided to support student organization administration, governance workflows, and financial transparency. You agree to use the platform only for lawful and school-related purposes.</p>
+        <p>You are responsible for accurate registration information and the confidentiality of your credentials. Account misuse and unauthorized access attempts may result in suspension and referral for disciplinary action.</p>
+        <p>The platform processes personal data in line with the Data Privacy Act of 2012 and related policies. Data is used only for legitimate operations and protected with reasonable safeguards.</p>
       </div>
       <div class="mt-4 flex justify-end gap-2">
         <button type="button" id="declinePrivacy" class="px-3 py-2 rounded border border-slate-300 text-slate-700">Close</button>
-        <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree</button>
+        <button type="button" id="acceptPrivacy" class="px-3 py-2 rounded bg-emerald-600 text-white">I Agree to the Terms</button>
       </div>
     </div>
   </div>

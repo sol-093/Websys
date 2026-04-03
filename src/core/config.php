@@ -24,7 +24,7 @@ return [
         'driver' => (string) $env('DB_DRIVER', 'mysql'),
         'host' => (string) $env('DB_HOST', (string) $env('MYSQLHOST', '127.0.0.1')),
         'port' => (int) $env('DB_PORT', (int) $env('MYSQLPORT', 3306)),
-        'database' => (string) $env('DB_DATABASE', (string) $env('MYSQLDATABASE', (string) $env('MYSQL_DATABASE', 'websys_db'))),
+        'database' => (string) $env('DB_DATABASE', (string) $env('MYSQLDATABASE', (string) $env('MYSQL_DATABASE', 'websysdb'))),
         'username' => (string) $env('DB_USERNAME', (string) $env('MYSQLUSER', 'root')),
         'password' => (string) $env('DB_PASSWORD', (string) $env('MYSQLPASSWORD', '')),
         'bootstrap_database' => $envBool('DB_BOOTSTRAP_DATABASE', true),

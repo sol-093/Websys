@@ -2,8 +2,22 @@ Student Organization Management and Budget Transparency System
 Comprehensive Project Documentation
 
 Version: 1.0.0  
-Last Updated: March 8, 2026  
+Last Updated: April 3, 2026  
 Platform: PHP 8.2+ / MySQL or SQLite / Tailwind CSS
+
+Recent Change Log
+
+- April 3, 2026: Dashboard Chart Theme Sync
+  - Added runtime theme synchronization so chart text/grid colors update instantly when theme changes.
+- April 3, 2026: Dashboard Chart Contrast Tuning
+  - Increased readability for axis and legend labels, with darker text in light mode.
+- April 3, 2026: Realistic Seed Data Expansion
+  - Extended seed coverage for varied organization categories, ownership and join workflows, and transaction-change request scenarios.
+- April 3, 2026: Shared Dropdown Component Adoption
+  - Replaced native selector styling limits with a reusable custom dropdown (click-open behavior, themed states, hidden input integration).
+- April 3, 2026: Owner Transaction UX Fixes
+  - Fixed filter binding for multiple dropdown controls in transaction history.
+  - Improved transaction table row separators and spacing for readability.
 
 ---
 

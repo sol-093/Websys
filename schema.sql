@@ -1,7 +1,7 @@
 -- MySQL schema for Student Organization Management and Budget Transparency System
 
-CREATE DATABASE IF NOT EXISTS websys_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE websys_db;
+CREATE DATABASE IF NOT EXISTS websysdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE websysdb;
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(191) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin','student','owner') NOT NULL DEFAULT 'student',
+    institute VARCHAR(191) NULL,
+    program VARCHAR(191) NULL,
+    year_level TINYINT NULL,
+    section VARCHAR(50) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
