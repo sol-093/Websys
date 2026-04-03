@@ -187,6 +187,9 @@ function handleOrganizationsPage(PDO $db, array $user): void
 function handleProfilePage(array $user): void
 {
     global $db;
+    $currentProgram = trim((string) ($user['program'] ?? ''));
+    $currentInstitute = trim((string) ($user['institute'] ?? ''));
+    $currentSection = trim((string) ($user['section'] ?? ''));
     
     // Get owned organization
     $ownedOrg = null;
@@ -209,7 +212,7 @@ function handleProfilePage(array $user): void
     
     renderHeader('My Profile');
     ?>
-    <section class="glass p-6 max-w-4xl mx-auto">
+    <section class="glass p-6 max-w-4xl mx-auto profile-page">
         <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('user', 'ui-icon') ?><span>My Profile</span></h1>
         <p class="text-sm text-slate-600 mb-4">Manage your account settings and preferences</p>
         
@@ -265,20 +268,16 @@ function handleProfilePage(array $user): void
                         <p class="mt-1 text-xs text-slate-600">Changing your email will require re-verification.</p>
                     </div>
 
-                    <div class="space-y-2 text-sm text-slate-800 border-t border-emerald-200/40 pt-4">
-                        <div><span class="font-semibold">Program:</span> <?= e((string) ($user['program'] ?? 'Not set')) ?></div>
-                        <div><span class="font-semibold">Institute:</span> <?= e((string) ($user['institute'] ?? 'Not set')) ?></div>
-                        <div><span class="font-semibold">Year and Section:</span> <?php
-                            $sectionValue = trim((string) ($user['section'] ?? ''));
-                            $yearLabel = formatYearLevelLabel(isset($user['year_level']) ? (int) $user['year_level'] : 0);
-                            if ($sectionValue !== '') {
-                                echo e($sectionValue);
-                            } elseif ($yearLabel !== 'Not set') {
-                                echo e($yearLabel);
-                            } else {
-                                echo 'Not set';
-                            }
-                        ?></div>
+                    <div class="space-y-3 text-sm text-slate-800 border-t border-emerald-200/40 pt-4 profile-meta">
+                        <div>
+                            <span class="font-semibold">Year and Section:</span> <?= e($currentSection !== '' ? $currentSection : 'Not set') ?>
+                        </div>
+                        <div>
+                            <span class="font-semibold">Program:</span> <?= e($currentProgram !== '' ? $currentProgram : 'Not set') ?>
+                        </div>
+                        <div>
+                            <span class="font-semibold">Institute:</span> <?= e($currentInstitute !== '' ? $currentInstitute : 'Not set') ?>
+                        </div>
                         <div><span class="font-semibold">Role:</span> <?= htmlspecialchars($user['role']) ?></div>
                         <div><span class="font-semibold">Account Status:</span> <?= htmlspecialchars(ucfirst((string) ($user['account_status'] ?? 'active'))) ?></div>
                         <div><span class="font-semibold">Email Verified:</span> <?= ((int) ($user['email_verified'] ?? 0) === 1) ? 'Verified' : 'Not Verified' ?></div>
@@ -294,13 +293,13 @@ function handleProfilePage(array $user): void
                     </div>
                     
                     <!-- Organization Information -->
-                    <div class="mt-6 pt-6 border-t border-emerald-200/40">
+                    <div class="mt-6 pt-6 border-t border-emerald-200/40 profile-org-section">
                         <h3 class="text-sm font-semibold text-slate-900 mb-4 icon-label"><?= uiIcon('orgs', 'ui-icon ui-icon-sm') ?><span>Organization Information</span></h3>
                         
                         <?php if ($ownedOrg): ?>
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-slate-700 mb-2">Owned Organization</label>
-                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/50">
+                                <label class="block text-sm font-medium text-slate-700 mb-2 profile-org-label">Owned Organization</label>
+                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/50 profile-org-card profile-org-card-owned">
                                     <p class="text-sm font-semibold text-emerald-900">
                                         <?php echo htmlspecialchars($ownedOrg['name']); ?>
                                     </p>
@@ -316,11 +315,11 @@ function handleProfilePage(array $user): void
                         <?php endif; ?>
                         
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2">Joined Organizations</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2 profile-org-label">Joined Organizations</label>
                             <?php if (count($joinedOrgs) > 0): ?>
                                 <div class="space-y-2">
                                     <?php foreach ($joinedOrgs as $org): ?>
-                                        <div class="p-3 rounded-xl bg-white/10 border border-emerald-100/25">
+                                        <div class="p-3 rounded-xl bg-white/10 border border-emerald-100/25 profile-org-card profile-org-card-joined">
                                             <p class="text-sm font-medium text-slate-900">
                                                 <?php echo htmlspecialchars($org['name']); ?>
                                             </p>
@@ -441,6 +440,7 @@ function handleProfilePage(array $user): void
                 modal.classList.add('hidden');
             }
         });
+
         </script>
     </section>
     <?php

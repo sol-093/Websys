@@ -25,13 +25,13 @@ Recent Updates:
 - Registration compliance update: restyled the consent checkbox line and upgraded modal text to formal Terms and Conditions
 - Registration consent refinement: positioned checkbox directly beside "I agree" text in horizontal layout
 - Registration checkbox visibility fix: enforced explicit checkbox rendering in light/dark themes so the consent box stays visible beside the terms text
-- Dashboard theme sync fix (April 3, 2026): charts now update colors immediately when switching theme without requiring page refresh
-- Dashboard chart contrast update (April 3, 2026): improved axis/legend readability and enforced dark text in light mode
-- Data realism update (April 3, 2026): expanded seed scenarios across users, organizations, memberships, announcements, join requests, owner assignments, and transaction change requests
-- Organization panel UI update (April 3, 2026): standardized join button sizing and reduced width for better layout consistency
-- Shared custom dropdown rollout (April 3, 2026): introduced themed click-open dropdown component and applied it to owner and admin organization selectors
-- Transaction history fix (April 3, 2026): corrected custom dropdown filter bindings to ensure accurate transaction filtering
-- Transaction table readability update (April 3, 2026): increased row separators contrast and row padding in owner transaction history
+- Dashboard theme sync fix: charts now update colors immediately when switching theme without requiring page refresh
+- Dashboard chart contrast update: improved axis/legend readability and enforced dark text in light mode
+- Data realism update: expanded seed scenarios across users, organizations, memberships, announcements, join requests, owner assignments, and transaction change requests
+- Organization panel UI update: standardized join button sizing and reduced width for better layout consistency
+- Shared custom dropdown rollout: introduced themed click-open dropdown component rendered with Tailwind classes in PHP pages and shared behavior script in static/js/owner-org-switcher.js
+- Transaction history fix: corrected custom dropdown filter bindings to ensure accurate transaction filtering
+- Transaction table readability: increased row separators contrast and row padding in owner transaction history
 
 ---
 

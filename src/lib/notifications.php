@@ -55,6 +55,56 @@ function collectUserRequestUpdates(int $userId): array
         ];
     }
 
+        $driver = (string) $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+                $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
+                        FROM security_notifications
+                        WHERE user_id = ?
+                            AND event_type = 'membership_removed'
+                            AND created_at >= datetime('now', '-30 day')
+                        ORDER BY created_at DESC
+                        LIMIT 8");
+        } else {
+                $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
+                        FROM security_notifications
+                        WHERE user_id = ?
+                            AND event_type = 'membership_removed'
+                            AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                        ORDER BY created_at DESC
+                        LIMIT 8");
+        }
+        $securityStmt->execute([$userId]);
+    foreach ($securityStmt->fetchAll() as $row) {
+        $eventDataRaw = (string) ($row['event_data'] ?? '');
+        $eventData = json_decode($eventDataRaw, true);
+        if (!is_array($eventData)) {
+            $eventData = [];
+        }
+
+        $removedOrganizations = [];
+        if (isset($eventData['organizations']) && is_array($eventData['organizations'])) {
+            foreach ($eventData['organizations'] as $orgName) {
+                $name = trim((string) $orgName);
+                if ($name !== '') {
+                    $removedOrganizations[] = $name;
+                }
+            }
+        }
+
+        $reason = trim((string) ($eventData['reason'] ?? 'profile eligibility changed'));
+        $message = 'Some memberships were removed after your ' . $reason . '.';
+        if ($removedOrganizations !== []) {
+            $message = 'Removed from: ' . implode(', ', $removedOrganizations);
+        }
+
+        $updates[] = [
+            'kind' => 'Membership Eligibility',
+            'status' => 'removed',
+            'message' => $message,
+            'event_at' => (string) ($row['created_at'] ?? ''),
+        ];
+    }
+
     usort($updates, static function (array $a, array $b): int {
         return strcmp((string) $b['event_at'], (string) $a['event_at']);
     });
@@ -67,6 +117,37 @@ function collectUserRequestUpdates(int $userId): array
     }));
 
     return array_slice($updates, 0, 8);
+}
+
+function queueMembershipRemovalNotification(int $userId, array $removedMemberships, string $reason = 'profile update'): void
+{
+    if ($userId <= 0 || $removedMemberships === []) {
+        return;
+    }
+
+    $organizationNames = [];
+    foreach ($removedMemberships as $membership) {
+        $name = trim((string) ($membership['organization_name'] ?? ''));
+        if ($name !== '') {
+            $organizationNames[] = $name;
+        }
+    }
+
+    if ($organizationNames === []) {
+        return;
+    }
+
+    $organizationNames = array_values(array_unique($organizationNames));
+    $payload = json_encode([
+        'reason' => $reason,
+        'organizations' => $organizationNames,
+    ]);
+    if (!is_string($payload) || $payload === '') {
+        return;
+    }
+
+    $insertStmt = db()->prepare('INSERT INTO security_notifications (user_id, event_type, event_data, sent_at) VALUES (?, ?, ?, NULL)');
+    $insertStmt->execute([$userId, 'membership_removed', $payload]);
 }
 
 function buildUpdatesMarker(array $updates): string

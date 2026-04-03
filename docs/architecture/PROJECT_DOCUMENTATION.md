@@ -7,6 +7,12 @@ Platform: PHP 8.2+ / MySQL or SQLite / Tailwind CSS
 
 Recent Change Log
 
+- April 3, 2026: Organization Membership Automation and Profile Integrity
+  - Added automatic organization membership enrollment when user is assigned as owner and accepts assignment.
+  - Implemented automatic membership removal when user's program/institute changes and they no longer meet eligibility for institute-wide or program-based organizations.
+  - Added security notification tracking for membership removal events with login popup alerts (displays org names and reason for removal in request-updates modal).
+  - Locked profile academic fields (Year & Section, Program, Institute) to read-only text display for all users (no edit capability).
+  - Profile update endpoint now ignores any attempts to change academic fields via POST submission, enforcing server-side immutability.
 - April 3, 2026: Dashboard Chart Theme Sync
   - Added runtime theme synchronization so chart text/grid colors update instantly when theme changes.
 - April 3, 2026: Dashboard Chart Contrast Tuning

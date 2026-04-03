@@ -70,27 +70,27 @@ function handleAdminRequestsPage(PDO $db): void
 
     renderHeader('Transaction Requests');
     ?>
-    <div class="bg-white shadow rounded p-4 overflow-auto">
+    <div class="bg-white shadow rounded p-6 overflow-auto">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
-        <table class="w-full text-sm">
+        <table class="w-full text-sm table-fixed">
             <thead>
             <tr class="border-b text-left">
-                <th class="py-2">Org</th>
-                <th>Requester</th>
-                <th>Action</th>
-                <th>Proposal</th>
-                <th>Status</th>
-                <th>Admin Note</th>
-                <th>Decision</th>
+                <th class="py-3 px-4 w-[14%]">Org</th>
+                <th class="py-3 px-4 w-[14%]">Requester</th>
+                <th class="py-3 px-4 w-[10%]">Action</th>
+                <th class="py-3 px-4 w-[20%]">Proposal</th>
+                <th class="py-3 px-4 w-[12%]">Status</th>
+                <th class="py-3 px-4 w-[18%]">Admin Note</th>
+                <th class="py-3 px-4 w-[12%]">Decision</th>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($requests as $req): ?>
                 <tr class="border-b align-top">
-                    <td class="py-2"><?= e($req['organization_name']) ?></td>
-                    <td><?= e($req['requester_name']) ?></td>
-                    <td><?= e($req['action_type']) ?></td>
-                    <td>
+                    <td class="py-4 px-4 align-top break-words"><?= e($req['organization_name']) ?></td>
+                    <td class="py-4 px-4 align-top break-words"><?= e($req['requester_name']) ?></td>
+                    <td class="py-4 px-4 align-top capitalize break-words"><?= e($req['action_type']) ?></td>
+                    <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words">
                         <?php if ($req['action_type'] === 'update'): ?>
                             <div class="text-xs">Type: <?= e((string) $req['proposed_type']) ?></div>
                             <div class="text-xs">Amount: ₱<?= number_format((float) $req['proposed_amount'], 2) ?></div>
@@ -100,7 +100,7 @@ function handleAdminRequestsPage(PDO $db): void
                             <div class="text-xs">Delete transaction #<?= (int) $req['transaction_id'] ?></div>
                         <?php endif; ?>
                     </td>
-                    <td><span class="icon-label"><?php
+                    <td class="py-4 px-4 align-top break-words"><span class="icon-label"><?php
                         $requestStatus = strtolower((string) $req['status']);
                         $requestStatusIcon = match ($requestStatus) {
                             'approved', 'accepted' => 'approved',
@@ -109,20 +109,19 @@ function handleAdminRequestsPage(PDO $db): void
                             default => 'default',
                         };
                         ?><?= uiIcon($requestStatusIcon, 'ui-icon ui-icon-sm') ?><?= e((string) $req['status']) ?></span></td>
-                    <td><?= e((string) ($req['admin_note'] ?? '')) ?></td>
-                    <td class="min-w-56">
+                    <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words"><?= e((string) ($req['admin_note'] ?? '')) ?></td>
+                    <td class="py-4 px-4 align-top">
                         <?php if ((string) $req['status'] === 'pending'): ?>
-                            <form method="post" class="space-y-1">
-                                <input type="hidden" name="action" value="process_tx_change_request">
-                                <input type="hidden" name="request_id" value="<?= (int) $req['id'] ?>">
-                                <input name="admin_note" placeholder="Optional note" class="w-full border rounded px-2 py-1 text-xs">
-                                <div class="flex gap-2">
-                                    <button name="decision" value="approve" class="bg-emerald-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
-                                    <button name="decision" value="reject" class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
-                                </div>
-                            </form>
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="inline-flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-md min-w-[5.75rem] justify-center hover:bg-emerald-700 transition-colors">
+                                    <?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span>
+                                </button>
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="inline-flex items-center gap-1.5 bg-red-600 text-white px-3 py-2 rounded-md min-w-[5.75rem] justify-center hover:bg-red-700 transition-colors">
+                                    <?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span>
+                                </button>
+                            </div>
                         <?php else: ?>
-                            <span class="text-xs text-gray-500">Processed</span>
+                            <span class="text-xs text-gray-500 whitespace-nowrap">Processed</span>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -131,6 +130,90 @@ function handleAdminRequestsPage(PDO $db): void
         </table>
         <?php renderPagination($requestsPagination); ?>
     </div>
+    <div id="txRequestNoteModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 px-4 py-6 overflow-y-auto">
+        <div class="mx-auto mt-16 w-full max-w-lg">
+            <div class="glass p-5">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Review Request</span></h2>
+                        <p class="text-sm text-slate-600 mt-1">Leave an admin note before approving or rejecting.</p>
+                    </div>
+                    <button type="button" id="txRequestModalClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                </div>
+
+                <form method="post" class="space-y-4" id="txRequestNoteForm">
+                    <input type="hidden" name="action" value="process_tx_change_request">
+                    <input type="hidden" name="request_id" id="txRequestModalRequestId" value="">
+                    <input type="hidden" name="decision" id="txRequestModalDecision" value="">
+
+                    <div>
+                        <label for="txRequestModalNote" class="block text-sm font-medium text-slate-700 mb-2">Admin Note</label>
+                        <textarea id="txRequestModalNote" name="admin_note" rows="4" class="w-full border rounded px-3 py-2" placeholder="Optional note for the requester"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2">
+                        <button type="button" id="txRequestModalCancel" class="border border-slate-300 text-slate-700 px-3 py-2 rounded text-sm">Cancel</button>
+                        <button type="submit" id="txRequestModalSubmit" class="bg-emerald-600 text-white px-4 py-2.5 rounded-md text-sm inline-flex items-center gap-2">
+                            <?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span id="txRequestModalSubmitLabel">Submit</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const modal = document.getElementById('txRequestNoteModal');
+            const closeButton = document.getElementById('txRequestModalClose');
+            const cancelButton = document.getElementById('txRequestModalCancel');
+            const requestIdInput = document.getElementById('txRequestModalRequestId');
+            const decisionInput = document.getElementById('txRequestModalDecision');
+            const noteInput = document.getElementById('txRequestModalNote');
+            const submitButton = document.getElementById('txRequestModalSubmit');
+            const submitLabel = document.getElementById('txRequestModalSubmitLabel');
+
+            function openModal(requestId, decision) {
+                requestIdInput.value = requestId;
+                decisionInput.value = decision;
+                submitLabel.textContent = decision === 'approve' ? 'Approve Request' : 'Reject Request';
+                submitButton.className = decision === 'approve'
+                    ? 'bg-emerald-600 text-white px-4 py-2.5 rounded-md text-sm inline-flex items-center gap-2'
+                    : 'bg-red-600 text-white px-4 py-2.5 rounded-md text-sm inline-flex items-center gap-2';
+                modal.classList.remove('hidden');
+                noteInput.value = '';
+                noteInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                requestIdInput.value = '';
+                decisionInput.value = '';
+            }
+
+            document.querySelectorAll('[data-tx-request-open]').forEach(function (link) {
+                link.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    openModal(link.getAttribute('data-request-id') || '', link.getAttribute('data-request-action') || 'approve');
+                });
+            });
+
+            closeButton.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', closeModal);
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+    <script src="static/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;
@@ -215,7 +298,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
 function handleMyOrgAdminPage(PDO $db): void
 {
     $orgId = (int) ($_GET['org_id'] ?? 0);
-    $orgs = $db->query('SELECT id, name FROM organizations ORDER BY name')->fetchAll();
+    $orgs = $db->query('SELECT id, name, description, org_category, target_institute, target_program FROM organizations ORDER BY name')->fetchAll();
     $org = null;
     if ($orgId > 0) {
         $stmt = $db->prepare('SELECT * FROM organizations WHERE id = ?');
@@ -232,35 +315,18 @@ function handleMyOrgAdminPage(PDO $db): void
         }
     }
     ?>
-    <link rel="stylesheet" href="static/css/owner-org-switcher.css">
     <div class="bg-white shadow rounded p-4">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview (Admin)</span></h1>
-        <form method="get" class="mb-4 flex gap-2 items-start relative my-org-switcher" data-dropdown-root>
+        <form method="get" class="mb-4 flex items-start gap-2 relative">
             <input type="hidden" name="page" value="my_org">
-            <input type="hidden" name="org_id" data-dropdown-value value="<?= $orgId > 0 ? (int) $orgId : '' ?>">
-            <div class="relative min-w-[16rem] my-org-switcher-wrap" data-dropdown-wrapper>
-                <button type="button" data-dropdown-toggle="adminOrgSwitcherMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
-                    <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
-                    <span class="my-org-switcher-caret text-xs">▾</span>
-                </button>
-                <div id="adminOrgSwitcherMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
-                    <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
-                        <li>
-                            <button type="button" data-org-id="" data-org-name="Select organization" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $orgId <= 0 ? 'is-active' : '' ?>">
-                                Select organization
-                            </button>
-                        </li>
-                        <?php foreach ($orgs as $option): ?>
-                            <li>
-                                <button type="button" data-org-id="<?= (int) $option['id'] ?>" data-org-name="<?= e((string) $option['name']) ?>" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $orgId === (int) $option['id'] ? 'is-active' : '' ?>">
-                                    <?= e((string) $option['name']) ?>
-                                </button>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-            </div>
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+            <input type="hidden" name="org_id" id="adminOrgIdInput" value="<?= $orgId > 0 ? (int) $orgId : '' ?>">
+            <input type="hidden" name="org_search_name" id="adminOrgSearchName" value="<?= e($selectedOrgName) ?>">
+            <button type="button" id="adminOrgSearchButton" class="inline-flex items-center gap-2 border rounded px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                <?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Search Organizations</span>
+            </button>
+            <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center gap-2 hover:bg-indigo-800 transition-colors">
+                <?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span>
+            </button>
         </form>
 
         <?php if ($org): ?>
@@ -270,9 +336,67 @@ function handleMyOrgAdminPage(PDO $db): void
             $tx = $txStmt->fetchAll();
             $adminTxPagination = paginateArray($tx, 'pg_myorg_admin_tx', 12);
             $tx = $adminTxPagination['items'];
+
+            $memberStmt = $db->prepare('SELECT u.name FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
+            $memberStmt->execute([(int) $org['id']]);
+            $orgMemberNames = array_map(static fn (array $row): string => (string) $row['name'], $memberStmt->fetchAll());
+            $orgMemberCount = count($orgMemberNames);
+
+            $viewer = currentUser();
+            $viewerId = (int) ($viewer['id'] ?? 0);
+            $canSeeMemberNames = false;
+            if ($viewerId > 0) {
+                $viewerMembershipStmt = $db->prepare('SELECT 1 FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1');
+                $viewerMembershipStmt->execute([(int) $org['id'], $viewerId]);
+                $canSeeMemberNames = (bool) $viewerMembershipStmt->fetchColumn();
+            }
             ?>
             <h2 class="text-lg font-semibold"><?= e($org['name']) ?></h2>
             <p class="text-gray-600 mb-3"><?= e($org['description']) ?></p>
+
+            <div class="mb-4 rounded-xl border border-emerald-200/55 bg-emerald-50/30 p-3">
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-sm font-semibold text-emerald-900">Total Members: <?= (int) $orgMemberCount ?></p>
+                    <?php if ($canSeeMemberNames): ?>
+                        <button type="button" id="adminOrgMembersOpen" class="inline-flex items-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded text-xs hover:bg-emerald-800 transition-colors">
+                            <?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View Members</span>
+                        </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if ($canSeeMemberNames): ?>
+                <div id="adminOrgMembersModal" class="hidden fixed inset-0 z-[999] bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto">
+                    <div class="mx-auto mt-12 w-full max-w-xl">
+                        <div class="admin-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)]">
+                            <div class="flex items-start justify-between gap-3 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
+                                    <p class="text-sm text-slate-600 mt-1">Search members for <?= e((string) $org['name']) ?>.</p>
+                                </div>
+                                <button type="button" id="adminOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" id="adminOrgMembersSearch" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                            </div>
+                            <div class="max-h-[48vh] overflow-auto rounded border border-slate-200/60">
+                                <div id="adminOrgMembersList" class="divide-y divide-slate-200/50">
+                                    <?php if ($orgMemberCount > 0): ?>
+                                        <?php foreach ($orgMemberNames as $memberName): ?>
+                                            <div class="admin-org-member-item px-3 py-2 text-sm text-slate-800 transition-colors" data-member-name="<?= e(strtolower($memberName)) ?>">
+                                                <?= e($memberName) ?>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <div class="px-3 py-3 text-sm text-slate-600">No members have joined this organization yet.</div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -293,7 +417,235 @@ function handleMyOrgAdminPage(PDO $db): void
             <?php renderPagination($adminTxPagination); ?>
         <?php endif; ?>
     </div>
-    <script src="static/js/owner-org-switcher.js"></script>
+    <div id="adminOrgSearchModal" class="hidden fixed inset-0 z-[999] bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto">
+        <div class="mx-auto mt-12 w-full max-w-2xl">
+            <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] dark:border-emerald-300/25 dark:bg-[#021a14]/95">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('search', 'ui-icon') ?><span>Select Organization</span></h2>
+                        <p class="text-sm text-slate-600 mt-1">Search or choose from the available organizations.</p>
+                    </div>
+                    <button type="button" id="adminOrgSearchModalClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                </div>
+
+                <div class="mb-4">
+                    <input type="text" id="adminOrgSearchInput" placeholder="Search organizations..." class="w-full border rounded px-3 py-3">
+                </div>
+
+                <div class="admin-org-search-scroll max-h-[60vh] overflow-auto rounded border border-slate-200/45">
+                    <div class="divide-y divide-slate-200/45" id="adminOrgSearchList">
+                        <?php foreach ($orgs as $option): ?>
+                            <button
+                                type="button"
+                                class="admin-org-search-item w-full text-left px-4 py-3 transition-colors"
+                                data-org-id="<?= (int) $option['id'] ?>"
+                                data-org-name="<?= e((string) $option['name']) ?>"
+                                data-org-description="<?= e((string) ($option['description'] ?? '')) ?>"
+                            >
+                                <div class="font-medium text-slate-900"><?= e((string) $option['name']) ?></div>
+                                <div class="text-xs text-slate-600 mt-1"><span class="font-semibold">Visibility:</span> <?= e(getOrganizationVisibilityLabel($option)) ?></div>
+                                <?php if (!empty($option['description'])): ?>
+                                    <div class="text-xs text-slate-500 mt-1 line-clamp-2"><?= e((string) $option['description']) ?></div>
+                                <?php endif; ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .admin-org-search-scroll {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .admin-org-search-scroll::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+        }
+
+        #adminOrgSearchModal .admin-org-search-item {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #adminOrgSearchModal .admin-org-search-item:hover {
+            background: rgba(167, 243, 208, 0.26);
+        }
+
+        body.theme-dark #adminOrgSearchModal h2,
+        body.theme-dark #adminOrgSearchModal p,
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item,
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item .text-slate-900 {
+            color: #ecfdf5 !important;
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item .text-slate-600 {
+            color: #a7f3d0 !important;
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item .text-slate-500 {
+            color: rgba(209, 250, 229, 0.76) !important;
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item {
+            background: rgba(1, 27, 21, 0.74);
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item:hover {
+            background: rgba(6, 78, 59, 0.62);
+        }
+
+        body.theme-dark #adminOrgSearchInput {
+            background: rgba(2, 44, 34, 0.66);
+            border-color: rgba(110, 231, 183, 0.35);
+            color: #ecfdf5;
+        }
+
+        #adminOrgMembersModal .admin-org-member-item:hover {
+            background: rgba(167, 243, 208, 0.24);
+        }
+
+        body.theme-dark #adminOrgMembersModal .admin-org-members-panel {
+            background: rgba(2, 22, 18, 0.96);
+            border-color: rgba(110, 231, 183, 0.28);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        }
+
+        body.theme-dark #adminOrgMembersModal h3,
+        body.theme-dark #adminOrgMembersModal p,
+        body.theme-dark #adminOrgMembersModal .admin-org-member-item,
+        body.theme-dark #adminOrgMembersModal .text-slate-800 {
+            color: #ecfdf5 !important;
+        }
+
+        body.theme-dark #adminOrgMembersModal .text-slate-600,
+        body.theme-dark #adminOrgMembersModal .text-slate-500 {
+            color: #a7f3d0 !important;
+        }
+
+        body.theme-dark #adminOrgMembersSearch {
+            background: rgba(2, 44, 34, 0.66);
+            border-color: rgba(110, 231, 183, 0.35);
+            color: #ecfdf5;
+        }
+
+        body.theme-dark #adminOrgMembersModal .admin-org-member-item:hover {
+            background: rgba(6, 78, 59, 0.62);
+        }
+    </style>
+    <script>
+        (function () {
+            const searchButton = document.getElementById('adminOrgSearchButton');
+            const modal = document.getElementById('adminOrgSearchModal');
+            const closeButton = document.getElementById('adminOrgSearchModalClose');
+            const searchInput = document.getElementById('adminOrgSearchInput');
+            const searchList = document.getElementById('adminOrgSearchList');
+            const orgIdInput = document.getElementById('adminOrgIdInput');
+            const orgSearchNameInput = document.getElementById('adminOrgSearchName');
+            const form = searchButton.closest('form');
+
+            const membersOpenButton = document.getElementById('adminOrgMembersOpen');
+            const membersModal = document.getElementById('adminOrgMembersModal');
+            const membersCloseButton = document.getElementById('adminOrgMembersClose');
+            const membersSearchInput = document.getElementById('adminOrgMembersSearch');
+            const memberItems = Array.from(document.querySelectorAll('.admin-org-member-item'));
+
+            function openModal() {
+                modal.classList.remove('hidden');
+                searchInput.value = '';
+                filterList();
+                searchInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+
+            function openMembersModal() {
+                if (!membersModal) return;
+                membersModal.classList.remove('hidden');
+                if (membersSearchInput) {
+                    membersSearchInput.value = '';
+                    filterMembers();
+                    membersSearchInput.focus();
+                }
+            }
+
+            function closeMembersModal() {
+                if (!membersModal) return;
+                membersModal.classList.add('hidden');
+            }
+
+            function filterList() {
+                const query = searchInput.value.trim().toLowerCase();
+                searchList.querySelectorAll('.admin-org-search-item').forEach(function (item) {
+                    const name = (item.getAttribute('data-org-name') || '').toLowerCase();
+                    const description = (item.getAttribute('data-org-description') || '').toLowerCase();
+                    const matches = query === '' || name.includes(query) || description.includes(query);
+                    item.classList.toggle('hidden', !matches);
+                });
+            }
+
+            function filterMembers() {
+                if (!membersSearchInput) return;
+                const query = membersSearchInput.value.trim().toLowerCase();
+                memberItems.forEach(function (item) {
+                    const name = item.getAttribute('data-member-name') || '';
+                    item.classList.toggle('hidden', !(query === '' || name.includes(query)));
+                });
+            }
+
+            searchButton.addEventListener('click', openModal);
+            closeButton.addEventListener('click', closeModal);
+            searchInput.addEventListener('input', filterList);
+
+            if (membersOpenButton) {
+                membersOpenButton.addEventListener('click', openMembersModal);
+            }
+            if (membersCloseButton) {
+                membersCloseButton.addEventListener('click', closeMembersModal);
+            }
+            if (membersSearchInput) {
+                membersSearchInput.addEventListener('input', filterMembers);
+            }
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            if (membersModal) {
+                membersModal.addEventListener('click', function (event) {
+                    if (event.target === membersModal) {
+                        closeMembersModal();
+                    }
+                });
+            }
+
+            document.querySelectorAll('.admin-org-search-item').forEach(function (item) {
+                item.addEventListener('click', function () {
+                    orgIdInput.value = item.getAttribute('data-org-id') || '';
+                    orgSearchNameInput.value = item.getAttribute('data-org-name') || '';
+                    closeModal();
+                    form.submit();
+                });
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    if (!modal.classList.contains('hidden')) {
+                        closeModal();
+                    }
+                    if (membersModal && !membersModal.classList.contains('hidden')) {
+                        closeMembersModal();
+                    }
+                }
+            });
+        })();
+    </script>
     <?php
     renderFooter();
     exit;
@@ -338,12 +690,19 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     $userTxPagination = paginateArray($transactions, 'pg_myorg_user_tx', 12);
     $transactions = $userTxPagination['items'];
 
+    $memberStmt = $db->prepare('SELECT u.name FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
+    $memberStmt->execute([(int) $selectedOrgId]);
+    $orgMemberNames = array_map(static fn (array $row): string => (string) $row['name'], $memberStmt->fetchAll());
+    $orgMemberCount = count($orgMemberNames);
+
     $titleSuffix = ($user['role'] ?? '') === 'owner' ? ' (Owner)' : ' (Student)';
+    $viewerMembershipStmt = $db->prepare('SELECT 1 FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1');
+    $viewerMembershipStmt->execute([(int) $selectedOrgId, (int) $user['id']]);
+    $canSeeMemberNames = (bool) $viewerMembershipStmt->fetchColumn();
 
     renderHeader('My Organization');
     $selectedOrgName = (string) ($org['name'] ?? 'Select organization');
     ?>
-    <link rel="stylesheet" href="static/css/owner-org-switcher.css">
     <div class="bg-white shadow rounded p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview<?= e($titleSuffix) ?></span></h1>
@@ -352,19 +711,19 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <?php endif; ?>
         </div>
 
-        <form method="get" class="mb-4 flex gap-2 items-start flex-wrap relative my-org-switcher" data-dropdown-root>
+        <form method="get" class="mb-4 flex gap-2 items-start flex-wrap relative" data-dropdown-root>
             <input type="hidden" name="page" value="my_org">
             <input type="hidden" name="org_id" data-dropdown-value value="<?= (int) $selectedOrgId ?>">
-            <div class="relative min-w-[16rem] my-org-switcher-wrap" data-dropdown-wrapper>
-                <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+            <div class="relative min-w-[16rem]" data-dropdown-wrapper>
+                <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                     <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
-                    <span class="my-org-switcher-caret text-xs">▾</span>
+                    <span class="hidden text-xs">▾</span>
                 </button>
-                <div id="userOrgSwitcherMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
-                    <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                <div id="userOrgSwitcherMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                    <ul class="p-2 text-sm font-medium space-y-1">
                         <?php foreach ($orgs as $option): ?>
                             <li>
-                                <button type="button" data-org-id="<?= (int) $option['id'] ?>" data-org-name="<?= e((string) $option['name']) ?>" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $selectedOrgId === (int) $option['id'] ? 'is-active' : '' ?>">
+                                <button type="button" data-dropdown-option data-active="<?= $selectedOrgId === (int) $option['id'] ? 'true' : 'false' ?>" data-org-id="<?= (int) $option['id'] ?>" data-org-name="<?= e((string) $option['name']) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors">
                                     <?= e((string) $option['name']) ?>
                                 </button>
                             </li>
@@ -377,6 +736,130 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
 
         <h2 class="text-lg font-semibold"><?= e((string) $org['name']) ?></h2>
         <p class="text-gray-600 mb-3"><?= e((string) ($org['description'] ?? '')) ?></p>
+
+        <div class="mb-4 rounded-xl border border-emerald-200/55 bg-emerald-50/30 p-3">
+            <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-semibold text-emerald-900">Total Members: <?= (int) $orgMemberCount ?></p>
+                <?php if ($canSeeMemberNames): ?>
+                    <button type="button" id="userOrgMembersOpen" class="inline-flex items-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded text-xs hover:bg-emerald-800 transition-colors">
+                        <?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View Members</span>
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if ($canSeeMemberNames): ?>
+            <div id="userOrgMembersModal" class="hidden fixed inset-0 z-[999] bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto">
+                <div class="mx-auto mt-12 w-full max-w-xl">
+                    <div class="user-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)]">
+                        <div class="flex items-start justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
+                                <p class="text-sm text-slate-600 mt-1">Search members for <?= e((string) $org['name']) ?>.</p>
+                            </div>
+                            <button type="button" id="userOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                        </div>
+                        <div class="mb-3">
+                            <input type="text" id="userOrgMembersSearch" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                        </div>
+                        <div class="max-h-[48vh] overflow-auto rounded border border-slate-200/60">
+                            <div id="userOrgMembersList" class="divide-y divide-slate-200/50">
+                                <?php if ($orgMemberCount > 0): ?>
+                                    <?php foreach ($orgMemberNames as $memberName): ?>
+                                        <div class="user-org-member-item px-3 py-2 text-sm text-slate-800 transition-colors" data-member-name="<?= e(strtolower($memberName)) ?>">
+                                            <?= e($memberName) ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="px-3 py-3 text-sm text-slate-600">No members have joined this organization yet.</div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <style>
+                #userOrgMembersModal .user-org-member-item:hover {
+                    background: rgba(167, 243, 208, 0.24);
+                }
+
+                body.theme-dark #userOrgMembersModal .user-org-members-panel {
+                    background: rgba(2, 22, 18, 0.96);
+                    border-color: rgba(110, 231, 183, 0.28);
+                    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+                }
+
+                body.theme-dark #userOrgMembersModal h3,
+                body.theme-dark #userOrgMembersModal p,
+                body.theme-dark #userOrgMembersModal .user-org-member-item,
+                body.theme-dark #userOrgMembersModal .text-slate-800 {
+                    color: #ecfdf5 !important;
+                }
+
+                body.theme-dark #userOrgMembersModal .text-slate-600,
+                body.theme-dark #userOrgMembersModal .text-slate-500 {
+                    color: #a7f3d0 !important;
+                }
+
+                body.theme-dark #userOrgMembersSearch {
+                    background: rgba(2, 44, 34, 0.66);
+                    border-color: rgba(110, 231, 183, 0.35);
+                    color: #ecfdf5;
+                }
+
+                body.theme-dark #userOrgMembersModal .user-org-member-item:hover {
+                    background: rgba(6, 78, 59, 0.62);
+                }
+            </style>
+            <script>
+                (function () {
+                    const openButton = document.getElementById('userOrgMembersOpen');
+                    const modal = document.getElementById('userOrgMembersModal');
+                    const closeButton = document.getElementById('userOrgMembersClose');
+                    const searchInput = document.getElementById('userOrgMembersSearch');
+                    const memberItems = Array.from(document.querySelectorAll('.user-org-member-item'));
+
+                    if (!openButton || !modal || !closeButton || !searchInput) {
+                        return;
+                    }
+
+                    function openModal() {
+                        modal.classList.remove('hidden');
+                        searchInput.value = '';
+                        filterMembers();
+                        searchInput.focus();
+                    }
+
+                    function closeModal() {
+                        modal.classList.add('hidden');
+                    }
+
+                    function filterMembers() {
+                        const query = searchInput.value.trim().toLowerCase();
+                        memberItems.forEach(function (item) {
+                            const name = item.getAttribute('data-member-name') || '';
+                            item.classList.toggle('hidden', !(query === '' || name.includes(query)));
+                        });
+                    }
+
+                    openButton.addEventListener('click', openModal);
+                    closeButton.addEventListener('click', closeModal);
+                    searchInput.addEventListener('input', filterMembers);
+
+                    modal.addEventListener('click', function (event) {
+                        if (event.target === modal) {
+                            closeModal();
+                        }
+                    });
+
+                    document.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                            closeModal();
+                        }
+                    });
+                })();
+            </script>
+        <?php endif; ?>
 
         <table class="w-full text-sm">
             <thead>
@@ -454,75 +937,49 @@ function handleAdminOrgsPage(PDO $db): void
             </form>
         </div>
 
-        <div class="md:col-span-2 bg-white shadow rounded p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>All Organizations</span></h2>
-            <table class="w-full text-sm">
+        <div class="md:col-span-2 bg-white shadow rounded p-6 overflow-auto">
+            <h2 class="text-lg font-semibold mb-4 icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>All Organizations</span></h2>
+            <table class="w-full text-sm table-fixed">
                 <thead>
                 <tr class="text-left border-b">
-                    <th class="py-2">Name</th>
-                    <th>Description</th>
-                    <th>Visibility</th>
-                    <th>Owner</th>
-                    <th>Actions</th>
+                    <th class="py-3 px-4 w-[18%]">Name</th>
+                    <th class="py-3 px-4 w-[30%]">Description</th>
+                    <th class="py-3 px-4 w-[15%]">Visibility</th>
+                    <th class="py-3 px-4 w-[22%]">Owner</th>
+                    <th class="py-3 px-4 w-[15%]">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <?php foreach ($orgs as $org): ?>
                     <tr class="border-b align-top">
-                        <td class="py-2 font-medium"><?= e($org['name']) ?></td>
-                        <td><?= e($org['description']) ?></td>
-                        <td>
+                        <td class="py-4 px-4 font-medium break-words leading-relaxed"><?= e($org['name']) ?></td>
+                        <td class="py-4 px-4 break-words leading-relaxed"><?= e($org['description']) ?></td>
+                        <td class="py-4 px-4">
                             <span class="text-xs"><?= e(getOrganizationVisibilityLabel($org)) ?></span>
                         </td>
-                        <td>
-                            <form method="post" class="flex gap-2 items-center">
-                                <input type="hidden" name="action" value="assign_owner">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <select name="owner_id" class="border rounded px-2 py-1 text-xs">
-                                    <option value="">-- none --</option>
-                                    <?php foreach ($students as $student): ?>
-                                        <option value="<?= (int) $student['id'] ?>" <?= (int) $org['owner_id'] === (int) $student['id'] ? 'selected' : '' ?>>
-                                            <?= e($student['name']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button class="bg-slate-700 text-white text-xs px-2 py-1 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save</span></span></button>
-                            </form>
-                            <span class="text-xs text-gray-500"><?= e($org['owner_name'] ?? 'Unassigned') ?></span>
-                            <?php if (!empty($org['assignment_status'])): ?>
-                                <div class="text-[11px] text-amber-200 mt-1">Pending: <?= e($org['assigned_student_name'] ?? 'Student') ?> (awaiting response)</div>
-                            <?php endif; ?>
+                        <td class="py-4 px-4">
+                            <div class="space-y-2">
+                                <div class="text-sm font-medium"><?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                <?php if (!empty($org['assignment_status'])): ?>
+                                    <div class="text-[11px] text-amber-200">Pending: <?= e($org['assigned_student_name'] ?? 'Student') ?> (awaiting response)</div>
+                                <?php endif; ?>
+                            </div>
                         </td>
-                        <td class="space-y-2 min-w-52">
-                            <form method="post" class="space-y-1">
-                                <input type="hidden" name="action" value="update_org_admin">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <input name="name" value="<?= e($org['name']) ?>" class="w-full border rounded px-2 py-1 text-xs">
-                                <textarea name="description" class="w-full border rounded px-2 py-1 text-xs"><?= e($org['description']) ?></textarea>
-                                <select name="org_category" class="w-full border rounded px-2 py-1 text-xs">
-                                    <?php foreach ($orgCategoryOptions as $categoryKey => $categoryLabel): ?>
-                                        <option value="<?= e($categoryKey) ?>" <?= (string) ($org['org_category'] ?? 'collegewide') === $categoryKey ? 'selected' : '' ?>><?= e($categoryLabel) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <select name="target_institute" class="w-full border rounded px-2 py-1 text-xs">
-                                    <option value="">Institute target (for institutewide)</option>
-                                    <?php foreach ($instituteOptions as $institute): ?>
-                                        <option value="<?= e($institute) ?>" <?= (string) ($org['target_institute'] ?? '') === $institute ? 'selected' : '' ?>><?= e($institute) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <select name="target_program" class="w-full border rounded px-2 py-1 text-xs">
-                                    <option value="">Program target (for program-based)</option>
-                                    <?php foreach ($programOptions as $programOption): ?>
-                                        <option value="<?= e($programOption) ?>" <?= (string) ($org['target_program'] ?? '') === $programOption ? 'selected' : '' ?>><?= e($programOption) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button class="bg-blue-600 text-white text-xs px-2 py-1 rounded"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Update</span></span></button>
-                            </form>
-                            <form method="post" onsubmit="return confirm('Delete this organization?')">
-                                <input type="hidden" name="action" value="delete_org">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <button class="bg-red-600 text-white text-xs px-2 py-1 rounded"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Delete</span></span></button>
-                            </form>
+                        <td class="py-4 px-4">
+                            <button
+                                type="button"
+                                data-org-edit-open
+                                data-org-id="<?= (int) $org['id'] ?>"
+                                data-org-name="<?= e((string) $org['name']) ?>"
+                                data-org-description="<?= e((string) $org['description']) ?>"
+                                data-org-category="<?= e((string) ($org['org_category'] ?? 'collegewide')) ?>"
+                                data-org-target-institute="<?= e((string) ($org['target_institute'] ?? '')) ?>"
+                                data-org-target-program="<?= e((string) ($org['target_program'] ?? '')) ?>"
+                                data-org-owner-id="<?= (int) ($org['owner_id'] ?? 0) ?>"
+                                class="bg-blue-600 text-white text-sm px-3.5 py-2 rounded inline-flex items-center gap-2 hover:bg-blue-700 transition-colors"
+                            >
+                                <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Update</span>
+                            </button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -531,6 +988,140 @@ function handleAdminOrgsPage(PDO $db): void
             <?php renderPagination($orgsPagination); ?>
         </div>
     </div>
+    <div id="orgEditModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 px-4 py-6 overflow-y-auto">
+        <div class="mx-auto mt-10 w-full max-w-3xl">
+            <div class="glass p-6">
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>Edit Organization</span></h2>
+                        <p class="text-sm text-slate-600 mt-1 max-w-xl">Update the organization details in one place without crowding the page.</p>
+                    </div>
+                    <button type="button" id="orgEditModalClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                </div>
+
+                <form method="post" id="orgEditModalForm" class="space-y-6">
+                    <input type="hidden" name="action" value="update_org_admin">
+                    <input type="hidden" name="org_id" id="orgEditModalOrgId" value="">
+
+                    <div class="grid gap-6 md:grid-cols-2">
+                        <div class="space-y-2 md:col-span-2">
+                            <label for="orgEditModalName" class="block text-sm font-medium text-slate-700">Organization Name</label>
+                            <input id="orgEditModalName" name="name" class="w-full border rounded px-3 py-3" required>
+                        </div>
+                        <div class="space-y-2 md:col-span-2">
+                            <label for="orgEditModalDescription" class="block text-sm font-medium text-slate-700">Description</label>
+                            <textarea id="orgEditModalDescription" name="description" rows="4" class="w-full border rounded px-3 py-3"></textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="orgEditModalCategory" class="block text-sm font-medium text-slate-700">Organization Category</label>
+                            <select id="orgEditModalCategory" name="org_category" class="w-full border rounded px-3 py-3" required>
+                                <?php foreach ($orgCategoryOptions as $categoryKey => $categoryLabel): ?>
+                                    <option value="<?= e($categoryKey) ?>"><?= e($categoryLabel) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="orgEditModalOwner" class="block text-sm font-medium text-slate-700">Owner</label>
+                            <select id="orgEditModalOwner" name="owner_id" class="w-full border rounded px-3 py-3">
+                                <option value="">-- none --</option>
+                                <?php foreach ($students as $student): ?>
+                                    <option value="<?= (int) $student['id'] ?>"><?= e($student['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="orgEditModalInstitute" class="block text-sm font-medium text-slate-700">Target Institute</label>
+                            <select id="orgEditModalInstitute" name="target_institute" class="w-full border rounded px-3 py-3">
+                                <option value="">Institute target (for institutewide)</option>
+                                <?php foreach ($instituteOptions as $institute): ?>
+                                    <option value="<?= e($institute) ?>"><?= e($institute) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="orgEditModalProgram" class="block text-sm font-medium text-slate-700">Target Program</label>
+                            <select id="orgEditModalProgram" name="target_program" class="w-full border rounded px-3 py-3">
+                                <option value="">Program target (for program-based)</option>
+                                <?php foreach ($programOptions as $programOption): ?>
+                                    <option value="<?= e($programOption) ?>"><?= e($programOption) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-3">
+                        <button type="button" id="orgEditModalCancel" class="border border-slate-300 text-slate-700 px-3 py-2 rounded text-sm">Cancel</button>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2.5 rounded text-sm inline-flex items-center gap-2 hover:bg-blue-700 transition-colors">
+                            <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Save Changes</span>
+                        </button>
+                    </div>
+                </form>
+
+                <form method="post" id="orgEditModalDeleteForm" class="mt-5 flex justify-start pt-4 border-t border-slate-200/60" onsubmit="return confirm('Delete this organization?')">
+                    <input type="hidden" name="action" value="delete_org">
+                    <input type="hidden" name="org_id" id="orgEditModalDeleteOrgId" value="">
+                    <button type="submit" class="bg-red-600 text-white px-3 py-2 rounded text-sm inline-flex items-center gap-2 hover:bg-red-700 transition-colors">
+                        <?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Delete Organization</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const modal = document.getElementById('orgEditModal');
+            const closeButton = document.getElementById('orgEditModalClose');
+            const cancelButton = document.getElementById('orgEditModalCancel');
+            const form = document.getElementById('orgEditModalForm');
+            const deleteOrgIdInput = document.getElementById('orgEditModalDeleteOrgId');
+            const orgIdInput = document.getElementById('orgEditModalOrgId');
+            const nameInput = document.getElementById('orgEditModalName');
+            const descriptionInput = document.getElementById('orgEditModalDescription');
+            const categoryInput = document.getElementById('orgEditModalCategory');
+            const ownerInput = document.getElementById('orgEditModalOwner');
+            const instituteInput = document.getElementById('orgEditModalInstitute');
+            const programInput = document.getElementById('orgEditModalProgram');
+
+            function openModal(button) {
+                const orgId = button.getAttribute('data-org-id') || '';
+                orgIdInput.value = orgId;
+                deleteOrgIdInput.value = orgId;
+                nameInput.value = button.getAttribute('data-org-name') || '';
+                descriptionInput.value = button.getAttribute('data-org-description') || '';
+                categoryInput.value = button.getAttribute('data-org-category') || 'collegewide';
+                ownerInput.value = button.getAttribute('data-org-owner-id') || '';
+                instituteInput.value = button.getAttribute('data-org-target-institute') || '';
+                programInput.value = button.getAttribute('data-org-target-program') || '';
+                modal.classList.remove('hidden');
+                nameInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+
+            document.querySelectorAll('[data-org-edit-open]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    openModal(button);
+                });
+            });
+
+            closeButton.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', closeModal);
+
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
     <?php
     renderFooter();
     exit;

@@ -19,6 +19,88 @@ function getOwnedOrganizationById(int $ownerId, int $organizationId): ?array
     return $org ?: null;
 }
 
+function ensureOrganizationMember(PDO $db, int $organizationId, int $userId): void
+{
+    if ($organizationId <= 0 || $userId <= 0) {
+        return;
+    }
+
+    $stmt = $db->prepare('SELECT 1 FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1');
+    $stmt->execute([$organizationId, $userId]);
+    if ($stmt->fetchColumn()) {
+        return;
+    }
+
+    $insertStmt = $db->prepare('INSERT INTO organization_members (organization_id, user_id) VALUES (?, ?)');
+    $insertStmt->execute([$organizationId, $userId]);
+}
+
+function removeIneligibleOrganizationMemberships(PDO $db, int $userId, ?string $newInstitute, ?string $newProgram): array
+{
+    if ($userId <= 0) {
+        return [];
+    }
+
+    $normalizedInstitute = normalizeAcademicValue((string) $newInstitute);
+    $normalizedProgram = normalizeAcademicValue((string) $newProgram);
+
+    $stmt = $db->prepare(
+        "SELECT om.organization_id, o.name, o.org_category, o.target_institute, o.target_program
+         FROM organization_members om
+         JOIN organizations o ON o.id = om.organization_id
+         WHERE om.user_id = ?
+           AND (o.owner_id IS NULL OR o.owner_id <> ?)"
+    );
+    $stmt->execute([$userId, $userId]);
+    $memberships = $stmt->fetchAll() ?: [];
+
+    $toRemoveIds = [];
+    $removed = [];
+
+    foreach ($memberships as $membership) {
+        $category = (string) ($membership['org_category'] ?? 'collegewide');
+        if ($category === 'collegewide') {
+            continue;
+        }
+
+        $isEligible = true;
+        if ($category === 'institutewide') {
+            $targetInstitute = normalizeAcademicValue((string) ($membership['target_institute'] ?? ''));
+            $isEligible = $targetInstitute !== '' && $normalizedInstitute !== '' && $targetInstitute === $normalizedInstitute;
+        } elseif ($category === 'program_based') {
+            $targetProgram = normalizeAcademicValue((string) ($membership['target_program'] ?? ''));
+            $isEligible = $targetProgram !== '' && $normalizedProgram !== '' && $targetProgram === $normalizedProgram;
+        }
+
+        if ($isEligible) {
+            continue;
+        }
+
+        $organizationId = (int) ($membership['organization_id'] ?? 0);
+        if ($organizationId <= 0) {
+            continue;
+        }
+
+        $toRemoveIds[] = $organizationId;
+        $removed[] = [
+            'organization_id' => $organizationId,
+            'organization_name' => (string) ($membership['name'] ?? ''),
+            'org_category' => $category,
+        ];
+    }
+
+    if ($toRemoveIds === []) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($toRemoveIds), '?'));
+    $params = array_merge([$userId], $toRemoveIds);
+    $deleteStmt = $db->prepare("DELETE FROM organization_members WHERE user_id = ? AND organization_id IN ($placeholders)");
+    $deleteStmt->execute($params);
+
+    return $removed;
+}
+
 function getInstituteOptions(): array
 {
     return [

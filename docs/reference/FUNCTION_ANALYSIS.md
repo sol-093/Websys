@@ -3,14 +3,22 @@ Last Updated: April 3, 2026
 
 Recent Functional Updates
 
+- April 3, 2026: Organization Membership and Profile Integrity Functions
+  - Added `removeIneligibleOrganizationMemberships(PDO $db, int $userId, ?string $newInstitute, ?string $newProgram): array` in `src/lib/organization.php`: prunes memberships when user no longer meets institute-wide or program-based org eligibility after academic profile change.
+  - Added `queueMembershipRemovalNotification(int $userId, array $removedMemberships, string $reason): void` in `src/lib/notifications.php`: records membership removal events to security_notifications table for display in login updates modal.
+  - Extended `collectUserRequestUpdates(int $userId): array` in `src/lib/notifications.php`: now includes recent security_notifications with event_type='membership_removed' (30-day lookback, driver-aware date filtering for MySQL/SQLite).
+  - Updated `handleUpdateProfileAction(PDO $db, array $user)` in `src/actions/auth_flows.php`: now always uses stored academic values (ignores submitted program/section); calls `removeIneligibleOrganizationMemberships()` and queues notifications on change.
+  - Updated profile form in `src/pages/community_pages.php`: converted Year & Section, Program, and Institute to read-only text display (removed editable inputs and Tailwind-based program-sync JS).
+  - Updated login updates modal styling in `src/core/layout.php`: added `updates-status-removed` badge styling and icon mapping for membership removal notifications.
 - April 3, 2026: `static/js/dashboard-page.js`
   - Added immediate chart recolor behavior on theme toggle.
   - Added body class observer to re-apply chart presentation state without refresh.
 - April 3, 2026: `static/js/owner-org-switcher.js` (new shared component)
   - Added multi-instance custom dropdown logic with click-open interaction.
   - Added isolated hidden-input synchronization for independent filters/selectors.
+  - Added runtime theme-aware class application for Tailwind-styled dropdown controls.
 - April 3, 2026: `src/pages/owner_pages.php`
-  - Updated custom dropdown integration for organization/transaction controls.
+  - Updated custom dropdown integration for organization/transaction controls using Tailwind utility classes.
   - Fixed transaction filter submission wiring and improved transaction row readability.
 
 ---

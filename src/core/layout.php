@@ -101,9 +101,9 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .glass {
-                background: rgba(255, 255, 255, 0.62);
+                background: linear-gradient(145deg, rgba(244, 255, 238, 0.29), rgba(212, 245, 229, 0.18));
                 border: 1px solid var(--line);
-                box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+                box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 border-radius: 1rem;
@@ -131,12 +131,70 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #ecfdf5;
             }
 
+            body.theme-dark .profile-page .profile-meta,
+            body.theme-dark .profile-page .profile-org-section {
+                color: #d1fae5;
+            }
+
+            body.theme-dark .profile-page .profile-org-label,
+            body.theme-dark .profile-page .profile-org-card p,
+            body.theme-dark .profile-page .profile-org-card .text-xs,
+            body.theme-dark .profile-page label,
+            body.theme-dark .profile-page h1,
+            body.theme-dark .profile-page h3 {
+                color: #f0fdf4;
+            }
+
+            body.theme-dark .profile-page .profile-org-card-owned {
+                background: rgba(6, 78, 59, 0.58) !important;
+                border-color: rgba(110, 231, 183, 0.28) !important;
+            }
+
+            body.theme-dark .profile-page .profile-org-card-joined {
+                background: rgba(2, 44, 34, 0.72) !important;
+                border-color: rgba(110, 231, 183, 0.18) !important;
+            }
+
+            body.theme-dark .profile-page .profile-org-card .text-emerald-900,
+            body.theme-dark .profile-page .profile-org-card .text-slate-900 {
+                color: #ecfdf5 !important;
+            }
+
+            body.theme-dark .profile-page .profile-org-card .text-emerald-700,
+            body.theme-dark .profile-page .profile-org-card .text-slate-600 {
+                color: #a7f3d0 !important;
+            }
+
+            body.theme-dark .profile-page input[readonly],
+            body.theme-dark .profile-page input[type="email"],
+            body.theme-dark .profile-page input[type="password"] {
+                background: rgba(2, 44, 34, 0.55) !important;
+                border-color: rgba(110, 231, 183, 0.24) !important;
+                color: #f0fdf4 !important;
+            }
+
+            body.theme-dark .profile-page .border-emerald-200\/50,
+            body.theme-dark .profile-page .border-emerald-200\/40 {
+                border-color: rgba(110, 231, 183, 0.25) !important;
+            }
+
+            body.theme-dark .profile-page .text-emerald-800,
+            body.theme-dark .profile-page .text-slate-700 {
+                color: #d1fae5 !important;
+            }
+
+            body.theme-dark .profile-page .bg-emerald-600,
+            body.theme-dark .profile-page .bg-emerald-700,
+            body.theme-dark .profile-page .bg-emerald-50\/60 {
+                box-shadow: none;
+            }
+
             .bg-white.shadow.rounded,
             .bg-white.shadow.rounded.p-4,
             .bg-white.shadow.rounded.p-6 {
-                background: rgba(255, 255, 255, 0.62) !important;
-                border: 1px solid var(--line) !important;
-                box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08) !important;
+                background: linear-gradient(145deg, rgba(244, 255, 238, 0.29), rgba(212, 245, 229, 0.18)) !important;
+                border: 1px solid rgba(15, 23, 42, 0.1) !important;
+                box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05) !important;
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 border-radius: 1rem !important;
@@ -853,7 +911,8 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .updates-status-rejected,
-            .updates-status-declined {
+            .updates-status-declined,
+            .updates-status-removed {
                 background: rgba(239, 68, 68, 0.2);
                 color: #991b1b;
             }
@@ -869,7 +928,8 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             body.theme-dark .updates-status-rejected,
-            body.theme-dark .updates-status-declined {
+            body.theme-dark .updates-status-declined,
+            body.theme-dark .updates-status-removed {
                 color: #fecaca;
             }
 
@@ -1289,7 +1349,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                     $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
                                     $statusIcon = match ($status) {
                                         'approved', 'accepted' => 'approved',
-                                        'rejected', 'declined' => 'rejected',
+                                        'rejected', 'declined', 'removed' => 'rejected',
                                         'pending' => 'pending',
                                         default => 'default',
                                     };

@@ -168,6 +168,8 @@ function handleRespondOwnerAssignmentAction(PDO $db, array $user): void
             $stmt = $db->prepare('UPDATE organizations SET owner_id = ? WHERE id = ?');
             $stmt->execute([(int) $user['id'], (int) $assignment['organization_id']]);
 
+            ensureOrganizationMember($db, (int) $assignment['organization_id'], (int) $user['id']);
+
             $stmt = $db->prepare("UPDATE users SET role = 'owner' WHERE id = ? AND role = 'student'");
             $stmt->execute([(int) $user['id']]);
 

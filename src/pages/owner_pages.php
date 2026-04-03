@@ -72,7 +72,6 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
 
     renderHeader('My Organization');
     ?>
-    <link rel="stylesheet" href="static/css/owner-org-switcher.css">
     <div class="space-y-4">
         <div class="bg-white shadow rounded p-4">
             <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Pending Membership Requests</span></h2>
@@ -115,22 +114,22 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>" class="text-sm text-indigo-700 underline whitespace-nowrap mt-1"><span class="icon-label"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Back to My Organization</span></span></a>
             </div>
             <?php $selectedOrgName = (string) ($org['name'] ?? 'Select organization'); ?>
-            <form method="get" class="mb-4 flex gap-2 items-start relative my-org-switcher" id="myOrgSwitcherForm" data-dropdown-root>
+            <form method="get" class="mb-4 flex gap-2 items-start relative" id="myOrgSwitcherForm" data-dropdown-root>
                 <input type="hidden" name="page" value="my_org_manage">
                 <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
                 <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
                 <input type="hidden" name="org_id" id="myOrgOrgId" data-dropdown-value value="<?= (int) $org['id'] ?>">
-                <div class="relative min-w-[16rem] my-org-switcher-wrap" data-dropdown-wrapper>
-                    <button type="button" id="myOrgSwitcherButton" data-dropdown-toggle="myOrgSwitcherMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+                <div class="relative min-w-[16rem]" data-dropdown-wrapper>
+                    <button type="button" id="myOrgSwitcherButton" data-dropdown-toggle="myOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                         <span id="myOrgSwitcherLabel" data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
-                        <span class="my-org-switcher-caret text-xs">▾</span>
+                        <span class="hidden text-xs">▾</span>
                     </button>
-                    <div id="myOrgSwitcherMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20" aria-labelledby="myOrgSwitcherButton">
-                        <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
+                    <div id="myOrgSwitcherMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md" aria-labelledby="myOrgSwitcherButton">
+                        <ul class="p-2 text-sm font-medium space-y-1">
                             <?php foreach ($ownedOrganizations as $ownedOption): ?>
                                 <?php $isCurrentOrg = (int) $org['id'] === (int) $ownedOption['id']; ?>
                                 <li>
-                                    <button type="button" data-org-id="<?= (int) $ownedOption['id'] ?>" data-org-name="<?= e($ownedOption['name']) ?>" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $isCurrentOrg ? 'is-active' : '' ?>">
+                                    <button type="button" data-dropdown-option data-active="<?= $isCurrentOrg ? 'true' : 'false' ?>" data-org-id="<?= (int) $ownedOption['id'] ?>" data-org-name="<?= e($ownedOption['name']) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors">
                                         <?= e($ownedOption['name']) ?>
                                     </button>
                                 </li>
@@ -192,15 +191,15 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                     <div class="grid grid-cols-2 gap-2" data-dropdown-root>
                         <input type="hidden" name="type" data-dropdown-value value="income">
-                        <div class="relative w-full my-org-switcher-wrap" data-dropdown-wrapper>
-                            <button type="button" data-dropdown-toggle="myOrgAddTypeMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25">
+                        <div class="relative w-full" data-dropdown-wrapper>
+                            <button type="button" data-dropdown-toggle="myOrgAddTypeMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                                 <span data-dropdown-label class="truncate text-left">Income</span>
-                                <span class="my-org-switcher-caret text-xs">▾</span>
+                                <span class="hidden text-xs">▾</span>
                             </button>
-                            <div id="myOrgAddTypeMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
-                                <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
-                                    <li><button type="button" data-option-value="income" data-option-label="Income" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left is-active">Income</button></li>
-                                    <li><button type="button" data-option-value="expense" data-option-label="Expense" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left">Expense</button></li>
+                            <div id="myOrgAddTypeMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                <ul class="p-2 text-sm font-medium space-y-1">
+                                    <li><button type="button" data-dropdown-option data-active="true" data-option-value="income" data-option-label="Income" class="block w-full rounded px-3 py-2 text-left transition-colors">Income</button></li>
+                                    <li><button type="button" data-dropdown-option data-active="false" data-option-value="expense" data-option-label="Expense" class="block w-full rounded px-3 py-2 text-left transition-colors">Expense</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -221,33 +220,33 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Type</label>
-                    <div class="relative min-w-[10rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                    <div class="relative min-w-[10rem]" data-dropdown-wrapper>
                         <input type="hidden" name="tx_type" data-dropdown-value value="<?= e($txTypeFilter) ?>">
-                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm">
+                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm transition-colors">
                             <span data-dropdown-label class="truncate text-left"><?= e($txTypeFilter === 'income' ? 'Income' : ($txTypeFilter === 'expense' ? 'Expense' : 'All')) ?></span>
-                            <span class="my-org-switcher-caret text-xs">▾</span>
+                            <span class="hidden text-xs">▾</span>
                         </button>
-                        <div id="myOrgTxTypeMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
-                            <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
-                                <li><button type="button" data-option-value="all" data-option-label="All" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txTypeFilter === 'all' ? 'is-active' : '' ?>">All</button></li>
-                                <li><button type="button" data-option-value="income" data-option-label="Income" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txTypeFilter === 'income' ? 'is-active' : '' ?>">Income</button></li>
-                                <li><button type="button" data-option-value="expense" data-option-label="Expense" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txTypeFilter === 'expense' ? 'is-active' : '' ?>">Expense</button></li>
+                        <div id="myOrgTxTypeMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                            <ul class="p-2 text-sm font-medium space-y-1">
+                                <li><button type="button" data-dropdown-option data-active="<?= $txTypeFilter === 'all' ? 'true' : 'false' ?>" data-option-value="all" data-option-label="All" class="block w-full rounded px-3 py-2 text-left transition-colors">All</button></li>
+                                <li><button type="button" data-dropdown-option data-active="<?= $txTypeFilter === 'income' ? 'true' : 'false' ?>" data-option-value="income" data-option-label="Income" class="block w-full rounded px-3 py-2 text-left transition-colors">Income</button></li>
+                                <li><button type="button" data-dropdown-option data-active="<?= $txTypeFilter === 'expense' ? 'true' : 'false' ?>" data-option-value="expense" data-option-label="Expense" class="block w-full rounded px-3 py-2 text-left transition-colors">Expense</button></li>
                             </ul>
                         </div>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Date</label>
-                    <div class="relative min-w-[10rem] my-org-switcher-wrap" data-dropdown-wrapper>
+                    <div class="relative min-w-[10rem]" data-dropdown-wrapper>
                         <input type="hidden" name="tx_sort" data-dropdown-value value="<?= e($txDateSort) ?>">
-                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="my-org-switcher-button w-full flex items-center justify-between gap-3 border rounded px-3 py-2 bg-emerald-950/75 text-emerald-50 border-emerald-500/40 hover:border-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm">
+                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm transition-colors">
                             <span data-dropdown-label class="truncate text-left"><?= e($txDateSort === 'asc' ? 'Oldest first' : 'Newest first') ?></span>
-                            <span class="my-org-switcher-caret text-xs">▾</span>
+                            <span class="hidden text-xs">▾</span>
                         </button>
-                        <div id="myOrgTxSortMenu" data-dropdown-menu class="my-org-switcher-menu absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border border-emerald-500/40 bg-emerald-950/95 shadow-xl z-20">
-                            <ul class="p-2 text-sm text-emerald-50 font-medium space-y-1">
-                                <li><button type="button" data-option-value="desc" data-option-label="Newest first" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txDateSort === 'desc' ? 'is-active' : '' ?>">Newest first</button></li>
-                                <li><button type="button" data-option-value="asc" data-option-label="Oldest first" class="my-org-switcher-item block w-full rounded px-3 py-2 text-left <?= $txDateSort === 'asc' ? 'is-active' : '' ?>">Oldest first</button></li>
+                        <div id="myOrgTxSortMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                            <ul class="p-2 text-sm font-medium space-y-1">
+                                <li><button type="button" data-dropdown-option data-active="<?= $txDateSort === 'desc' ? 'true' : 'false' ?>" data-option-value="desc" data-option-label="Newest first" class="block w-full rounded px-3 py-2 text-left transition-colors">Newest first</button></li>
+                                <li><button type="button" data-dropdown-option data-active="<?= $txDateSort === 'asc' ? 'true' : 'false' ?>" data-option-value="asc" data-option-label="Oldest first" class="block w-full rounded px-3 py-2 text-left transition-colors">Oldest first</button></li>
                             </ul>
                         </div>
                     </div>

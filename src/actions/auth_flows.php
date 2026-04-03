@@ -501,6 +501,10 @@ function handleUpdateProfileAction(PDO $db, array $user): void
 {
     $email = trim((string) ($_POST['email'] ?? ''));
     $name = (string) ($user['name'] ?? '');
+    $program = trim((string) ($user['program'] ?? ''));
+    $section = trim((string) ($user['section'] ?? ''));
+    $institute = trim((string) ($user['institute'] ?? ''));
+    $yearLevel = isset($user['year_level']) && $user['year_level'] !== '' ? (int) $user['year_level'] : null;
     
     if ($email === '') {
         setFlash('error', 'Email is required.');
@@ -533,12 +537,21 @@ function handleUpdateProfileAction(PDO $db, array $user): void
             UPDATE users 
             SET name = ?, 
                 email = ?, 
+                institute = ?,
+                program = ?,
+                section = ?,
+                year_level = ?,
                 email_verified = 0, 
                 activation_token = ?, 
                 activation_expires = ?
             WHERE id = ?
         ');
-        $updateStmt->execute([$name, $email, $activationToken, $activationExpires, (int) $user['id']]);
+        $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $activationToken, $activationExpires, (int) $user['id']]);
+
+        $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
+        if ($removedMemberships !== []) {
+            queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
+        }
         
         // Send verification email to new address
         sendActivationEmail($email, $name, $activationToken);
@@ -552,9 +565,14 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         session_destroy();
         redirect('?page=login');
     } else {
-        // No editable fields changed
-        $updateStmt = $db->prepare('UPDATE users SET email = ? WHERE id = ?');
-        $updateStmt->execute([$email, (int) $user['id']]);
+        // Update editable profile fields
+        $updateStmt = $db->prepare('UPDATE users SET email = ?, institute = ?, program = ?, section = ?, year_level = ? WHERE id = ?');
+        $updateStmt->execute([$email, $institute, $program, $section, $yearLevel, (int) $user['id']]);
+
+        $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
+        if ($removedMemberships !== []) {
+            queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
+        }
         
         // Audit log
         auditLog((int) $user['id'], 'profile.update', 'user', (int) $user['id'], 'Profile updated');
