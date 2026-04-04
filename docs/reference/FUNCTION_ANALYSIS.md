@@ -3,6 +3,11 @@ Last Updated: April 3, 2026
 
 Recent Functional Updates
 
+- April 4, 2026: Organization Search Modal Light-Mode Styling
+  - Updated `src/pages/admin_pages.php` organization picker modal to use a brighter light-mode surface, input, and row contrast.
+  - Kept the dark-mode modal overrides while making the white panel treatment explicit in light mode.
+- April 4, 2026: Organization Members Modal Light-Mode Styling
+  - Updated `src/pages/owner_pages.php` member list modal with lighter light-mode panel, input, and row hover treatment.
 - April 3, 2026: Organization Membership and Profile Integrity Functions
   - Added `removeIneligibleOrganizationMemberships(PDO $db, int $userId, ?string $newInstitute, ?string $newProgram): array` in `src/lib/organization.php`: prunes memberships when user no longer meets institute-wide or program-based org eligibility after academic profile change.
   - Added `queueMembershipRemovalNotification(int $userId, array $removedMemberships, string $reason): void` in `src/lib/notifications.php`: records membership removal events to security_notifications table for display in login updates modal.

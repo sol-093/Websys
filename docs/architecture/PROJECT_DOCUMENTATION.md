@@ -7,6 +7,9 @@ Platform: PHP 8.2+ / MySQL or SQLite / Tailwind CSS
 
 Recent Change Log
 
+- April 4, 2026: Light-Mode Organization Modal Polish
+  - Brightened the organization search modal surface, search field, and list rows in light mode for better contrast.
+  - Kept dark-mode modal styling intact while tightening the light-mode white panel treatment.
 - April 3, 2026: Organization Membership Automation and Profile Integrity
   - Added automatic organization membership enrollment when user is assigned as owner and accepts assignment.
   - Implemented automatic membership removal when user's program/institute changes and they no longer meet eligibility for institute-wide or program-based organizations.

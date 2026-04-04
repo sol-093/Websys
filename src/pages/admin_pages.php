@@ -455,6 +455,33 @@ function handleMyOrgAdminPage(PDO $db): void
         </div>
     </div>
     <style>
+        #adminOrgSearchModal > div > div {
+            background: rgb(249, 255, 252);
+            border-color: rgba(148, 163, 184, 0.35);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+        }
+
+        #adminOrgSearchInput {
+            background: rgba(240, 255, 245, 0.98);
+            border-color: rgba(148, 163, 184, 0.55);
+            color: #0f172a;
+        }
+
+        #adminOrgSearchModal h2,
+        #adminOrgSearchModal p,
+        #adminOrgSearchModal .admin-org-search-item,
+        #adminOrgSearchModal .admin-org-search-item .text-slate-900 {
+            color: #0f172a;
+        }
+
+        #adminOrgSearchModal .admin-org-search-item .text-slate-600 {
+            color: #475569;
+        }
+
+        #adminOrgSearchModal .admin-org-search-item .text-slate-500 {
+            color: #64748b;
+        }
+
         .admin-org-search-scroll {
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -467,11 +494,12 @@ function handleMyOrgAdminPage(PDO $db): void
         }
 
         #adminOrgSearchModal .admin-org-search-item {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.65);
         }
 
         #adminOrgSearchModal .admin-org-search-item:hover {
-            background: rgba(167, 243, 208, 0.26);
+            background: rgba(236, 253, 245, 0.96);
         }
 
         body.theme-dark #adminOrgSearchModal h2,

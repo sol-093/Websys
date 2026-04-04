@@ -83,8 +83,36 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                         <div class="border rounded p-3 flex flex-wrap justify-between items-center gap-3">
                             <div>
                                 <div class="font-medium"><?= e($request['name']) ?></div>
+                                #userOrgMembersModal .user-org-members-panel {
+                                    background: rgba(83, 255, 183, 0.43);
+                                    border-color: rgba(148, 163, 184, 0.35);
+                                    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+                                }
+
+                                #userOrgMembersModal h3,
+                                #userOrgMembersModal p,
+                                #userOrgMembersModal .user-org-member-item,
+                                #userOrgMembersModal .text-slate-800 {
+                                    color: #0f172a !important;
+                                }
+
+                                #userOrgMembersModal .text-slate-600,
+                                #userOrgMembersModal .text-slate-500 {
+                                    color: #475569 !important;
+                                }
+
+                                #userOrgMembersSearch {
+                                    background: rgba(124, 255, 142, 0.41);
+                                    border-color: rgba(148, 163, 184, 0.55);
+                                    color: #0f172a;
+                                }
+
+                                #userOrgMembersList {
+                                    background: rgba(116, 255, 202, 0.57);
+                                }
+
                                 <div class="text-xs text-gray-500"><?= e($request['email']) ?> · <?= e($request['created_at']) ?></div>
-                            </div>
+                                    background: rgba(142, 255, 202, 0.33);
                             <div class="flex gap-2">
                                 <form method="post">
                                     <input type="hidden" name="action" value="respond_join_request">
