@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(191) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin','student','owner') NOT NULL DEFAULT 'student',
+    onboarding_done TINYINT(1) NOT NULL DEFAULT 0,
     institute VARCHAR(191) NULL,
     program VARCHAR(191) NULL,
     year_level TINYINT NULL,

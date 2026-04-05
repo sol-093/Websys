@@ -113,11 +113,11 @@ function handleAdminRequestsPage(PDO $db): void
                     <td class="py-4 px-4 align-top">
                         <?php if ((string) $req['status'] === 'pending'): ?>
                             <div class="flex flex-wrap gap-2 text-xs">
-                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="inline-flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-md min-w-[5.75rem] justify-center hover:bg-emerald-700 transition-colors">
-                                    <?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span>
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="inline-flex items-center justify-center bg-emerald-600 text-white px-3 py-2 rounded-md min-w-[6.25rem] hover:bg-emerald-700 transition-colors">
+                                    <span class="icon-label w-[4.75rem] justify-start leading-none"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span class="inline-block w-[3.8rem] text-left leading-none">Approve</span></span>
                                 </button>
-                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="inline-flex items-center gap-1.5 bg-red-600 text-white px-3 py-2 rounded-md min-w-[5.75rem] justify-center hover:bg-red-700 transition-colors">
-                                    <?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span>
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="inline-flex items-center justify-center bg-red-600 text-white px-3 py-2 rounded-md min-w-[6.25rem] hover:bg-red-700 transition-colors">
+                                    <span class="icon-label w-[4.75rem] justify-start leading-none"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span class="inline-block w-[2.5rem] text-center leading-none">Reject</span></span>
                                 </button>
                             </div>
                         <?php else: ?>
@@ -142,6 +142,7 @@ function handleAdminRequestsPage(PDO $db): void
                 </div>
 
                 <form method="post" class="space-y-4" id="txRequestNoteForm">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="process_tx_change_request">
                     <input type="hidden" name="request_id" id="txRequestModalRequestId" value="">
                     <input type="hidden" name="decision" id="txRequestModalDecision" value="">
@@ -397,6 +398,13 @@ function handleMyOrgAdminPage(PDO $db): void
                 </div>
             <?php endif; ?>
 
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h3 class="text-base font-semibold text-slate-800">Transaction History</h3>
+                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=csv" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
+                    Export CSV
+                </a>
+            </div>
+
             <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -517,18 +525,43 @@ function handleMyOrgAdminPage(PDO $db): void
             color: rgba(209, 250, 229, 0.76) !important;
         }
 
-        body.theme-dark #adminOrgSearchModal .admin-org-search-item {
-            background: rgba(1, 27, 21, 0.74);
+        body.theme-dark #adminOrgSearchModal > div > div {
+            background: rgba(2, 22, 18, 0.96);
+            border-color: rgba(110, 231, 183, 0.28);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
         }
 
-        body.theme-dark #adminOrgSearchModal .admin-org-search-item:hover {
-            background: rgba(6, 78, 59, 0.62);
+        body.theme-dark #adminOrgSearchModal h2,
+        body.theme-dark #adminOrgSearchModal p,
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item,
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item .text-slate-900 {
+            color: #ecfdf5 !important;
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item .text-slate-600 {
+            color: #a7f3d0 !important;
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item .text-slate-500 {
+            color: rgba(209, 250, 229, 0.76) !important;
         }
 
         body.theme-dark #adminOrgSearchInput {
             background: rgba(2, 44, 34, 0.66);
             border-color: rgba(110, 231, 183, 0.35);
             color: #ecfdf5;
+        }
+
+        body.theme-dark #adminOrgSearchInput::placeholder {
+            color: rgba(209, 250, 229, 0.52);
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item {
+            background: rgba(2, 22, 18, 0.96);
+        }
+
+        body.theme-dark #adminOrgSearchModal .admin-org-search-item:hover {
+            background: rgba(6, 78, 59, 0.62);
         }
 
         #adminOrgMembersModal .admin-org-member-item:hover {
@@ -941,6 +974,7 @@ function handleAdminOrgsPage(PDO $db): void
         <div class="bg-white shadow rounded p-4">
             <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Create Organization</span></h2>
             <form method="post" class="space-y-2">
+                <?= csrfField() ?>
                 <input type="hidden" name="action" value="create_org">
                 <input name="name" placeholder="Organization name" required class="w-full border rounded px-3 py-2">
                 <textarea name="description" placeholder="Description" class="w-full border rounded px-3 py-2"></textarea>
@@ -1028,6 +1062,7 @@ function handleAdminOrgsPage(PDO $db): void
                 </div>
 
                 <form method="post" id="orgEditModalForm" class="space-y-6">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="update_org_admin">
                     <input type="hidden" name="org_id" id="orgEditModalOrgId" value="">
 
@@ -1086,6 +1121,7 @@ function handleAdminOrgsPage(PDO $db): void
                 </form>
 
                 <form method="post" id="orgEditModalDeleteForm" class="mt-5 flex justify-start pt-4 border-t border-slate-200/60" onsubmit="return confirm('Delete this organization?')">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete_org">
                     <input type="hidden" name="org_id" id="orgEditModalDeleteOrgId" value="">
                     <button type="submit" class="bg-red-600 text-white px-3 py-2 rounded text-sm inline-flex items-center gap-2 hover:bg-red-700 transition-colors">

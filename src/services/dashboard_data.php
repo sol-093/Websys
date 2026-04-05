@@ -60,6 +60,48 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $kpiExpense = (float) ($kpi['expense'] ?? 0);
     $kpiBalance = $kpiIncome - $kpiExpense;
 
+    $monthStart = new DateTimeImmutable('first day of this month 00:00:00');
+    $previousMonthStart = $monthStart->modify('-1 month');
+    $nextMonthStart = $monthStart->modify('+1 month');
+
+    $kpiMonthlyStmt = $db->prepare("SELECT
+        COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_current,
+        COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_previous,
+        COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS income_previous_count,
+        COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_current,
+        COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_previous
+        , COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS expense_previous_count
+        FROM financial_transactions");
+    $kpiMonthlyStmt->execute([
+        $monthStart->format('Y-m-d'),
+        $nextMonthStart->format('Y-m-d'),
+        $previousMonthStart->format('Y-m-d'),
+        $monthStart->format('Y-m-d'),
+        $previousMonthStart->format('Y-m-d'),
+        $monthStart->format('Y-m-d'),
+        $monthStart->format('Y-m-d'),
+        $nextMonthStart->format('Y-m-d'),
+        $previousMonthStart->format('Y-m-d'),
+        $monthStart->format('Y-m-d'),
+        $previousMonthStart->format('Y-m-d'),
+        $monthStart->format('Y-m-d'),
+    ]);
+    $kpiMonthly = $kpiMonthlyStmt->fetch();
+
+    $incomeCurrentMonthTotal = (float) ($kpiMonthly['income_current'] ?? 0);
+    $incomePreviousMonthTotal = (float) ($kpiMonthly['income_previous'] ?? 0);
+    $incomePreviousMonthCount = (int) ($kpiMonthly['income_previous_count'] ?? 0);
+    $expenseCurrentMonthTotal = (float) ($kpiMonthly['expense_current'] ?? 0);
+    $expensePreviousMonthTotal = (float) ($kpiMonthly['expense_previous'] ?? 0);
+    $expensePreviousMonthCount = (int) ($kpiMonthly['expense_previous_count'] ?? 0);
+    $previousMonthTransactionCount = $incomePreviousMonthCount + $expensePreviousMonthCount;
+    $balanceCurrentMonthTotal = $incomeCurrentMonthTotal - $expenseCurrentMonthTotal;
+    $balancePreviousMonthTotal = $incomePreviousMonthTotal - $expensePreviousMonthTotal;
+
+    $income_delta_pct = (($incomeCurrentMonthTotal - $incomePreviousMonthTotal) / max($incomePreviousMonthTotal, 1)) * 100;
+    $expenses_delta_pct = (($expenseCurrentMonthTotal - $expensePreviousMonthTotal) / max($expensePreviousMonthTotal, 1)) * 100;
+    $balance_delta_pct = (($balanceCurrentMonthTotal - $balancePreviousMonthTotal) / max($balancePreviousMonthTotal, 1)) * 100;
+
     $activityStmt = $db->prepare("SELECT 'announcement' AS type, title AS label, created_at, organization_id FROM announcements WHERE created_at >= ?
         UNION ALL
         SELECT 'transaction' AS type, description AS label, created_at, organization_id FROM financial_transactions WHERE transaction_date >= ?
@@ -139,6 +181,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
 
     $pendingAssignmentsPagination = paginateArray($pendingAssignments, 'pg_dash_assign', 2);
     $pendingAssignments = $pendingAssignmentsPagination['items'];
+    $pendingTransactionRequestCount = (int) $db->query("SELECT COUNT(*) FROM transaction_change_requests WHERE status = 'pending'")->fetchColumn();
     $dashboardOrganizationsPreview = array_slice($orgs, 0, 3);
     $summaryAll = $summary;
     $summaryPagination = paginateArray($summaryAll, 'pg_dash_summary', 4);
@@ -237,8 +280,14 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'expenseRatio',
         'healthyMonthCount',
         'highestPressure',
+        'incomePreviousMonthCount',
+        'incomePreviousMonthTotal',
+        'income_delta_pct',
         'joinedIds',
         'joinRequestStatus',
+        'previousMonthTransactionCount',
+        'balancePreviousMonthTotal',
+        'balance_delta_pct',
         'kpiBalance',
         'kpiExpense',
         'kpiIncome',
@@ -253,6 +302,9 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'pendingAssignmentCount',
         'pendingAssignments',
         'pendingAssignmentsPagination',
+        'expensePreviousMonthCount',
+        'expensePreviousMonthTotal',
+        'expenses_delta_pct',
         'recentReportCount',
         'summary',
         'summaryAll',

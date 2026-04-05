@@ -7,9 +7,35 @@ function renderHeader(string $title = 'Dashboard'): void
     $config = require __DIR__ . '/config.php';
     $user = currentUser();
     $flash = getFlash();
+    $flashMessage = (string) ($flash['message'] ?? '');
+    $flashType = (string) ($flash['type'] ?? 'info');
     $loginUpdates = $_SESSION['login_updates_popup'] ?? [];
     unset($_SESSION['login_updates_popup']);
     $currentPage = (string) ($_GET['page'] ?? ($user ? 'dashboard' : 'home'));
+    $isHomeActive = $currentPage === 'home';
+    $isDashboardActive = in_array($currentPage, ['dashboard', 'announcements', 'organizations'], true);
+    $isMyOrgActive = in_array($currentPage, ['my_org', 'my_org_manage'], true);
+    $isProfileActive = $currentPage === 'profile';
+    $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
+    $isRegisterActive = $currentPage === 'register';
+    $showOnboarding = false;
+    if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
+        $_SESSION['show_onboarding'] = true;
+        $showOnboarding = true;
+    } elseif (!empty($_SESSION['show_onboarding']) && ($user['role'] ?? '') === 'student') {
+        $showOnboarding = true;
+    }
+    $displayName = '';
+    if ($user) {
+        $parts = preg_split('/\s+/', trim((string) ($user['name'] ?? '')));
+        $firstName = (string) ($parts[0] ?? '');
+        $lastName = (string) ($parts[count($parts) - 1] ?? '');
+        $lastInitial = $lastName !== '' ? strtoupper(substr($lastName, 0, 1)) . '.' : '';
+        $displayName = trim($firstName . ' ' . $lastInitial);
+        if ($displayName === '') {
+            $displayName = (string) ($user['name'] ?? '');
+        }
+    }
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -109,6 +135,201 @@ function renderHeader(string $title = 'Dashboard'): void
                 border-radius: 1rem;
                 max-width: 100%;
                 overflow-x: auto;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .glass.scrolled {
+                border-color: rgba(15, 23, 42, 0.24);
+                box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+            }
+
+            #toast-container {
+                position: fixed;
+                top: 5.25rem;
+                right: 1.5rem;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: flex-end;
+                pointer-events: none;
+                max-height: calc(100vh - 6.5rem);
+                overflow: hidden;
+            }
+
+            @media (max-width: 640px) {
+                #toast-container {
+                    top: 4.75rem;
+                    right: 0.75rem;
+                    max-height: calc(100vh - 5.5rem);
+                }
+            }
+
+            .toast {
+                pointer-events: auto;
+                width: min(24rem, calc(100vw - 2rem));
+                border-radius: 0.9rem;
+                border: 1px solid rgba(15, 23, 42, 0.12);
+                background: rgba(255, 255, 255, 0.94);
+                color: #0f172a;
+                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                overflow: hidden;
+                transform: translateX(110%);
+                opacity: 0;
+                animation: toast-in 0.26s ease forwards;
+            }
+
+            .toast.is-leaving {
+                animation: toast-out 0.22s ease forwards;
+            }
+
+            .toast-body {
+                display: flex;
+                gap: 0.75rem;
+                align-items: flex-start;
+                padding: 0.85rem 0.95rem;
+            }
+
+            .toast-accent {
+                width: 0.38rem;
+                align-self: stretch;
+                flex: 0 0 auto;
+                border-radius: 999px;
+            }
+
+            .toast-content {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            .toast-title {
+                margin: 0;
+                font-size: 0.92rem;
+                font-weight: 700;
+                line-height: 1.35;
+            }
+
+            .toast-message {
+                margin-top: 0.15rem;
+                font-size: 0.85rem;
+                line-height: 1.45;
+                color: rgba(15, 23, 42, 0.82);
+                word-break: break-word;
+            }
+
+            .toast-close {
+                flex: 0 0 auto;
+                border: 0;
+                background: transparent;
+                color: inherit;
+                cursor: pointer;
+                font-size: 1.1rem;
+                line-height: 1;
+                padding: 0.1rem 0.2rem;
+                opacity: 0.72;
+            }
+
+            .toast-close:hover {
+                opacity: 1;
+            }
+
+            .toast-success {
+                border-color: rgba(16, 185, 129, 0.24);
+            }
+
+            .toast-success .toast-accent {
+                background: linear-gradient(180deg, #34d399, #059669);
+            }
+
+            .toast-success .toast-title {
+                color: #065f46;
+            }
+
+            .toast-error {
+                border-color: rgba(248, 113, 113, 0.26);
+            }
+
+            .toast-error .toast-accent {
+                background: linear-gradient(180deg, #f87171, #dc2626);
+            }
+
+            .toast-error .toast-title {
+                color: #991b1b;
+            }
+
+            .toast-warning {
+                border-color: rgba(245, 158, 11, 0.26);
+            }
+
+            .toast-warning .toast-accent {
+                background: linear-gradient(180deg, #fbbf24, #d97706);
+            }
+
+            .toast-warning .toast-title {
+                color: #92400e;
+            }
+
+            .toast-info {
+                border-color: rgba(59, 130, 246, 0.22);
+            }
+
+            .toast-info .toast-accent {
+                background: linear-gradient(180deg, #60a5fa, #2563eb);
+            }
+
+            .toast-info .toast-title {
+                color: #1d4ed8;
+            }
+
+            body.theme-dark .toast {
+                background: rgba(2, 22, 18, 0.92);
+                border-color: rgba(110, 231, 183, 0.2);
+                color: #ecfdf5;
+                box-shadow: 0 20px 42px rgba(0, 0, 0, 0.36);
+            }
+
+            body.theme-dark .toast-message {
+                color: rgba(209, 250, 229, 0.8);
+            }
+
+            body.theme-dark .toast-success .toast-title {
+                color: #6ee7b7;
+            }
+
+            body.theme-dark .toast-error .toast-title {
+                color: #fca5a5;
+            }
+
+            body.theme-dark .toast-warning .toast-title {
+                color: #fcd34d;
+            }
+
+            body.theme-dark .toast-info .toast-title {
+                color: #93c5fd;
+            }
+
+            @keyframes toast-in {
+                from {
+                    transform: translateX(110%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes toast-out {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(110%);
+                    opacity: 0;
+                }
             }
 
             .grid > .glass {
@@ -129,6 +350,11 @@ function renderHeader(string $title = 'Dashboard'): void
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 color: #ecfdf5;
+            }
+
+            body.theme-dark .glass.scrolled {
+                border-color: rgba(110, 231, 183, 0.34);
+                box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4);
             }
 
             body.theme-dark .profile-page .profile-meta,
@@ -228,6 +454,77 @@ function renderHeader(string $title = 'Dashboard'): void
                 text-shadow: 0 0 14px rgba(16, 185, 129, 0.22);
             }
 
+            .empty-state {
+                max-width: 38rem;
+                margin: 0 auto;
+                text-align: center;
+                padding: 1.5rem 1.25rem;
+            }
+
+            .empty-state-icon {
+                width: 3rem;
+                height: 3rem;
+                margin: 0 auto 0.85rem;
+                color: #047857;
+                opacity: 0.9;
+            }
+
+            .empty-state-title {
+                margin: 0;
+                color: #064e3b;
+                font-size: 1.08rem;
+                font-weight: 700;
+                letter-spacing: -0.01em;
+            }
+
+            .empty-state-message {
+                margin: 0.55rem auto 0;
+                max-width: 32rem;
+                color: #475569;
+                font-size: 0.92rem;
+                line-height: 1.5;
+            }
+
+            .empty-state-action {
+                margin-top: 1rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.4rem;
+                border-radius: 0.6rem;
+                border: 1px solid rgba(16, 185, 129, 0.52);
+                background: linear-gradient(135deg, #10b981, #0f766e);
+                color: #ecfdf5;
+                padding: 0.55rem 0.9rem;
+                font-size: 0.84rem;
+                font-weight: 600;
+                text-decoration: none;
+                transition: filter 0.2s ease, transform 0.2s ease;
+            }
+
+            .empty-state-action:hover {
+                filter: brightness(1.05);
+                transform: translateY(-1px);
+            }
+
+            body.theme-dark .empty-state-icon {
+                color: #6ee7b7;
+            }
+
+            body.theme-dark .empty-state-title {
+                color: #ecfdf5;
+            }
+
+            body.theme-dark .empty-state-message {
+                color: #a7f3d0;
+            }
+
+            body.theme-dark .empty-state-action {
+                border-color: rgba(110, 231, 183, 0.45);
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.45), rgba(6, 95, 70, 0.72));
+                color: #ecfdf5;
+            }
+
             body.theme-dark .modern-title {
                 color: #f3fff8;
                 text-shadow: 0 0 24px rgba(184, 243, 74, 0.28);
@@ -270,6 +567,89 @@ function renderHeader(string $title = 'Dashboard'): void
                 display: inline-flex;
                 align-items: center;
                 gap: 0.25rem;
+            }
+
+            @keyframes btn-spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @keyframes shimmer {
+                0% {
+                    background-position: -200% 0;
+                }
+                100% {
+                    background-position: 200% 0;
+                }
+            }
+
+            .btn-loading {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+            .btn-loading-spinner {
+                width: 1rem;
+                height: 1rem;
+                color: currentColor;
+                animation: btn-spin 0.8s linear infinite;
+                flex: 0 0 auto;
+            }
+
+            .skeleton {
+                position: relative;
+                overflow: hidden;
+                border-radius: 0.6rem;
+                background: linear-gradient(90deg, rgba(203, 213, 225, 0.42) 0%, rgba(226, 232, 240, 0.78) 50%, rgba(203, 213, 225, 0.42) 100%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite ease-in-out;
+            }
+
+            .skeleton-text {
+                height: 0.85rem;
+                width: 100%;
+                border-radius: 999px;
+            }
+
+            .skeleton-card {
+                height: 9.25rem;
+                border-radius: 1rem;
+            }
+
+            .skeleton-stat {
+                height: 4.2rem;
+                border-radius: 0.9rem;
+            }
+
+            body.theme-dark .skeleton {
+                background: linear-gradient(90deg, rgba(15, 23, 42, 0.68) 0%, rgba(51, 65, 85, 0.84) 50%, rgba(15, 23, 42, 0.68) 100%);
+                background-size: 200% 100%;
+            }
+
+            .currency-input-wrap {
+                position: relative;
+            }
+
+            .currency-prefix {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                pointer-events: none;
+                color: #065f46;
+                font-weight: 600;
+                line-height: 1;
+            }
+
+            .currency-input-wrap input[data-currency] {
+                padding-left: 1.8rem !important;
+            }
+
+            body.theme-dark .currency-prefix {
+                color: #a7f3d0;
             }
 
             body.theme-dark .nav-link {
@@ -602,6 +982,72 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #064e3b !important;
             }
 
+            input[type="text"],
+            input[type="email"],
+            input[type="password"],
+            input[type="number"],
+            textarea,
+            select {
+                border: 1px solid rgba(16, 185, 129, 0.3) !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            input[type="text"]:focus,
+            input[type="email"]:focus,
+            input[type="password"]:focus,
+            input[type="number"]:focus,
+            textarea:focus,
+            select:focus {
+                outline: none;
+                border-color: rgba(16, 185, 129, 0.6) !important;
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+            }
+
+            body.theme-dark input[type="text"],
+            body.theme-dark input[type="email"],
+            body.theme-dark input[type="password"],
+            body.theme-dark input[type="number"],
+            body.theme-dark textarea,
+            body.theme-dark select {
+                border: 1px solid rgba(52, 211, 153, 0.35) !important;
+            }
+
+            body.theme-dark input[type="text"]:focus,
+            body.theme-dark input[type="email"]:focus,
+            body.theme-dark input[type="password"]:focus,
+            body.theme-dark input[type="number"]:focus,
+            body.theme-dark textarea:focus,
+            body.theme-dark select:focus {
+                outline: none;
+                border-color: rgba(52, 211, 153, 0.7) !important;
+                box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18);
+            }
+
+            input[readonly] {
+                background: rgba(241, 245, 249, 0.75) !important;
+                border-color: rgba(16, 185, 129, 0.2) !important;
+                color: #64748b !important;
+                cursor: default;
+            }
+
+            input[readonly]:focus {
+                outline: none;
+                border-color: rgba(16, 185, 129, 0.2) !important;
+                box-shadow: none !important;
+            }
+
+            body.theme-dark input[readonly] {
+                background: rgba(15, 23, 42, 0.35) !important;
+                border-color: rgba(52, 211, 153, 0.24) !important;
+                color: rgba(209, 250, 229, 0.68) !important;
+            }
+
+            body.theme-dark input[readonly]:focus {
+                outline: none;
+                border-color: rgba(52, 211, 153, 0.24) !important;
+                box-shadow: none !important;
+            }
+
             input[type="checkbox"] {
                 appearance: auto !important;
                 -webkit-appearance: checkbox !important;
@@ -667,6 +1113,18 @@ function renderHeader(string $title = 'Dashboard'): void
             body.theme-dark select:hover {
                 border-color: rgba(52, 211, 153, 0.65) !important;
                 box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+            }
+
+            body.theme-dark .report-export-btn {
+                background: linear-gradient(135deg, rgba(6, 95, 70, 0.95), rgba(4, 120, 87, 0.98)) !important;
+                border-color: rgba(110, 231, 183, 0.35) !important;
+                color: #ecfdf5 !important;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
+            }
+
+            body.theme-dark .report-export-btn:hover {
+                background: linear-gradient(135deg, rgba(4, 120, 87, 1), rgba(6, 148, 111, 1)) !important;
+                color: #ffffff !important;
             }
 
             body:not(.theme-dark) input::placeholder,
@@ -751,6 +1209,29 @@ function renderHeader(string $title = 'Dashboard'): void
                 justify-content: center;
             }
 
+            .global-search-trigger {
+                border: 1px solid rgba(16, 185, 129, 0.45);
+                background: rgba(16, 185, 129, 0.14);
+                width: 1.7rem;
+                height: 1.7rem;
+                border-radius: 0.375rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+            }
+
+            .global-search-trigger:hover {
+                background: rgba(16, 185, 129, 0.2);
+                border-color: rgba(5, 150, 105, 0.58);
+                transform: translateY(-1px);
+            }
+
+            .global-search-trigger .ui-icon {
+                width: 0.85rem;
+                height: 0.85rem;
+            }
+
             .hamburger-line {
                 display: block;
                 width: 16px;
@@ -772,6 +1253,13 @@ function renderHeader(string $title = 'Dashboard'): void
                 border-top: 1px solid rgba(16, 185, 129, 0.2);
                 margin-top: 0.75rem;
                 padding-top: 0.75rem;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.25s ease;
+            }
+
+            .mobile-nav-panel.is-open {
+                max-height: 300px;
             }
 
             .themed-scroll {
@@ -842,6 +1330,103 @@ function renderHeader(string $title = 'Dashboard'): void
                 display: none;
             }
 
+            .global-search-results {
+                display: grid;
+                gap: 0.5rem;
+            }
+
+            .global-search-result {
+                display: flex;
+                width: 100%;
+                align-items: flex-start;
+                gap: 0.75rem;
+                border-radius: 1rem;
+                border: 1px solid rgba(16, 185, 129, 0.14);
+                background: rgba(255, 255, 255, 0.72);
+                padding: 0.8rem 0.9rem;
+                text-align: left;
+                transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+            }
+
+            .global-search-result:hover,
+            .global-search-result.is-active {
+                border-color: rgba(16, 185, 129, 0.45);
+                background: rgba(16, 185, 129, 0.1);
+                transform: translateY(-1px);
+            }
+
+            body.theme-dark .global-search-result {
+                background: rgba(15, 23, 42, 0.5);
+                border-color: rgba(110, 231, 183, 0.18);
+            }
+
+            body.theme-dark .global-search-result:hover,
+            body.theme-dark .global-search-result.is-active {
+                background: rgba(16, 185, 129, 0.18);
+                border-color: rgba(110, 231, 183, 0.42);
+            }
+
+            .global-search-result-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2rem;
+                height: 2rem;
+                flex-shrink: 0;
+                border-radius: 0.75rem;
+                background: rgba(16, 185, 129, 0.12);
+                color: #047857;
+            }
+
+            body.theme-dark .global-search-result-icon {
+                background: rgba(52, 211, 153, 0.14);
+                color: #d1fae5;
+            }
+
+            .global-search-result-meta {
+                color: rgba(71, 85, 105, 0.95);
+            }
+
+            body.theme-dark .global-search-result-meta {
+                color: rgba(209, 250, 229, 0.72);
+            }
+
+            .global-search-shortcut {
+                border: 1px solid rgba(16, 185, 129, 0.18);
+                border-radius: 999px;
+                padding: 0.15rem 0.45rem;
+                font-size: 0.7rem;
+                color: #065f46;
+                background: rgba(236, 253, 245, 0.78);
+            }
+
+            body.theme-dark .global-search-shortcut {
+                border-color: rgba(110, 231, 183, 0.24);
+                color: #d1fae5;
+                background: rgba(15, 23, 42, 0.45);
+            }
+
+            .global-search-empty {
+                border: 1px dashed rgba(16, 185, 129, 0.24);
+                border-radius: 1rem;
+                padding: 1rem;
+                text-align: center;
+                color: rgba(71, 85, 105, 0.95);
+            }
+
+            body.theme-dark .global-search-empty {
+                border-color: rgba(110, 231, 183, 0.24);
+                color: rgba(209, 250, 229, 0.72);
+            }
+
+            .global-search-overlay {
+                z-index: 70;
+            }
+
+            .global-search-overlay .glass {
+                width: min(100%, 44rem);
+            }
+
             @media (max-width: 1023px) {
                 .updates-modal-overlay {
                     align-items: flex-start;
@@ -852,6 +1437,10 @@ function renderHeader(string $title = 'Dashboard'): void
                     width: 100%;
                     max-height: calc(100dvh - 0.75rem);
                     border-radius: 0.85rem;
+                }
+
+                .global-search-overlay > .glass {
+                    width: 100%;
                 }
 
                 .updates-modal-overlay .grid.md\:grid-cols-3,
@@ -1075,6 +1664,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 height: 100%;
                 border-radius: inherit;
                 background: linear-gradient(90deg, rgba(110, 231, 183, 0.96), rgba(16, 185, 129, 0.88));
+                transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
             .dashboard-feed-item {
@@ -1243,9 +1833,72 @@ function renderHeader(string $title = 'Dashboard'): void
                 background: rgba(255, 255, 255, 0.97);
                 border-color: rgba(15, 23, 42, 0.1);
             }
+
+            @media print {
+                html,
+                body {
+                    background: #fff !important;
+                    color: #000 !important;
+                }
+
+                nav,
+                aside,
+                header,
+                footer,
+                form,
+                button,
+                input,
+                select,
+                textarea,
+                .theme-switch,
+                .global-search-trigger,
+                .hamburger-btn,
+                .toast-container,
+                .mobile-nav-panel,
+                .nav-greeting,
+                script {
+                    display: none !important;
+                }
+
+                main,
+                .glass,
+                .bg-white.shadow.rounded,
+                .bg-white.shadow.rounded.p-4,
+                .bg-white.shadow.rounded.p-6,
+                .dashboard-panel,
+                .dashboard-metric-card,
+                .dashboard-feed-item {
+                    background: transparent !important;
+                    border: 0 !important;
+                    box-shadow: none !important;
+                    backdrop-filter: none !important;
+                    -webkit-backdrop-filter: none !important;
+                }
+
+                .toast,
+                .modal,
+                .overlay {
+                    display: none !important;
+                }
+
+                a {
+                    color: inherit !important;
+                    text-decoration: none !important;
+                }
+
+                table {
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                }
+
+                th,
+                td {
+                    color: #000 !important;
+                }
+            }
         </style>
     </head>
-    <body class="min-h-screen <?= $user ? 'is-authenticated' : '' ?>">
+    <body class="min-h-screen <?= $user ? 'is-authenticated' : '' ?>" data-flash="<?= e($flashMessage) ?>" data-flash-type="<?= e($flashType) ?>">
         <script>
             (function () {
                 const saved = localStorage.getItem('websys-theme');
@@ -1254,14 +1907,15 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
             })();
         </script>
-        <nav class="glass fixed top-0 inset-x-0 z-50 mx-2 sm:mx-3 mt-2 text-slate-800">
+        <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-2 sm:mx-3 mt-2 text-slate-800">
             <div class="max-w-7xl mx-auto px-4 py-3">
                 <div class="flex items-center justify-between gap-2 min-w-0">
                     <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title"><?= e($config['app_name']) ?></a>
                     <div class="nav-desktop hidden lg:flex gap-4 text-sm items-center">
-                        <a href="?page=home" class="nav-link <?= $currentPage === 'home' ? 'nav-link-active' : '' ?>">Home</a>
+                        <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
                         <?php if ($user): ?>
-                            <a href="?page=dashboard" class="nav-link <?= $currentPage === 'dashboard' ? 'nav-link-active' : '' ?>">Dashboard</a>
+                            <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
+                            <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
                             <?php if ($user['role'] === 'admin'): ?>
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
@@ -1269,23 +1923,31 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                             <?php endif; ?>
                             <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
-                                <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
+                                <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
                             <?php if ($user['role'] !== 'admin'): ?>
-                                <a href="?page=profile" class="nav-link <?= $currentPage === 'profile' ? 'nav-link-active' : '' ?>">Profile</a>
+                                <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
                             <?php endif; ?>
-                            <span class="nav-greeting">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</span>
+                            <span class="nav-greeting">Hi, <?= e($displayName) ?></span>
+                            <button type="button" id="globalSearchOpen" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
+                                <?= icon('search') ?>
+                            </button>
                             <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
                             <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
                             <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-1 rounded hover:bg-indigo-950">Logout</a>
                         <?php else: ?>
-                            <a href="?page=login" class="nav-link <?= $currentPage === 'login' ? 'nav-link-active' : '' ?>">Login</a>
-                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700 shadow-sm">Register</a>
+                            <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
+                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700 shadow-sm <?= $isRegisterActive ? 'ring-2 ring-emerald-300/70' : '' ?>">Register</a>
                             <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
                             <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
                         <?php endif; ?>
                     </div>
                     <div class="nav-mobile lg:hidden flex items-center gap-2 nav-mobile-controls">
+                        <?php if ($user): ?>
+                            <button type="button" id="globalSearchOpenMobile" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
+                                <?= icon('search') ?>
+                            </button>
+                        <?php endif; ?>
                         <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
                         <button type="button" id="navMenuToggle" class="hamburger-btn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobileNavMenu">
                             <span>
@@ -1297,11 +1959,12 @@ function renderHeader(string $title = 'Dashboard'): void
                     </div>
                 </div>
 
-                <div id="mobileNavMenu" class="mobile-nav-panel hidden lg:hidden">
+                <div id="mobileNavMenu" class="mobile-nav-panel lg:hidden">
                     <div class="flex flex-col gap-3 text-sm">
-                        <a href="?page=home" class="nav-link <?= $currentPage === 'home' ? 'nav-link-active' : '' ?>">Home</a>
+                        <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
                         <?php if ($user): ?>
-                            <a href="?page=dashboard" class="nav-link <?= $currentPage === 'dashboard' ? 'nav-link-active' : '' ?>">Dashboard</a>
+                            <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
+                            <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
                             <?php if ($user['role'] === 'admin'): ?>
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
@@ -1309,28 +1972,337 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                             <?php endif; ?>
                             <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
-                                <a href="?page=my_org" class="nav-link <?= $currentPage === 'my_org' ? 'nav-link-active' : '' ?>">My Organization</a>
+                                <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
                             <?php if ($user['role'] !== 'admin'): ?>
-                                <a href="?page=profile" class="nav-link <?= $currentPage === 'profile' ? 'nav-link-active' : '' ?>">Profile</a>
+                                <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
                             <?php endif; ?>
-                            <div class="text-xs text-slate-600">Hi, <?= e($user['name']) ?> (<?= e($user['role']) ?>)</div>
+                            <div class="text-xs text-slate-600">Hi, <?= e($displayName) ?></div>
                             <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-2 rounded text-center hover:bg-indigo-950">Logout</a>
                         <?php else: ?>
-                            <a href="?page=login" class="nav-link <?= $currentPage === 'login' ? 'nav-link-active' : '' ?>">Login</a>
-                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-2 rounded text-center hover:bg-emerald-700 shadow-sm">Register</a>
+                            <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
+                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-2 rounded text-center hover:bg-emerald-700 shadow-sm <?= $isRegisterActive ? 'ring-2 ring-emerald-300/70' : '' ?>">Register</a>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
         </nav>
 
-        <main class="max-w-7xl mx-auto p-3 pt-24 sm:p-4 sm:pt-28 lg:p-6 lg:pt-28">
-            <?php if ($flash): ?>
-                <div class="glass mb-4 rounded px-4 py-3 text-white <?= $flash['type'] === 'error' ? 'border-red-300/60 bg-red-500/20' : 'border-emerald-300/60 bg-emerald-500/20' ?>">
-                    <?= e($flash['message']) ?>
+        <script>
+            (function () {
+                var nav = document.getElementById('appNav');
+                if (!nav) {
+                    return;
+                }
+
+                var updateScrolledState = function () {
+                    nav.classList.toggle('scrolled', window.scrollY > 20);
+                };
+
+                updateScrolledState();
+                window.addEventListener('scroll', updateScrolledState, { passive: true });
+            })();
+        </script>
+
+        <?php if ($user): ?>
+            <div id="globalSearchModal" class="updates-modal-overlay global-search-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="globalSearchTitle" aria-hidden="true">
+                <div class="glass w-full max-w-2xl p-5">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                            <h2 id="globalSearchTitle" class="text-lg font-semibold icon-label"><?= uiIcon('search', 'ui-icon') ?><span>Search the system</span></h2>
+                            <p class="text-sm text-slate-600">Find users, organizations, and announcements from anywhere.</p>
+                        </div>
+                        <button type="button" id="globalSearchClose" class="text-slate-600 hover:text-slate-900 text-xl leading-none" aria-label="Close search">&times;</button>
+                    </div>
+
+                    <label class="sr-only" for="globalSearchInput">Search</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?></span>
+                        <input id="globalSearchInput" type="search" autocomplete="off" placeholder="Search people, orgs, announcements" class="w-full rounded-xl border border-emerald-200/60 bg-white/80 pl-10 pr-20 py-3 text-slate-800 shadow-sm focus:border-emerald-400 focus:ring-0">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 global-search-shortcut">Ctrl+K</span>
+                    </div>
+
+                    <div class="mt-4 max-h-[55vh] overflow-auto themed-scroll pr-1">
+                        <div id="globalSearchStatus" class="text-sm text-slate-600">Type at least 2 characters to search.</div>
+                        <div id="globalSearchResults" class="global-search-results mt-3" aria-live="polite"></div>
+                    </div>
                 </div>
-            <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($user): ?>
+            <script>
+                (function () {
+                    var modal = document.getElementById('globalSearchModal');
+                    var openButtons = [document.getElementById('globalSearchOpen'), document.getElementById('globalSearchOpenMobile')].filter(function (button) { return Boolean(button); });
+                    var closeButton = document.getElementById('globalSearchClose');
+                    var input = document.getElementById('globalSearchInput');
+                    var status = document.getElementById('globalSearchStatus');
+                    var resultsContainer = document.getElementById('globalSearchResults');
+
+                    if (!modal || !input || !status || !resultsContainer) {
+                        return;
+                    }
+
+                    var requestId = 0;
+                    var requestController = null;
+                    var searchTimer = null;
+                    var activeIndex = -1;
+                    var currentResults = [];
+                    var lastTrigger = null;
+
+                    var typeLabels = {
+                        user: 'User',
+                        org: 'Organization',
+                        announcement: 'Announcement',
+                    };
+
+                    var typeIcons = {
+                        user: 'U',
+                        org: 'O',
+                        announcement: 'A',
+                    };
+
+                    var setBodyLocked = function (locked) {
+                        document.body.style.overflow = locked ? 'hidden' : '';
+                    };
+
+                    var setStatus = function (message) {
+                        status.textContent = message;
+                    };
+
+                    var openModal = function (trigger) {
+                        lastTrigger = trigger || document.activeElement;
+                        modal.classList.remove('hidden');
+                        modal.setAttribute('aria-hidden', 'false');
+                        setBodyLocked(true);
+                        currentResults = [];
+                        activeIndex = -1;
+                        resultsContainer.innerHTML = '';
+                        setStatus('Type at least 2 characters to search.');
+                        window.setTimeout(function () {
+                            input.focus();
+                            input.select();
+                        }, 0);
+                    };
+
+                    var closeModal = function () {
+                        modal.classList.add('hidden');
+                        modal.setAttribute('aria-hidden', 'true');
+                        setBodyLocked(false);
+                        input.value = '';
+                        if (requestController) {
+                            requestController.abort();
+                            requestController = null;
+                        }
+                        if (searchTimer) {
+                            window.clearTimeout(searchTimer);
+                            searchTimer = null;
+                        }
+                        if (lastTrigger && typeof lastTrigger.focus === 'function') {
+                            lastTrigger.focus();
+                        }
+                    };
+
+                    var renderResults = function (results) {
+                        currentResults = results;
+                        activeIndex = results.length > 0 ? 0 : -1;
+                        resultsContainer.innerHTML = '';
+
+                        if (results.length === 0) {
+                            resultsContainer.innerHTML = '<div class="global-search-empty">No results found.</div>';
+                            return;
+                        }
+
+                        results.forEach(function (result, index) {
+                            var link = document.createElement('a');
+                            link.href = result.url;
+                            link.className = 'global-search-result';
+                            link.setAttribute('role', 'option');
+                            link.setAttribute('aria-selected', index === activeIndex ? 'true' : 'false');
+                            link.dataset.resultIndex = String(index);
+
+                            if (index === activeIndex) {
+                                link.classList.add('is-active');
+                            }
+
+                            link.innerHTML =
+                                '<span class="global-search-result-icon">' + (typeIcons[result.type] || '?') + '</span>' +
+                                '<span class="min-w-0 flex-1">' +
+                                    '<span class="block font-semibold text-slate-800 truncate">' + result.label + '</span>' +
+                                    '<span class="block text-sm global-search-result-meta truncate">' + result.sublabel + '</span>' +
+                                '</span>' +
+                                '<span class="global-search-shortcut">' + (typeLabels[result.type] || 'Result') + '</span>';
+
+                            link.addEventListener('mouseenter', function () {
+                                activeIndex = index;
+                                updateActiveState();
+                            });
+
+                            link.addEventListener('click', function () {
+                                closeModal();
+                            });
+
+                            resultsContainer.appendChild(link);
+                        });
+                    };
+
+                    var updateActiveState = function () {
+                        var resultNodes = resultsContainer.querySelectorAll('.global-search-result');
+                        resultNodes.forEach(function (node, index) {
+                            var isActive = index === activeIndex;
+                            node.classList.toggle('is-active', isActive);
+                            node.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                            if (isActive && typeof node.scrollIntoView === 'function') {
+                                node.scrollIntoView({ block: 'nearest' });
+                            }
+                        });
+                    };
+
+                    var moveSelection = function (step) {
+                        if (currentResults.length === 0) {
+                            return;
+                        }
+
+                        activeIndex = (activeIndex + step + currentResults.length) % currentResults.length;
+                        updateActiveState();
+                    };
+
+                    var search = function (query) {
+                        var trimmed = query.trim();
+                        if (trimmed.length < 2) {
+                            if (requestController) {
+                                requestController.abort();
+                                requestController = null;
+                            }
+                            currentResults = [];
+                            activeIndex = -1;
+                            resultsContainer.innerHTML = '';
+                            setStatus('Type at least 2 characters to search.');
+                            return;
+                        }
+
+                        setStatus('Searching...');
+                        var currentRequestId = ++requestId;
+
+                        if (requestController) {
+                            requestController.abort();
+                        }
+
+                        requestController = window.AbortController ? new AbortController() : null;
+
+                        fetch('?action=search&q=' + encodeURIComponent(trimmed), {
+                            headers: {
+                                'Accept': 'application/json'
+                            },
+                            credentials: 'same-origin',
+                            signal: requestController ? requestController.signal : undefined,
+                        }).then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Search request failed');
+                            }
+
+                            return response.json();
+                        }).then(function (payload) {
+                            if (currentRequestId !== requestId) {
+                                return;
+                            }
+
+                            var results = Array.isArray(payload.results) ? payload.results : [];
+                            if (results.length === 0) {
+                                setStatus('No results found for "' + trimmed + '".');
+                            } else {
+                                setStatus('Showing ' + results.length + ' result' + (results.length === 1 ? '' : 's') + ' for "' + trimmed + '".');
+                            }
+
+                            renderResults(results);
+                        }).catch(function (error) {
+                            if (error && error.name === 'AbortError') {
+                                return;
+                            }
+
+                            if (currentRequestId !== requestId) {
+                                return;
+                            }
+
+                            currentResults = [];
+                            activeIndex = -1;
+                            resultsContainer.innerHTML = '<div class="global-search-empty">Search is temporarily unavailable.</div>';
+                            setStatus('Search is temporarily unavailable.');
+                        }).finally(function () {
+                            if (currentRequestId === requestId) {
+                                requestController = null;
+                            }
+                        });
+                    };
+
+                    var scheduleSearch = function () {
+                        if (searchTimer) {
+                            window.clearTimeout(searchTimer);
+                        }
+
+                        searchTimer = window.setTimeout(function () {
+                            search(input.value);
+                        }, 180);
+                    };
+
+                    openButtons.forEach(function (button) {
+                        button.addEventListener('click', function () {
+                            openModal(button);
+                        });
+                    });
+
+                    if (closeButton) {
+                        closeButton.addEventListener('click', closeModal);
+                    }
+
+                    modal.addEventListener('click', function (event) {
+                        if (event.target === modal) {
+                            closeModal();
+                        }
+                    });
+
+                    input.addEventListener('input', scheduleSearch);
+                    input.addEventListener('keydown', function (event) {
+                        if (event.key === 'ArrowDown') {
+                            event.preventDefault();
+                            moveSelection(1);
+                            return;
+                        }
+
+                        if (event.key === 'ArrowUp') {
+                            event.preventDefault();
+                            moveSelection(-1);
+                            return;
+                        }
+
+                        if (event.key === 'Enter' && currentResults.length > 0) {
+                            event.preventDefault();
+                            window.location.href = currentResults[activeIndex < 0 ? 0 : activeIndex].url;
+                            return;
+                        }
+
+                        if (event.key === 'Escape') {
+                            event.preventDefault();
+                            closeModal();
+                        }
+                    });
+
+                    document.addEventListener('keydown', function (event) {
+                        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                            event.preventDefault();
+                            openModal(document.getElementById('globalSearchOpen') || document.getElementById('globalSearchOpenMobile'));
+                        }
+
+                        if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                            closeModal();
+                        }
+                    });
+                })();
+            </script>
+        <?php endif; ?>
+
+        <main class="max-w-7xl mx-auto p-3 pt-24 sm:p-4 sm:pt-28 lg:p-6 lg:pt-28">
 
             <?php if ($user && is_array($loginUpdates) && count($loginUpdates) > 0): ?>
                 <div id="loginUpdatesModal" class="updates-modal-overlay hidden">
@@ -1375,6 +2347,7 @@ function renderHeader(string $title = 'Dashboard'): void
 
 function renderFooter(): void
 {
+    $user = currentUser();
     ?>
         </main>
         <footer class="app-footer">
@@ -1423,6 +2396,15 @@ function renderFooter(): void
                             <li><a href="mailto:studentaffairs@campus.local" class="app-footer-link">studentaffairs@campus.local</a></li>
                             <li>2nd Floor, Student Services Building</li>
                             <li>Main Campus, City 1000</li>
+                            <?php if ($user && ($user['role'] ?? '') === 'student'): ?>
+                                <li class="pt-2">
+                                    <form method="post" id="restartOnboardingForm" class="inline-flex">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="action" value="restart_onboarding">
+                                        <button type="submit" class="app-footer-link underline decoration-dotted">Replay onboarding tour</button>
+                                    </form>
+                                </li>
+                            <?php endif; ?>
                         </ul>
                     </div>
                 </div>
@@ -1432,6 +2414,355 @@ function renderFooter(): void
                 </div>
             </div>
         </footer>
+
+        <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var restartForm = document.getElementById('restartOnboardingForm');
+                if (!restartForm) {
+                    return;
+                }
+
+                restartForm.addEventListener('submit', function () {
+                    localStorage.removeItem('websys_onboarding_done');
+                    sessionStorage.removeItem('websys_onboarding_step');
+                });
+            });
+        </script>
+
+        <script>
+            (function () {
+                var container = document.getElementById('toast-container');
+                if (!container) {
+                    return;
+                }
+
+                var typeLabels = {
+                    success: 'Success',
+                    error: 'Error',
+                    warning: 'Warning',
+                    info: 'Info'
+                };
+
+                var normalizeType = function (type) {
+                    var value = String(type || 'info').toLowerCase();
+                    return Object.prototype.hasOwnProperty.call(typeLabels, value) ? value : 'info';
+                };
+
+                var dismissToast = function (toast) {
+                    if (!toast || toast.dataset.toastState === 'leaving') {
+                        return;
+                    }
+
+                    toast.dataset.toastState = 'leaving';
+                    toast.classList.add('is-leaving');
+
+                    var remove = function () {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    };
+
+                    toast.addEventListener('animationend', remove, { once: true });
+                    window.setTimeout(remove, 260);
+                };
+
+                var showToast = function (message, type, duration) {
+                    var text = String(message || '').trim();
+                    if (text === '') {
+                        return null;
+                    }
+
+                    var toastType = normalizeType(type);
+                    var displayDuration = Number(duration);
+                    if (!Number.isFinite(displayDuration) || displayDuration < 0) {
+                        displayDuration = 4000;
+                    }
+
+                    var toast = document.createElement('div');
+                    toast.className = 'toast toast-' + toastType;
+                    toast.setAttribute('role', 'status');
+                    toast.setAttribute('aria-live', toastType === 'error' ? 'assertive' : 'polite');
+
+                    var body = document.createElement('div');
+                    body.className = 'toast-body';
+
+                    var accent = document.createElement('div');
+                    accent.className = 'toast-accent';
+
+                    var content = document.createElement('div');
+                    content.className = 'toast-content';
+
+                    var title = document.createElement('p');
+                    title.className = 'toast-title';
+                    title.textContent = typeLabels[toastType];
+
+                    var messageNode = document.createElement('div');
+                    messageNode.className = 'toast-message';
+                    messageNode.textContent = text;
+
+                    content.appendChild(title);
+                    content.appendChild(messageNode);
+
+                    var closeButton = document.createElement('button');
+                    closeButton.type = 'button';
+                    closeButton.className = 'toast-close';
+                    closeButton.setAttribute('aria-label', 'Dismiss notification');
+                    closeButton.innerHTML = '&times;';
+                    closeButton.addEventListener('click', function () {
+                        dismissToast(toast);
+                    });
+
+                    body.appendChild(accent);
+                    body.appendChild(content);
+                    body.appendChild(closeButton);
+                    toast.appendChild(body);
+
+                    container.appendChild(toast);
+
+                    if (displayDuration > 0) {
+                        window.setTimeout(function () {
+                            dismissToast(toast);
+                        }, displayDuration);
+                    }
+
+                    return toast;
+                };
+
+                window.Toast = {
+                    show: showToast,
+                    dismiss: dismissToast
+                };
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    var flashMessage = document.body.dataset.flash || '';
+                    if (flashMessage.trim() === '') {
+                        return;
+                    }
+
+                    showToast(flashMessage, document.body.dataset.flashType || 'info', 4000);
+                });
+            })();
+        </script>
+
+        <script>
+            function initCurrencyInput(inputEl) {
+                if (!(inputEl instanceof HTMLInputElement) || inputEl.dataset.currencyInitialized === '1') {
+                    return;
+                }
+
+                const parent = inputEl.parentElement;
+                if (!parent) {
+                    return;
+                }
+
+                let wrapper = parent;
+                if (!parent.classList.contains('currency-input-wrap')) {
+                    wrapper = document.createElement('div');
+                    wrapper.className = 'currency-input-wrap';
+                    parent.insertBefore(wrapper, inputEl);
+                    wrapper.appendChild(inputEl);
+                }
+
+                if (!wrapper.querySelector('.currency-prefix')) {
+                    const prefix = document.createElement('span');
+                    prefix.className = 'currency-prefix';
+                    prefix.textContent = '₱';
+                    wrapper.insertBefore(prefix, inputEl);
+                }
+
+                if (inputEl.type === 'number') {
+                    inputEl.type = 'text';
+                }
+                inputEl.setAttribute('inputmode', 'decimal');
+                inputEl.dataset.currencyInitialized = '1';
+
+                const toRaw = function (value) {
+                    const cleaned = String(value || '').replace(/[^\d.]/g, '');
+                    if (cleaned === '') {
+                        return '';
+                    }
+
+                    const firstDotIndex = cleaned.indexOf('.');
+                    let integerPart = cleaned;
+                    let decimalPart = '';
+
+                    if (firstDotIndex !== -1) {
+                        integerPart = cleaned.slice(0, firstDotIndex);
+                        decimalPart = cleaned.slice(firstDotIndex + 1).replace(/\./g, '').slice(0, 2);
+                    }
+
+                    if (integerPart === '' && decimalPart !== '') {
+                        integerPart = '0';
+                    }
+
+                    integerPart = integerPart.replace(/^0+(?=\d)/, '');
+                    if (integerPart === '' && decimalPart === '') {
+                        return '';
+                    }
+
+                    return decimalPart !== '' ? integerPart + '.' + decimalPart : integerPart;
+                };
+
+                const toFormatted = function (rawValue) {
+                    if (rawValue === '') {
+                        return '';
+                    }
+
+                    const parts = rawValue.split('.');
+                    const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    if (parts.length < 2) {
+                        return intPart;
+                    }
+
+                    return intPart + '.' + parts[1].slice(0, 2);
+                };
+
+                const syncCurrencyValue = function (sourceValue) {
+                    const raw = toRaw(sourceValue);
+                    inputEl.dataset.currencyRaw = raw;
+                    inputEl.value = toFormatted(raw);
+                };
+
+                inputEl.addEventListener('input', function () {
+                    syncCurrencyValue(inputEl.value);
+                });
+
+                inputEl.form?.addEventListener('submit', function (event) {
+                    const raw = toRaw(inputEl.value);
+                    inputEl.dataset.currencyRaw = raw;
+                    inputEl.value = raw;
+
+                    // Restore formatted display if submission is cancelled on the client side.
+                    window.setTimeout(function () {
+                        if (event.defaultPrevented) {
+                            inputEl.value = toFormatted(inputEl.dataset.currencyRaw || '');
+                        }
+                    }, 0);
+                });
+
+                syncCurrencyValue(inputEl.value);
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                document.querySelectorAll('input[data-currency]').forEach(function (inputEl) {
+                    initCurrencyInput(inputEl);
+                });
+            });
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var toggleInputs = document.querySelectorAll('input[data-password-toggle]');
+
+                var eyeOpenSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="ui-icon" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6z" /><circle cx="12" cy="12" r="2.25" /></svg>';
+                var eyeSlashSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="ui-icon" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" /><path stroke-linecap="round" stroke-linejoin="round" d="M10.58 10.58a2 2 0 102.83 2.83" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.88 5.09A10.87 10.87 0 0112 4.88c6 0 9.75 7.12 9.75 7.12a19.27 19.27 0 01-3.04 4.13" /><path stroke-linecap="round" stroke-linejoin="round" d="M6.61 6.61A19.18 19.18 0 002.25 12S6 19.12 12 19.12c1.79 0 3.35-.41 4.72-1.03" /></svg>';
+
+                toggleInputs.forEach(function (input) {
+                    var wrapper = input.parentElement;
+                    if (!wrapper || !wrapper.classList.contains('relative') || wrapper.getAttribute('data-password-toggle-wrapper') !== '1') {
+                        var newWrapper = document.createElement('div');
+                        newWrapper.className = 'relative';
+                        newWrapper.setAttribute('data-password-toggle-wrapper', '1');
+                        input.parentNode.insertBefore(newWrapper, input);
+                        newWrapper.appendChild(input);
+                        wrapper = newWrapper;
+                    }
+
+                    if (wrapper.querySelector('button[data-password-toggle-btn]')) {
+                        return;
+                    }
+
+                    input.classList.add('pr-10');
+
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'absolute inset-y-0 right-0 px-3 inline-flex items-center text-slate-600 hover:text-slate-900';
+                    button.setAttribute('data-password-toggle-btn', '1');
+                    button.setAttribute('aria-label', 'Show password');
+                    button.setAttribute('aria-pressed', 'false');
+                    button.innerHTML = eyeOpenSvg;
+
+                    button.addEventListener('click', function () {
+                        var showing = input.type === 'text';
+                        input.type = showing ? 'password' : 'text';
+                        button.setAttribute('aria-pressed', showing ? 'false' : 'true');
+                        button.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+                        button.innerHTML = showing ? eyeOpenSvg : eyeSlashSvg;
+                    });
+
+                    wrapper.appendChild(button);
+                });
+            });
+        </script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var postForms = document.querySelectorAll('form[method="post"], form[method="POST"]');
+
+                var restoreButton = function (button) {
+                    if (!button || button.dataset.loadingState !== '1') {
+                        return;
+                    }
+
+                    button.disabled = false;
+                    button.classList.remove('btn-loading');
+                    if (typeof button.dataset.originalHtml === 'string') {
+                        button.innerHTML = button.dataset.originalHtml;
+                    }
+                    delete button.dataset.loadingState;
+                    delete button.dataset.originalHtml;
+                };
+
+                postForms.forEach(function (form) {
+                    if (form.hasAttribute('data-no-loading')) {
+                        return;
+                    }
+
+                    var submitButtons = form.querySelectorAll('button[type="submit"]');
+                    if (submitButtons.length === 0) {
+                        return;
+                    }
+
+                    form.addEventListener('submit', function (event) {
+                        var activeElement = document.activeElement;
+                        var submitButton = activeElement instanceof HTMLButtonElement && activeElement.type === 'submit' && form.contains(activeElement)
+                            ? activeElement
+                            : submitButtons[0];
+
+                        if (!submitButton || submitButton.dataset.loadingState === '1') {
+                            return;
+                        }
+
+                        submitButton.dataset.loadingState = '1';
+                        submitButton.dataset.originalHtml = submitButton.innerHTML;
+                        submitButton.disabled = true;
+                        submitButton.classList.add('btn-loading');
+                        submitButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="btn-loading-spinner" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="42 18"></circle></svg><span>Processing...</span>';
+
+                        // If a submit handler cancels submission, revert the button state.
+                        window.setTimeout(function () {
+                            if (event.defaultPrevented) {
+                                restoreButton(submitButton);
+                            }
+                        }, 0);
+
+                        // Safety net for long-running requests or navigation cancelled by the browser.
+                        window.setTimeout(function () {
+                            restoreButton(submitButton);
+                        }, 15000);
+                    });
+                });
+
+                window.addEventListener('pageshow', function () {
+                    var loadingButtons = document.querySelectorAll('button[data-loading-state="1"]');
+                    loadingButtons.forEach(function (button) {
+                        restoreButton(button);
+                    });
+                });
+            });
+        </script>
 
         <script>
             (function () {
@@ -1480,16 +2811,26 @@ function renderFooter(): void
                 const navToggle = document.getElementById('navMenuToggle');
                 const mobileNavMenu = document.getElementById('mobileNavMenu');
                 if (navToggle && mobileNavMenu) {
+                    const setMobileNavState = function (open) {
+                        mobileNavMenu.classList.toggle('is-open', open);
+                        navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    };
+
                     navToggle.addEventListener('click', function () {
-                        const isOpen = !mobileNavMenu.classList.contains('hidden');
-                        mobileNavMenu.classList.toggle('hidden', isOpen);
-                        navToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+                        const isOpen = mobileNavMenu.classList.contains('is-open');
+                        setMobileNavState(!isOpen);
+                    });
+
+                    const mobileMenuLinks = mobileNavMenu.querySelectorAll('a');
+                    mobileMenuLinks.forEach(function (link) {
+                        link.addEventListener('click', function () {
+                            setMobileNavState(false);
+                        });
                     });
 
                     window.addEventListener('resize', function () {
                         if (window.innerWidth >= 1024) {
-                            mobileNavMenu.classList.add('hidden');
-                            navToggle.setAttribute('aria-expanded', 'false');
+                            setMobileNavState(false);
                         }
                     });
                 }
@@ -1583,7 +2924,547 @@ function renderFooter(): void
                 }
             })();
         </script>
+        <?php if (!empty($_SESSION['show_onboarding'])): ?>
+            <style>
+                .onboarding-layer {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 10020;
+                    pointer-events: none;
+                }
+
+                .onboarding-backdrop {
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(2, 24, 18, 0.56);
+                    backdrop-filter: blur(1px);
+                }
+
+                .onboarding-focus {
+                    position: fixed;
+                    border-radius: 1rem;
+                    box-shadow: 0 0 0 3px rgba(110, 231, 183, 0.95), 0 0 0 9999px rgba(2, 24, 18, 0.45);
+                    transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+                    pointer-events: none;
+                    z-index: 10021;
+                }
+
+                .onboarding-tooltip {
+                    position: fixed;
+                    width: min(22rem, calc(100vw - 1.5rem));
+                    border-radius: 1rem;
+                    border: 1px solid rgba(110, 231, 183, 0.26);
+                    background: rgba(4, 24, 18, 0.96);
+                    color: #ecfdf5;
+                    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+                    padding: 0.95rem 1rem 0.85rem;
+                    pointer-events: auto;
+                    z-index: 10022;
+                }
+
+                .onboarding-tooltip::before {
+                    content: '';
+                    position: absolute;
+                    width: 0.8rem;
+                    height: 0.8rem;
+                    background: inherit;
+                    border-left: 1px solid rgba(110, 231, 183, 0.26);
+                    border-top: 1px solid rgba(110, 231, 183, 0.26);
+                    transform: rotate(45deg);
+                }
+
+                .onboarding-tooltip[data-placement='bottom']::before {
+                    top: -0.4rem;
+                    left: 1.4rem;
+                }
+
+                .onboarding-tooltip[data-placement='top']::before {
+                    bottom: -0.4rem;
+                    left: 1.4rem;
+                    transform: rotate(225deg);
+                }
+
+                .onboarding-title {
+                    margin: 0;
+                    font-size: 0.98rem;
+                    font-weight: 700;
+                    color: #d1fae5;
+                }
+
+                .onboarding-body {
+                    margin: 0.45rem 0 0;
+                    font-size: 0.86rem;
+                    line-height: 1.5;
+                    color: rgba(236, 253, 245, 0.82);
+                }
+
+                .onboarding-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 0.5rem;
+                    margin-top: 0.85rem;
+                }
+
+                .onboarding-button {
+                    border: 1px solid rgba(110, 231, 183, 0.2);
+                    border-radius: 0.65rem;
+                    padding: 0.5rem 0.85rem;
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+
+                .onboarding-button-next {
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    color: #f0fdf4;
+                }
+
+                .onboarding-button-done {
+                    background: rgba(15, 23, 42, 0.35);
+                    color: #ecfdf5;
+                }
+
+                .onboarding-tooltip-code {
+                    display: inline-block;
+                    margin-top: 0.5rem;
+                    padding: 0.2rem 0.45rem;
+                    border-radius: 999px;
+                    background: rgba(16, 185, 129, 0.14);
+                    color: #bbf7d0;
+                    font-size: 0.72rem;
+                }
+            </style>
+            <script>
+                (function () {
+                    const storageKey = 'websys_onboarding_done';
+                    if (localStorage.getItem(storageKey) === '1') {
+                        return;
+                    }
+
+                    const steps = [
+                        {
+                            target: '#dashboardWelcomeMessage',
+                            title: 'Welcome',
+                            body: 'This area gives you a quick read on your organizations, current activity, and budget status.'
+                        },
+                        {
+                            target: '.nav-organizations-link',
+                            title: 'Browse organizations',
+                            body: 'Open the organizations directory to see groups you can join and their visibility rules.'
+                        },
+                        {
+                            target: '[data-tour="join-button"]:not([disabled])',
+                            title: 'Request to join',
+                            body: 'Use a join button on the organizations page when you want to become a member of a group.'
+                        },
+                        {
+                            target: '#dashboardAnnouncementsSection',
+                            title: 'Announcements',
+                            body: 'Important updates and recent announcements appear here so you can stay informed.'
+                        },
+                        {
+                            target: '#dashboardBudgetTransparencySection',
+                            title: 'Budget transparency',
+                            body: 'Check the finance status section to review income, expenses, and balance at a glance.'
+                        }
+                    ];
+
+                    const stepPages = ['dashboard', 'dashboard', 'organizations', 'dashboard', 'dashboard'];
+                    const currentPage = new URLSearchParams(window.location.search).get('page') || 'dashboard';
+                    const root = document.createElement('div');
+                    root.className = 'onboarding-layer';
+                    root.innerHTML = '<div class="onboarding-backdrop" aria-hidden="true"></div>';
+
+                    const focus = document.createElement('div');
+                    focus.className = 'onboarding-focus hidden';
+
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'onboarding-tooltip';
+                    tooltip.setAttribute('role', 'dialog');
+                    tooltip.setAttribute('aria-live', 'polite');
+
+                    root.appendChild(focus);
+                    root.appendChild(tooltip);
+                    document.body.appendChild(root);
+
+                    let stepIndex = Number.parseInt(sessionStorage.getItem('websys_onboarding_step') || '0', 10);
+                    if (!Number.isFinite(stepIndex) || stepIndex < 0) {
+                        stepIndex = 0;
+                    }
+
+                    const normalizeTarget = function (selector) {
+                        if (selector === '.nav-organizations-link') {
+                            if (window.matchMedia('(max-width: 1023px)').matches) {
+                                return document.querySelector('#mobileNavMenu .nav-organizations-link') || document.querySelector(selector);
+                            }
+
+                            return document.querySelector('#appNav .nav-desktop .nav-organizations-link') || document.querySelector(selector);
+                        }
+
+                        if (selector === '[data-tour="join-button"]:not([disabled])') {
+                            return document.querySelector(selector) || document.querySelector('[data-tour="join-button"]');
+                        }
+
+                        return document.querySelector(selector);
+                    };
+
+                    const getStepElement = function (index) {
+                        const step = steps[index];
+                        if (!step) {
+                            return null;
+                        }
+
+                        return normalizeTarget(step.target);
+                    };
+
+                    const navigateToStepPage = function (index) {
+                        const page = stepPages[index] || 'dashboard';
+                        sessionStorage.setItem('websys_onboarding_step', String(index));
+                        const targetUrl = '?page=' + encodeURIComponent(page);
+                        if (currentPage !== page) {
+                            window.location.href = targetUrl;
+                            return true;
+                        }
+
+                        return false;
+                    };
+
+                    const positionTooltip = function (element) {
+                        const rect = element.getBoundingClientRect();
+                        const spacing = 16;
+                        const tooltipRect = tooltip.getBoundingClientRect();
+                        const tooltipHeight = tooltipRect.height || 180;
+                        const tooltipWidth = tooltipRect.width || 320;
+
+                        focus.classList.remove('hidden');
+                        focus.style.top = Math.max(8, rect.top - 6) + 'px';
+                        focus.style.left = Math.max(8, rect.left - 6) + 'px';
+                        focus.style.width = Math.min(window.innerWidth - 16, rect.width + 12) + 'px';
+                        focus.style.height = Math.min(window.innerHeight - 16, rect.height + 12) + 'px';
+
+                        const placeBelow = rect.bottom + spacing + tooltipHeight < window.innerHeight;
+                        const top = placeBelow ? rect.bottom + spacing : Math.max(12, rect.top - spacing - tooltipHeight);
+                        let left = rect.left;
+                        if (left + tooltipWidth > window.innerWidth - 12) {
+                            left = window.innerWidth - tooltipWidth - 12;
+                        }
+                        left = Math.max(12, left);
+
+                        tooltip.dataset.placement = placeBelow ? 'bottom' : 'top';
+                        tooltip.style.top = top + 'px';
+                        tooltip.style.left = left + 'px';
+                    };
+
+                    const renderStep = function () {
+                        const step = steps[stepIndex];
+                        if (!step) {
+                            sessionStorage.removeItem('websys_onboarding_step');
+                            root.remove();
+                            return;
+                        }
+
+                        if (stepIndex === 1 && window.matchMedia('(max-width: 1023px)').matches) {
+                            const navToggle = document.getElementById('navMenuToggle');
+                            const mobileNavMenu = document.getElementById('mobileNavMenu');
+                            if (navToggle && mobileNavMenu) {
+                                mobileNavMenu.classList.add('is-open');
+                                navToggle.setAttribute('aria-expanded', 'true');
+                            }
+                        }
+
+                        const page = stepPages[stepIndex] || 'dashboard';
+                        if (currentPage !== page) {
+                            navigateToStepPage(stepIndex);
+                            return;
+                        }
+
+                        const element = getStepElement(stepIndex);
+                        if (!element) {
+                            if (navigateToStepPage(stepIndex)) {
+                                return;
+                            }
+
+                            sessionStorage.removeItem('websys_onboarding_step');
+                            root.remove();
+                            return;
+                        }
+
+                        const title = document.createElement('p');
+                        title.className = 'onboarding-title';
+                        title.textContent = step.title;
+
+                        const body = document.createElement('p');
+                        body.className = 'onboarding-body';
+                        body.textContent = step.body;
+
+                        const actions = document.createElement('div');
+                        actions.className = 'onboarding-actions';
+
+                        const nextButton = document.createElement('button');
+                        nextButton.type = 'button';
+                        nextButton.className = 'onboarding-button onboarding-button-next';
+
+                        const isLastStep = stepIndex === steps.length - 1;
+                        nextButton.textContent = isLastStep ? 'Done' : 'Next';
+
+                        nextButton.addEventListener('click', function () {
+                            if (isLastStep) {
+                                fetch('?action=complete_onboarding', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                                    },
+                                    body: 'action=complete_onboarding&_csrf=' + encodeURIComponent(<?= json_encode(csrfToken()) ?>),
+                                    credentials: 'same-origin'
+                                }).then(function (response) {
+                                    if (!response.ok) {
+                                        throw new Error('Unable to complete onboarding');
+                                    }
+
+                                    return response.json();
+                                }).then(function () {
+                                    localStorage.setItem(storageKey, '1');
+                                    sessionStorage.removeItem('websys_onboarding_step');
+                                    root.remove();
+                                }).catch(function () {
+                                    root.remove();
+                                });
+                                return;
+                            }
+
+                            const nextIndex = stepIndex + 1;
+                            sessionStorage.setItem('websys_onboarding_step', String(nextIndex));
+                            const nextPage = stepPages[nextIndex] || 'dashboard';
+                            if (nextPage !== currentPage) {
+                                window.location.href = '?page=' + encodeURIComponent(nextPage);
+                                return;
+                            }
+
+                            stepIndex = nextIndex;
+                            renderStep();
+                        });
+
+                        actions.appendChild(nextButton);
+
+                        tooltip.innerHTML = '';
+                        tooltip.appendChild(title);
+                        tooltip.appendChild(body);
+                        tooltip.appendChild(actions);
+
+                        if (!isLastStep) {
+                            const code = document.createElement('span');
+                            code.className = 'onboarding-tooltip-code';
+                            code.textContent = 'Step ' + (stepIndex + 1) + ' of ' + steps.length;
+                            tooltip.appendChild(code);
+                        }
+
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                        window.setTimeout(function () {
+                            positionTooltip(element);
+                        }, 220);
+                    };
+
+                    const observer = typeof ResizeObserver !== 'undefined'
+                        ? new ResizeObserver(function () {
+                            const element = getStepElement(stepIndex);
+                            if (element && !root.classList.contains('hidden')) {
+                                positionTooltip(element);
+                            }
+                        })
+                        : null;
+
+                    window.addEventListener('scroll', function () {
+                        const element = getStepElement(stepIndex);
+                        if (element && !root.classList.contains('hidden')) {
+                            positionTooltip(element);
+                        }
+                    }, { passive: true });
+
+                    window.addEventListener('resize', function () {
+                        const element = getStepElement(stepIndex);
+                        if (element && !root.classList.contains('hidden')) {
+                            positionTooltip(element);
+                        }
+                    }, { passive: true });
+
+                    document.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape') {
+                            localStorage.setItem(storageKey, '1');
+                            sessionStorage.removeItem('websys_onboarding_step');
+                            root.remove();
+                        }
+                    });
+
+                    const initialElement = getStepElement(stepIndex);
+                    if (!initialElement && navigateToStepPage(stepIndex)) {
+                        return;
+                    }
+
+                    if (initialElement && observer) {
+                        observer.observe(initialElement);
+                    }
+
+                    renderStep();
+                })();
+            </script>
+        <?php endif; ?>
     </body>
     </html>
     <?php
+}
+
+function renderBreadcrumb(array $crumbs): void
+{
+    if ($crumbs === []) {
+        return;
+    }
+
+    echo '<nav aria-label="breadcrumb" class="mb-3">';
+    echo '<ol class="flex items-center gap-2 text-xs text-slate-500 whitespace-nowrap overflow-x-auto">';
+
+    $lastIndex = count($crumbs) - 1;
+    foreach ($crumbs as $index => $crumb) {
+        $label = e((string) ($crumb['label'] ?? ''));
+        $url = $crumb['url'] ?? null;
+
+        echo '<li class="inline-flex items-center gap-2">';
+        if ($url !== null && $url !== '') {
+            echo '<a href="' . e((string) $url) . '" class="hover:text-slate-700">' . $label . '</a>';
+        } else {
+            echo '<span class="text-slate-700" aria-current="page">' . $label . '</span>';
+        }
+
+        if ($index < $lastIndex) {
+            echo '<span aria-hidden="true" class="text-slate-400">/</span>';
+        }
+
+        echo '</li>';
+    }
+
+    echo '</ol>';
+    echo '</nav>';
+}
+
+function renderEmptyState(string $icon, string $title, string $message, ?string $actionLabel = null, ?string $actionUrl = null): void
+{
+    $iconMarkup = match ($icon) {
+        'search' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M16 16l5 5"></path></svg>',
+        'folder' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.5 7.5a2 2 0 012-2h4l1.8 2H18.5a2 2 0 012 2v8a2 2 0 01-2 2H5.5a2 2 0 01-2-2z"></path></svg>',
+        'users' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="9" r="2.5"></circle><circle cx="16" cy="10" r="2.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M3.5 18c.8-2.2 2.8-3.5 5.1-3.5S12.9 15.8 13.7 18"></path><path stroke-linecap="round" stroke-linejoin="round" d="M13 18c.6-1.8 2.1-2.9 3.9-2.9 1.8 0 3.3 1.1 3.9 2.9"></path></svg>',
+        'chart' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19.5h16"></path><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V10"></path><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V6"></path><path stroke-linecap="round" stroke-linejoin="round" d="M17 16v-3"></path></svg>',
+        default => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7.5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 8l7.5 5 7.5-5"></path></svg>',
+    };
+
+    echo '<div class="glass empty-state">';
+    echo '<div class="empty-state-icon">' . $iconMarkup . '</div>';
+    echo '<h3 class="empty-state-title">' . e($title) . '</h3>';
+    echo '<p class="empty-state-message">' . e($message) . '</p>';
+
+    if ($actionLabel !== null && $actionLabel !== '' && $actionUrl !== null && $actionUrl !== '') {
+        echo '<a href="' . e($actionUrl) . '" class="empty-state-action">' . e($actionLabel) . '</a>';
+    }
+
+    echo '</div>';
+}
+
+function renderSkeletonDashboard(): void
+{
+    echo '<div class="dashboard-shell space-y-3" aria-hidden="true">';
+
+    echo '<section class="grid xl:grid-cols-12 gap-3">';
+    echo '<div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">';
+    echo '<div class="space-y-2">';
+    echo '<div class="skeleton skeleton-text w-24"></div>';
+    echo '<div class="skeleton skeleton-text w-full max-w-2xl h-7"></div>';
+    echo '<div class="skeleton skeleton-text w-full max-w-xl"></div>';
+    echo '</div>';
+    echo '<div class="dashboard-metric-grid mt-4">';
+    echo '<div class="skeleton skeleton-stat"></div>';
+    echo '<div class="skeleton skeleton-stat"></div>';
+    echo '<div class="skeleton skeleton-stat"></div>';
+    echo '</div>';
+    echo '</div>';
+
+    echo '<div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">';
+    echo '<div class="space-y-2">';
+    echo '<div class="skeleton skeleton-text w-36"></div>';
+    echo '<div class="skeleton skeleton-text w-full max-w-sm"></div>';
+    echo '</div>';
+    echo '<div class="mt-4 space-y-3">';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-4/5"></div>';
+    echo '<div class="skeleton skeleton-text w-3/4"></div>';
+    echo '<div class="skeleton skeleton-text w-2/3"></div>';
+    echo '</div>';
+    echo '</div>';
+    echo '</section>';
+
+    echo '<section class="grid xl:grid-cols-12 gap-3">';
+    echo '<div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">';
+    echo '<div class="space-y-2 mb-3">';
+    echo '<div class="skeleton skeleton-text w-40"></div>';
+    echo '<div class="skeleton skeleton-text w-64"></div>';
+    echo '</div>';
+    echo '<div class="dashboard-metric-grid mb-3">';
+    echo '<div class="skeleton skeleton-stat"></div>';
+    echo '<div class="skeleton skeleton-stat"></div>';
+    echo '<div class="skeleton skeleton-stat"></div>';
+    echo '</div>';
+    echo '<div class="skeleton skeleton-card"></div>';
+    echo '</div>';
+
+    echo '<div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">';
+    echo '<div class="space-y-2 mb-3">';
+    echo '<div class="skeleton skeleton-text w-28"></div>';
+    echo '<div class="skeleton skeleton-text w-52"></div>';
+    echo '</div>';
+    echo '<div class="space-y-2">';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-5/6"></div>';
+    echo '<div class="skeleton skeleton-text w-4/5"></div>';
+    echo '</div>';
+    echo '</div>';
+
+    echo '<div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">';
+    echo '<div class="space-y-2 mb-3">';
+    echo '<div class="skeleton skeleton-text w-32"></div>';
+    echo '<div class="skeleton skeleton-text w-60"></div>';
+    echo '</div>';
+    echo '<div class="space-y-2">';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-3/4"></div>';
+    echo '</div>';
+    echo '</div>';
+
+    echo '<div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">';
+    echo '<div class="space-y-2 mb-3">';
+    echo '<div class="skeleton skeleton-text w-36"></div>';
+    echo '<div class="skeleton skeleton-text w-64"></div>';
+    echo '</div>';
+    echo '<div class="space-y-2">';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-5/6"></div>';
+    echo '<div class="skeleton skeleton-text w-3/4"></div>';
+    echo '</div>';
+    echo '</div>';
+
+    echo '<div class="glass dashboard-panel xl:col-span-12 p-4 md:p-4">';
+    echo '<div class="space-y-2 mb-3">';
+    echo '<div class="skeleton skeleton-text w-56"></div>';
+    echo '<div class="skeleton skeleton-text w-80"></div>';
+    echo '</div>';
+    echo '<div class="space-y-2">';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-full"></div>';
+    echo '<div class="skeleton skeleton-text w-11/12"></div>';
+    echo '</div>';
+    echo '</div>';
+    echo '</section>';
+
+    echo '</div>';
 }

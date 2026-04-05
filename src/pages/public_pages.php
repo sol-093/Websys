@@ -52,7 +52,7 @@ function handleHomePage(PDO $db, ?array $user): void
                     <span class="font-semibold highlight-glow snapshot-value"><?= $orgCount ?></span>
                 </div>
                 <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
-                    <span class="snapshot-label icon-label"><?= uiIcon('students', 'ui-icon ui-icon-sm') ?><span>Students & Owners</span></span>
+                    <span class="snapshot-label icon-label"><?= uiIcon('students-owners', 'ui-icon ui-icon-sm') ?><span>Students & Owners</span></span>
                     <span class="font-semibold highlight-glow snapshot-value"><?= $memberCount ?></span>
                 </div>
                 <div class="flex items-center justify-between p-3 rounded-xl bg-white/10 border border-emerald-100/25 snapshot-item">
@@ -67,11 +67,11 @@ function handleHomePage(PDO $db, ?array $user): void
             <p class="text-sm text-slate-600">Create organizations, assign one owner, and filter all student records.</p>
         </div>
         <div class="glass lg:col-span-4 p-5">
-            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>For Owners</span></h3>
+            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('owner', 'ui-icon') ?><span>For Owners</span></h3>
             <p class="text-sm text-slate-600">Update organization profile, post announcements, and maintain income/expense logs.</p>
         </div>
         <div class="glass lg:col-span-4 p-5">
-            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('students', 'ui-icon') ?><span>For Students</span></h3>
+            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('students-owners', 'ui-icon') ?><span>For Students</span></h3>
             <p class="text-sm text-slate-600">Join organizations and monitor complete budget reports with transparency.</p>
         </div>
     </section>
@@ -94,7 +94,7 @@ function handleLoginPage(array $config): void
             <input type="hidden" name="action" value="login">
             <input type="hidden" name="_csrf" value="<?= csrfToken() ?>">
             <input name="email" type="email" placeholder="Email" required class="w-full border rounded px-3 py-2">
-            <input name="password" type="password" placeholder="Password" required class="w-full border rounded px-3 py-2">
+            <input name="password" type="password" placeholder="Password" required data-password-toggle class="w-full border rounded px-3 py-2">
             <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full"><span class="icon-label justify-center"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Login</span></span></button>
         </form>
         <?php if ($showResend): ?>
@@ -136,6 +136,7 @@ function handleRegisterPage(): void
         <p class="text-sm text-slate-600 mb-6">Fill out the form carefully for registration.</p>
 
         <form method="post" id="registerForm" class="space-y-5">
+            <?= csrfField() ?>
             <input type="hidden" name="action" value="register">
             <input type="hidden" name="name" id="registerFullName" value="">
 
@@ -182,7 +183,12 @@ function handleRegisterPage(): void
 
             <div>
                 <label for="registerPassword" class="block text-sm font-semibold mb-2">Password</label>
-                <input id="registerPassword" name="password" type="password" placeholder="Create a secure password" required class="w-full border rounded px-3 py-2">
+                <input id="registerPassword" name="password" type="password" placeholder="Create a secure password" required data-password-toggle class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div>
+                <label for="registerConfirmPassword" class="block text-sm font-semibold mb-2">Confirm Password</label>
+                <input id="registerConfirmPassword" name="confirm_password" type="password" placeholder="Re-enter your password" required minlength="8" data-password-toggle class="w-full border rounded px-3 py-2">
             </div>
 
             <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
@@ -289,7 +295,7 @@ function handleRegisterPage(): void
                     const selectedProgram = programInput.value;
                     const instituteName = programInstituteMap[selectedProgram];
                     institutePreview.textContent = instituteName
-                        ? 'Institute: ' + instituteName + ' (assigned automatically)'
+                        ? 'Institute: ' + instituteName
                         : 'Institute will be assigned from the selected program.';
                 };
 
@@ -298,6 +304,7 @@ function handleRegisterPage(): void
             }
         })();
     </script>
+    <script src="static/js/register-form.js"></script>
     <?php
     renderFooter();
     exit;
@@ -392,12 +399,14 @@ function handleResetPasswordPage(): void
     $tokenValid = false;
     
     if ($token) {
+        $tokenHash = hash('sha256', $token);
         // Verify token exists and is not expired
-        $stmt = $db->prepare('SELECT id, email, reset_expires FROM users WHERE reset_token = ? LIMIT 1');
-        $stmt->execute([$token]);
+        $stmt = $db->prepare('SELECT id, email, reset_expires, reset_token FROM users WHERE reset_token = ? LIMIT 1');
+        $stmt->execute([$tokenHash]);
         $user = $stmt->fetch();
         
-        if ($user && strtotime($user['reset_expires'] ?? '') >= time()) {
+        $storedToken = (string) ($user['reset_token'] ?? '');
+        if ($user && $storedToken !== '' && hash_equals($tokenHash, $storedToken) && strtotime($user['reset_expires'] ?? '') >= time()) {
             $tokenValid = true;
         }
     }
@@ -430,12 +439,12 @@ function handleResetPasswordPage(): void
                 
                 <div>
                     <label for="password" class="block text-sm font-medium text-slate-700 mb-1">New Password</label>
-                    <input id="password" name="password" type="password" placeholder="At least 8 characters" required minlength="8" class="w-full border rounded px-3 py-2">
+                    <input id="password" name="password" type="password" placeholder="At least 8 characters" required minlength="8" data-password-toggle class="w-full border rounded px-3 py-2">
                 </div>
                 
                 <div>
                     <label for="confirm_password" class="block text-sm font-medium text-slate-700 mb-1">Confirm Password</label>
-                    <input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter password" required minlength="8" class="w-full border rounded px-3 py-2">
+                    <input id="confirm_password" name="confirm_password" type="password" placeholder="Re-enter password" required minlength="8" data-password-toggle class="w-full border rounded px-3 py-2">
                 </div>
                 
                 <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded w-full">

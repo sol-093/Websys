@@ -1,0 +1,9 @@
+{
+  "name": "websys/app",
+  "description": "Student Organization Management web application",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "phpmailer/phpmailer": "^6.9"
+  }
+}

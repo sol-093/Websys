@@ -4,6 +4,22 @@ let currentPage = 'home';
 let trendChart = null;
 let financialRankingChart = null;
 
+function syncBodyRoleState() {
+  document.body.classList.toggle('is-authenticated', role !== 'guest');
+}
+
+function uiIcon(name, classes) {
+  const iconClass = classes || 'ui-icon';
+  const icons = {
+    dashboard: '<path d="M8.4 3H4.6C4.03995 3 3.75992 3 3.54601 3.10899C3.35785 3.20487 3.20487 3.35785 3.10899 3.54601C3 3.75992 3 4.03995 3 4.6V8.4C3 8.96005 3 9.24008 3.10899 9.45399C3.20487 9.64215 3.35785 9.79513 3.54601 9.89101C3.75992 10 4.03995 10 4.6 10H8.4C8.96005 10 9.24008 10 9.45399 9.89101C9.64215 9.79513 9.79513 9.64215 9.89101 9.45399C10 9.24008 10 8.96005 10 8.4V4.6C10 4.03995 10 3.75992 9.89101 3.54601C9.79513 3.35785 9.64215 3.20487 9.45399 3.10899C9.24008 3 8.96005 3 8.4 3Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.4 3H15.6C15.0399 3 14.7599 3 14.546 3.10899C14.3578 3.20487 14.2049 3.35785 14.109 3.54601C14 3.75992 14 4.03995 14 4.6V8.4C14 8.96005 14 9.24008 14.109 9.45399C14.2049 9.64215 14.3578 9.79513 14.546 9.89101C14.7599 10 15.0399 10 15.6 10H19.4C19.9601 10 20.2401 10 20.454 9.89101C20.6422 9.79513 20.7951 9.64215 20.891 9.45399C21 9.24008 21 8.96005 21 8.4V4.6C21 4.03995 21 3.75992 20.891 3.54601C20.7951 3.35785 20.6422 3.20487 20.454 3.10899C20.2401 3 19.9601 3 19.4 3Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.4 14H15.6C15.0399 14 14.7599 14 14.546 14.109C14.3578 14.2049 14.2049 14.3578 14.109 14.546C14 14.7599 14 15.0399 14 15.6V19.4C14 19.9601 14 20.2401 14.109 20.454C14.2049 20.6422 14.3578 20.7951 14.546 20.891C14.7599 21 15.0399 21 15.6 21H19.4C19.9601 21 20.2401 21 20.454 20.891C20.6422 20.7951 20.7951 20.6422 20.891 20.454C21 20.2401 21 19.9601 21 19.4V15.6C21 15.0399 21 14.7599 20.891 14.546C20.7951 14.3578 20.6422 14.2049 20.454 14.109C20.2401 14 19.9601 14 19.4 14Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M8.4 14H4.6C4.03995 14 3.75992 14 3.54601 14.109C3.35785 14.2049 3.20487 14.3578 3.10899 14.546C3 14.7599 3 15.0399 3 15.6V19.4C3 19.9601 3 20.2401 3.10899 20.454C3.20487 20.6422 3.35785 20.7951 3.54601 20.891C3.75992 21 4.03995 21 4.6 21H8.4C8.96005 21 9.24008 21 9.45399 20.891C9.64215 20.7951 9.79513 20.6422 9.89101 20.454C10 20.2401 10 19.9601 10 19.4V15.6C10 15.0399 10 14.7599 9.89101 14.546C9.79513 14.3578 9.64215 14.2049 9.45399 14.109C9.24008 14 8.96005 14 8.4 14Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />',
+    register: '<path d="M12 15.5H7.5C6.10444 15.5 5.40665 15.5 4.83886 15.6722C3.56045 16.06 2.56004 17.0605 2.17224 18.3389C2 18.9067 2 19.6044 2 21M19 21V15M16 18H22M14.5 7.5C14.5 9.98528 12.4853 12 10 12C7.51472 12 5.5 9.98528 5.5 7.5C5.5 5.01472 7.51472 3 10 3C12.4853 3 14.5 5.01472 14.5 7.5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />',
+    login: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 21H5.25a1.5 1.5 0 01-1.5-1.5v-15a1.5 1.5 0 011.5-1.5H9" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 16.5L9.75 12l4.5-4.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 12H21" />'
+  };
+
+  const pathMarkup = icons[name] || icons.login;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="${iconClass}" aria-hidden="true">${pathMarkup}</svg>`;
+}
+
 function bindPageNavButtons(scope) {
   if (!scope) return;
   scope.querySelectorAll('[data-page]').forEach((btn) => {
@@ -24,6 +40,7 @@ function showPage(page) {
 
 function setRole(nextRole) {
   role = nextRole;
+  syncBodyRoleState();
   if (nextRole === 'guest') showPage('home');
   if (nextRole === 'student' || nextRole === 'owner' || nextRole === 'admin') showPage('dashboard');
   renderNav();
@@ -64,8 +81,8 @@ function initTrendChart() {
   if (!canvas || typeof Chart === 'undefined') return;
 
   const labels = ['2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02'];
-  const income = [12000, 14500, 16000, 17500, 19000, 21000];
-  const expense = [8000, 9200, 9800, 11000, 12000, 13000];
+  const income = [420000, 310000, 680000, 250000, 910000, 1200000];
+  const expense = [190000, 540000, 360000, 720000, 640000, 980000];
 
   const isDark = document.body.classList.contains('theme-dark');
   const axisColor = isDark ? '#a7f3d0' : '#065f46';
@@ -128,8 +145,8 @@ function initFinancialRankingChart() {
   const canvas = document.getElementById('financialSummaryRankingChart');
   if (!canvas || typeof Chart === 'undefined') return;
 
-  const labels = ['Music Ensemble', 'Computing Society', 'Language Society', 'Environmental Advocates', 'Volunteer Network', 'Athletics Council', 'Entrepreneurship Circle', 'Arts Collective'];
-  const balances = [58249.41, 51423.39, 46795.85, 43078.36, 42618.94, 42522.21, 42190.63, 40278.13];
+  const labels = ['Media and Creators Guild', 'Computing Society', 'Language Society', 'Volunteer Network', 'Athletics Council', 'Environmental Advocates', 'Debate Union', 'Entrepreneurship Circle'];
+  const balances = [1284950.0, 992300.0, 744500.0, 530200.0, 184400.0, 74200.0, -95200.0, -318500.0];
 
   const isDark = document.body.classList.contains('theme-dark');
   const axisColor = isDark ? '#a7f3d0' : '#065f46';
@@ -242,10 +259,10 @@ function renderHomeActions() {
   const el = document.getElementById('homeActions');
   if (role === 'guest') {
     el.innerHTML = `
-      <button class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition" data-page="register">Get Started</button>
-      <button class="border border-emerald-200/50 text-emerald-800 px-5 py-2.5 rounded-lg hover:bg-white/30" data-page="login">Login</button>`;
+      <button class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]" data-page="register"><span class="icon-label">${uiIcon('register', 'ui-icon ui-icon-sm')}<span>Get Started</span></span></button>
+      <button class="border border-emerald-200/50 text-emerald-800 px-5 py-2.5 rounded-lg hover:bg-white/30" data-page="login"><span class="icon-label">${uiIcon('login', 'ui-icon ui-icon-sm')}<span>Login</span></span></button>`;
   } else {
-    el.innerHTML = `<button class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition" data-page="dashboard">Open Dashboard</button>`;
+    el.innerHTML = `<button class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]" data-page="dashboard"><span class="icon-label">${uiIcon('dashboard', 'ui-icon ui-icon-sm')}<span>Open Dashboard</span></span></button>`;
   }
   bindPageNavButtons(el);
 }
@@ -462,7 +479,7 @@ if (myOrgBudgetForm && myOrgBudgetList) {
     }
 
     const row = document.createElement('div');
-    row.className = 'border rounded p-2 flex flex-wrap items-center justify-between gap-2';
+    row.className = 'demo-budget-row flex flex-wrap items-center justify-between gap-2';
 
     const amountClass = type === 'income' ? 'text-green-700' : 'text-red-700';
     row.innerHTML = `
@@ -489,6 +506,7 @@ document.querySelectorAll('#roleControls [data-role]').forEach((btn) => {
 });
 
 renderNav();
+syncBodyRoleState();
 renderHomeActions();
 renderQuickActions();
 applyDashboardRoleVisibility();

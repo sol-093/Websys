@@ -168,6 +168,7 @@ function handleRegisterAction(PDO $db): void
 
     try {
         $activationToken = bin2hex(random_bytes(32));
+        $activationTokenHash = hash('sha256', $activationToken);
         $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
         
         $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, year_level, section, email_verified, activation_token, activation_expires, account_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -181,7 +182,7 @@ function handleRegisterAction(PDO $db): void
             $yearLevel,
             $section,
             0,
-            $activationToken,
+            $activationTokenHash,
             $activationExpires,
             'active'
         ]);
@@ -243,43 +244,83 @@ function handleLoginAction(PDO $db): void
     rateLimitClear($loginRateKey);
     $_SESSION['user_id'] = (int) $candidate['id'];
     session_regenerate_id(true);
+    if ((string) ($candidate['role'] ?? '') === 'student' && (int) ($candidate['onboarding_done'] ?? 0) === 0) {
+        $_SESSION['show_onboarding'] = true;
+    }
     queueLoginUpdatesPopup((int) $candidate['id']);
     auditLog((int) $candidate['id'], 'auth.login_success', 'user', (int) $candidate['id'], 'Email login succeeded');
     setFlash('success', 'Welcome back, ' . $candidate['name'] . '!');
     redirect('?page=dashboard');
 }
 
-function handleVerifyEmailAction(PDO $db): void
+function handleCompleteOnboardingAction(PDO $db, array $user): void
 {
-    $token = trim((string) ($_GET['token'] ?? ''));
-    
+    requireLogin();
+
+    header('Content-Type: application/json; charset=UTF-8');
+
+    if (($user['role'] ?? '') !== 'student') {
+        http_response_code(403);
+        echo json_encode(['ok' => false], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    $stmt = $db->prepare('UPDATE users SET onboarding_done = 1 WHERE id = ?');
+    $stmt->execute([(int) $user['id']]);
+
+    $_SESSION['show_onboarding'] = false;
+
+    echo json_encode(['ok' => true], JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function handleRestartOnboardingAction(PDO $db, array $user): void
+{
+    requireLogin();
+
+    if (($user['role'] ?? '') !== 'student') {
+        setFlash('error', 'Only student accounts can replay onboarding.');
+        redirect('?page=' . urlencode((string) ($_GET['page'] ?? 'dashboard')));
+    }
+
+    $stmt = $db->prepare('UPDATE users SET onboarding_done = 0 WHERE id = ?');
+    $stmt->execute([(int) $user['id']]);
+
+    $_SESSION['show_onboarding'] = true;
+    setFlash('success', 'Onboarding tour restarted.');
+
+    redirect('?page=' . urlencode((string) ($_GET['page'] ?? 'dashboard')));
+}
+
+function handleVerifyEmailAction(PDO $db, ?string $providedToken = null): array
+{
+    $token = trim((string) ($providedToken ?? ($_GET['token'] ?? '')));
+
     if ($token === '') {
-        setFlash('error', 'Invalid verification link.');
-        redirect('?page=login');
+        return ['success' => false, 'error' => 'Invalid verification link.'];
     }
-    
-    $stmt = $db->prepare('SELECT id, name, email, activation_expires FROM users WHERE activation_token = ? AND email_verified = 0 LIMIT 1');
-    $stmt->execute([$token]);
+
+    $tokenHash = hash('sha256', $token);
+    $stmt = $db->prepare('SELECT id, name, email, activation_expires, activation_token FROM users WHERE activation_token = ? AND email_verified = 0 LIMIT 1');
+    $stmt->execute([$tokenHash]);
     $user = $stmt->fetch();
-    
-    if (!$user) {
-        setFlash('error', 'Invalid or expired verification link.');
-        redirect('?page=login');
+
+    $storedToken = (string) ($user['activation_token'] ?? '');
+    if (!$user || $storedToken === '' || !hash_equals($tokenHash, $storedToken)) {
+        return ['success' => false, 'error' => 'Invalid or expired verification link.'];
     }
-    
+
     $expiresAt = (string) ($user['activation_expires'] ?? '');
     if ($expiresAt !== '' && strtotime($expiresAt) < time()) {
-        setFlash('error', 'Verification link has expired. Please request a new one.');
-        redirect('?page=login&show_resend=1');
+        return ['success' => false, 'error' => 'Verification link has expired. Please request a new one.'];
     }
-    
+
     $updateStmt = $db->prepare('UPDATE users SET email_verified = 1, email_verified_at = CURRENT_TIMESTAMP, activation_token = NULL, activation_expires = NULL WHERE id = ?');
     $updateStmt->execute([(int) $user['id']]);
-    
+
     auditLog((int) $user['id'], 'auth.email_verified', 'user', (int) $user['id'], 'Email address verified successfully');
-    
-    setFlash('success', 'Email verified successfully! You can now login.');
-    redirect('?page=login');
+
+    return ['success' => true];
 }
 
 function handleResendVerificationAction(PDO $db): void
@@ -304,10 +345,11 @@ function handleResendVerificationAction(PDO $db): void
     
     if ($user && (int) ($user['email_verified'] ?? 1) === 0) {
         $activationToken = bin2hex(random_bytes(32));
+        $activationTokenHash = hash('sha256', $activationToken);
         $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
         
         $updateStmt = $db->prepare('UPDATE users SET activation_token = ?, activation_expires = ? WHERE id = ?');
-        $updateStmt->execute([$activationToken, $activationExpires, (int) $user['id']]);
+        $updateStmt->execute([$activationTokenHash, $activationExpires, (int) $user['id']]);
         
         sendActivationEmail($user['email'], $user['name'], $activationToken);
         rateLimitIncrement($resendRateKey, 3600);
@@ -344,11 +386,12 @@ function handleForgotPasswordAction(PDO $db): void
     if ($user && in_array($user['account_status'] ?? 'active', ['active', 'pending'], true)) {
         // Generate reset token
         $resetToken = bin2hex(random_bytes(32));
+        $resetTokenHash = hash('sha256', $resetToken);
         $resetExpires = date('Y-m-d H:i:s', strtotime('+1 hour'));
         
         // Update user with reset token
         $updateStmt = $db->prepare('UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?');
-        $updateStmt->execute([$resetToken, $resetExpires, (int) $user['id']]);
+        $updateStmt->execute([$resetTokenHash, $resetExpires, (int) $user['id']]);
         
         // Send password reset email
         sendPasswordResetEmail($user['email'], $user['name'], $resetToken);
@@ -388,12 +431,15 @@ function handleResetPasswordAction(PDO $db): void
         redirect('?page=reset_password&token=' . urlencode($token));
     }
     
-    // Find user by reset token
-    $stmt = $db->prepare('SELECT id, email, name, reset_expires FROM users WHERE reset_token = ? LIMIT 1');
-    $stmt->execute([$token]);
+    $tokenHash = hash('sha256', $token);
+
+    // Find user by reset token hash
+    $stmt = $db->prepare('SELECT id, email, name, reset_expires, reset_token FROM users WHERE reset_token = ? LIMIT 1');
+    $stmt->execute([$tokenHash]);
     $user = $stmt->fetch();
-    
-    if (!$user) {
+
+    $storedToken = (string) ($user['reset_token'] ?? '');
+    if (!$user || $storedToken === '' || !hash_equals($tokenHash, $storedToken)) {
         setFlash('error', 'Invalid or expired password reset link.');
         redirect('?page=login');
     }
@@ -530,6 +576,7 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         
         // Generate new activation token for email verification
         $activationToken = bin2hex(random_bytes(32));
+        $activationTokenHash = hash('sha256', $activationToken);
         $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
         
         // Update user with new email and mark as unverified
@@ -546,7 +593,7 @@ function handleUpdateProfileAction(PDO $db, array $user): void
                 activation_expires = ?
             WHERE id = ?
         ');
-        $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $activationToken, $activationExpires, (int) $user['id']]);
+        $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $activationTokenHash, $activationExpires, (int) $user['id']]);
 
         $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
         if ($removedMemberships !== []) {

@@ -143,6 +143,7 @@ function initializeDatabaseSqlite(PDO $pdo): void
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'student' CHECK(role IN ('admin','student','owner')),
+        onboarding_done INTEGER NOT NULL DEFAULT 0,
         institute TEXT NULL,
         program TEXT NULL,
         year_level INTEGER NULL,
@@ -266,6 +267,7 @@ function initializeDatabaseMySql(PDO $pdo): void
         email VARCHAR(191) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         role ENUM('admin','student','owner') NOT NULL DEFAULT 'student',
+        onboarding_done TINYINT(1) NOT NULL DEFAULT 0,
         institute VARCHAR(191) NULL,
         program VARCHAR(191) NULL,
         year_level TINYINT NULL,
@@ -504,9 +506,22 @@ function tableColumnExists(PDO $pdo, string $table, string $column): bool
     return false;
 }
 
+function addColumnIfNotExists(PDO $pdo, string $table, string $column, string $mysqlDefinition, string $sqliteDefinition): void
+{
+    if (tableColumnExists($pdo, $table, $column)) {
+        return;
+    }
+
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $definition = $driver === 'mysql' ? $mysqlDefinition : $sqliteDefinition;
+    $pdo->exec('ALTER TABLE ' . $table . ' ADD COLUMN ' . $definition);
+}
+
 function ensureAuthEnhancementColumns(PDO $pdo): void
 {
     $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    addColumnIfNotExists($pdo, 'users', 'onboarding_done', 'onboarding_done TINYINT(1) NOT NULL DEFAULT 0', 'onboarding_done INTEGER NOT NULL DEFAULT 0');
 
     if (!tableColumnExists($pdo, 'users', 'email_verified')) {
         if ($driver === 'mysql') {

@@ -8,7 +8,7 @@ function currentUser(): ?array
         return null;
     }
 
-    $stmt = db()->prepare('SELECT id, name, email, role, institute, program, year_level, section, email_verified, account_status, created_at FROM users WHERE id = ?');
+    $stmt = db()->prepare('SELECT id, name, email, role, onboarding_done, institute, program, year_level, section, email_verified, account_status, created_at FROM users WHERE id = ?');
     $stmt->execute([(int) $_SESSION['user_id']]);
     $user = $stmt->fetch();
     if (!$user) {

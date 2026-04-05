@@ -3,9 +3,12 @@
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
 Version: 1.0.0  
-Last Updated: April 3, 2026
+Last Updated: April 6, 2026
 
 Recent Updates:
+- Full baseline comparison summary documented in `docs/reference/CHANGELOG_2026-04-06.md`
+- First-login onboarding tooltip tour for new student users with completion tracking
+- Global command palette search with `Ctrl+K` / `Cmd+K` for users, organizations, and announcements
 - Dashboard redesign with KPI cards, trend charts, and modal drill-downs
 - Organization visibility categories (collegewide, institutewide, program-based)
 - Owner assignment workflow (pending, accepted, declined)
@@ -32,6 +35,7 @@ Recent Updates:
 - Shared custom dropdown rollout: introduced themed click-open dropdown component rendered with Tailwind classes in PHP pages and shared behavior script in static/js/owner-org-switcher.js
 - Transaction history fix: corrected custom dropdown filter bindings to ensure accurate transaction filtering
 - Transaction table readability: increased row separators contrast and row padding in owner transaction history
+- Transaction export update: added CSV export links for owner and admin transaction reports, plus print-friendly report styling
 
 ---
 
@@ -268,6 +272,7 @@ Dashboard
 - Recent announcements and transactions
 - Financial summary per organization
 - Modal views for organizations, announcements, and chart snapshot
+- Global command palette search for fast navigation across users, organizations, and announcements
 
 Announcements
 - Organization announcements feed

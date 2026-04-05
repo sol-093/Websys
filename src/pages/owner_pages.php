@@ -115,6 +115,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                     background: rgba(142, 255, 202, 0.33);
                             <div class="flex gap-2">
                                 <form method="post">
+                                    <?= csrfField() ?>
                                     <input type="hidden" name="action" value="respond_join_request">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
@@ -122,6 +123,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                     <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
                                 </form>
                                 <form method="post">
+                                    <?= csrfField() ?>
                                     <input type="hidden" name="action" value="respond_join_request">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
@@ -168,6 +170,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
             <form method="post" class="grid md:grid-cols-2 gap-3">
+                <?= csrfField() ?>
                 <input type="hidden" name="action" value="update_my_org">
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                 <div>
@@ -188,6 +191,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <div class="bg-white shadow rounded p-4">
                 <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>Post Announcement</span></h2>
                 <form method="post" class="space-y-2">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="add_announcement">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                     <input name="title" placeholder="Title" class="w-full border rounded px-3 py-2" required>
@@ -199,8 +203,9 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <?php foreach ($announcements as $announcement): ?>
                         <div class="border rounded p-2">
                             <div class="font-medium"><?= e($announcement['title']) ?></div>
-                            <div class="text-sm text-emerald-950/80"><?= e($announcement['content']) ?></div>
+                            <div class="text-sm text-slate-700"><?= e($announcement['content']) ?></div>
                             <form method="post" class="mt-2">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete_announcement">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <input type="hidden" name="announcement_id" value="<?= (int) $announcement['id'] ?>">
@@ -215,6 +220,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <div class="bg-white shadow rounded p-4">
                 <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Add Income / Expense</span></h2>
                 <form method="post" enctype="multipart/form-data" class="space-y-2">
+                    <?= csrfField() ?>
                     <input type="hidden" name="action" value="add_transaction">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                     <div class="grid grid-cols-2 gap-2" data-dropdown-root>
@@ -231,7 +237,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                 </ul>
                             </div>
                         </div>
-                        <input type="number" step="0.01" name="amount" placeholder="Amount" class="border rounded px-3 py-2" required>
+                        <input type="number" step="0.01" name="amount" placeholder="Amount" class="border rounded px-3 py-2" data-currency required>
                     </div>
                     <input type="date" name="transaction_date" value="<?= date('Y-m-d') ?>" class="w-full border rounded px-3 py-2" required>
                     <input name="description" placeholder="Description" class="w-full border rounded px-3 py-2" required>
@@ -242,7 +248,12 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
         </div>
 
         <div id="tx-history" class="bg-white shadow rounded p-4 overflow-auto">
-            <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
+                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=csv" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
+                    Export CSV
+                </a>
+            </div>
             <form method="get" action="?page=my_org_manage#tx-history" class="mb-3 flex flex-wrap items-end gap-2" data-dropdown-root onsubmit="const b=this.querySelector('[data-filter-submit]'); if(b){ b.disabled=true; b.textContent='Filtering...'; }">
                 <input type="hidden" name="page" value="my_org_manage">
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -308,6 +319,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                         </td>
                         <td class="py-3 space-y-1 min-w-56">
                             <form method="post" class="grid grid-cols-2 gap-1">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="update_transaction">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
@@ -315,12 +327,13 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                     <option value="income" <?= $row['type'] === 'income' ? 'selected' : '' ?>>Income</option>
                                     <option value="expense" <?= $row['type'] === 'expense' ? 'selected' : '' ?>>Expense</option>
                                 </select>
-                                <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs">
+                                <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs" data-currency>
                                 <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1 text-xs">
                                 <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1 text-xs">
                                 <button class="bg-blue-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
                             </form>
                             <form method="post" onsubmit="return confirm('Delete transaction?')">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete_transaction">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">

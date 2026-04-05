@@ -1,0 +1,124 @@
+# Change Summary (April 6, 2026)
+
+Baseline: `8a74fda` (April 4, 2026: Polish organization modals in light mode)
+Scope: all current workspace updates compared to baseline
+
+## 1) Security and request handling
+- Added centralized security headers and CSP setup during bootstrap.
+- Introduced shared CSRF helper APIs and middleware flow for POST actions.
+- Added reusable CSRF field helper and migrated many forms to use it.
+- Added secure file upload helper with MIME allowlist and size guardrails.
+
+Files:
+- index.php
+- src/core/helpers.php
+- src/pages/admin_pages.php
+- src/pages/community_pages.php
+- src/pages/dashboard_page_markup.php
+- src/pages/owner_pages.php
+- src/pages/public_pages.php
+- src/lib/uploads.php
+
+## 2) Authentication and account flows
+- Added first-login student onboarding state (`onboarding_done`) end-to-end.
+- Added complete onboarding endpoint and replay onboarding endpoint.
+- Hardened token workflows by storing hashed activation/reset tokens.
+- Updated verify/reset handlers to compare hashed tokens safely.
+
+Files:
+- schema.sql
+- src/core/db.php
+- src/core/auth.php
+- src/actions/auth_flows.php
+- index.php
+
+## 3) Navigation and global search
+- Added global command palette search (`Ctrl+K`/`Cmd+K`) for users, organizations, announcements.
+- Added organizations nav shortcut in desktop/mobile menus.
+- Improved mobile nav open/close behavior and responsive nav state.
+
+Files:
+- index.php
+- src/core/layout.php
+
+## 4) Onboarding tour UX
+- Added conditional onboarding tooltip overlay for eligible student sessions.
+- Added guided multi-step targets across dashboard and organizations pages.
+- Added completion persistence and local/session storage coordination.
+- Added footer action to replay onboarding tour for student users.
+
+Files:
+- src/core/layout.php
+- src/pages/dashboard_page_markup.php
+- src/pages/community_pages.php
+- src/actions/auth_flows.php
+- index.php
+
+## 5) Dashboard data and resilience improvements
+- Added month-over-month KPI delta calculations in dashboard data service.
+- Added progress-bar animation hooks and chart fallback messaging.
+- Added empty-state and no-data handling for chart rendering.
+- Added client-side transaction history filtering enhancements.
+
+Files:
+- src/services/dashboard_data.php
+- src/pages/dashboard_page_markup.php
+- static/js/dashboard-page.js
+
+## 6) Reporting and transactions
+- Added CSV export action for transaction reports.
+- Added owner/admin export links in transaction history UIs.
+- Added print-friendly report styling updates.
+
+Files:
+- src/actions/content_actions.php
+- index.php
+- src/pages/owner_pages.php
+- src/pages/admin_pages.php
+- src/core/layout.php
+
+## 7) Email and configuration updates
+- Added SMTP configuration fields to app config.
+- Updated email sending to support PHPMailer when SMTP is configured.
+- Added fallback to PHP mail() when SMTP host is not configured.
+- Added Composer manifest for PHPMailer dependency.
+
+Files:
+- src/core/config.php
+- src/lib/email.php
+- composer.json
+
+## 8) UI and component consistency updates
+- Updated icon set and helper alias for shared icon rendering.
+- Added loading/toast/password-toggle/currency-input shared UX scripts.
+- Refined dark-mode card, modal, and footer visual consistency.
+- Updated static demo assets to mirror current runtime UX direction.
+
+Files:
+- src/core/helpers.php
+- src/core/layout.php
+- src/pages/public_pages.php
+- static/README.md
+- static/demo/system-static-demo.css
+- static/demo/system-static-demo.html
+- static/demo/system-static-demo.js
+
+## 9) Documentation and instruction files
+- Updated project README recent updates list.
+- Added repository-specific Copilot instruction file.
+- Added this dated compare summary for full baseline-to-current traceability.
+
+Files:
+- README.md
+- .github/copilot-instructions.md
+- docs/reference/CHANGELOG_2026-04-06.md
+
+## 10) Net diff size
+- 22 tracked files changed in working tree diff output (`git diff --stat HEAD`).
+- Approximate delta: 3,264 insertions and 250 deletions.
+- Plus newly added files not in that stat before staging:
+  - .github/copilot-instructions.md
+  - composer.json
+  - src/lib/uploads.php
+  - static/js/register-form.js
+  - docs/reference/CHANGELOG_2026-04-06.md

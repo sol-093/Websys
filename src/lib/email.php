@@ -12,25 +12,70 @@ function sendEmail(string $to, string $subject, string $htmlBody, string $textBo
     $config = require __DIR__ . '/../core/config.php';
     $appName = (string) ($config['app_name'] ?? 'Student Organization Management');
     $baseUrl = appBaseUrl($config);
-    
-    $from = 'noreply@campus.local';
-    $headers = [
-        'From' => $from,
-        'Reply-To' => $from,
-        'X-Mailer' => 'PHP/' . phpversion(),
-        'MIME-Version' => '1.0',
-        'Content-Type' => 'text/html; charset=UTF-8',
-    ];
-    
-    $headerString = '';
-    foreach ($headers as $key => $value) {
-        $headerString .= "$key: $value\r\n";
-    }
-    
+
     $emailBody = buildEmailTemplate($subject, $htmlBody, $appName, $baseUrl);
-    
+
+    $smtp = $config['smtp'] ?? [];
+    $smtpHost = (string) ($smtp['host'] ?? '');
+    $smtpPort = (int) ($smtp['port'] ?? 587);
+    $smtpUser = (string) ($smtp['user'] ?? '');
+    $smtpPass = (string) ($smtp['pass'] ?? '');
+    $from = (string) ($smtp['from'] ?? 'noreply@campus.local');
+    $fromName = (string) ($smtp['from_name'] ?? $appName);
+
+    if ($smtpHost === '') {
+        error_log('SMTP_HOST is empty; falling back to PHP mail().');
+
+        $headers = [
+            'From' => $from,
+            'Reply-To' => $from,
+            'X-Mailer' => 'PHP/' . phpversion(),
+            'MIME-Version' => '1.0',
+            'Content-Type' => 'text/html; charset=UTF-8',
+        ];
+
+        $headerString = '';
+        foreach ($headers as $key => $value) {
+            $headerString .= "$key: $value\r\n";
+        }
+
+        try {
+            return mail($to, $subject, $emailBody, $headerString);
+        } catch (Throwable $e) {
+            error_log('Email sending failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     try {
-        return mail($to, $subject, $emailBody, $headerString);
+        $mailerClass = '\\PHPMailer\\PHPMailer\\PHPMailer';
+        if (!class_exists($mailerClass)) {
+            error_log('PHPMailer class not found. Ensure composer dependencies are installed.');
+            return false;
+        }
+
+        $mailer = new $mailerClass(true);
+        $mailer->isSMTP();
+        $mailer->Host = $smtpHost;
+        $mailer->Port = $smtpPort;
+        $mailer->SMTPAuth = $smtpUser !== '';
+
+        if ($mailer->SMTPAuth) {
+            $mailer->Username = $smtpUser;
+            $mailer->Password = $smtpPass;
+        }
+
+        $mailer->SMTPSecure = $smtpPort === 465 ? 'ssl' : 'tls';
+
+        $mailer->CharSet = 'UTF-8';
+        $mailer->setFrom($from, $fromName);
+        $mailer->addAddress($to);
+        $mailer->Subject = $subject;
+        $mailer->isHTML(true);
+        $mailer->Body = $emailBody;
+        $mailer->AltBody = $textBody !== '' ? $textBody : trim(strip_tags($htmlBody));
+
+        return $mailer->send();
     } catch (Throwable $e) {
         error_log('Email sending failed: ' . $e->getMessage());
         return false;

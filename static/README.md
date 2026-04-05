@@ -11,10 +11,12 @@ This folder contains the synced static version of the current frontend UX, inclu
 ## Synced Coverage
 
 - Public pages: home, login, register.
+- Home-page icon set synced with live UI updates (dashboard, register/get-started, owners, announcements).
 - Role-based dashboard navigation and quick actions.
 - Dashboard sections: overview, finance status, monthly trend, live activity, organizations, recent reports, and financial summary.
 - Modal interactions: terms and conditions, organizations list, announcements list, and financial health snapshot.
 - Light/dark theme persistence via localStorage.
+- Layered background treatment synced with the runtime app, including role-aware guest/authenticated variants and texture overlay.
 - Chart.js trend and financial ranking chart theme adaptation.
 - Footer blocks aligned with the live frontend information architecture.
 

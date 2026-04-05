@@ -11,15 +11,17 @@ function uiIcon(string $name, string $classes = 'ui-icon', bool $ariaHidden = tr
 {
     $icons = [
         'home' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5L12 3l9 7.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 9.75V21h13.5V9.75" />',
-        'dashboard' => '<rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="5" rx="1.5" /><rect x="13" y="10" width="8" height="11" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" />',
+        'dashboard' => '<path d="M8.4 3H4.6C4.03995 3 3.75992 3 3.54601 3.10899C3.35785 3.20487 3.20487 3.35785 3.10899 3.54601C3 3.75992 3 4.03995 3 4.6V8.4C3 8.96005 3 9.24008 3.10899 9.45399C3.20487 9.64215 3.35785 9.79513 3.54601 9.89101C3.75992 10 4.03995 10 4.6 10H8.4C8.96005 10 9.24008 10 9.45399 9.89101C9.64215 9.79513 9.79513 9.64215 9.89101 9.45399C10 9.24008 10 8.96005 10 8.4V4.6C10 4.03995 10 3.75992 9.89101 3.54601C9.79513 3.35785 9.64215 3.20487 9.45399 3.10899C9.24008 3 8.96005 3 8.4 3Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.4 3H15.6C15.0399 3 14.7599 3 14.546 3.10899C14.3578 3.20487 14.2049 3.35785 14.109 3.54601C14 3.75992 14 4.03995 14 4.6V8.4C14 8.96005 14 9.24008 14.109 9.45399C14.2049 9.64215 14.3578 9.79513 14.546 9.89101C14.7599 10 15.0399 10 15.6 10H19.4C19.9601 10 20.2401 10 20.454 9.89101C20.6422 9.79513 20.7951 9.64215 20.891 9.45399C21 9.24008 21 8.96005 21 8.4V4.6C21 4.03995 21 3.75992 20.891 3.54601C20.7951 3.35785 20.6422 3.20487 20.454 3.10899C20.2401 3 19.9601 3 19.4 3Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M19.4 14H15.6C15.0399 14 14.7599 14 14.546 14.109C14.3578 14.2049 14.2049 14.3578 14.109 14.546C14 14.7599 14 15.0399 14 15.6V19.4C14 19.9601 14 20.2401 14.109 20.454C14.2049 20.6422 14.3578 20.7951 14.546 20.891C14.7599 21 15.0399 21 15.6 21H19.4C19.9601 21 20.2401 21 20.454 20.891C20.6422 20.7951 20.7951 20.6422 20.891 20.454C21 20.2401 21 19.9601 21 19.4V15.6C21 15.0399 21 14.7599 20.891 14.546C20.7951 14.3578 20.6422 14.2049 20.454 14.109C20.2401 14 19.9601 14 19.4 14Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /><path d="M8.4 14H4.6C4.03995 14 3.75992 14 3.54601 14.109C3.35785 14.2049 3.20487 14.3578 3.10899 14.546C3 14.7599 3 15.0399 3 15.6V19.4C3 19.9601 3 20.2401 3.10899 20.454C3.20487 20.6422 3.35785 20.7951 3.54601 20.891C3.75992 21 4.03995 21 4.6 21H8.4C8.96005 21 9.24008 21 9.45399 20.891C9.64215 20.7951 9.79513 20.6422 9.89101 20.454C10 20.2401 10 19.9601 10 19.4V15.6C10 15.0399 10 14.7599 9.89101 14.546C9.79513 14.3578 9.64215 14.2049 9.45399 14.109C9.24008 14 8.96005 14 8.4 14Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />',
         'orgs' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 21V8.25L12 3l7.5 5.25V21" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 21v-5.25h6V21" />',
         'students' => '<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 7.5a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a5.25 5.25 0 0110.5 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M18.75 9.75a2.25 2.25 0 100-4.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 20.25a4.5 4.5 0 014.5-4.5" />',
+        'owner' => '<path d="M20 21C20 19.6044 20 18.9067 19.8278 18.3389C19.44 17.0605 18.4395 16.06 17.1611 15.6722C16.5933 15.5 15.8956 15.5 14.5 15.5H9.5C8.10444 15.5 7.40665 15.5 6.83886 15.6722C5.56045 16.06 4.56004 17.0605 4.17224 18.3389C4 18.9067 4 19.6044 4 21M16.5 7.5C16.5 9.98528 14.4853 12 12 12C9.51472 12 7.5 9.98528 7.5 7.5C7.5 5.01472 9.51472 3 12 3C14.4853 3 16.5 5.01472 16.5 7.5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />',
+        'students-owners' => '<path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M4.5 17H4a1 1 0 0 1-1-1 3 3 0 0 1 3-3h1m0-3.05A2.5 2.5 0 1 1 9 5.5M19.5 17h.5a1 1 0 0 0 1-1 3 3 0 0 0-3-3h-1m0-3.05a2.5 2.5 0 1 0-2-4.45m.5 13.5h-7a1 1 0 0 1-1-1 3 3 0 0 1 3-3h3a3 3 0 0 1 3 3 1 1 0 0 1-1 1Zm-1-9.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z" />',
         'requests' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15v10.5h-15z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5l7.5 5.25L19.5 7.5" />',
         'audit' => '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 20v-9l-4 1.125V20h4Zm0 0h8m-8 0V6.66667M16 20v-9l4 1.125V20h-4Zm0 0V6.66667M18 8l-6-4-6 4m5 1h2m-2 3h2" />',
         'my-org' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 21V6.75A1.5 1.5 0 017.5 5.25h9A1.5 1.5 0 0118 6.75V21" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9h4.5M9.75 12.75h4.5" />',
         'logout' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 21H5.25a1.5 1.5 0 01-1.5-1.5v-15a1.5 1.5 0 011.5-1.5H9" /><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 16.5L21 12l-4.5-4.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M21 12H9.75" />',
         'login' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 21H5.25a1.5 1.5 0 01-1.5-1.5v-15a1.5 1.5 0 011.5-1.5H9" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 16.5L9.75 12l4.5-4.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 12H21" />',
-        'register' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.5h3m-1.5-1.5v3" />',
+        'register' => '<path d="M12 15.5H7.5C6.10444 15.5 5.40665 15.5 4.83886 15.6722C3.56045 16.06 2.56004 17.0605 2.17224 18.3389C2 18.9067 2 19.6044 2 21M19 21V15M16 18H22M14.5 7.5C14.5 9.98528 12.4853 12 10 12C7.51472 12 5.5 9.98528 5.5 7.5C5.5 5.01472 7.51472 3 10 3C12.4853 3 14.5 5.01472 14.5 7.5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />',
         'user' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />',
         'security' => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2.25" /><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 21h10.5a1.5 1.5 0 001.5-1.5v-6a1.5 1.5 0 00-1.5-1.5H6.75a1.5 1.5 0 00-1.5 1.5v6a1.5 1.5 0 001.5 1.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 12V7.5a3.75 3.75 0 017.5 0V12" />',
         'verify' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75l2.25 2.25 4.5-4.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 9.75a9.75 9.75 0 01-9.75 9.75A9.75 9.75 0 010 9.75 9.75 9.75 0 019.75 0 9.75 9.75 0 0119.5 9.75z" />',
@@ -31,7 +33,7 @@ function uiIcon(string $name, string $classes = 'ui-icon', bool $ariaHidden = tr
         'delete' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 7.5h15" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 7.5V5.25h6V7.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5l.75 12.75h7.5L16.5 7.5" />',
         'view' => '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6z" /><circle cx="12" cy="12" r="2.25" />',
         'refresh' => '<path stroke-linecap="round" stroke-linejoin="round" d="M18.75 8.25V3.75h-4.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12a7.5 7.5 0 10-2.197 5.303L18.75 15.75" />',
-        'announce' => '<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 11.25V8.625a1.5 1.5 0 011.125-1.45l10.5-2.625a1.5 1.5 0 011.875 1.456V18a1.5 1.5 0 01-1.875 1.456l-10.5-2.625A1.5 1.5 0 014.5 15.375V12" /><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 16.5v2.25a1.5 1.5 0 001.5 1.5h1.5" />',
+        'announce' => '<path stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46" />',
         'search' => '<circle cx="10.5" cy="10.5" r="5.25" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 14.25L19.5 19.5" />',
         'open' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9.75 6.75h7.5v7.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L8.25 15.75" /><path stroke-linecap="round" stroke-linejoin="round" d="M18 12v6a1.5 1.5 0 01-1.5 1.5h-10.5A1.5 1.5 0 014.5 18V7.5A1.5 1.5 0 016 6h6" />',
         'pin' => '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3.75l12 12-2.25 2.25-4.5-4.5-4.5 6V13.5L3.75 8.25 8.25 3.75z" />',
@@ -47,6 +49,11 @@ function uiIcon(string $name, string $classes = 'ui-icon', bool $ariaHidden = tr
     $ariaLabel = $label !== null ? ' aria-label="' . e($label) . '" role="img"' : '';
 
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="' . e($classes) . '" aria-hidden="' . $aria . '"' . $ariaLabel . '>' . $pathMarkup . '</svg>';
+}
+
+function icon(string $name, string $classes = 'ui-icon', bool $ariaHidden = true, ?string $label = null): string
+{
+    return uiIcon($name, $classes, $ariaHidden, $label);
 }
 
 function redirect(string $url): void
@@ -86,6 +93,17 @@ function csrfToken(): string
     return (string) $_SESSION['csrf_token'];
 }
 
+function csrfField(): string
+{
+    return '<input type="hidden" name="_csrf" value="' . e(csrfToken()) . '">';
+}
+
+function verifyCsrf(): bool
+{
+    $token = (string) ($_POST['_csrf'] ?? '');
+    return verifyCsrfToken($token);
+}
+
 function verifyCsrfToken(?string $token): bool
 {
     if ($token === null || $token === '') {
@@ -98,6 +116,21 @@ function verifyCsrfToken(?string $token): bool
     }
 
     return hash_equals($sessionToken, $token);
+}
+
+function csrfMiddleware(): void
+{
+    if (!isPost()) {
+        return;
+    }
+
+    if (verifyCsrf()) {
+        return;
+    }
+
+    setFlash('error', 'Invalid form session. Please try again.');
+    $fallbackPage = (string) ($_GET['page'] ?? (currentUser() ? 'dashboard' : 'login'));
+    redirect('?page=' . urlencode($fallbackPage));
 }
 
 function rateLimitIsBlocked(string $key, int $maxAttempts, int $windowSeconds): bool

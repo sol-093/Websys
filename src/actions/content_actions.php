@@ -244,3 +244,71 @@ function handleDeleteTransactionAction(PDO $db, array $user): void
     }
     redirect('?page=my_org&org_id=' . (int) ($org['id'] ?? 0));
 }
+
+function handleExportTransactionsAction(PDO $db, array $user): void
+{
+    requireLogin();
+
+    if (($_GET['format'] ?? '') !== 'csv') {
+        setFlash('error', 'Unsupported export format.');
+        redirect('?page=' . urlencode((string) ($_GET['page'] ?? 'dashboard')));
+    }
+
+    $orgId = (int) ($_GET['org_id'] ?? 0);
+    $org = null;
+
+    if (($user['role'] ?? '') === 'admin') {
+        $orgStmt = $db->prepare('SELECT id, name FROM organizations WHERE id = ? LIMIT 1');
+        $orgStmt->execute([$orgId]);
+        $org = $orgStmt->fetch();
+    } elseif (($user['role'] ?? '') === 'owner') {
+        $org = getOwnedOrganizationById((int) $user['id'], $orgId);
+    }
+
+    if (!$org) {
+        setFlash('error', 'You do not have access to export that organization.');
+        redirect('?page=' . urlencode((string) ($_GET['page'] ?? 'dashboard')) . ($orgId > 0 ? '&org_id=' . $orgId : ''));
+    }
+
+    $stmt = $db->prepare('SELECT type, amount, description, transaction_date, receipt_path FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
+    $stmt->execute([(int) $org['id']]);
+    $transactions = $stmt->fetchAll();
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $orgName = (string) ($org['name'] ?? 'organization');
+    $slugSource = preg_replace('/[^A-Za-z0-9]+/', '-', $orgName) ?? '';
+    $slug = strtolower(trim($slugSource, '-'));
+    if ($slug === '') {
+        $slug = 'organization';
+    }
+    $filename = $slug . '-transactions-' . date('Y-m-d') . '.csv';
+
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $output = fopen('php://output', 'wb');
+    if ($output === false) {
+        exit;
+    }
+
+    echo "\xEF\xBB\xBF";
+    fputcsv($output, ['Date', 'Type', 'Amount', 'Description', 'Receipt Path']);
+
+    foreach ($transactions as $row) {
+        fputcsv($output, [
+            (string) ($row['transaction_date'] ?? ''),
+            (string) ($row['type'] ?? ''),
+            number_format((float) ($row['amount'] ?? 0), 2, '.', ''),
+            (string) ($row['description'] ?? ''),
+            (string) ($row['receipt_path'] ?? ''),
+        ]);
+    }
+
+    fclose($output);
+    exit;
+}

@@ -36,5 +36,13 @@ return [
         'client_id' => (string) $env('GOOGLE_CLIENT_ID', ''),
         'client_secret' => (string) $env('GOOGLE_CLIENT_SECRET', ''),
     ],
+    'smtp' => [
+        'host' => (string) $env('SMTP_HOST', ''),
+        'port' => (int) $env('SMTP_PORT', 587),
+        'user' => (string) $env('SMTP_USER', ''),
+        'pass' => (string) $env('SMTP_PASS', ''),
+        'from' => (string) $env('SMTP_FROM', 'noreply@campus.local'),
+        'from_name' => (string) $env('SMTP_FROM_NAME', (string) $env('APP_NAME', 'Student Organization Management')),
+    ],
     'base_url' => (string) $env('BASE_URL', (string) $env('APP_URL', '')),
 ];

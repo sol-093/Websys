@@ -1,21 +1,39 @@
 <div class="dashboard-shell space-y-3">
+    <?php
+        $renderDeltaBadge = static function (float $deltaPct, bool $hasPreviousData): void {
+            if (!$hasPreviousData || abs($deltaPct) < 0.0001) {
+                echo '<div class="text-xs text-gray-500 mt-1">—</div>';
+                return;
+            }
+
+            if ($deltaPct > 0) {
+                echo '<div class="text-xs text-emerald-600 mt-1">↑ ' . number_format($deltaPct, 1) . '%</div>';
+                return;
+            }
+
+            echo '<div class="text-xs text-red-500 mt-1">↓ ' . number_format(abs($deltaPct), 1) . '%</div>';
+        };
+    ?>
+
     <section class="grid xl:grid-cols-12 gap-3">
         <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                     <div class="dashboard-kicker">Overview</div>
                     <h1 class="dashboard-headline modern-title">Operations are on track, budgets are transparent, and every organization is in sync.</h1>
-                    <p class="dashboard-copy mt-3">Welcome, <?= e($user['name']) ?>. Track collections, spending, announcements, and ownership activity from one focused workspace.</p>
+                    <p id="dashboardWelcomeMessage" class="dashboard-copy mt-3">Welcome, <?= e($user['name']) ?>. Track collections, spending, announcements, and ownership activity from one focused workspace.</p>
                 </div>
                 <div class="dashboard-stamp"><?= e($dashboardTimestamp) ?></div>
             </div>
             <div class="dashboard-metric-grid mt-4">
                 <div class="dashboard-metric-card">
                     <div class="dashboard-metric-value">₱<?= number_format($kpiIncome, 2) ?></div>
+                    <?php $renderDeltaBadge((float) $income_delta_pct, ((int) $incomePreviousMonthCount) > 0); ?>
                     <div class="dashboard-metric-label">Total income recorded</div>
                 </div>
                 <div class="dashboard-metric-card">
                     <div class="dashboard-metric-value <?= $kpiBalance >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($kpiBalance, 2) ?></div>
+                    <?php $renderDeltaBadge((float) $balance_delta_pct, ((int) $previousMonthTransactionCount) > 0); ?>
                     <div class="dashboard-metric-label">Current net balance</div>
                 </div>
                 <div class="dashboard-metric-card">
@@ -25,7 +43,7 @@
             </div>
         </div>
 
-        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+        <div id="dashboardBudgetTransparencySection" class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
             <h2 class="dashboard-section-title">Finance status</h2>
             <p class="dashboard-section-copy mt-1">A compact reading of spend, balance, and workload based on live records.</p>
             <div class="mt-4 space-y-3">
@@ -34,14 +52,14 @@
                         <span class="dashboard-stat-label">Expense share of income</span>
                         <span class="dashboard-stat-value"><?= $expenseRatio ?>%</span>
                     </div>
-                    <div class="dashboard-progress mt-3"><span style="width: <?= $expenseRatio ?>%"></span></div>
+                    <div class="dashboard-progress mt-3"><span style="width: 0%" data-width="<?= (int) $expenseRatio ?>"></span></div>
                 </div>
                 <div>
                     <div class="dashboard-stat-row">
                         <span class="dashboard-stat-label">Balance retained</span>
                         <span class="dashboard-stat-value"><?= $balanceRatio ?>%</span>
                     </div>
-                    <div class="dashboard-progress mt-3"><span style="width: <?= $balanceRatio ?>%"></span></div>
+                    <div class="dashboard-progress mt-3"><span style="width: 0%" data-width="<?= (int) $balanceRatio ?>"></span></div>
                 </div>
                 <div class="dashboard-stat-list pt-1">
                     <div class="dashboard-stat-row">
@@ -62,7 +80,7 @@
     </section>
 
     <?php if (count($pendingAssignments) > 0): ?>
-        <section class="glass dashboard-panel p-4 md:p-4">
+        <section id="pending-assignments" class="glass dashboard-panel p-4 md:p-4">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h2 class="dashboard-section-title">Pending assignments</h2>
@@ -79,12 +97,14 @@
                         </div>
                         <div class="flex gap-2">
                             <form method="post">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="respond_owner_assignment">
                                 <input type="hidden" name="assignment_id" value="<?= (int) $assignment['id'] ?>">
                                 <input type="hidden" name="decision" value="accept">
                                 <button class="bg-emerald-600 text-white px-3 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Accept</span></span></button>
                             </form>
                             <form method="post">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="respond_owner_assignment">
                                 <input type="hidden" name="assignment_id" value="<?= (int) $assignment['id'] ?>">
                                 <input type="hidden" name="decision" value="decline">
@@ -110,6 +130,7 @@
             <div class="dashboard-metric-grid mb-3">
                 <div class="dashboard-metric-card">
                     <div class="dashboard-metric-value text-red-300">₱<?= number_format($kpiExpense, 2) ?></div>
+                    <?php $renderDeltaBadge((float) $expenses_delta_pct, ((int) $expensePreviousMonthCount) > 0); ?>
                     <div class="dashboard-metric-label">Expense total</div>
                 </div>
                 <div class="dashboard-metric-card">
@@ -122,6 +143,9 @@
                 </div>
             </div>
             <canvas id="trendChart" height="112"></canvas>
+            <p id="trendChartFallback" class="hidden mt-3 rounded border border-amber-300/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-100" role="status">
+                The trend graph is temporarily unavailable. Dashboard data remains up to date below.
+            </p>
             <div class="trend-insight-grid mt-5 grid md:grid-cols-3 gap-2">
                 <div class="dashboard-feed-item trend-insight-card">
                     <span class="dashboard-feed-dot"></span>
@@ -152,7 +176,7 @@
             </div>
         </div>
 
-        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+        <div id="dashboardAnnouncementsSection" class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
             <div class="flex items-center justify-between gap-3 mb-3">
                 <div>
                     <h2 class="dashboard-section-title">Live activity</h2>
@@ -206,6 +230,7 @@
                         </div>
                         <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                             <form method="post">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="join_org">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <?php
@@ -330,6 +355,7 @@
                         </div>
                         <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                             <form method="post">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="join_org">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                 <?php
@@ -382,6 +408,7 @@
                         <div class="text-sm mt-1"><?= e($item['content']) ?></div>
                         <?php if (($user['role'] ?? '') === 'admin'): ?>
                             <form method="post" class="mt-2">
+                                <?= csrfField() ?>
                                 <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
                                 <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
                                 <input type="hidden" name="return_page" value="dashboard">
@@ -425,6 +452,9 @@
                         <h4 class="dashboard-section-title">Top Organizations by Net Balance</h4>
                         <p class="dashboard-section-copy mt-1">Higher bars indicate stronger surplus after expenses.</p>
                         <canvas id="financialSummaryRankingChart" height="165"></canvas>
+                        <p id="financialSummaryRankingFallback" class="hidden mt-2 rounded border border-amber-300/40 bg-amber-500/15 px-3 py-2 text-xs text-amber-100" role="status">
+                            Chart preview is temporarily unavailable. Use the summary table for current values.
+                        </p>
                         <div class="mt-2 grid sm:grid-cols-3 gap-1">
                             <div class="dashboard-feed-item trend-insight-card">
                                 <div>

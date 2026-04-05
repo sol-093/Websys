@@ -41,6 +41,7 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
                                     <p class="text-sm mt-2"><?= e($item['content']) ?></p>
                                     <?php if (($user['role'] ?? '') === 'admin'): ?>
                                         <form method="post" class="mt-2">
+                                            <?= csrfField() ?>
                                             <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
                                             <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
                                             <input type="hidden" name="return_page" value="announcements">
@@ -147,6 +148,7 @@ function handleOrganizationsPage(PDO $db, array $user): void
                     </div>
                     <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                         <form method="post">
+                            <?= csrfField() ?>
                             <input type="hidden" name="action" value="join_org">
                             <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                             <?php
@@ -170,7 +172,7 @@ function handleOrganizationsPage(PDO $db, array $user): void
                                 }
                                 $joinIcon = !$canJoin ? 'rejected' : ($isJoined ? 'approved' : ($requestStatus === 'pending' ? 'pending' : 'requests'));
                             ?>
-                            <button class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                            <button data-tour="join-button" class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
                                 <span class="icon-label"><?= uiIcon($joinIcon, 'ui-icon ui-icon-sm') ?><span><?= $label ?></span></span>
                             </button>
                         </form>
@@ -373,6 +375,7 @@ function handleProfilePage(array $user): void
                             <input type="password" 
                                    id="current_password" 
                                    name="current_password" 
+                                data-password-toggle
                                    required
                                    class="w-full border rounded px-3 py-2">
                         </div>
@@ -382,6 +385,7 @@ function handleProfilePage(array $user): void
                             <input type="password" 
                                    id="new_password" 
                                    name="new_password" 
+                                data-password-toggle
                                    required
                                    minlength="8"
                                    class="w-full border rounded px-3 py-2">
@@ -393,6 +397,7 @@ function handleProfilePage(array $user): void
                             <input type="password" 
                                    id="confirm_password" 
                                    name="confirm_password" 
+                                data-password-toggle
                                    required
                                    minlength="8"
                                    class="w-full border rounded px-3 py-2">
