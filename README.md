@@ -2,7 +2,7 @@
 
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
-Version: 1.0.0  
+Version: 1.1.0  
 Last Updated: April 6, 2026
 
 Recent Updates:
@@ -37,28 +37,44 @@ Recent Updates:
 - Transaction table readability: increased row separators contrast and row padding in owner transaction history
 - Transaction export update: added CSV export links for owner and admin transaction reports, plus print-friendly report styling
 
+Version History
+
+- 1.1.0 (2026-04-06)
+    - Commit: b783bce
+    - Added onboarding tour + replay control, global search palette, security hardening, SMTP/PHPMailer path, upload safety helper, report export updates, and full documentation refresh.
+- 1.0.3 (2026-04-04)
+    - Commit: 8a74fda
+    - Polished organization modal behavior and light-mode presentation details.
+- 1.0.2 (2026-04-03)
+    - Commits: dfe17e5, cbf54ad
+    - Added organization membership automation, profile integrity updates, dashboard/dropdown improvements, and seed/doc refinements.
+- 1.0.1 (2026-03-28)
+    - Commits: 9e6ec8c, d906ec8, a9f604d, 1a6f8e1, 5f79c64, cb63c39, 9f59665, 55a74e9
+    - Refined registration and consent UX, improved dark theme treatment, and adjusted footer/layout polish.
+
 ---
 
 Table of Contents
 
-1. Overview
-2. Quick Start
-3. Installation
-4. Configuration
-5. Default Credentials
-6. Project Structure
-7. Post-Reorg Map
-8. Features
-9. User Roles
-10. Technology Stack
-11. Database Setup
-12. Security Features
-13. Routes and Actions
-14. File Management
-15. Development Guide
-16. Troubleshooting
-17. Documentation
-18. Support
+1. Version History
+2. Overview
+3. Quick Start
+4. Installation
+5. Configuration
+6. Default Credentials
+7. Project Structure
+8. Post-Reorg Map
+9. Features
+10. User Roles
+11. Technology Stack
+12. Database Setup
+13. Security Features
+14. Routes and Actions
+15. File Management
+16. Development Guide
+17. Troubleshooting
+18. Documentation
+19. Support
 
 ---
 
@@ -621,28 +637,4 @@ Internal academic use.
 
 ---
 
-Version History
-
-Version 1.0.0 (March 7, 2026)
-- Consolidated dashboard and role-based workflows
-- Added request-driven finance edits/deletes
-- Added owner assignment and join request flows
-- Added audit logs and Google OAuth support
-
-Version 1.0.1 (March 28, 2026)
-- Updated the shared admin-facing icon (`uiIcon('audit')`) to use the new admin logo SVG across all pages where it appears
-
-Version 1.0.2 (March 28, 2026)
-- Added a shared multi-column footer in `renderFooter()` with platform, role-tool, governance, and support sections
-- Footer links now adapt by authentication state and role (admin, owner, student, guest)
-
-Version 1.0.3 (March 28, 2026)
-- Fixed footer Data Privacy Notice link to open the registration privacy consent flow directly
-- Added query-parameter support on the register page so `privacy=1` auto-opens the privacy modal
-
-Version 1.0.4 (March 28, 2026)
-- Updated shared layout shell so short pages keep the footer at the viewport bottom (including login page)
-
-Version 1.0.5 (March 28, 2026)
-- Simplified footer bottom bar by removing icon shortcuts
-- Reduced footer vertical spacing for a more compact layout
+Version history is maintained in the commit-based section near the top of this README.

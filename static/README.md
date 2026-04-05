@@ -2,6 +2,24 @@
 
 This folder contains the synced static version of the current frontend UX, including dashboard visuals, modal flows, theme switching, and chart interactions.
 
+Version: 1.1.0  
+Last Updated: April 6, 2026
+
+## Static Version History
+
+- 1.1.0 (2026-04-06)
+	- Commit: b783bce
+	- Synced current runtime UX updates including refreshed visual shell, icon updates, dashboard/chart behavior enhancements, and static docs alignment.
+- 1.0.3 (2026-04-04)
+	- Commit: 8a74fda
+	- Synced organization modal polish and light-mode visual adjustments.
+- 1.0.2 (2026-04-03)
+	- Commits: dfe17e5, cbf54ad
+	- Synced dashboard/dropdown refinements and broader realism/content updates.
+- 1.0.1 (2026-03-28)
+	- Commits: 9e6ec8c, d906ec8, a9f604d, 1a6f8e1, 5f79c64, cb63c39, 9f59665, 55a74e9
+	- Synced registration UX refinements, dark theme polish, and footer layout adjustments.
+
 ## Files
 
 - `demo/system-static-demo.html`
@@ -13,9 +31,12 @@ This folder contains the synced static version of the current frontend UX, inclu
 - Public pages: home, login, register.
 - Home-page icon set synced with live UI updates (dashboard, register/get-started, owners, announcements).
 - Role-based dashboard navigation and quick actions.
+- Global command palette simulation (`Ctrl+K` / `Cmd+K`) with users, organizations, and announcements results.
+- First-login student onboarding tour simulation, including footer replay control.
 - Dashboard sections: overview, finance status, monthly trend, live activity, organizations, recent reports, and financial summary.
 - Modal interactions: terms and conditions, organizations list, announcements list, and financial health snapshot.
 - Light/dark theme persistence via localStorage.
+- Shared toast notifications and password visibility toggles in auth forms.
 - Layered background treatment synced with the runtime app, including role-aware guest/authenticated variants and texture overlay.
 - Chart.js trend and financial ranking chart theme adaptation.
 - Footer blocks aligned with the live frontend information architecture.
