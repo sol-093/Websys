@@ -6,6 +6,10 @@ Version: 1.1.0
 Last Updated: April 6, 2026
 
 Recent Updates:
+- Navbar active-state hotfix: Organizations no longer highlights Dashboard at the same time
+- Onboarding stability hotfix: improved step fallback/completion behavior to prevent repeated or stuck tours
+- Static demo onboarding hotfix: improved resume/completion state and tooltip positioning reliability
+- Added presentation-ready static brief: `static/FRONTEND_IDEAS.md`
 - Full baseline comparison summary documented in `docs/reference/CHANGELOG_2026-04-06.md`
 - First-login onboarding tooltip tour for new student users with completion tracking
 - Global command palette search with `Ctrl+K` / `Cmd+K` for users, organizations, and announcements

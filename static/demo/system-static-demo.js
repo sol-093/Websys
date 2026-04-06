@@ -677,6 +677,9 @@ function startOnboardingTour(forceRestart) {
 
   const existingLayer = document.querySelector('.onboarding-layer');
   if (existingLayer) {
+    if (!forceRestart) {
+      return;
+    }
     existingLayer.remove();
   }
 
@@ -688,7 +691,8 @@ function startOnboardingTour(forceRestart) {
     { target: '#dashboardBudgetTransparencySection', title: 'Budget transparency', body: 'Use this section to understand spending and retained balance.' }
   ];
 
-  let stepIndex = 0;
+  const savedStep = Number.parseInt(sessionStorage.getItem(onboardingStepKey) || '0', 10);
+  let stepIndex = Number.isFinite(savedStep) && savedStep >= 0 ? savedStep : 0;
   const root = document.createElement('div');
   root.className = 'onboarding-layer';
   root.innerHTML = '<div class="onboarding-backdrop" aria-hidden="true"></div>';
@@ -711,34 +715,43 @@ function startOnboardingTour(forceRestart) {
     return document.querySelector(selector);
   };
 
+  const completeOnboarding = function () {
+    localStorage.setItem(onboardingStorageKey, '1');
+    sessionStorage.removeItem(onboardingStepKey);
+    root.remove();
+    showToast('Onboarding completed.', 'Success');
+  };
+
   const renderStep = function () {
     const step = steps[stepIndex];
     if (!step) {
-      localStorage.setItem(onboardingStorageKey, '1');
-      sessionStorage.removeItem(onboardingStepKey);
-      root.remove();
-      showToast('Onboarding completed.', 'Success');
+      completeOnboarding();
       return;
     }
 
     const target = getStepTarget(step.target);
     if (!target) {
       stepIndex += 1;
+      sessionStorage.setItem(onboardingStepKey, String(stepIndex));
       renderStep();
       return;
     }
 
-    const rect = target.getBoundingClientRect();
     target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    focus.style.top = Math.max(8, rect.top - 6) + 'px';
-    focus.style.left = Math.max(8, rect.left - 6) + 'px';
-    focus.style.width = Math.min(window.innerWidth - 16, rect.width + 12) + 'px';
-    focus.style.height = Math.min(window.innerHeight - 16, rect.height + 12) + 'px';
 
-    const top = Math.min(window.innerHeight - 190, rect.bottom + 14);
-    const left = Math.max(12, Math.min(rect.left, window.innerWidth - 340));
-    tooltip.style.top = top + 'px';
-    tooltip.style.left = left + 'px';
+    const placeTooltip = function () {
+      const rect = target.getBoundingClientRect();
+
+      focus.style.top = Math.max(8, rect.top - 6) + 'px';
+      focus.style.left = Math.max(8, rect.left - 6) + 'px';
+      focus.style.width = Math.min(window.innerWidth - 16, rect.width + 12) + 'px';
+      focus.style.height = Math.min(window.innerHeight - 16, rect.height + 12) + 'px';
+
+      const top = Math.max(12, Math.min(window.innerHeight - 190, rect.bottom + 14));
+      const left = Math.max(12, Math.min(rect.left, window.innerWidth - 340));
+      tooltip.style.top = top + 'px';
+      tooltip.style.left = left + 'px';
+    };
 
     tooltip.innerHTML =
       '<p class="onboarding-title">' + step.title + '</p>' +
@@ -754,6 +767,8 @@ function startOnboardingTour(forceRestart) {
         renderStep();
       });
     }
+
+    window.setTimeout(placeTooltip, 220);
   };
 
   renderStep();

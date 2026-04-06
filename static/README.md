@@ -2,11 +2,15 @@
 
 This folder contains the synced static version of the current frontend UX, including dashboard visuals, modal flows, theme switching, and chart interactions.
 
-Version: 1.1.0  
+Version: 1.1.1  
 Last Updated: April 6, 2026
 
 ## Static Version History
 
+- 1.1.1 (2026-04-06)
+	- Commit: pending (current working tree)
+	- Fixed static onboarding reliability (resume state, missing-target progression, tooltip placement timing).
+	- Added teacher-facing presentation brief for current frontend concept and visual language.
 - 1.1.0 (2026-04-06)
 	- Commit: b783bce
 	- Synced current runtime UX updates including refreshed visual shell, icon updates, dashboard/chart behavior enhancements, and static docs alignment.
@@ -25,6 +29,7 @@ Last Updated: April 6, 2026
 - `demo/system-static-demo.html`
 - `demo/system-static-demo.css`
 - `demo/system-static-demo.js`
+- `FRONTEND_IDEAS.md`
 
 ## Synced Coverage
 
@@ -70,3 +75,4 @@ Direct file open:
 
 - This is a frontend-only static simulation with seeded visual data.
 - No PHP runtime, database connection, or backend workflow is executed in this mode.
+- Presentation-oriented pitch content for the static frontend is available in `FRONTEND_IDEAS.md`.

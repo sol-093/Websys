@@ -3,6 +3,39 @@
 Baseline: `8a74fda` (April 4, 2026: Polish organization modals in light mode)
 Scope: all current workspace updates compared to baseline
 
+## Addendum (post-summary updates)
+
+### A) Navigation active-state hotfix
+- Fixed overlapping nav highlight on Organizations view.
+- Dashboard active state no longer includes the organizations page key.
+
+Files:
+- src/core/layout.php
+
+### B) Runtime onboarding resilience hotfix
+- Added shared onboarding completion helper in layout script.
+- Added fallback that skips unavailable step targets and completes tour when no valid steps remain.
+- Prevents disappearing/repeating onboarding loop when navigating between dashboard and organizations targets.
+
+Files:
+- src/core/layout.php
+
+### C) Static onboarding reliability hotfix
+- Preserved onboarding progress by resuming from saved session step index.
+- Prevented unintended restart while an onboarding layer is already active.
+- Persisted step index when skipping missing targets.
+- Reworked tooltip/focus placement to run after scroll completion with viewport-safe clamping.
+
+Files:
+- static/demo/system-static-demo.js
+
+### D) Static presentation documentation
+- Added presentation-oriented idea/pitch document focused on current static frontend UI details.
+- Includes theme origin (glass transparency), color direction, typography notes, and teacher-facing pitch script.
+
+Files:
+- static/FRONTEND_IDEAS.md
+
 ## 1) Security and request handling
 - Added centralized security headers and CSP setup during bootstrap.
 - Introduced shared CSRF helper APIs and middleware flow for POST actions.

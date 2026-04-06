@@ -13,7 +13,7 @@ function renderHeader(string $title = 'Dashboard'): void
     unset($_SESSION['login_updates_popup']);
     $currentPage = (string) ($_GET['page'] ?? ($user ? 'dashboard' : 'home'));
     $isHomeActive = $currentPage === 'home';
-    $isDashboardActive = in_array($currentPage, ['dashboard', 'announcements', 'organizations'], true);
+    $isDashboardActive = in_array($currentPage, ['dashboard', 'announcements'], true);
     $isMyOrgActive = in_array($currentPage, ['my_org', 'my_org_manage'], true);
     $isProfileActive = $currentPage === 'profile';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
@@ -3129,6 +3129,49 @@ function renderFooter(): void
                         return false;
                     };
 
+                    const completeOnboarding = function () {
+                        localStorage.setItem(storageKey, '1');
+                        sessionStorage.removeItem('websys_onboarding_step');
+
+                        return fetch('?action=complete_onboarding', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            },
+                            body: 'action=complete_onboarding&_csrf=' + encodeURIComponent(<?= json_encode(csrfToken()) ?>),
+                            credentials: 'same-origin'
+                        }).then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Unable to complete onboarding');
+                            }
+
+                            return response.json();
+                        }).catch(function () {
+                            return null;
+                        }).finally(function () {
+                            root.remove();
+                        });
+                    };
+
+                    const moveToNextAvailableStep = function (startIndex) {
+                        for (let index = startIndex; index < steps.length; index += 1) {
+                            const page = stepPages[index] || 'dashboard';
+                            if (currentPage !== page) {
+                                navigateToStepPage(index);
+                                return true;
+                            }
+
+                            if (getStepElement(index)) {
+                                stepIndex = index;
+                                sessionStorage.setItem('websys_onboarding_step', String(index));
+                                return false;
+                            }
+                        }
+
+                        completeOnboarding();
+                        return true;
+                    };
+
                     const positionTooltip = function (element) {
                         const rect = element.getBoundingClientRect();
                         const spacing = 16;
@@ -3180,12 +3223,11 @@ function renderFooter(): void
 
                         const element = getStepElement(stepIndex);
                         if (!element) {
-                            if (navigateToStepPage(stepIndex)) {
+                            if (moveToNextAvailableStep(stepIndex + 1)) {
                                 return;
                             }
 
-                            sessionStorage.removeItem('websys_onboarding_step');
-                            root.remove();
+                            renderStep();
                             return;
                         }
 
@@ -3209,26 +3251,7 @@ function renderFooter(): void
 
                         nextButton.addEventListener('click', function () {
                             if (isLastStep) {
-                                fetch('?action=complete_onboarding', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-                                    },
-                                    body: 'action=complete_onboarding&_csrf=' + encodeURIComponent(<?= json_encode(csrfToken()) ?>),
-                                    credentials: 'same-origin'
-                                }).then(function (response) {
-                                    if (!response.ok) {
-                                        throw new Error('Unable to complete onboarding');
-                                    }
-
-                                    return response.json();
-                                }).then(function () {
-                                    localStorage.setItem(storageKey, '1');
-                                    sessionStorage.removeItem('websys_onboarding_step');
-                                    root.remove();
-                                }).catch(function () {
-                                    root.remove();
-                                });
+                                completeOnboarding();
                                 return;
                             }
 
@@ -3295,10 +3318,11 @@ function renderFooter(): void
                         }
                     });
 
-                    const initialElement = getStepElement(stepIndex);
-                    if (!initialElement && navigateToStepPage(stepIndex)) {
+                    if (moveToNextAvailableStep(stepIndex)) {
                         return;
                     }
+
+                    const initialElement = getStepElement(stepIndex);
 
                     if (initialElement && observer) {
                         observer.observe(initialElement);
