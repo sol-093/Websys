@@ -47,11 +47,11 @@ function renderPagination(array $pagination): void
 
     ?>
     <div class="mt-3 flex items-center gap-2 text-xs">
-        <a class="pagination-control inline-flex min-w-[44px] min-h-[44px] items-center justify-center rounded border px-3 py-2 <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Prev</span></span></a>
+        <a class="pagination-control inline-flex items-center justify-center rounded border px-2.5 py-1.5 <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Prev</span></span></a>
         <?php for ($p = $startPage; $p <= $endPage; $p++): ?>
             <a class="px-2 py-1 rounded border <?= $p === $currentPage ? 'bg-indigo-700 text-white border-indigo-700' : '' ?>" href="<?= e($buildUrl($p)) ?>"<?= $preserveScrollAttr ?>><?= $p ?></a>
         <?php endfor; ?>
-        <a class="pagination-control inline-flex min-w-[44px] min-h-[44px] items-center justify-center rounded border px-3 py-2 <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><span>Next</span><?= uiIcon('next', 'ui-icon ui-icon-sm') ?></span></a>
+        <a class="pagination-control inline-flex items-center justify-center rounded border px-2.5 py-1.5 <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><span>Next</span><?= uiIcon('next', 'ui-icon ui-icon-sm') ?></span></a>
         <span class="text-gray-500 ml-1">Page <?= $currentPage ?> of <?= $totalPages ?></span>
     </div>
     <?php

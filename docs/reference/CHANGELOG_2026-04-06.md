@@ -60,6 +60,13 @@ Files:
 - src/pages/dashboard_page_markup.php
 - src/pages/owner_pages.php
 
+### G) Pagination sizing refinement (April 7)
+- Reduced Prev/Next pagination button footprint to better match number buttons while keeping them slightly larger for clarity.
+- Preserved existing pagination behavior and disabled-state handling.
+
+Files:
+- src/lib/pagination.php
+
 ## 1) Security and request handling
 - Added centralized security headers and CSP setup during bootstrap.
 - Introduced shared CSRF helper APIs and middleware flow for POST actions.

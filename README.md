@@ -3,9 +3,10 @@
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
 Version: 1.1.1  
-Last Updated: April 6, 2026
+Last Updated: April 7, 2026
 
 Recent Updates:
+- Pagination sizing refinement: reduced Prev/Next control footprint to better match page-number buttons while remaining slightly larger
 - Footer modernization pass: responsive accordion/grid refinement with compact spacing and improved alignment
 - Footer simplification pass: removed branding strip and collapsed preview lines for a smaller mobile footprint
 - Footer social links update: moved to inline SVG icons and removed external icon CDN dependency
