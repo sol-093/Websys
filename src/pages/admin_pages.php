@@ -28,7 +28,8 @@ function handleAdminStudentsPage(PDO $db): void
         </form>
 
         <div class="overflow-auto">
-            <table class="w-full text-sm">
+            <div class="table-wrapper">
+                <table class="w-full text-sm">
                 <thead>
                 <tr class="border-b text-left">
                     <th class="py-2">Name</th>
@@ -47,7 +48,8 @@ function handleAdminStudentsPage(PDO $db): void
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
-            </table>
+                </table>
+            </div>
             <?php renderPagination($studentsPagination); ?>
         </div>
     </div>
@@ -72,7 +74,8 @@ function handleAdminRequestsPage(PDO $db): void
     ?>
     <div class="bg-white shadow rounded p-6 overflow-auto">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
-        <table class="w-full text-sm table-fixed">
+        <div class="table-wrapper">
+            <table class="w-full text-sm table-fixed">
             <thead>
             <tr class="border-b text-left">
                 <th class="py-3 px-4 w-[14%]">Org</th>
@@ -127,12 +130,13 @@ function handleAdminRequestsPage(PDO $db): void
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+            </table>
+        </div>
         <?php renderPagination($requestsPagination); ?>
     </div>
-    <div id="txRequestNoteModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 px-4 py-6 overflow-y-auto">
+    <div id="txRequestNoteModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 px-4 py-6 overflow-y-auto" data-modal-close>
         <div class="mx-auto mt-16 w-full max-w-lg">
-            <div class="glass p-5">
+            <div class="glass p-5 max-h-[90dvh] overflow-y-auto" data-modal-panel>
                 <div class="flex items-start justify-between gap-3 mb-4">
                     <div>
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Review Request</span></h2>
@@ -262,7 +266,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
         <?php if (!$logs): ?>
             <p class="text-sm text-gray-600">No audit entries in the selected range.</p>
         <?php else: ?>
-            <div class="overflow-x-auto">
+            <div class="table-wrapper">
                 <table class="min-w-full text-sm">
                     <thead>
                         <tr class="border-b">
@@ -367,9 +371,9 @@ function handleMyOrgAdminPage(PDO $db): void
             </div>
 
             <?php if ($canSeeMemberNames): ?>
-                <div id="adminOrgMembersModal" class="hidden fixed inset-0 z-[999] bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto">
+                <div id="adminOrgMembersModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
                     <div class="mx-auto mt-12 w-full max-w-xl">
-                        <div class="admin-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)]">
+                        <div class="admin-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] max-h-[90dvh] overflow-y-auto" data-modal-panel>
                             <div class="flex items-start justify-between gap-3 mb-4">
                                 <div>
                                     <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
@@ -378,7 +382,7 @@ function handleMyOrgAdminPage(PDO $db): void
                                 <button type="button" id="adminOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
                             </div>
                             <div class="mb-3">
-                                <input type="text" id="adminOrgMembersSearch" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                                <input type="text" id="adminOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
                             </div>
                             <div class="max-h-[48vh] overflow-auto rounded border border-slate-200/60">
                                 <div id="adminOrgMembersList" class="divide-y divide-slate-200/50">
@@ -405,7 +409,8 @@ function handleMyOrgAdminPage(PDO $db): void
                 </a>
             </div>
 
-            <table class="w-full text-sm">
+            <div class="table-wrapper">
+                <table class="w-full text-sm">
                 <thead>
                 <tr class="text-left border-b">
                     <th class="py-2">Date</th><th>Type</th><th>Amount</th><th>Description</th>
@@ -421,13 +426,14 @@ function handleMyOrgAdminPage(PDO $db): void
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
-            </table>
+                </table>
+            </div>
             <?php renderPagination($adminTxPagination); ?>
         <?php endif; ?>
     </div>
-    <div id="adminOrgSearchModal" class="hidden fixed inset-0 z-[999] bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto">
+    <div id="adminOrgSearchModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
         <div class="mx-auto mt-12 w-full max-w-2xl">
-            <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] dark:border-emerald-300/25 dark:bg-[#021a14]/95">
+            <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] dark:border-emerald-300/25 dark:bg-[#021a14]/95 max-h-[90dvh] overflow-y-auto" data-modal-panel>
                 <div class="flex items-start justify-between gap-3 mb-4">
                     <div>
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('search', 'ui-icon') ?><span>Select Organization</span></h2>
@@ -437,7 +443,7 @@ function handleMyOrgAdminPage(PDO $db): void
                 </div>
 
                 <div class="mb-4">
-                    <input type="text" id="adminOrgSearchInput" placeholder="Search organizations..." class="w-full border rounded px-3 py-3">
+                    <input type="text" id="adminOrgSearchInput" inputmode="search" placeholder="Search organizations..." class="w-full border rounded px-3 py-3">
                 </div>
 
                 <div class="admin-org-search-scroll max-h-[60vh] overflow-auto rounded border border-slate-200/45">
@@ -810,9 +816,9 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         </div>
 
         <?php if ($canSeeMemberNames): ?>
-            <div id="userOrgMembersModal" class="hidden fixed inset-0 z-[999] bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto">
+            <div id="userOrgMembersModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
                 <div class="mx-auto mt-12 w-full max-w-xl">
-                    <div class="user-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)]">
+                    <div class="user-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] max-h-[90dvh] overflow-y-auto" data-modal-panel>
                         <div class="flex items-start justify-between gap-3 mb-4">
                             <div>
                                 <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
@@ -821,7 +827,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                             <button type="button" id="userOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
                         </div>
                         <div class="mb-3">
-                            <input type="text" id="userOrgMembersSearch" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                            <input type="text" id="userOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
                         </div>
                         <div class="max-h-[48vh] overflow-auto rounded border border-slate-200/60">
                             <div id="userOrgMembersList" class="divide-y divide-slate-200/50">
@@ -922,7 +928,8 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             </script>
         <?php endif; ?>
 
-        <table class="w-full text-sm">
+        <div class="table-wrapper">
+            <table class="w-full text-sm">
             <thead>
             <tr class="text-left border-b">
                 <th class="py-2">Date</th>
@@ -941,7 +948,8 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                 </tr>
             <?php endforeach; ?>
             </tbody>
-        </table>
+            </table>
+        </div>
         <?php renderPagination($userTxPagination); ?>
     </div>
     <script src="static/js/owner-org-switcher.js"></script>
@@ -1001,7 +1009,8 @@ function handleAdminOrgsPage(PDO $db): void
 
         <div class="md:col-span-2 bg-white shadow rounded p-6 overflow-auto">
             <h2 class="text-lg font-semibold mb-4 icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>All Organizations</span></h2>
-            <table class="w-full text-sm table-fixed">
+            <div class="table-wrapper">
+                <table class="w-full text-sm table-fixed">
                 <thead>
                 <tr class="text-left border-b">
                     <th class="py-3 px-4 w-[18%]">Name</th>
@@ -1046,13 +1055,14 @@ function handleAdminOrgsPage(PDO $db): void
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
-            </table>
+                </table>
+            </div>
             <?php renderPagination($orgsPagination); ?>
         </div>
     </div>
-    <div id="orgEditModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 px-4 py-6 overflow-y-auto">
+    <div id="orgEditModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 px-4 py-6 overflow-y-auto" data-modal-close>
         <div class="mx-auto mt-10 w-full max-w-3xl">
-            <div class="glass p-6">
+            <div class="glass p-6 max-h-[90dvh] overflow-y-auto" data-modal-panel>
                 <div class="flex items-start justify-between gap-4 mb-5">
                     <div>
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>Edit Organization</span></h2>
@@ -1069,7 +1079,7 @@ function handleAdminOrgsPage(PDO $db): void
                     <div class="grid gap-6 md:grid-cols-2">
                         <div class="space-y-2 md:col-span-2">
                             <label for="orgEditModalName" class="block text-sm font-medium text-slate-700">Organization Name</label>
-                            <input id="orgEditModalName" name="name" class="w-full border rounded px-3 py-3" required>
+                            <input id="orgEditModalName" name="name" inputmode="text" class="w-full border rounded px-3 py-3" required>
                         </div>
                         <div class="space-y-2 md:col-span-2">
                             <label for="orgEditModalDescription" class="block text-sm font-medium text-slate-700">Description</label>

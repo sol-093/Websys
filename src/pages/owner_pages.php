@@ -292,83 +292,103 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 </div>
                 <button data-filter-submit class="bg-indigo-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
             </form>
-            <table class="w-full text-sm">
-                <thead>
-                <tr class="text-left border-b border-emerald-400">
-                    <th class="py-2">Date</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Description</th>
-                    <th>Receipt</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($transactions as $row): ?>
-                    <tr class="border-b border-emerald-300 align-top">
-                        <td class="py-3"><?= e($row['transaction_date']) ?></td>
-                        <td class="py-3"><?= e($row['type']) ?></td>
-                        <td class="py-3">₱<?= number_format((float) $row['amount'], 2) ?></td>
-                        <td class="py-3"><?= e($row['description']) ?></td>
-                        <td class="py-3">
-                            <?php if (!empty($row['receipt_path'])): ?>
-                                <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="text-indigo-700 underline"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
-                            <?php else: ?>
-                                <span class="text-gray-400">-</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="py-3 space-y-1 min-w-56">
-                            <form method="post" class="grid grid-cols-2 gap-1">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="update_transaction">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                <select name="type" class="border rounded px-2 py-1 text-xs">
-                                    <option value="income" <?= $row['type'] === 'income' ? 'selected' : '' ?>>Income</option>
-                                    <option value="expense" <?= $row['type'] === 'expense' ? 'selected' : '' ?>>Expense</option>
-                                </select>
-                                <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs" data-currency>
-                                <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1 text-xs">
-                                <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1 text-xs">
-                                <button class="bg-blue-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
-                            </form>
-                            <form method="post" onsubmit="return confirm('Delete transaction?')">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="delete_transaction">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
-                            </form>
-                        </td>
+            <div class="table-wrapper">
+                <table class="hidden sm:block w-full text-sm">
+                    <thead>
+                    <tr class="text-left border-b border-emerald-400">
+                        <th class="py-2">Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th>Receipt</th>
+                        <th>Actions</th>
                     </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($transactions as $row): ?>
+                        <tr class="border-b border-emerald-300 align-top">
+                            <td class="py-3"><?= e($row['transaction_date']) ?></td>
+                            <td class="py-3"><?= e($row['type']) ?></td>
+                            <td class="py-3">₱<?= number_format((float) $row['amount'], 2) ?></td>
+                            <td class="py-3"><?= e($row['description']) ?></td>
+                            <td class="py-3">
+                                <?php if (!empty($row['receipt_path'])): ?>
+                                    <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 text-indigo-700 underline"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
+                                <?php else: ?>
+                                    <span class="text-gray-400">-</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="py-3 space-y-1 min-w-56">
+                                <form method="post" class="grid grid-cols-2 gap-1">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="update_transaction">
+                                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                    <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
+                                    <select name="type" class="border rounded px-2 py-1 text-xs">
+                                        <option value="income" <?= $row['type'] === 'income' ? 'selected' : '' ?>>Income</option>
+                                        <option value="expense" <?= $row['type'] === 'expense' ? 'selected' : '' ?>>Expense</option>
+                                    </select>
+                                    <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs" data-currency>
+                                    <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1 text-xs">
+                                    <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1 text-xs">
+                                    <button class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 bg-blue-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
+                                </form>
+                                <form method="post" onsubmit="return confirm('Delete transaction?')">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="delete_transaction">
+                                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                    <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
+                                    <button class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 bg-red-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mobile-cards sm:hidden space-y-3">
+                <?php foreach ($transactions as $row): ?>
+                    <?php $type = (string) $row['type']; ?>
+                    <article class="rounded-lg border border-emerald-200 bg-white p-3 shadow-sm">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500"><?= e((string) $org['name']) ?></div>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold <?= $type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' ?>"><?= e(ucfirst($type)) ?></span>
+                        </div>
+                        <div class="mt-2 text-2xl font-bold leading-tight text-slate-900">₱<?= number_format((float) $row['amount'], 2) ?></div>
+                        <div class="mt-2 text-xs text-slate-600"><?= e((string) $row['transaction_date']) ?></div>
+                        <p class="mt-2 text-sm text-slate-700" style="display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            <?= e((string) $row['description']) ?>
+                        </p>
+                    </article>
                 <?php endforeach; ?>
-                </tbody>
-            </table>
+            </div>
             <?php renderPagination($transactionsPagination); ?>
         </div>
 
         <div class="bg-white shadow rounded p-4 overflow-auto">
             <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>My Pending/Recent Transaction Requests</span></h2>
-            <table class="w-full text-sm">
-                <thead>
-                <tr class="text-left border-b">
-                    <th class="py-2">Date</th>
-                    <th>Action</th>
-                    <th>Status</th>
-                    <th>Admin Note</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($myTxRequests as $req): ?>
-                    <tr class="border-b">
-                        <td class="py-2"><?= e((string) $req['created_at']) ?></td>
-                        <td><?= e((string) $req['action_type']) ?></td>
-                        <td><?= e((string) $req['status']) ?></td>
-                        <td><?= e((string) ($req['admin_note'] ?? '')) ?></td>
+            <div class="table-wrapper">
+                <table class="w-full text-sm">
+                    <thead>
+                    <tr class="text-left border-b">
+                        <th class="py-2">Date</th>
+                        <th>Action</th>
+                        <th>Status</th>
+                        <th>Admin Note</th>
                     </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($myTxRequests as $req): ?>
+                        <tr class="border-b">
+                            <td class="py-2"><?= e((string) $req['created_at']) ?></td>
+                            <td><?= e((string) $req['action_type']) ?></td>
+                            <td><?= e((string) $req['status']) ?></td>
+                            <td><?= e((string) ($req['admin_note'] ?? '')) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
             <?php renderPagination($myTxRequestsPagination); ?>
         </div>
     </div>

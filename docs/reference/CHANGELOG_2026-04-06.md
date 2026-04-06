@@ -36,6 +36,30 @@ Files:
 Files:
 - static/FRONTEND_IDEAS.md
 
+### E) Footer modernization and compaction update
+- Reworked footer into a cleaner responsive accordion/grid shell while preserving role-aware content.
+- Added and then iteratively refined compact spacing, alignment, and typography for mobile and desktop.
+- Removed footer branding strip for a shorter footprint and hid mobile accordion chevrons.
+- Simplified collapsed state by removing preview text; section details now appear only when expanded.
+- Added social links with inline SVG icons (no CDN dependency) and aligned bottom utility row.
+
+Files:
+- src/core/layout.php
+
+### F) Navigation and page-level responsive polish
+- Tightened desktop utility control spacing in navbar (search, theme toggle, logout) without changing control size.
+- Improved table responsiveness by wrapping multiple admin/owner/student tables in table-scroll containers.
+- Standardized modal shells with close-target attributes and viewport-safe panel scrolling.
+- Improved search/text input intent hints for relevant modal search fields.
+- Increased pagination control hit targets for better touch accessibility.
+
+Files:
+- src/core/layout.php
+- src/lib/pagination.php
+- src/pages/admin_pages.php
+- src/pages/dashboard_page_markup.php
+- src/pages/owner_pages.php
+
 ## 1) Security and request handling
 - Added centralized security headers and CSP setup during bootstrap.
 - Introduced shared CSRF helper APIs and middleware flow for POST actions.

@@ -271,34 +271,36 @@
                 </div>
                 <div class="dashboard-stamp">Showing <?= $recentReportCount ?> latest items</div>
             </div>
-            <table class="dashboard-table w-full text-sm table-fixed">
-                <thead>
-                <tr class="border-b text-left">
-                    <th class="py-2 w-[20%]">Date</th>
-                    <th class="w-[30%]">Organization</th>
-                    <th class="w-[16%]">Type</th>
-                    <th class="w-[20%]">Amount</th>
-                    <th class="w-[14%]">Receipt</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($transactions as $tx): ?>
-                    <tr class="border-b">
-                        <td class="py-2"><?= e($tx['transaction_date']) ?></td>
-                        <td><?= e($tx['organization_name']) ?></td>
-                        <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
-                        <td>₱<?= number_format((float) $tx['amount'], 2) ?></td>
-                        <td>
-                            <?php if (!empty($tx['receipt_path'])): ?>
-                                <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
-                            <?php else: ?>
-                                <span class="text-gray-400">-</span>
-                            <?php endif; ?>
-                        </td>
+            <div class="table-wrapper">
+                <table class="dashboard-table w-full text-sm table-fixed">
+                    <thead>
+                    <tr class="border-b text-left">
+                        <th class="py-2 w-[20%]">Date</th>
+                        <th class="w-[30%]">Organization</th>
+                        <th class="w-[16%]">Type</th>
+                        <th class="w-[20%]">Amount</th>
+                        <th class="w-[14%]">Receipt</th>
                     </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($transactions as $tx): ?>
+                        <tr class="border-b">
+                            <td class="py-2"><?= e($tx['transaction_date']) ?></td>
+                            <td><?= e($tx['organization_name']) ?></td>
+                            <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
+                            <td>₱<?= number_format((float) $tx['amount'], 2) ?></td>
+                            <td>
+                                <?php if (!empty($tx['receipt_path'])): ?>
+                                    <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
+                                <?php else: ?>
+                                    <span class="text-gray-400">-</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="glass dashboard-panel xl:col-span-12 p-4 md:p-4 overflow-hidden">
@@ -309,7 +311,7 @@
                 </div>
                 <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View charts</span></span></button>
             </div>
-            <div>
+            <div class="table-wrapper">
                 <table class="dashboard-table w-full text-sm table-fixed">
                     <thead>
                     <tr class="border-b text-left">
@@ -338,8 +340,8 @@
         </div>
     </section>
 
-    <div id="organizationsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="organizationsModalTitle">
-        <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
+    <div id="organizationsModal" class="updates-modal-overlay hidden" data-modal-close role="dialog" aria-modal="true" aria-labelledby="organizationsModalTitle">
+        <div class="glass w-full max-w-5xl max-h-[90dvh] overflow-y-auto" data-modal-panel>
             <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
                 <h3 id="organizationsModalTitle" class="text-lg font-semibold">All Organizations</h3>
                 <button type="button" id="closeOrganizationsModal" class="px-2 py-1 rounded border text-sm">Close</button>
@@ -389,8 +391,8 @@
         </div>
     </div>
 
-    <div id="announcementsModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="announcementsModalTitle">
-        <div class="glass w-full max-w-5xl max-h-[86vh] overflow-hidden">
+    <div id="announcementsModal" class="updates-modal-overlay hidden" data-modal-close role="dialog" aria-modal="true" aria-labelledby="announcementsModalTitle">
+        <div class="glass w-full max-w-5xl max-h-[90dvh] overflow-y-auto" data-modal-panel>
             <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
                 <h3 id="announcementsModalTitle" class="text-lg font-semibold">All Latest Announcements</h3>
                 <button type="button" id="closeAnnouncementsModal" class="px-2 py-1 rounded border text-sm">Close</button>
@@ -426,8 +428,8 @@
         </div>
     </div>
 
-    <div id="financialSummaryModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="financialSummaryModalTitle">
-        <div class="glass w-full max-w-6xl overflow-hidden">
+    <div id="financialSummaryModal" class="updates-modal-overlay hidden" data-modal-close role="dialog" aria-modal="true" aria-labelledby="financialSummaryModalTitle">
+        <div class="glass w-full max-w-6xl max-h-[90dvh] overflow-y-auto" data-modal-panel>
             <div class="flex items-center justify-between border-b border-emerald-200/30 px-4 py-3">
                 <h3 id="financialSummaryModalTitle" class="text-lg font-semibold">Financial Health Snapshot</h3>
                 <button type="button" id="closeFinancialSummaryModal" class="px-2 py-1 rounded border text-sm">Close</button>

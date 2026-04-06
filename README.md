@@ -2,10 +2,17 @@
 
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
-Version: 1.1.0  
+Version: 1.1.1  
 Last Updated: April 6, 2026
 
 Recent Updates:
+- Footer modernization pass: responsive accordion/grid refinement with compact spacing and improved alignment
+- Footer simplification pass: removed branding strip and collapsed preview lines for a smaller mobile footprint
+- Footer social links update: moved to inline SVG icons and removed external icon CDN dependency
+- Mobile footer compression update: tighter typography, spacing, and controls for denser layout
+- Navbar utility spacing update: desktop search/theme/logout controls grouped closer together (same control sizes)
+- Admin/owner/dashboard responsive polish: added table wrappers and viewport-safe modal panel scrolling
+- Pagination accessibility update: larger touch-friendly prev/next controls
 - Navbar active-state hotfix: Organizations no longer highlights Dashboard at the same time
 - Onboarding stability hotfix: improved step fallback/completion behavior to prevent repeated or stuck tours
 - Static demo onboarding hotfix: improved resume/completion state and tooltip positioning reliability
@@ -43,6 +50,8 @@ Recent Updates:
 
 Version History
 
+- 1.1.1 (2026-04-06)
+    - Added compressed footer redesign refinements (desktop/mobile), inline SVG social icons, navbar utility spacing polish, and responsive admin/owner/dashboard table-modal usability updates.
 - 1.1.0 (2026-04-06)
     - Commit: b783bce
     - Added onboarding tour + replay control, global search palette, security hardening, SMTP/PHPMailer path, upload safety helper, report export updates, and full documentation refresh.

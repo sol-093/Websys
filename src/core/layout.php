@@ -138,6 +138,17 @@ function renderHeader(string $title = 'Dashboard'): void
                 transition: border-color 0.2s ease, box-shadow 0.2s ease;
             }
 
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: inherit;
+            }
+
+            .modal-panel,
+            [data-modal-panel] {
+                -webkit-overflow-scrolling: touch;
+            }
+
             .glass.scrolled {
                 border-color: rgba(15, 23, 42, 0.24);
                 box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
@@ -556,6 +567,15 @@ function renderHeader(string $title = 'Dashboard'): void
                 height: 0.9rem;
             }
 
+            button,
+            .theme-switch,
+            .hamburger-btn,
+            .global-search-trigger,
+            .pagination-control,
+            .row-action-hit-target {
+                touch-action: manipulation;
+            }
+
             .icon-label {
                 display: inline-flex;
                 align-items: center;
@@ -714,6 +734,31 @@ function renderHeader(string $title = 'Dashboard'): void
                 display: flex;
             }
 
+            .nav-utility-controls {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+            }
+
+            @media (max-width: 480px) {
+                .nav-brand {
+                    max-width: calc(100% - 6.5rem);
+                    font-size: 0.9rem;
+                    line-height: 1.05;
+                    letter-spacing: -0.01em;
+                    overflow-wrap: normal;
+                    word-break: normal;
+                }
+
+                .nav-mobile-controls {
+                    gap: 0.35rem;
+                }
+
+                .nav-mobile {
+                    gap: 0.35rem;
+                }
+            }
+
             @media (min-width: 1024px) {
                 .nav-brand {
                     flex: 1 1 17rem;
@@ -773,33 +818,76 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #334155;
             }
 
-            .app-footer-social {
-                color: #0f766e;
-                transition: color 0.2s ease;
-            }
-
-            .app-footer-social:hover {
-                color: #065f46;
-            }
-
             body.theme-dark .app-footer {
                 border-top-color: rgba(110, 231, 183, 0.34);
                 background: rgba(0, 0, 0, 0.2);
             }
 
             body.theme-dark .app-footer-link,
-            body.theme-dark .app-footer-muted,
-            body.theme-dark .app-footer-social {
+            body.theme-dark .app-footer-muted {
                 color: #d1fae5;
             }
 
-            body.theme-dark .app-footer-link:hover,
-            body.theme-dark .app-footer-social:hover {
+            body.theme-dark .app-footer-link:hover {
                 color: #bbf7d0;
             }
 
             .footer-section {
                 min-width: 0;
+            }
+
+            .footer-main-grid {
+                align-items: start;
+            }
+
+            .footer-bottom-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .footer-bottom-actions {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                margin-left: auto;
+            }
+
+            .footer-bottom-bar p {
+                margin: 0;
+            }
+
+            .footer-social-links {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            .app-footer-icon-link {
+                width: 1.9rem;
+                height: 1.9rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: #065f46;
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                border-radius: 999px;
+                transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+                text-decoration: none;
+            }
+
+            .app-footer-icon-link:hover {
+                color: #047857;
+                border-color: rgba(16, 185, 129, 0.55);
+                background-color: rgba(16, 185, 129, 0.09);
+                text-decoration: none;
+            }
+
+            .app-footer-icon-link svg {
+                width: 0.95rem;
+                height: 0.95rem;
             }
 
             .footer-accordion-toggle {
@@ -813,6 +901,19 @@ function renderHeader(string $title = 'Dashboard'): void
                 padding: 0;
                 text-align: left;
                 color: inherit;
+                touch-action: manipulation;
+            }
+
+            .footer-accordion-title-wrap {
+                display: flex;
+                flex-direction: column;
+                gap: 0.1rem;
+                min-width: 0;
+            }
+
+            .footer-section-title {
+                margin: 0;
+                line-height: 1.15;
             }
 
             .footer-accordion-toggle:focus-visible {
@@ -822,8 +923,8 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .footer-accordion-icon {
-                width: 0.5rem;
-                height: 0.5rem;
+                width: 0.7rem;
+                height: 0.7rem;
                 border-right: 2px solid #0f766e;
                 border-bottom: 2px solid #0f766e;
                 transform: rotate(45deg);
@@ -841,27 +942,120 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .footer-accordion-panel {
-                display: none;
-                padding-top: 0.65rem;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.28s ease, padding-top 0.28s ease;
+                padding-top: 0;
             }
 
             .footer-accordion-panel.is-open {
-                display: block;
+                max-height: 250px;
+                padding-top: 0.5rem;
             }
 
             @media (max-width: 767px) {
                 .app-footer .grid {
                     grid-template-columns: 1fr;
-                    gap: 0.4rem;
+                    gap: 0;
+                }
+
+                .footer-main-grid {
+                    padding-top: 0.12rem;
+                    padding-bottom: 0.12rem;
+                }
+
+                .footer-accordion-toggle {
+                    min-height: 34px;
+                    padding: 0.16rem 0;
+                    justify-content: flex-start;
+                    gap: 0.3rem;
+                }
+
+                .footer-accordion-icon {
+                    display: none;
+                }
+
+                .footer-accordion-toggle[aria-expanded="true"] {
+                    color: #065f46;
                 }
 
                 .footer-section {
-                    padding: 0.55rem 0;
+                    padding: 0.24rem 0;
                     border-bottom: 1px solid rgba(16, 185, 129, 0.24);
+                }
+
+                .footer-section-title {
+                    font-size: 0.76rem;
+                    letter-spacing: 0.04em;
+                    line-height: 1;
+                }
+
+                .footer-accordion-panel.is-open {
+                    padding-top: 0.12rem;
+                }
+
+                .footer-accordion-panel ul {
+                    font-size: 0.7rem;
+                }
+
+                .footer-accordion-panel li {
+                    line-height: 1.04;
+                }
+
+                .footer-accordion-panel li + li {
+                    margin-top: 0.02rem;
+                }
+
+                .footer-accordion-panel address {
+                    line-height: 1.04;
                 }
 
                 .footer-section:last-child {
                     border-bottom: 0;
+                }
+
+                body.theme-dark .footer-accordion-toggle[aria-expanded="true"] {
+                    color: #6ee7b7;
+                }
+
+                .footer-bottom-bar {
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    padding-top: 0.2rem;
+                    padding-bottom: 0.2rem;
+                }
+
+                .footer-bottom-bar p {
+                    font-size: 0.62rem;
+                    line-height: 1.06;
+                }
+
+                .footer-bottom-actions {
+                    width: 100%;
+                    justify-content: center;
+                    flex-direction: column-reverse;
+                    gap: 0.14rem;
+                }
+
+                .footer-social-links {
+                    justify-content: center;
+                    gap: 0.08rem;
+                }
+
+                .app-footer-icon-link {
+                    width: 1.2rem;
+                    height: 1.2rem;
+                }
+
+                .app-footer-icon-link svg {
+                    width: 0.58rem;
+                    height: 0.58rem;
+                }
+
+                #backToTop {
+                    font-size: 0.64rem;
+                    line-height: 1;
                 }
             }
 
@@ -871,13 +1065,142 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
 
                 .footer-accordion-panel {
-                    display: block !important;
+                    max-height: none !important;
+                    overflow: visible !important;
                     padding-top: 0;
                 }
 
                 .footer-accordion-toggle {
                     cursor: default;
                 }
+            }
+
+            @media (min-width: 1024px) {
+                .footer-main-grid {
+                    display: grid;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    column-gap: 1.2rem;
+                    row-gap: 0.55rem;
+                    align-items: start;
+                    padding-top: 0.55rem;
+                    padding-bottom: 0.55rem;
+                }
+
+                .footer-section {
+                    display: block;
+                    min-width: 0;
+                }
+
+                .footer-section-support {
+                    grid-column: auto;
+                }
+
+                .footer-accordion-toggle {
+                    width: 100%;
+                    justify-content: flex-start;
+                    pointer-events: none;
+                    margin-bottom: 0.12rem;
+                }
+
+                .footer-accordion-title-wrap {
+                    display: block;
+                }
+
+                .footer-section-title {
+                    font-size: 0.62rem;
+                    letter-spacing: 0.12em;
+                    white-space: nowrap;
+                    opacity: 0.75;
+                    font-weight: 700;
+                    line-height: 1.05;
+                }
+
+                .footer-accordion-panel ul {
+                    display: block;
+                    margin: 0;
+                }
+
+                .footer-accordion-panel li {
+                    display: block;
+                    line-height: 1.18;
+                }
+
+                .footer-accordion-panel li + li::before {
+                    content: none;
+                    margin-right: 0;
+                }
+
+                .footer-accordion-panel li + li {
+                    margin-top: 0.14rem;
+                }
+
+                .footer-accordion-panel address {
+                    display: block;
+                    line-height: 1.16;
+                }
+
+                .footer-accordion-panel address br {
+                    display: block;
+                }
+
+                .footer-accordion-panel .pt-1 {
+                    padding-top: 0;
+                }
+
+                .footer-main-grid .app-footer-link,
+                .footer-main-grid .app-footer-muted {
+                    font-size: 0.8rem;
+                }
+
+                .footer-bottom-bar {
+                    align-items: center;
+                    padding-top: 0.5rem;
+                    padding-bottom: 0.5rem;
+                }
+
+                .footer-bottom-actions {
+                    align-items: center;
+                    gap: 0.4rem;
+                }
+
+                .footer-social-links {
+                    gap: 0.22rem;
+                }
+
+                .app-footer-icon-link {
+                    width: 1.6rem;
+                    height: 1.6rem;
+                }
+
+                .app-footer-icon-link svg {
+                    width: 0.85rem;
+                    height: 0.85rem;
+                }
+
+                #backToTop {
+                    line-height: 1;
+                }
+            }
+
+            @media (min-width: 1440px) {
+                .footer-section-support {
+                    grid-column: auto;
+                }
+            }
+
+            body.theme-dark .app-footer-icon-link {
+                color: #d1fae5;
+                border-color: rgba(110, 231, 183, 0.35);
+            }
+
+            body.theme-dark .app-footer-icon-link:hover {
+                color: #bbf7d0;
+                border-color: rgba(110, 231, 183, 0.65);
+                background-color: rgba(110, 231, 183, 0.08);
+            }
+
+            body.theme-dark .footer-accordion-panel li + li::before {
+                color: rgba(209, 250, 229, 0.7);
             }
 
             .hero-kicker {
@@ -1164,19 +1487,32 @@ function renderHeader(string $title = 'Dashboard'): void
                 align-items: center;
                 justify-content: center;
                 position: relative;
+                width: 44px;
+                height: 44px;
+                cursor: pointer;
+                transition: opacity 0.2s ease;
+            }
+
+            .theme-switch::before {
+                content: '';
+                position: absolute;
+                top: 6px;
+                left: 50%;
+                transform: translateX(-50%);
                 width: 20px;
                 height: 32px;
                 border-radius: 999px;
                 border: 1px solid rgba(16, 185, 129, 0.45);
                 background: rgba(16, 185, 129, 0.2);
-                cursor: pointer;
                 transition: all 0.2s ease;
             }
 
             .theme-switch::after {
                 content: '';
                 position: absolute;
-                top: 3px;
+                top: 9px;
+                left: 50%;
+                transform: translateX(-50%);
                 width: 10px;
                 height: 10px;
                 border-radius: 999px;
@@ -1190,23 +1526,28 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             body.theme-dark .theme-switch {
+                opacity: 1;
+            }
+
+            body.theme-dark .theme-switch::before {
                 border-color: rgba(167, 243, 208, 0.5);
                 background: rgba(255, 255, 255, 0.14);
             }
 
             body.theme-dark .theme-switch::after {
-                top: 19px;
+                top: 25px;
             }
 
             .hamburger-btn {
                 border: 1px solid rgba(16, 185, 129, 0.45);
                 background: rgba(16, 185, 129, 0.14);
-                width: 2.3rem;
-                height: 2.3rem;
+                min-width: 44px;
+                min-height: 44px;
                 border-radius: 0.75rem;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                padding: 0;
             }
 
             .global-search-trigger {
@@ -1303,7 +1644,7 @@ function renderHeader(string $title = 'Dashboard'): void
             .updates-modal-overlay {
                 position: fixed;
                 inset: 0;
-                z-index: 60;
+                z-index: 50;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1316,8 +1657,33 @@ function renderHeader(string $title = 'Dashboard'): void
 
             .updates-modal-overlay > .glass {
                 width: min(100%, 72rem);
-                max-height: calc(100dvh - 1.25rem);
-                overflow: hidden;
+                max-height: 90dvh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .modal-panel {
+                position: relative;
+                transform: translateY(0);
+                transition: transform 0.2s ease;
+                will-change: transform;
+            }
+
+            .modal-panel.is-dragging {
+                transition: none;
+            }
+
+            .modal-drag-handle {
+                width: 40px;
+                height: 4px;
+                margin: 0 auto 1rem;
+                border-radius: 2px;
+                background: rgba(148, 163, 184, 0.78);
+                flex: 0 0 auto;
+            }
+
+            body.theme-dark .modal-drag-handle {
+                background: rgba(203, 213, 225, 0.55);
             }
 
             body.theme-dark .updates-modal-overlay {
@@ -1420,7 +1786,7 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .global-search-overlay {
-                z-index: 70;
+                z-index: 50;
             }
 
             .global-search-overlay .glass {
@@ -1929,12 +2295,14 @@ function renderHeader(string $title = 'Dashboard'): void
                                 <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
                             <?php endif; ?>
                             <span class="nav-greeting">Hi, <?= e($displayName) ?></span>
-                            <button type="button" id="globalSearchOpen" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
-                                <?= icon('search') ?>
-                            </button>
-                            <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
-                            <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
-                            <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-1 rounded hover:bg-indigo-950">Logout</a>
+                            <div class="nav-utility-controls">
+                                <button type="button" id="globalSearchOpen" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
+                                    <?= icon('search') ?>
+                                </button>
+                                <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
+                                <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
+                                <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-1 rounded hover:bg-indigo-950">Logout</a>
+                            </div>
                         <?php else: ?>
                             <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
                             <a href="?page=register" class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700 shadow-sm <?= $isRegisterActive ? 'ring-2 ring-emerald-300/70' : '' ?>">Register</a>
@@ -2005,20 +2373,21 @@ function renderHeader(string $title = 'Dashboard'): void
         </script>
 
         <?php if ($user): ?>
-            <div id="globalSearchModal" class="updates-modal-overlay global-search-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="globalSearchTitle" aria-hidden="true">
-                <div class="glass w-full max-w-2xl p-5">
+            <div id="globalSearchModal" class="updates-modal-overlay global-search-overlay hidden" data-modal-close role="dialog" aria-modal="true" aria-labelledby="globalSearchTitle" aria-hidden="true">
+                <div class="glass modal-panel w-full max-w-2xl p-5 max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                    <div class="modal-drag-handle" aria-hidden="true"></div>
                     <div class="flex items-start justify-between gap-3 mb-4">
                         <div>
                             <h2 id="globalSearchTitle" class="text-lg font-semibold icon-label"><?= uiIcon('search', 'ui-icon') ?><span>Search the system</span></h2>
                             <p class="text-sm text-slate-600">Find users, organizations, and announcements from anywhere.</p>
                         </div>
-                        <button type="button" id="globalSearchClose" class="text-slate-600 hover:text-slate-900 text-xl leading-none" aria-label="Close search">&times;</button>
+                        <button type="button" id="globalSearchClose" data-modal-close-button class="text-slate-600 hover:text-slate-900 text-xl leading-none" aria-label="Close search">&times;</button>
                     </div>
 
                     <label class="sr-only" for="globalSearchInput">Search</label>
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?></span>
-                        <input id="globalSearchInput" type="search" autocomplete="off" placeholder="Search people, orgs, announcements" class="w-full rounded-xl border border-emerald-200/60 bg-white/80 pl-10 pr-20 py-3 text-slate-800 shadow-sm focus:border-emerald-400 focus:ring-0">
+                        <input id="globalSearchInput" type="search" inputmode="search" autocomplete="off" placeholder="Search people, orgs, announcements" class="w-full rounded-xl border border-emerald-200/60 bg-white/80 pl-10 pr-20 py-3 text-slate-800 shadow-sm focus:border-emerald-400 focus:ring-0">
                         <span class="absolute right-3 top-1/2 -translate-y-1/2 global-search-shortcut">Ctrl+K</span>
                     </div>
 
@@ -2302,17 +2671,18 @@ function renderHeader(string $title = 'Dashboard'): void
             </script>
         <?php endif; ?>
 
-        <main class="max-w-7xl mx-auto p-3 pt-24 sm:p-4 sm:pt-28 lg:p-6 lg:pt-28">
+        <main class="max-w-7xl mx-auto p-3 pt-32 sm:p-4 sm:pt-28 lg:p-6 lg:pt-28">
 
             <?php if ($user && is_array($loginUpdates) && count($loginUpdates) > 0): ?>
-                <div id="loginUpdatesModal" class="updates-modal-overlay hidden">
-                    <div class="glass w-full max-w-2xl p-5">
+                <div id="loginUpdatesModal" class="updates-modal-overlay hidden" data-modal-close>
+                    <div class="glass modal-panel w-full max-w-2xl p-5 max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                        <div class="modal-drag-handle" aria-hidden="true"></div>
                         <div class="flex items-start justify-between gap-3 mb-3">
                             <div>
                                 <h2 class="text-lg font-semibold icon-label"><?= uiIcon('update', 'ui-icon') ?><span>Request Updates</span></h2>
                                 <p class="text-sm text-slate-600">Latest approval/rejection results related to your requests.</p>
                             </div>
-                            <button type="button" id="closeLoginUpdatesModal" class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
+                            <button type="button" id="closeLoginUpdatesModal" data-modal-close-button class="text-slate-600 hover:text-slate-900 text-xl leading-none">&times;</button>
                         </div>
                         <div class="space-y-2 max-h-[55vh] overflow-auto pr-1">
                             <?php foreach ($loginUpdates as $item): ?>
@@ -2337,7 +2707,7 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php endforeach; ?>
                         </div>
                         <div class="mt-4 flex justify-end">
-                            <button type="button" id="closeLoginUpdatesModalBtn" class="bg-indigo-900 text-white px-3 py-2 rounded hover:bg-indigo-950">Close</button>
+                            <button type="button" id="closeLoginUpdatesModalBtn" data-modal-close-button class="bg-indigo-900 text-white px-3 py-2 rounded hover:bg-indigo-950">Close</button>
                         </div>
                     </div>
                 </div>
@@ -2347,70 +2717,138 @@ function renderHeader(string $title = 'Dashboard'): void
 
 function renderFooter(): void
 {
-    $user = currentUser();
+    $footerUser = currentUser();
+    $footerRole = (string) ($footerUser['role'] ?? '');
     ?>
         </main>
-        <footer class="app-footer">
+        <footer class="app-footer" data-default-open="<?= ($footerUser === null ? 0 : 3) ?>">
             <div class="mx-auto w-full max-w-7xl">
-                <div class="grid grid-cols-1 gap-6 px-4 py-5 md:grid-cols-2 lg:grid-cols-4 lg:py-6 text-sm">
+                <div class="footer-main-grid grid grid-cols-1 gap-3 px-4 py-2 sm:grid-cols-2 lg:grid-cols-4 lg:py-3 text-sm">
                     <div class="footer-section">
-                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</h2>
-                        <ul class="space-y-1 app-footer-muted font-medium">
-                            <li><a href="?page=home" class="app-footer-link">Home</a></li>
-                            <li><a href="?page=home" class="app-footer-link">Public Overview</a></li>
-                            <li><a href="?page=login" class="app-footer-link">Login</a></li>
-                            <li><a href="?page=register" class="app-footer-link">Register</a></li>
-                        </ul>
+                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-platform">
+                            <span class="footer-accordion-title-wrap">
+                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</span>
+                            </span>
+                            <span class="footer-accordion-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="footer-panel-platform" class="footer-accordion-panel">
+                            <ul class="space-y-0.5 app-footer-muted font-medium">
+                                <li><a href="?page=home" class="app-footer-link">Home</a></li>
+                                <?php if ($footerUser === null): ?>
+                                    <li><a href="?page=login" class="app-footer-link">Login</a></li>
+                                    <li><a href="?page=register" class="app-footer-link">Register</a></li>
+                                <?php elseif ($footerRole === 'student'): ?>
+                                    <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
+                                    <li><a href="?page=organizations" class="app-footer-link">Organizations</a></li>
+                                    <li><a href="?page=profile" class="app-footer-link">Profile</a></li>
+                                <?php elseif ($footerRole === 'owner'): ?>
+                                    <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
+                                    <li><a href="?page=my_org" class="app-footer-link">My Organization</a></li>
+                                    <li><a href="?page=profile" class="app-footer-link">Profile</a></li>
+                                <?php elseif ($footerRole === 'admin'): ?>
+                                    <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
+                                    <li><a href="?page=admin_orgs" class="app-footer-link">Admin Panel</a></li>
+                                    <li><a href="?page=profile" class="app-footer-link">Profile</a></li>
+                                <?php else: ?>
+                                    <li><a href="?page=login" class="app-footer-link">Login</a></li>
+                                    <li><a href="?page=register" class="app-footer-link">Register</a></li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="footer-section">
-                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Resources</h2>
-                        <ul class="space-y-1 app-footer-muted font-medium">
-                            <li><a href="?page=organizations" class="app-footer-link">Organization Directory</a></li>
-                            <li><a href="?page=home" class="app-footer-link">Budgeting FAQ</a></li>
-                            <li><a href="?page=home" class="app-footer-link">User Documentation</a></li>
-                        </ul>
+                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-resources">
+                            <span class="footer-accordion-title-wrap">
+                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Resources</span>
+                            </span>
+                            <span class="footer-accordion-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="footer-panel-resources" class="footer-accordion-panel">
+                            <ul class="space-y-0.5 app-footer-muted font-medium">
+                                <li><a href="?page=organizations" class="app-footer-link">Organization Directory</a></li>
+                                <li><a href="?page=organizations" class="app-footer-link">Financial Reports</a></li>
+                                <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Privacy Notice</a></li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="footer-section">
-                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance &amp; Security</h2>
-                        <ul class="space-y-1 app-footer-muted font-medium">
-                            <li><a href="?page=admin_audit" class="app-footer-link">Audit Log Policy</a></li>
-                            <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Data Privacy Notice</a></li>
-                            <li>
-                                <div class="flex items-center gap-2 app-footer-muted">
-                                    <span class="relative flex h-2.5 w-2.5">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70"></span>
-                                        <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                    </span>
-                                    <span>All Systems Operational</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="footer-section">
-                        <h2 class="mb-3 text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</h2>
-                        <ul class="space-y-1 app-footer-muted font-medium">
-                            <li>Student Affairs Office</li>
-                            <li><a href="mailto:studentaffairs@campus.local" class="app-footer-link">studentaffairs@campus.local</a></li>
-                            <li>2nd Floor, Student Services Building</li>
-                            <li>Main Campus, City 1000</li>
-                            <?php if ($user && ($user['role'] ?? '') === 'student'): ?>
-                                <li class="pt-2">
-                                    <form method="post" id="restartOnboardingForm" class="inline-flex">
-                                        <?= csrfField() ?>
-                                        <input type="hidden" name="action" value="restart_onboarding">
-                                        <button type="submit" class="app-footer-link underline decoration-dotted">Replay onboarding tour</button>
-                                    </form>
+                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-governance">
+                            <span class="footer-accordion-title-wrap">
+                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance &amp; Security</span>
+                            </span>
+                            <span class="footer-accordion-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="footer-panel-governance" class="footer-accordion-panel">
+                            <ul class="space-y-0.5 app-footer-muted font-medium">
+                                <?php if ($footerRole === 'admin'): ?>
+                                    <li><a href="?page=admin_audit" class="app-footer-link">Audit Log Policy</a></li>
+                                <?php endif; ?>
+                                <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Data Privacy Notice</a></li>
+                                <li>
+                                    <div class="flex items-center gap-2 app-footer-muted">
+                                        <span class="relative flex h-2.5 w-2.5">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70"></span>
+                                            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                                        </span>
+                                        <span>All Systems Operational</span>
+                                    </div>
                                 </li>
-                            <?php endif; ?>
-                        </ul>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="footer-section footer-section-support">
+                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-support">
+                            <span class="footer-accordion-title-wrap">
+                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</span>
+                            </span>
+                            <span class="footer-accordion-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="footer-panel-support" class="footer-accordion-panel">
+                            <ul class="space-y-0.5 app-footer-muted font-medium">
+                                <li>
+                                    <address style="font-style: normal;">
+                                        <strong>Student Affairs Office</strong><br>
+                                        <a href="mailto:studentaffairs@campus.local" class="app-footer-link">studentaffairs@campus.local</a><br>
+                                        <span class="app-footer-muted">2nd Floor, Student Services Building</span><br>
+                                        <span class="app-footer-muted">Main Campus, City 1000</span>
+                                    </address>
+                                </li>
+                                <?php if ($footerUser && ($footerUser['role'] ?? '') === 'student'): ?>
+                                    <li class="pt-1">
+                                        <form method="post" id="restartOnboardingForm" class="inline-flex">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="restart_onboarding">
+                                            <button type="submit" class="app-footer-link underline decoration-dotted">Replay onboarding tour</button>
+                                        </form>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
-                <div class="px-4 py-2 border-t border-emerald-200/40">
-                    <p class="text-xs app-footer-muted">&copy; 2026 Student Organization Management and Budget Transparency System. Built with PHP 8.2 &amp; Secure Session Enforcement.</p>
+                <div class="footer-bottom-bar px-4 py-2 border-t border-emerald-200/40 flex items-center justify-between flex-wrap">
+                    <p class="text-xs app-footer-muted"><?php echo date('Y') > 2026 ? '&copy; 2026–' . date('Y') : '&copy; 2026'; ?> Student Organization Management System. All rights reserved.</p>
+                    <div class="footer-bottom-actions">
+                        <nav class="footer-social-links" aria-label="Footer social links">
+                            <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="app-footer-icon-link" aria-label="Visit X">
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2h3.308l-7.227 8.26L22.82 22h-6.648l-5.208-6.802L4.99 22H1.68l7.73-8.835L1.26 2h6.816l4.708 6.231L18.244 2z"/></svg>
+                            </a>
+                            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="app-footer-icon-link" aria-label="Visit Facebook">
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 8H16V4.8h-2.5c-2.76 0-4.5 1.8-4.5 4.6V12H6v3.2h3v6h3.4v-6h3.1l.5-3.2h-3.6V9.7c0-.99.28-1.7 1.1-1.7z"/></svg>
+                            </a>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="app-footer-icon-link" aria-label="Visit Instagram">
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4A5.8 5.8 0 0 1 16.2 22H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2zm0 1.9A3.9 3.9 0 0 0 3.9 7.8v8.4a3.9 3.9 0 0 0 3.9 3.9h8.4a3.9 3.9 0 0 0 3.9-3.9V7.8a3.9 3.9 0 0 0-3.9-3.9H7.8zm8.95 1.45a1.35 1.35 0 1 1 0 2.7 1.35 1.35 0 0 1 0-2.7zM12 7.1A4.9 4.9 0 1 1 7.1 12 4.9 4.9 0 0 1 12 7.1zm0 1.9A3 3 0 1 0 15 12a3 3 0 0 0-3-3z"/></svg>
+                            </a>
+                            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="app-footer-icon-link" aria-label="Visit LinkedIn">
+                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.4 8.6A1.9 1.9 0 1 1 5.4 4.8a1.9 1.9 0 0 1 0 3.8zM3.7 9.9h3.4V20H3.7V9.9zm5.4 0h3.3v1.4h.1c.5-.9 1.7-1.9 3.6-1.9 3.8 0 4.5 2.5 4.5 5.7V20h-3.4v-4.3c0-1-.02-2.4-1.5-2.4-1.5 0-1.8 1.1-1.8 2.3V20H9.1V9.9z"/></svg>
+                            </a>
+                        </nav>
+                        <button id="backToTop" class="app-footer-link text-xs" onclick="window.scrollTo({top:0,behavior:'smooth'})">Back to top</button>
+                    </div>
                 </div>
             </div>
         </footer>
@@ -2860,7 +3298,124 @@ function renderFooter(): void
                     });
                 }
 
+                document.addEventListener('click', function (event) {
+                    const overlay = event.target instanceof Element ? event.target.closest('[data-modal-close]') : null;
+                    if (!overlay || event.target !== overlay) {
+                        return;
+                    }
+
+                    overlay.classList.add('hidden');
+                    if (overlay.hasAttribute('aria-hidden')) {
+                        overlay.setAttribute('aria-hidden', 'true');
+                    }
+
+                    const openModal = document.querySelector('[data-modal-close]:not(.hidden)');
+                    if (!openModal) {
+                        document.body.style.overflow = '';
+                    }
+                });
+
+                if ('ontouchstart' in window) {
+                    document.querySelectorAll('.modal-panel').forEach(function (panel) {
+                        let startY = 0;
+                        let lastY = 0;
+                        let activeTouchId = null;
+                        let isDragging = false;
+
+                        const resetPanel = function (animated) {
+                            panel.classList.remove('is-dragging');
+                            panel.style.transition = animated ? 'transform 0.2s ease' : '';
+                            panel.style.transform = animated ? 'translateY(0px)' : '';
+
+                            if (animated) {
+                                window.setTimeout(function () {
+                                    if (!panel.classList.contains('is-dragging')) {
+                                        panel.style.transition = '';
+                                    }
+                                }, 200);
+                            }
+                        };
+
+                        const closePanel = function () {
+                            const closeButton = panel.querySelector('[data-modal-close-button]');
+                            if (closeButton && typeof closeButton.click === 'function') {
+                                closeButton.click();
+                            }
+                        };
+
+                        panel.addEventListener('touchstart', function (event) {
+                            if (event.touches.length !== 1 || panel.scrollTop > 0) {
+                                return;
+                            }
+
+                            const touch = event.touches[0];
+                            const bounds = panel.getBoundingClientRect();
+                            if ((touch.clientY - bounds.top) > 72) {
+                                return;
+                            }
+
+                            activeTouchId = touch.identifier;
+                            startY = touch.clientY;
+                            lastY = touch.clientY;
+                            isDragging = true;
+                            panel.classList.add('is-dragging');
+                            panel.style.transition = 'none';
+                        }, { passive: true });
+
+                        panel.addEventListener('touchmove', function (event) {
+                            if (!isDragging) {
+                                return;
+                            }
+
+                            const touch = Array.prototype.find.call(event.touches, function (item) {
+                                return item.identifier === activeTouchId;
+                            }) || event.touches[0];
+
+                            if (!touch) {
+                                return;
+                            }
+
+                            lastY = touch.clientY;
+                            const deltaY = Math.max(0, lastY - startY);
+                            panel.style.transform = 'translateY(' + deltaY + 'px)';
+
+                            if (deltaY > 0) {
+                                event.preventDefault();
+                            }
+                        }, { passive: false });
+
+                        const finishDrag = function () {
+                            if (!isDragging) {
+                                return;
+                            }
+
+                            const deltaY = Math.max(0, lastY - startY);
+                            isDragging = false;
+                            activeTouchId = null;
+
+                            if (deltaY > 80) {
+                                closePanel();
+                                panel.style.transform = '';
+                                panel.style.transition = '';
+                                panel.classList.remove('is-dragging');
+                                return;
+                            }
+
+                            resetPanel(true);
+                        };
+
+                        panel.addEventListener('touchend', finishDrag);
+                        panel.addEventListener('touchcancel', function () {
+                            isDragging = false;
+                            activeTouchId = null;
+                            resetPanel(true);
+                        });
+                    });
+                }
+
                 const footerToggles = document.querySelectorAll('.footer-accordion-toggle');
+                const footer = document.querySelector('footer.app-footer');
+                const defaultOpenIndex = footer ? parseInt(footer.getAttribute('data-default-open') || '0', 10) : 0;
                 const footerDesktopQuery = window.matchMedia('(min-width: 768px)');
 
                 const setFooterPanels = function () {
@@ -2876,7 +3431,7 @@ function renderFooter(): void
                             return;
                         }
 
-                        const isOpen = isDesktop || index === 0;
+                        const isOpen = isDesktop || index === defaultOpenIndex;
                         toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                         panel.classList.toggle('is-open', isOpen);
                     });
