@@ -56,6 +56,7 @@ function handleUpdateOrgAdminAction(PDO $db, array $user): void
 {
     requireRole(['admin']);
     $orgId = (int) ($_POST['org_id'] ?? 0);
+    $ownerId = (int) ($_POST['owner_id'] ?? 0);
     $name = trim((string) ($_POST['name'] ?? ''));
     $description = trim((string) ($_POST['description'] ?? ''));
     $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
@@ -86,10 +87,76 @@ function handleUpdateOrgAdminAction(PDO $db, array $user): void
         $targetProgram = '';
     }
 
-    $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, org_category = ?, target_institute = ?, target_program = ? WHERE id = ?');
-    $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $orgId]);
-    auditLog((int) $user['id'], 'organization.update', 'organization', $orgId, 'Updated organization details');
-    setFlash('success', 'Organization updated.');
+    $orgStmt = $db->prepare('SELECT owner_id FROM organizations WHERE id = ? LIMIT 1');
+    $orgStmt->execute([$orgId]);
+    $existingOrg = $orgStmt->fetch();
+    if (!$existingOrg) {
+        setFlash('error', 'Organization not found.');
+        redirect('?page=admin_orgs');
+    }
+
+    $existingOwnerId = (int) ($existingOrg['owner_id'] ?? 0);
+
+    try {
+        $db->beginTransaction();
+
+        $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, org_category = ?, target_institute = ?, target_program = ? WHERE id = ?');
+        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $orgId]);
+
+        if ($ownerId <= 0) {
+            $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');
+            $stmt->execute([$orgId]);
+
+            $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ?');
+            $stmt->execute([$orgId]);
+        } elseif ($ownerId !== $existingOwnerId) {
+            $ownerStmt = $db->prepare("SELECT id FROM users WHERE id = ? AND role IN ('student', 'owner') LIMIT 1");
+            $ownerStmt->execute([$ownerId]);
+            if (!$ownerStmt->fetch()) {
+                throw new RuntimeException('Selected owner is invalid.');
+            }
+
+            $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');
+            $stmt->execute([$orgId]);
+
+            $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ?');
+            $stmt->execute([$orgId]);
+
+            $stmt = $db->prepare('INSERT INTO owner_assignments (organization_id, student_id, status) VALUES (?, ?, ?)');
+            $stmt->execute([$orgId, $ownerId, 'pending']);
+        } else {
+            $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ? AND status = ?');
+            $stmt->execute([$orgId, 'pending']);
+        }
+
+        $db->commit();
+
+        auditLog((int) $user['id'], 'organization.update', 'organization', $orgId, 'Updated organization details');
+        if ($ownerId !== $existingOwnerId) {
+            auditLog((int) $user['id'], 'organization.assign_owner', 'organization', $orgId, $ownerId > 0 ? 'Assignment set to pending via organization update' : 'Owner assignment cleared via organization update');
+        }
+
+        if ($ownerId !== $existingOwnerId && $ownerId > 0) {
+            setFlash('success', 'Organization updated. Owner assignment sent and awaiting student response.');
+        } elseif ($ownerId !== $existingOwnerId && $ownerId <= 0) {
+            setFlash('success', 'Organization updated. Owner assignment cleared.');
+        } else {
+            setFlash('success', 'Organization updated.');
+        }
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) {
+            $db->rollBack();
+        }
+
+        if (str_contains(strtolower($e->getMessage()), 'duplicate')) {
+            setFlash('error', 'Organization name already exists.');
+        } elseif ($e instanceof RuntimeException) {
+            setFlash('error', $e->getMessage());
+        } else {
+            setFlash('error', 'Could not update organization.');
+        }
+    }
+
     redirect('?page=admin_orgs');
 }
 
