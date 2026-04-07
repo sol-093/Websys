@@ -303,6 +303,16 @@ function handleAdminAuditPage(PDO $db, array $user): void
 function handleMyOrgAdminPage(PDO $db): void
 {
     $orgId = (int) ($_GET['org_id'] ?? 0);
+    $txTypeFilter = (string) ($_GET['tx_type'] ?? 'all');
+    if (!in_array($txTypeFilter, ['all', 'income', 'expense'], true)) {
+        $txTypeFilter = 'all';
+    }
+
+    $txDateSort = strtolower((string) ($_GET['tx_sort'] ?? 'desc'));
+    if (!in_array($txDateSort, ['asc', 'desc'], true)) {
+        $txDateSort = 'desc';
+    }
+
     $orgs = $db->query('SELECT id, name, description, org_category, target_institute, target_program FROM organizations ORDER BY name')->fetchAll();
     $org = null;
     if ($orgId > 0) {
@@ -321,11 +331,13 @@ function handleMyOrgAdminPage(PDO $db): void
     }
     ?>
     <div class="bg-white shadow rounded p-4">
-        <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview (Admin)</span></h1>
+        <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview</span></h1>
         <form method="get" class="mb-4 flex items-start gap-2 relative">
             <input type="hidden" name="page" value="my_org">
             <input type="hidden" name="org_id" id="adminOrgIdInput" value="<?= $orgId > 0 ? (int) $orgId : '' ?>">
             <input type="hidden" name="org_search_name" id="adminOrgSearchName" value="<?= e($selectedOrgName) ?>">
+            <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
+            <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
             <button type="button" id="adminOrgSearchButton" class="inline-flex items-center gap-2 border rounded px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
                 <?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Search Organizations</span>
             </button>
@@ -336,8 +348,17 @@ function handleMyOrgAdminPage(PDO $db): void
 
         <?php if ($org): ?>
             <?php
-            $txStmt = $db->prepare('SELECT * FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
-            $txStmt->execute([(int) $org['id']]);
+            $txSql = 'SELECT * FROM financial_transactions WHERE organization_id = ?';
+            $txParams = [(int) $org['id']];
+            if ($txTypeFilter !== 'all') {
+                $txSql .= ' AND type = ?';
+                $txParams[] = $txTypeFilter;
+            }
+            $txOrder = $txDateSort === 'asc' ? 'ASC' : 'DESC';
+            $txSql .= " ORDER BY transaction_date {$txOrder}, id {$txOrder}";
+
+            $txStmt = $db->prepare($txSql);
+            $txStmt->execute($txParams);
             $tx = $txStmt->fetchAll();
             $adminTxPagination = paginateArray($tx, 'pg_myorg_admin_tx', 12);
             $tx = $adminTxPagination['items'];
@@ -404,10 +425,31 @@ function handleMyOrgAdminPage(PDO $db): void
 
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <h3 class="text-base font-semibold text-slate-800">Transaction History</h3>
-                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=csv" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
-                    Export CSV
+                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=pdf&tx_type=<?= urlencode($txTypeFilter) ?>&tx_sort=<?= urlencode($txDateSort) ?>" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
+                    Export PDF
                 </a>
             </div>
+
+            <form method="get" action="?page=my_org" class="mb-3 flex flex-wrap items-end gap-2">
+                <input type="hidden" name="page" value="my_org">
+                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">Type</label>
+                    <select name="tx_type" class="border rounded px-3 py-2 text-sm">
+                        <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
+                        <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
+                        <option value="expense" <?= $txTypeFilter === 'expense' ? 'selected' : '' ?>>Expense</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">Date</label>
+                    <select name="tx_sort" class="border rounded px-3 py-2 text-sm">
+                        <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
+                        <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
+                    </select>
+                </div>
+                <button class="inline-flex items-center justify-center min-w-[86px] bg-indigo-700 text-white px-2 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+            </form>
 
             <div class="table-wrapper">
                 <table class="w-full text-sm">
@@ -751,8 +793,27 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         $selectedOrgId = (int) $org['id'];
     }
 
-    $txStmt = $db->prepare('SELECT * FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
-    $txStmt->execute([(int) $selectedOrgId]);
+    $txTypeFilter = (string) ($_GET['tx_type'] ?? 'all');
+    if (!in_array($txTypeFilter, ['all', 'income', 'expense'], true)) {
+        $txTypeFilter = 'all';
+    }
+
+    $txDateSort = strtolower((string) ($_GET['tx_sort'] ?? 'desc'));
+    if (!in_array($txDateSort, ['asc', 'desc'], true)) {
+        $txDateSort = 'desc';
+    }
+
+    $txSql = 'SELECT * FROM financial_transactions WHERE organization_id = ?';
+    $txParams = [(int) $selectedOrgId];
+    if ($txTypeFilter !== 'all') {
+        $txSql .= ' AND type = ?';
+        $txParams[] = $txTypeFilter;
+    }
+    $txOrder = $txDateSort === 'asc' ? 'ASC' : 'DESC';
+    $txSql .= " ORDER BY transaction_date {$txOrder}, id {$txOrder}";
+
+    $txStmt = $db->prepare($txSql);
+    $txStmt->execute($txParams);
     $transactions = $txStmt->fetchAll();
     $userTxPagination = paginateArray($transactions, 'pg_myorg_user_tx', 12);
     $transactions = $userTxPagination['items'];
@@ -762,7 +823,6 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     $orgMemberNames = array_map(static fn (array $row): string => (string) $row['name'], $memberStmt->fetchAll());
     $orgMemberCount = count($orgMemberNames);
 
-    $titleSuffix = ($user['role'] ?? '') === 'owner' ? ' (Owner)' : ' (Student)';
     $viewerMembershipStmt = $db->prepare('SELECT 1 FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1');
     $viewerMembershipStmt->execute([(int) $selectedOrgId, (int) $user['id']]);
     $canSeeMemberNames = (bool) $viewerMembershipStmt->fetchColumn();
@@ -772,7 +832,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     ?>
     <div class="bg-white shadow rounded p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview<?= e($titleSuffix) ?></span></h1>
+            <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview</span></h1>
             <?php if (($user['role'] ?? '') === 'owner'): ?>
                 <a href="?page=my_org_manage&org_id=<?= (int) $selectedOrgId ?>" class="bg-emerald-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Manage Organization</span></span></a>
             <?php endif; ?>
@@ -781,6 +841,8 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         <form method="get" class="mb-4 flex gap-2 items-start flex-wrap relative" data-dropdown-root>
             <input type="hidden" name="page" value="my_org">
             <input type="hidden" name="org_id" data-dropdown-value value="<?= (int) $selectedOrgId ?>">
+            <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
+            <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
             <div class="relative min-w-[16rem]" data-dropdown-wrapper>
                 <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                     <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
@@ -814,6 +876,27 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                 <?php endif; ?>
             </div>
         </div>
+
+        <form method="get" action="?page=my_org" class="mb-3 flex flex-wrap items-end gap-2">
+            <input type="hidden" name="page" value="my_org">
+            <input type="hidden" name="org_id" value="<?= (int) $selectedOrgId ?>">
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">Type</label>
+                <select name="tx_type" class="border rounded px-3 py-2 text-sm">
+                    <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
+                    <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
+                    <option value="expense" <?= $txTypeFilter === 'expense' ? 'selected' : '' ?>>Expense</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-600 mb-1">Date</label>
+                <select name="tx_sort" class="border rounded px-3 py-2 text-sm">
+                    <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
+                    <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
+                </select>
+            </div>
+            <button class="inline-flex items-center justify-center min-w-[86px] bg-indigo-700 text-white px-2 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+        </form>
 
         <?php if ($canSeeMemberNames): ?>
             <div id="userOrgMembersModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>

@@ -249,7 +249,7 @@ function handleExportTransactionsAction(PDO $db, array $user): void
 {
     requireLogin();
 
-    if (($_GET['format'] ?? '') !== 'csv') {
+    if (($_GET['format'] ?? '') !== 'pdf') {
         setFlash('error', 'Unsupported export format.');
         redirect('?page=' . urlencode((string) ($_GET['page'] ?? 'dashboard')));
     }
@@ -270,8 +270,27 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         redirect('?page=' . urlencode((string) ($_GET['page'] ?? 'dashboard')) . ($orgId > 0 ? '&org_id=' . $orgId : ''));
     }
 
-    $stmt = $db->prepare('SELECT type, amount, description, transaction_date, receipt_path FROM financial_transactions WHERE organization_id = ? ORDER BY transaction_date DESC, id DESC');
-    $stmt->execute([(int) $org['id']]);
+    $txTypeFilter = (string) ($_GET['tx_type'] ?? 'all');
+    if (!in_array($txTypeFilter, ['all', 'income', 'expense'], true)) {
+        $txTypeFilter = 'all';
+    }
+
+    $txDateSort = strtolower((string) ($_GET['tx_sort'] ?? 'desc'));
+    if (!in_array($txDateSort, ['asc', 'desc'], true)) {
+        $txDateSort = 'desc';
+    }
+
+    $txOrder = $txDateSort === 'asc' ? 'ASC' : 'DESC';
+    $sql = 'SELECT id, type, amount, description, transaction_date, receipt_path FROM financial_transactions WHERE organization_id = ?';
+    $params = [(int) $org['id']];
+    if ($txTypeFilter !== 'all') {
+        $sql .= ' AND type = ?';
+        $params[] = $txTypeFilter;
+    }
+    $sql .= " ORDER BY transaction_date {$txOrder}, id {$txOrder}";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
     $transactions = $stmt->fetchAll();
 
     while (ob_get_level() > 0) {
@@ -284,31 +303,141 @@ function handleExportTransactionsAction(PDO $db, array $user): void
     if ($slug === '') {
         $slug = 'organization';
     }
-    $filename = $slug . '-transactions-' . date('Y-m-d') . '.csv';
+    $filename = $slug . '-transactions-' . date('Y-m-d') . '.pdf';
 
-    header('Content-Type: text/csv; charset=UTF-8');
+    $sanitizeText = static function (string $text): string {
+        $clean = preg_replace('/[^\x20-\x7E]/', '?', $text);
+        return (string) $clean;
+    };
+
+    $wrapLine = static function (string $text, int $maxChars = 108): array {
+        if ($text === '') {
+            return [''];
+        }
+
+        $wrapped = wordwrap($text, $maxChars, "\n", true);
+        return explode("\n", $wrapped);
+    };
+
+    $formatAmount = static function (float $amount): string {
+        return 'PHP ' . number_format($amount, 2);
+    };
+
+    $lines = [];
+    $lines[] = 'Student Organization Management and Budget Transparency System';
+    $lines[] = 'Transaction Report Export';
+    $lines[] = '';
+    $lines[] = 'Organization: ' . (string) $orgName;
+    $lines[] = 'Generated: ' . date('Y-m-d H:i:s');
+    $lines[] = 'Filter (Type): ' . ($txTypeFilter === 'all' ? 'All' : ucfirst($txTypeFilter));
+    $lines[] = 'Sort (Date): ' . ($txDateSort === 'asc' ? 'Oldest first' : 'Newest first');
+    $lines[] = 'Total records: ' . count($transactions);
+    $lines[] = str_repeat('-', 110);
+
+    if ($transactions === []) {
+        $lines[] = 'No transactions found for the current view.';
+    } else {
+        foreach ($transactions as $index => $row) {
+            $number = $index + 1;
+            $date = (string) ($row['transaction_date'] ?? '');
+            $type = strtoupper((string) ($row['type'] ?? ''));
+            $amount = $formatAmount((float) ($row['amount'] ?? 0));
+            $description = trim((string) ($row['description'] ?? ''));
+            $receipt = trim((string) ($row['receipt_path'] ?? ''));
+            $id = (int) ($row['id'] ?? 0);
+
+            $lines[] = $number . '. Tx ID: ' . $id . ' | Date: ' . $date . ' | Type: ' . $type . ' | Amount: ' . $amount;
+
+            foreach ($wrapLine('   Description: ' . ($description !== '' ? $description : '-')) as $wrappedLine) {
+                $lines[] = $wrappedLine;
+            }
+
+            foreach ($wrapLine('   Receipt Path: ' . ($receipt !== '' ? $receipt : '-')) as $wrappedLine) {
+                $lines[] = $wrappedLine;
+            }
+
+            $lines[] = str_repeat('-', 110);
+        }
+    }
+
+    $normalizedLines = [];
+    foreach ($lines as $line) {
+        foreach ($wrapLine($sanitizeText($line)) as $wrappedLine) {
+            $normalizedLines[] = $wrappedLine;
+        }
+    }
+
+    $linesPerPage = 52;
+    $pages = array_chunk($normalizedLines, $linesPerPage);
+    if ($pages === []) {
+        $pages = [['No data available.']];
+    }
+
+    $escapePdfText = static function (string $text): string {
+        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+    };
+
+    $objects = [];
+    $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+
+    $pageCount = count($pages);
+    $pageObjectStart = 4;
+    $contentObjectStart = $pageObjectStart + $pageCount;
+    $pageRefs = [];
+
+    for ($i = 0; $i < $pageCount; $i++) {
+        $pageObjId = $pageObjectStart + $i;
+        $contentObjId = $contentObjectStart + $i;
+        $pageRefs[] = $pageObjId . ' 0 R';
+
+        $stream = "BT\n/F1 10 Tf\n14 TL\n40 802 Td\n";
+        foreach ($pages[$i] as $lineIndex => $lineText) {
+            $escaped = $escapePdfText($lineText);
+            if ($lineIndex === 0) {
+                $stream .= '(' . $escaped . ") Tj\n";
+            } else {
+                $stream .= 'T* (' . $escaped . ") Tj\n";
+            }
+        }
+        $stream .= "ET";
+
+        $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ' . $contentObjId . ' 0 R >>';
+        $objects[$contentObjId] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
+    }
+
+    $objects[2] = '<< /Type /Pages /Count ' . $pageCount . ' /Kids [ ' . implode(' ', $pageRefs) . ' ] >>';
+    $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+
+    ksort($objects);
+    $pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+    $offsets = [0 => 0];
+    foreach ($objects as $id => $obj) {
+        $offsets[$id] = strlen($pdf);
+        $pdf .= $id . " 0 obj\n" . $obj . "\nendobj\n";
+    }
+
+    $xrefOffset = strlen($pdf);
+    $maxObjectId = max(array_keys($objects));
+    $pdf .= 'xref' . "\n";
+    $pdf .= '0 ' . ($maxObjectId + 1) . "\n";
+    $pdf .= sprintf('%010d %05d f %s', 0, 65535, "\n");
+    for ($i = 1; $i <= $maxObjectId; $i++) {
+        $offset = (int) ($offsets[$i] ?? 0);
+        $pdf .= sprintf('%010d %05d n %s', $offset, 0, "\n");
+    }
+
+    $pdf .= 'trailer' . "\n";
+    $pdf .= '<< /Size ' . ($maxObjectId + 1) . ' /Root 1 0 R >>' . "\n";
+    $pdf .= 'startxref' . "\n";
+    $pdf .= $xrefOffset . "\n";
+    $pdf .= '%%EOF';
+
+    header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Content-Length: ' . strlen($pdf));
     header('Pragma: no-cache');
     header('Expires: 0');
 
-    $output = fopen('php://output', 'wb');
-    if ($output === false) {
-        exit;
-    }
-
-    echo "\xEF\xBB\xBF";
-    fputcsv($output, ['Date', 'Type', 'Amount', 'Description', 'Receipt Path']);
-
-    foreach ($transactions as $row) {
-        fputcsv($output, [
-            (string) ($row['transaction_date'] ?? ''),
-            (string) ($row['type'] ?? ''),
-            number_format((float) ($row['amount'] ?? 0), 2, '.', ''),
-            (string) ($row['description'] ?? ''),
-            (string) ($row['receipt_path'] ?? ''),
-        ]);
-    }
-
-    fclose($output);
+    echo $pdf;
     exit;
 }

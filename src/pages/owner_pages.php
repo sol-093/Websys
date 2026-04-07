@@ -250,8 +250,8 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
         <div id="tx-history" class="bg-white shadow rounded p-4 overflow-auto">
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
-                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=csv" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
-                    Export CSV
+                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=pdf&tx_type=<?= urlencode($txTypeFilter) ?>&tx_sort=<?= urlencode($txDateSort) ?>" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
+                    Export PDF
                 </a>
             </div>
             <form method="get" action="?page=my_org_manage#tx-history" class="mb-3 flex flex-wrap items-end gap-2" data-dropdown-root onsubmit="const b=this.querySelector('[data-filter-submit]'); if(b){ b.disabled=true; b.textContent='Filtering...'; }">
