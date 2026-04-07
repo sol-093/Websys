@@ -13,6 +13,35 @@
 
             echo '<div class="text-xs text-red-500 mt-1">↓ ' . number_format(abs($deltaPct), 1) . '%</div>';
         };
+
+        $formatAnnouncementExpiry = static function (?string $expiresAt): string {
+            $expiresAt = trim((string) ($expiresAt ?? ''));
+            if ($expiresAt === '') {
+                return 'No expiry';
+            }
+
+            try {
+                $now = new DateTimeImmutable('now');
+                $expiry = new DateTimeImmutable($expiresAt);
+                $daysLeft = (int) $now->diff($expiry)->format('%r%a');
+            } catch (Throwable) {
+                return 'Expires soon';
+            }
+
+            if ($daysLeft < 0) {
+                return 'Expired';
+            }
+
+            if ($daysLeft === 0) {
+                return 'Expires today';
+            }
+
+            if ($daysLeft === 1) {
+                return 'Expires in 1 day';
+            }
+
+            return 'Expires in ' . $daysLeft . ' days';
+        };
     ?>
 
     <section class="grid xl:grid-cols-12 gap-3">
@@ -23,7 +52,7 @@
                     <h1 class="dashboard-headline modern-title">Operations are on track, budgets are transparent, and every organization is in sync.</h1>
                     <p id="dashboardWelcomeMessage" class="dashboard-copy mt-3">Welcome, <?= e($user['name']) ?>. Track collections, spending, announcements, and ownership activity from one focused workspace.</p>
                 </div>
-                <div class="dashboard-stamp"><?= e($dashboardTimestamp) ?></div>
+                <div id="dashboardLiveTimestamp" class="dashboard-stamp" data-live-dashboard-time="1"><?= e($dashboardTimestamp) ?></div>
             </div>
             <div class="dashboard-metric-grid mt-4">
                 <div class="dashboard-metric-card">
@@ -190,8 +219,12 @@
                     <div class="dashboard-feed-item">
                         <span class="<?= e($feedDotClass) ?>"></span>
                         <div>
-                            <div class="dashboard-feed-title"><?= e($item['title']) ?></div>
-                            <div class="dashboard-feed-meta mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                            <div class="dashboard-feed-title flex items-center gap-2"><?= e($item['title']) ?>
+                                <?php if (trim((string) ($item['label'] ?? '')) !== ''): ?>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40"><?= e((string) $item['label']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['organization_name']) ?> · <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
                             <div class="dashboard-feed-body mt-1"><?= e($item['content']) ?></div>
                         </div>
                     </div>
@@ -402,11 +435,16 @@
                     <div class="border rounded p-3">
                         <div class="flex items-center justify-between gap-2">
                             <div class="font-medium"><?= e($item['title']) ?></div>
-                            <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
-                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
-                            <?php endif; ?>
+                            <div class="flex items-center gap-1">
+                                <?php if (trim((string) ($item['label'] ?? '')) !== ''): ?>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40"><?= e((string) $item['label']) ?></span>
+                                <?php endif; ?>
+                                <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
                         <div class="text-sm mt-1"><?= e($item['content']) ?></div>
                         <?php if (($user['role'] ?? '') === 'admin'): ?>
                             <form method="post" class="mt-2">
@@ -422,7 +460,7 @@
                     </div>
                 <?php endforeach; ?>
                 <?php if (count($announcements) === 0): ?>
-                    <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
+                    <p class="text-sm text-gray-600">No active announcements right now.</p>
                 <?php endif; ?>
             </div>
         </div>

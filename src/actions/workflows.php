@@ -2,6 +2,40 @@
 
 declare(strict_types=1);
 
+function assertOwnerAssignmentEligibility(PDO $db, int $orgId, int $ownerId): void
+{
+    if ($ownerId <= 0) {
+        return;
+    }
+
+    $orgStmt = $db->prepare('SELECT id, name, org_category, target_institute, target_program FROM organizations WHERE id = ? LIMIT 1');
+    $orgStmt->execute([$orgId]);
+    $org = $orgStmt->fetch();
+    if (!$org) {
+        throw new RuntimeException('Organization not found.');
+    }
+
+    $ownerStmt = $db->prepare("SELECT id, role, institute, program FROM users WHERE id = ? AND role IN ('student', 'owner') LIMIT 1");
+    $ownerStmt->execute([$ownerId]);
+    $owner = $ownerStmt->fetch();
+    if (!$owner) {
+        throw new RuntimeException('Selected owner is invalid.');
+    }
+
+    if (!canUserJoinOrganization($org, $owner)) {
+        $category = (string) ($org['org_category'] ?? 'collegewide');
+        if ($category === 'institutewide') {
+            throw new RuntimeException('Selected user cannot be assigned. Institutewide organizations require a matching institute.');
+        }
+
+        if ($category === 'program_based') {
+            throw new RuntimeException('Selected user cannot be assigned. Program-based organizations require a matching program.');
+        }
+
+        throw new RuntimeException('Selected user cannot be assigned to this organization.');
+    }
+}
+
 function handleCreateOrgAction(PDO $db, array $user): void
 {
     requireRole(['admin']);
@@ -110,11 +144,7 @@ function handleUpdateOrgAdminAction(PDO $db, array $user): void
             $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ?');
             $stmt->execute([$orgId]);
         } elseif ($ownerId !== $existingOwnerId) {
-            $ownerStmt = $db->prepare("SELECT id FROM users WHERE id = ? AND role IN ('student', 'owner') LIMIT 1");
-            $ownerStmt->execute([$ownerId]);
-            if (!$ownerStmt->fetch()) {
-                throw new RuntimeException('Selected owner is invalid.');
-            }
+            assertOwnerAssignmentEligibility($db, $orgId, $ownerId);
 
             $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');
             $stmt->execute([$orgId]);
@@ -185,6 +215,8 @@ function handleAssignOwnerAction(PDO $db, array $user): void
             $stmt = $db->prepare('DELETE FROM owner_assignments WHERE organization_id = ?');
             $stmt->execute([$orgId]);
         } else {
+            assertOwnerAssignmentEligibility($db, $orgId, $ownerId);
+
             $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');
             $stmt->execute([$orgId]);
 
@@ -200,7 +232,11 @@ function handleAssignOwnerAction(PDO $db, array $user): void
         setFlash('success', $ownerId > 0 ? 'Owner assignment sent. Student must accept first.' : 'Owner assignment cleared.');
     } catch (Throwable $e) {
         $db->rollBack();
-        setFlash('error', 'Could not assign owner.');
+        if ($e instanceof RuntimeException) {
+            setFlash('error', $e->getMessage());
+        } else {
+            setFlash('error', 'Could not assign owner.');
+        }
     }
 
     redirect('?page=admin_orgs');
@@ -378,12 +414,12 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
     $org = getOwnedOrganizationById((int) $user['id'], $orgId);
     if (!$org) {
         setFlash('error', 'You are not allowed to manage this organization.');
-        redirect('?page=my_org');
+        redirect('?page=my_org_manage');
     }
 
     if (!in_array($decision, ['approve', 'decline'], true)) {
         setFlash('error', 'Invalid request action.');
-        redirect('?page=my_org&org_id=' . $orgId);
+        redirect('?page=my_org_manage&org_id=' . $orgId);
     }
 
     $stmt = $db->prepare('SELECT * FROM organization_join_requests WHERE id = ? AND organization_id = ? AND status = ? LIMIT 1');
@@ -392,7 +428,7 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
 
     if (!$request) {
         setFlash('error', 'Request is no longer pending.');
-        redirect('?page=my_org&org_id=' . $orgId);
+        redirect('?page=my_org_manage&org_id=' . $orgId);
     }
 
     $db->beginTransaction();
@@ -420,5 +456,5 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
         setFlash('error', 'Unable to update join request.');
     }
 
-    redirect('?page=my_org&org_id=' . $orgId);
+    redirect('?page=my_org_manage&org_id=' . $orgId);
 }

@@ -22,9 +22,12 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
         redirect('?page=my_org');
     }
 
-    $stmt = $db->prepare('SELECT * FROM announcements WHERE organization_id = ? AND created_at >= ? ORDER BY id DESC');
-    $stmt->execute([(int) $org['id'], $announcementCutoff]);
+    $activeAnnouncementCutoff = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
+    $stmt = $db->prepare('SELECT * FROM announcements WHERE organization_id = ? AND (expires_at IS NULL OR expires_at >= ?) ORDER BY id DESC');
+    $stmt->execute([(int) $org['id'], $activeAnnouncementCutoff]);
     $announcements = $stmt->fetchAll();
+    $allAnnouncements = $announcements;
+    $announcementPreview = array_slice($allAnnouncements, 0, 3);
 
     $txTypeFilter = (string) ($_GET['tx_type'] ?? 'all');
     if (!in_array($txTypeFilter, ['all', 'income', 'expense'], true)) {
@@ -63,8 +66,6 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
 
     $pendingJoinPagination = paginateArray($pendingJoinRequests, 'pg_myorg_join', 5);
     $pendingJoinRequests = $pendingJoinPagination['items'];
-    $announcementsPagination = paginateArray($announcements, 'pg_myorg_ann', 5);
-    $announcements = $announcementsPagination['items'];
     $transactionsPagination = paginateArray($transactions, 'pg_myorg_tx', 10);
     $transactions = $transactionsPagination['items'];
     $myTxRequestsPagination = paginateArray($myTxRequests, 'pg_myorg_req', 8);
@@ -189,32 +190,46 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
 
         <div class="grid md:grid-cols-2 gap-4">
             <div class="bg-white shadow rounded p-4">
-                <h2 class="text-lg font-semibold mb-2 icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>Post Announcement</span></h2>
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <h2 class="text-lg font-semibold icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>Post Announcement</span></h2>
+                    <button type="button" id="myOrgAnnouncementsOpen" class="text-xs text-indigo-700 underline">View all announcements</button>
+                </div>
                 <form method="post" class="space-y-2">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="add_announcement">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                     <input name="title" placeholder="Title" class="w-full border rounded px-3 py-2" required>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <input name="label" maxlength="40" placeholder="Label (optional, e.g. Urgent)" class="w-full border rounded px-3 py-2">
+                        <select name="duration_days" class="w-full border rounded px-3 py-2" required>
+                            <option value="7">Visible for 7 days</option>
+                            <option value="14">Visible for 14 days</option>
+                            <option value="30" selected>Visible for 30 days</option>
+                            <option value="60">Visible for 60 days</option>
+                            <option value="90">Visible for 90 days</option>
+                        </select>
+                    </div>
                     <textarea name="content" placeholder="Announcement details" class="w-full border rounded px-3 py-2" required></textarea>
                     <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('create', 'ui-icon ui-icon-sm') ?><span>Post</span></span></button>
                 </form>
 
                 <div class="mt-4 space-y-2 max-h-72 overflow-auto">
-                    <?php foreach ($announcements as $announcement): ?>
+                    <?php foreach ($announcementPreview as $announcement): ?>
                         <div class="border rounded p-2">
-                            <div class="font-medium"><?= e($announcement['title']) ?></div>
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="font-medium"><?= e($announcement['title']) ?></div>
+                                <?php if (trim((string) ($announcement['label'] ?? '')) !== ''): ?>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full border border-emerald-300/40 bg-emerald-500/20"><?= e((string) $announcement['label']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">Expires: <?= e((string) ($announcement['expires_at'] ?? '')) ?></div>
                             <div class="text-sm text-slate-700"><?= e($announcement['content']) ?></div>
-                            <form method="post" class="mt-2">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="delete_announcement">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <input type="hidden" name="announcement_id" value="<?= (int) $announcement['id'] ?>">
-                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Delete</span></span></button>
-                            </form>
                         </div>
                     <?php endforeach; ?>
+                    <?php if (count($announcementPreview) === 0): ?>
+                        <p class="text-sm text-gray-500">No active announcements right now.</p>
+                    <?php endif; ?>
                 </div>
-                <?php renderPagination($announcementsPagination); ?>
             </div>
 
             <div class="bg-white shadow rounded p-4">
@@ -241,7 +256,13 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     </div>
                     <input type="date" name="transaction_date" value="<?= date('Y-m-d') ?>" class="w-full border rounded px-3 py-2" required>
                     <input name="description" placeholder="Description" class="w-full border rounded px-3 py-2" required>
-                    <input type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="w-full border rounded px-3 py-2">
+                    <div class="w-full border rounded px-3 py-2 flex items-center gap-3">
+                        <label for="myOrgReceiptInput" class="inline-flex items-center justify-center bg-indigo-700 text-white px-3 py-1.5 rounded text-xs cursor-pointer hover:bg-indigo-800 transition-colors">
+                            Upload Receipt
+                        </label>
+                        <span id="myOrgReceiptFilename" class="text-sm text-slate-500 truncate">No file chosen</span>
+                        <input id="myOrgReceiptInput" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="sr-only" onchange="var f=this.files&&this.files[0]?this.files[0].name:'No file chosen'; var n=document.getElementById('myOrgReceiptFilename'); if(n){ n.textContent=f; }">
+                    </div>
                     <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
                 </form>
             </div>
@@ -250,7 +271,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
         <div id="tx-history" class="bg-white shadow rounded p-4 overflow-auto">
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
-                <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=pdf&tx_type=<?= urlencode($txTypeFilter) ?>&tx_sort=<?= urlencode($txDateSort) ?>" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
+                <a href="?page=my_org_manage&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=pdf&tx_type=<?= urlencode($txTypeFilter) ?>&tx_sort=<?= urlencode($txDateSort) ?>" class="report-export-btn inline-flex items-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors">
                     Export PDF
                 </a>
             </div>
@@ -259,13 +280,13 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Type</label>
-                    <div class="relative min-w-[10rem]" data-dropdown-wrapper>
+                    <div class="relative" data-dropdown-wrapper>
                         <input type="hidden" name="tx_type" data-dropdown-value value="<?= e($txTypeFilter) ?>">
-                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm transition-colors">
+                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-xs transition-colors">
                             <span data-dropdown-label class="truncate text-left"><?= e($txTypeFilter === 'income' ? 'Income' : ($txTypeFilter === 'expense' ? 'Expense' : 'All')) ?></span>
                             <span class="hidden text-xs">▾</span>
                         </button>
-                        <div id="myOrgTxTypeMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                        <div id="myOrgTxTypeMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-max min-w-full overflow-hidden rounded border z-20 backdrop-blur-md">
                             <ul class="p-2 text-sm font-medium space-y-1">
                                 <li><button type="button" data-dropdown-option data-active="<?= $txTypeFilter === 'all' ? 'true' : 'false' ?>" data-option-value="all" data-option-label="All" class="block w-full rounded px-3 py-2 text-left transition-colors">All</button></li>
                                 <li><button type="button" data-dropdown-option data-active="<?= $txTypeFilter === 'income' ? 'true' : 'false' ?>" data-option-value="income" data-option-label="Income" class="block w-full rounded px-3 py-2 text-left transition-colors">Income</button></li>
@@ -276,13 +297,13 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Date</label>
-                    <div class="relative min-w-[10rem]" data-dropdown-wrapper>
+                    <div class="relative" data-dropdown-wrapper>
                         <input type="hidden" name="tx_sort" data-dropdown-value value="<?= e($txDateSort) ?>">
-                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-sm transition-colors">
+                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-xs transition-colors">
                             <span data-dropdown-label class="truncate text-left"><?= e($txDateSort === 'asc' ? 'Oldest first' : 'Newest first') ?></span>
                             <span class="hidden text-xs">▾</span>
                         </button>
-                        <div id="myOrgTxSortMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                        <div id="myOrgTxSortMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-max min-w-full overflow-hidden rounded border z-20 backdrop-blur-md">
                             <ul class="p-2 text-sm font-medium space-y-1">
                                 <li><button type="button" data-dropdown-option data-active="<?= $txDateSort === 'desc' ? 'true' : 'false' ?>" data-option-value="desc" data-option-label="Newest first" class="block w-full rounded px-3 py-2 text-left transition-colors">Newest first</button></li>
                                 <li><button type="button" data-dropdown-option data-active="<?= $txDateSort === 'asc' ? 'true' : 'false' ?>" data-option-value="asc" data-option-label="Oldest first" class="block w-full rounded px-3 py-2 text-left transition-colors">Oldest first</button></li>
@@ -290,7 +311,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                         </div>
                     </div>
                 </div>
-                <button data-filter-submit class="bg-indigo-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+                <button data-filter-submit class="bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
             </form>
             <div class="table-wrapper">
                 <table class="hidden sm:block w-full text-sm">
@@ -331,14 +352,14 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                     <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs" data-currency>
                                     <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1 text-xs">
                                     <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1 text-xs">
-                                    <button class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 bg-blue-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
+                                    <button class="row-action-hit-target inline-flex items-center justify-center px-2 py-1 bg-blue-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
                                 </form>
                                 <form method="post" onsubmit="return confirm('Delete transaction?')">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="delete_transaction">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                    <button class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 bg-red-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
+                                    <button class="row-action-hit-target inline-flex items-center justify-center px-2 py-1 bg-red-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
                                 </form>
                             </td>
                         </tr>
@@ -392,6 +413,78 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <?php renderPagination($myTxRequestsPagination); ?>
         </div>
     </div>
+
+    <div id="myOrgAnnouncementsModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
+        <div class="mx-auto mt-12 w-full max-w-3xl">
+            <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>All Organization Announcements</span></h3>
+                        <p class="text-sm text-slate-600 mt-1">Manage every active announcement for <?= e((string) $org['name']) ?>.</p>
+                    </div>
+                    <button type="button" id="myOrgAnnouncementsClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                </div>
+
+                <div class="space-y-2">
+                    <?php foreach ($allAnnouncements as $announcement): ?>
+                        <div class="border rounded p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="font-medium"><?= e((string) $announcement['title']) ?></div>
+                                <?php if (trim((string) ($announcement['label'] ?? '')) !== ''): ?>
+                                    <span class="text-[11px] px-2 py-0.5 rounded-full border border-emerald-300/40 bg-emerald-500/20"><?= e((string) $announcement['label']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1">Expires: <?= e((string) ($announcement['expires_at'] ?? '')) ?></div>
+                            <div class="text-sm text-slate-700 mt-1"><?= e((string) $announcement['content']) ?></div>
+                            <form method="post" class="mt-2">
+                                <?= csrfField() ?>
+                                <input type="hidden" name="action" value="delete_announcement">
+                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                <input type="hidden" name="announcement_id" value="<?= (int) $announcement['id'] ?>">
+                                <button class="bg-red-600 text-white px-2 py-1 rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Delete</span></span></button>
+                            </form>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php if (count($allAnnouncements) === 0): ?>
+                        <p class="text-sm text-gray-500">No active announcements right now.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('myOrgAnnouncementsModal');
+            const openBtn = document.getElementById('myOrgAnnouncementsOpen');
+            const closeBtn = document.getElementById('myOrgAnnouncementsClose');
+            if (!modal || !openBtn || !closeBtn) {
+                return;
+            }
+
+            const openModal = function () {
+                modal.classList.remove('hidden');
+            };
+
+            const closeModal = function () {
+                modal.classList.add('hidden');
+            };
+
+            openBtn.addEventListener('click', openModal);
+            closeBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+
     <script src="static/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();

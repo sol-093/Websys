@@ -1,4 +1,40 @@
 (function () {
+    const initDashboardLiveTimestamp = function () {
+        const stamp = document.getElementById('dashboardLiveTimestamp');
+        if (!stamp) {
+            return;
+        }
+
+        const formatter = new Intl.DateTimeFormat(undefined, {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        });
+
+        const render = function () {
+            const now = new Date();
+            const parts = formatter.formatToParts(now);
+            const getPart = function (type) {
+                const part = parts.find(function (item) {
+                    return item.type === type;
+                });
+                return part ? part.value : '';
+            };
+
+            const text = getPart('weekday') + ', ' + getPart('month') + ' ' + getPart('day') + ', ' + getPart('year') + ' | ' + getPart('hour') + ':' + getPart('minute') + ' ' + getPart('dayPeriod').toUpperCase();
+            stamp.textContent = text;
+        };
+
+        render();
+        window.setInterval(render, 60000);
+    };
+
+    initDashboardLiveTimestamp();
+
     const canvas = document.getElementById('trendChart');
     if (!canvas) return;
 

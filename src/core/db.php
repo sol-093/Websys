@@ -178,6 +178,9 @@ function initializeDatabaseSqlite(PDO $pdo): void
         organization_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         content TEXT NOT NULL,
+        label TEXT NULL,
+        duration_days INTEGER NOT NULL DEFAULT 30,
+        expires_at TEXT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     );
@@ -253,6 +256,7 @@ function initializeDatabaseSqlite(PDO $pdo): void
     $pdo->exec($schema);
     ensureAcademicAndVisibilityColumns($pdo);
     ensureAnnouncementPinColumns($pdo);
+    ensureAnnouncementLifecycleColumns($pdo);
     ensureAuthEnhancementColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
@@ -305,6 +309,9 @@ function initializeDatabaseMySql(PDO $pdo): void
         organization_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
+        label VARCHAR(80) NULL,
+        duration_days SMALLINT UNSIGNED NOT NULL DEFAULT 30,
+        expires_at DATETIME NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_announce_org FOREIGN KEY (organization_id)
             REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -397,6 +404,7 @@ function initializeDatabaseMySql(PDO $pdo): void
 
     ensureAcademicAndVisibilityColumns($pdo);
     ensureAnnouncementPinColumns($pdo);
+    ensureAnnouncementLifecycleColumns($pdo);
     ensureAuthEnhancementColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
@@ -482,6 +490,44 @@ function ensureAnnouncementPinColumns(PDO $pdo): void
             $pdo->exec('ALTER TABLE announcements ADD COLUMN pinned_at TEXT NULL');
         }
     }
+}
+
+function ensureAnnouncementLifecycleColumns(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if (!tableColumnExists($pdo, 'announcements', 'label')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN label VARCHAR(80) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN label TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'announcements', 'duration_days')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN duration_days SMALLINT UNSIGNED NOT NULL DEFAULT 30');
+        } else {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN duration_days INTEGER NOT NULL DEFAULT 30');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'announcements', 'expires_at')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN expires_at DATETIME NULL');
+        } else {
+            $pdo->exec('ALTER TABLE announcements ADD COLUMN expires_at TEXT NULL');
+        }
+    }
+
+    if ($driver === 'mysql') {
+        $pdo->exec('UPDATE announcements SET duration_days = 30 WHERE duration_days IS NULL OR duration_days <= 0');
+        $pdo->exec('UPDATE announcements SET expires_at = DATE_ADD(created_at, INTERVAL duration_days DAY) WHERE expires_at IS NULL');
+        return;
+    }
+
+    $pdo->exec('UPDATE announcements SET duration_days = 30 WHERE duration_days IS NULL OR duration_days <= 0');
+    $pdo->exec("UPDATE announcements SET expires_at = datetime(created_at, '+' || duration_days || ' days') WHERE expires_at IS NULL");
 }
 
 function tableColumnExists(PDO $pdo, string $table, string $column): bool

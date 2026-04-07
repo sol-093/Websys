@@ -17,13 +17,14 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         $joinRequestStatus[(int) $req['organization_id']] = (string) $req['status'];
     }
 
+    $activeAnnouncementCutoff = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
     $announcementsStmt = $db->prepare('SELECT a.*, o.name AS organization_name
         FROM announcements a
         JOIN organizations o ON o.id = a.organization_id
-        WHERE a.created_at >= ?
+        WHERE (a.expires_at IS NULL OR a.expires_at >= ?)
         ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC
         LIMIT 30');
-    $announcementsStmt->execute([$announcementCutoff]);
+    $announcementsStmt->execute([$activeAnnouncementCutoff]);
     $announcements = $announcementsStmt->fetchAll();
 
     $transactionsStmt = $db->prepare('SELECT t.*, o.name AS organization_name

@@ -67,6 +67,32 @@ Files:
 Files:
 - src/lib/pagination.php
 
+### H) Announcement label and duration controls (April 7)
+- Added optional announcement label and configurable visibility duration (7, 14, 30, 60, 90 days) when owners post announcements.
+- Added announcement expiry support (`duration_days`, `expires_at`) with runtime schema compatibility updates for both SQLite and MySQL.
+- Updated announcement listings and dashboard feeds to show only active announcements and display label/expiry metadata.
+- Updated cleanup routine to purge announcements based on expiry timestamp.
+- Added a dedicated owner modal for viewing/managing all organization announcements, while keeping the Post Announcement panel focused on a compact preview list.
+
+### I) Owner assignment eligibility guard (April 7)
+- Enforced admin owner assignment validation so assignees must match organization visibility requirements for institutewide/program-based organizations.
+- Collegewide organizations remain assignable to any eligible student/owner account.
+- Applied validation to both direct assign-owner actions and organization update flows that change the owner.
+
+Files:
+- src/actions/workflows.php
+
+Files:
+- src/core/db.php
+- src/actions/content_actions.php
+- src/pages/owner_pages.php
+- src/pages/community_pages.php
+- src/services/dashboard_data.php
+- src/pages/dashboard_page_markup.php
+- src/lib/maintenance.php
+- scripts/seed/seed_dummy_data.php
+- schema.sql
+
 ## 1) Security and request handling
 - Added centralized security headers and CSP setup during bootstrap.
 - Introduced shared CSRF helper APIs and middleware flow for POST actions.

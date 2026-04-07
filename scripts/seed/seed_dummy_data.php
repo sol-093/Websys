@@ -83,8 +83,9 @@ function ensureAnnouncement(PDO $pdo, int $organizationId, string $title, string
         return;
     }
 
-    $insert = $pdo->prepare('INSERT INTO announcements (organization_id, title, content) VALUES (?, ?, ?)');
-    $insert->execute([$organizationId, $title, $content]);
+    $expiresAt = (new DateTimeImmutable('now'))->modify('+30 days')->format('Y-m-d H:i:s');
+    $insert = $pdo->prepare('INSERT INTO announcements (organization_id, title, content, duration_days, expires_at) VALUES (?, ?, ?, ?, ?)');
+    $insert->execute([$organizationId, $title, $content, 30, $expiresAt]);
 }
 
 function ensureTransaction(

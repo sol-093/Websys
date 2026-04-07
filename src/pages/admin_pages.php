@@ -435,7 +435,7 @@ function handleMyOrgAdminPage(PDO $db): void
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Type</label>
-                    <select name="tx_type" class="border rounded px-3 py-2 text-sm">
+                    <select name="tx_type" class="border rounded px-2.5 py-1.5 text-xs">
                         <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
                         <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
                         <option value="expense" <?= $txTypeFilter === 'expense' ? 'selected' : '' ?>>Expense</option>
@@ -443,12 +443,12 @@ function handleMyOrgAdminPage(PDO $db): void
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Date</label>
-                    <select name="tx_sort" class="border rounded px-3 py-2 text-sm">
+                    <select name="tx_sort" class="border rounded px-2.5 py-1.5 text-xs">
                         <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
                         <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
                     </select>
                 </div>
-                <button class="inline-flex items-center justify-center min-w-[86px] bg-indigo-700 text-white px-2 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+                <button class="inline-flex items-center justify-center bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
             </form>
 
             <div class="table-wrapper">
@@ -769,6 +769,23 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     $membershipStmt->execute([(int) $user['id']]);
     $memberOrganizationIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
     $orgs = applyOrganizationVisibilityForUser($orgs, $user, $memberOrganizationIds);
+    $ownedOrgIds = [];
+    foreach ($orgs as $candidateOrg) {
+        if ((int) ($candidateOrg['owner_id'] ?? 0) === (int) $user['id']) {
+            $ownedOrgIds[] = (int) $candidateOrg['id'];
+        }
+    }
+
+    usort($orgs, static function (array $left, array $right) use ($ownedOrgIds): int {
+        $leftOwned = in_array((int) ($left['id'] ?? 0), $ownedOrgIds, true);
+        $rightOwned = in_array((int) ($right['id'] ?? 0), $ownedOrgIds, true);
+
+        if ($leftOwned !== $rightOwned) {
+            return $leftOwned ? -1 : 1;
+        }
+
+        return strcasecmp((string) ($left['name'] ?? ''), (string) ($right['name'] ?? ''));
+    });
 
     if (count($orgs) === 0) {
         setFlash('error', 'No organizations are available for your account yet.');
@@ -853,7 +870,12 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                         <?php foreach ($orgs as $option): ?>
                             <li>
                                 <button type="button" data-dropdown-option data-active="<?= $selectedOrgId === (int) $option['id'] ? 'true' : 'false' ?>" data-org-id="<?= (int) $option['id'] ?>" data-org-name="<?= e((string) $option['name']) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors">
-                                    <?= e((string) $option['name']) ?>
+                                    <span class="flex items-center justify-between gap-2">
+                                        <span class="truncate"><?= e((string) $option['name']) ?></span>
+                                        <?php if (in_array((int) ($option['id'] ?? 0), $ownedOrgIds, true)): ?>
+                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40">Owned</span>
+                                        <?php endif; ?>
+                                    </span>
                                 </button>
                             </li>
                         <?php endforeach; ?>
@@ -863,7 +885,11 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
         </form>
 
-        <h2 class="text-lg font-semibold"><?= e((string) $org['name']) ?></h2>
+        <h2 class="text-lg font-semibold inline-flex items-center gap-2"><?= e((string) $org['name']) ?>
+            <?php if (in_array((int) $selectedOrgId, $ownedOrgIds, true)): ?>
+                <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40">Owned</span>
+            <?php endif; ?>
+        </h2>
         <p class="text-gray-600 mb-3"><?= e((string) ($org['description'] ?? '')) ?></p>
 
         <div class="mb-4 rounded-xl border border-emerald-200/55 bg-emerald-50/30 p-3">
@@ -882,7 +908,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <input type="hidden" name="org_id" value="<?= (int) $selectedOrgId ?>">
             <div>
                 <label class="block text-xs text-gray-600 mb-1">Type</label>
-                <select name="tx_type" class="border rounded px-3 py-2 text-sm">
+                <select name="tx_type" class="border rounded px-2.5 py-1.5 text-xs">
                     <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
                     <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
                     <option value="expense" <?= $txTypeFilter === 'expense' ? 'selected' : '' ?>>Expense</option>
@@ -890,12 +916,12 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             </div>
             <div>
                 <label class="block text-xs text-gray-600 mb-1">Date</label>
-                <select name="tx_sort" class="border rounded px-3 py-2 text-sm">
+                <select name="tx_sort" class="border rounded px-2.5 py-1.5 text-xs">
                     <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
                     <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
                 </select>
             </div>
-            <button class="inline-flex items-center justify-center min-w-[86px] bg-indigo-700 text-white px-2 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+            <button class="inline-flex items-center justify-center bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
         </form>
 
         <?php if ($canSeeMemberNames): ?>

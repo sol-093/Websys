@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS announcements (
     organization_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
+    label VARCHAR(80) NULL,
+    duration_days SMALLINT UNSIGNED NOT NULL DEFAULT 30,
+    expires_at DATETIME NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_announce_org FOREIGN KEY (organization_id)
         REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE

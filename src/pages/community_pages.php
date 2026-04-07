@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): void
 {
+    $activeAnnouncementCutoff = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
     $stmt = $db->prepare('SELECT a.*, o.name AS organization_name
         FROM announcements a
         JOIN organizations o ON o.id = a.organization_id
-        WHERE a.created_at >= ?
+        WHERE (a.expires_at IS NULL OR a.expires_at >= ?)
         ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC');
-    $stmt->execute([$announcementCutoff]);
+    $stmt->execute([$activeAnnouncementCutoff]);
     $allAnnouncements = $stmt->fetchAll();
     $slides = array_chunk($allAnnouncements, 3);
     $slideCount = count($slides);
@@ -23,7 +24,7 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
         </div>
 
         <?php if ($slideCount === 0): ?>
-            <p class="text-sm text-gray-600">No announcements in the last 30 days.</p>
+            <p class="text-sm text-gray-600">No active announcements right now.</p>
         <?php else: ?>
             <div class="relative">
                 <?php foreach ($slides as $index => $slideItems): ?>
@@ -33,11 +34,16 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
                                 <article class="border rounded p-3">
                                     <div class="flex items-start justify-between gap-2">
                                         <h2 class="font-semibold"><?= e($item['title']) ?></h2>
-                                        <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
-                                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40 icon-label"><?= uiIcon('pin', 'ui-icon ui-icon-sm') ?><span>Important</span></span>
-                                        <?php endif; ?>
+                                        <div class="flex items-center gap-1">
+                                            <?php if (trim((string) ($item['label'] ?? '')) !== ''): ?>
+                                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40"><?= e((string) $item['label']) ?></span>
+                                            <?php endif; ?>
+                                            <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40 icon-label"><?= uiIcon('pin', 'ui-icon ui-icon-sm') ?><span>Important</span></span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?></div>
+                                    <div class="text-xs text-gray-500 mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?> · Expires <?= e((string) ($item['expires_at'] ?? '')) ?></div>
                                     <p class="text-sm mt-2"><?= e($item['content']) ?></p>
                                     <?php if (($user['role'] ?? '') === 'admin'): ?>
                                         <form method="post" class="mt-2">

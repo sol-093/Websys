@@ -16,13 +16,13 @@ function handleUpdateMyOrgAction(PDO $db, array $user): void
     $description = trim((string) ($_POST['description'] ?? ''));
     if ($name === '') {
         setFlash('error', 'Organization name is required.');
-        redirect('?page=my_org');
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
     }
 
     $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ? WHERE id = ?');
     $stmt->execute([$name, $description, (int) $org['id']]);
     setFlash('success', 'Organization details updated.');
-    redirect('?page=my_org&org_id=' . (int) $org['id']);
+    redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
 }
 
 function handleAddAnnouncementAction(PDO $db, array $user): void
@@ -37,15 +37,30 @@ function handleAddAnnouncementAction(PDO $db, array $user): void
 
     $title = trim((string) ($_POST['title'] ?? ''));
     $content = trim((string) ($_POST['content'] ?? ''));
+    $label = trim((string) ($_POST['label'] ?? ''));
+    $durationDays = (int) ($_POST['duration_days'] ?? 30);
+    $allowedDurations = [7, 14, 30, 60, 90];
     if ($title === '' || $content === '') {
         setFlash('error', 'Announcement title and content are required.');
-        redirect('?page=my_org');
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
     }
 
-    $stmt = $db->prepare('INSERT INTO announcements (organization_id, title, content) VALUES (?, ?, ?)');
-    $stmt->execute([(int) $org['id'], $title, $content]);
+    if ($label !== '' && mb_strlen($label) > 40) {
+        setFlash('error', 'Announcement label must be 40 characters or less.');
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
+    }
+
+    if (!in_array($durationDays, $allowedDurations, true)) {
+        setFlash('error', 'Invalid announcement duration selected.');
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
+    }
+
+    $expiresAt = (new DateTimeImmutable('now'))->modify('+' . $durationDays . ' days')->format('Y-m-d H:i:s');
+
+    $stmt = $db->prepare('INSERT INTO announcements (organization_id, title, content, label, duration_days, expires_at) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->execute([(int) $org['id'], $title, $content, ($label !== '' ? $label : null), $durationDays, $expiresAt]);
     setFlash('success', 'Announcement posted.');
-    redirect('?page=my_org&org_id=' . (int) $org['id']);
+    redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
 }
 
 function handleDeleteAnnouncementAction(PDO $db, array $user): void
@@ -59,7 +74,7 @@ function handleDeleteAnnouncementAction(PDO $db, array $user): void
         $stmt->execute([$id, (int) $org['id']]);
         setFlash('success', 'Announcement deleted.');
     }
-    redirect('?page=my_org&org_id=' . (int) ($org['id'] ?? 0));
+    redirect('?page=my_org_manage&org_id=' . (int) ($org['id'] ?? 0));
 }
 
 function handlePinAnnouncementAdminAction(PDO $db, array $user): void
@@ -145,14 +160,14 @@ function handleAddTransactionAction(PDO $db, array $user, array $config): void
 
     if (!in_array($type, ['income', 'expense'], true) || $amount <= 0 || $description === '') {
         setFlash('error', 'Please provide valid transaction values.');
-        redirect('?page=my_org');
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
     }
 
     if (!empty($_FILES['receipt']['name'])) {
         $uploadResult = validateAndStoreReceiptUpload($_FILES['receipt'], (string) $config['upload_dir']);
         if (!empty($uploadResult['error'])) {
             setFlash('error', (string) $uploadResult['error']);
-            redirect('?page=my_org&org_id=' . (int) $org['id']);
+            redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
         }
 
         $receiptPath = (string) ($uploadResult['path'] ?? '') ?: null;
@@ -162,7 +177,7 @@ function handleAddTransactionAction(PDO $db, array $user, array $config): void
     $stmt->execute([(int) $org['id'], $type, $amount, $description, $transactionDate, $receiptPath]);
 
     setFlash('success', 'Transaction saved.');
-    redirect('?page=my_org&org_id=' . (int) $org['id']);
+    redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
 }
 
 function handleUpdateTransactionAction(PDO $db, array $user): void
@@ -182,21 +197,21 @@ function handleUpdateTransactionAction(PDO $db, array $user): void
 
     if (!in_array($type, ['income', 'expense'], true) || $amount <= 0 || $description === '') {
         setFlash('error', 'Invalid transaction update request.');
-        redirect('?page=my_org&org_id=' . (int) $org['id']);
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
     }
 
     $existingStmt = $db->prepare('SELECT id FROM financial_transactions WHERE id = ? AND organization_id = ? LIMIT 1');
     $existingStmt->execute([$txId, (int) $org['id']]);
     if (!$existingStmt->fetch()) {
         setFlash('error', 'Transaction not found.');
-        redirect('?page=my_org&org_id=' . (int) $org['id']);
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
     }
 
     $pendingCheck = $db->prepare('SELECT id FROM transaction_change_requests WHERE transaction_id = ? AND action_type = ? AND status = ? LIMIT 1');
     $pendingCheck->execute([$txId, 'update', 'pending']);
     if ($pendingCheck->fetch()) {
         setFlash('error', 'An update request for this transaction is already pending.');
-        redirect('?page=my_org&org_id=' . (int) $org['id']);
+        redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
     }
 
     $stmt = $db->prepare('INSERT INTO transaction_change_requests (transaction_id, organization_id, requested_by, action_type, proposed_type, proposed_amount, proposed_description, proposed_transaction_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -213,7 +228,7 @@ function handleUpdateTransactionAction(PDO $db, array $user): void
     ]);
 
     setFlash('success', 'Update request sent to admin for approval.');
-    redirect('?page=my_org&org_id=' . (int) $org['id']);
+    redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
 }
 
 function handleDeleteTransactionAction(PDO $db, array $user): void
@@ -227,14 +242,14 @@ function handleDeleteTransactionAction(PDO $db, array $user): void
         $existingStmt->execute([$txId, (int) $org['id']]);
         if (!$existingStmt->fetch()) {
             setFlash('error', 'Transaction not found.');
-            redirect('?page=my_org&org_id=' . (int) $org['id']);
+            redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
         }
 
         $pendingCheck = $db->prepare('SELECT id FROM transaction_change_requests WHERE transaction_id = ? AND action_type = ? AND status = ? LIMIT 1');
         $pendingCheck->execute([$txId, 'delete', 'pending']);
         if ($pendingCheck->fetch()) {
             setFlash('error', 'A delete request for this transaction is already pending.');
-            redirect('?page=my_org&org_id=' . (int) $org['id']);
+            redirect('?page=my_org_manage&org_id=' . (int) $org['id'] . '#tx-history');
         }
 
         $stmt = $db->prepare('INSERT INTO transaction_change_requests (transaction_id, organization_id, requested_by, action_type, status) VALUES (?, ?, ?, ?, ?)');
@@ -242,7 +257,7 @@ function handleDeleteTransactionAction(PDO $db, array $user): void
 
         setFlash('success', 'Delete request sent to admin for approval.');
     }
-    redirect('?page=my_org&org_id=' . (int) ($org['id'] ?? 0));
+    redirect('?page=my_org_manage&org_id=' . (int) ($org['id'] ?? 0) . '#tx-history');
 }
 
 function handleExportTransactionsAction(PDO $db, array $user): void
