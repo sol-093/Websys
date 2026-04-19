@@ -850,7 +850,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     <div class="bg-white shadow rounded p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview</span></h1>
-            <?php if (($user['role'] ?? '') === 'owner'): ?>
+            <?php if (($user['role'] ?? '') === 'owner' && in_array((int) $selectedOrgId, $ownedOrgIds, true)): ?>
                 <a href="?page=my_org_manage&org_id=<?= (int) $selectedOrgId ?>" class="bg-emerald-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Manage Organization</span></span></a>
             <?php endif; ?>
         </div>
@@ -861,9 +861,8 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
             <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
             <div class="relative min-w-[16rem]" data-dropdown-wrapper>
-                <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                     <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
-                    <span class="hidden text-xs">▾</span>
                 </button>
                 <div id="userOrgSwitcherMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
                     <ul class="p-2 text-sm font-medium space-y-1">

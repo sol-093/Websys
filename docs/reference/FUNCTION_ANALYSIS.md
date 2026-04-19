@@ -1,8 +1,12 @@
 Student Organization Management and Budget Transparency System - Function Analysis
-Last Updated: April 3, 2026
+Last Updated: April 19, 2026
 
 Recent Functional Updates
 
+- April 19, 2026: Password reset maintenance and SMTP guardrails
+  - Added `passwordResetEmailConfigured()` in `src/lib/email.php` to block forgot-password requests until SMTP credentials are configured.
+  - Added `validatePasswordStrength()` enforcement in `handleResetPasswordAction(PDO $db)` so reset passwords follow the same policy as registration.
+  - Added `scripts/maintenance/cleanup_expired_reset_tokens.php` to clear expired reset tokens on a schedule.
 - April 4, 2026: Organization Search Modal Light-Mode Styling
   - Updated `src/pages/admin_pages.php` organization picker modal to use a brighter light-mode surface, input, and row contrast.
   - Kept the dark-mode modal overrides while making the white panel treatment explicit in light mode.
@@ -103,6 +107,17 @@ Used by: admin and owner workflows throughout `index.php`.
 - **`handleUpdateProfileAction(PDO $db, array $user)`**: updates name/email; email changes trigger re-verification workflow.
 
 Used by: route/action dispatch in `index.php` to keep main controller concise.
+
+---
+
+## `src/lib/email.php`
+
+### Email Delivery Helpers
+
+- **`sendEmail(string $to, string $subject, string $htmlBody, string $textBody = '', ?array $attachments = null)`**: sends outgoing mail through SMTP when configured, otherwise falls back to `mail()`.
+- **`passwordResetEmailConfigured()`**: checks that the SMTP host, user, and password are present before allowing forgot-password requests to proceed.
+
+Used by: auth recovery flows in `src/actions/auth_flows.php`.
 
 ---
 

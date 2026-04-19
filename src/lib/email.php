@@ -82,6 +82,18 @@ function sendEmail(string $to, string $subject, string $htmlBody, string $textBo
     }
 }
 
+function passwordResetEmailConfigured(): bool
+{
+    $config = require __DIR__ . '/../core/config.php';
+    $smtp = $config['smtp'] ?? [];
+
+    $smtpHost = trim((string) ($smtp['host'] ?? ''));
+    $smtpUser = trim((string) ($smtp['user'] ?? ''));
+    $smtpPass = trim((string) ($smtp['pass'] ?? ''));
+
+    return $smtpHost !== '' && $smtpUser !== '' && $smtpPass !== '';
+}
+
 function buildEmailTemplate(string $subject, string $content, string $appName, string $baseUrl): string
 {
     return <<<HTML

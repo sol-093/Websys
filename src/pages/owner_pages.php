@@ -151,9 +151,8 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
                 <input type="hidden" name="org_id" id="myOrgOrgId" data-dropdown-value value="<?= (int) $org['id'] ?>">
                 <div class="relative min-w-[16rem]" data-dropdown-wrapper>
-                    <button type="button" id="myOrgSwitcherButton" data-dropdown-toggle="myOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                    <button type="button" id="myOrgSwitcherButton" data-dropdown-toggle="myOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                         <span id="myOrgSwitcherLabel" data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
-                        <span class="hidden text-xs">▾</span>
                     </button>
                     <div id="myOrgSwitcherMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md" aria-labelledby="myOrgSwitcherButton">
                         <ul class="p-2 text-sm font-medium space-y-1">
@@ -314,52 +313,60 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <button data-filter-submit class="bg-indigo-700 text-white px-2.5 py-1.5 rounded text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
             </form>
             <div class="table-wrapper">
-                <table class="hidden sm:block w-full text-sm">
+                <table class="hidden sm:table w-full text-sm table-fixed">
+                    <colgroup>
+                        <col class="w-[12%]">
+                        <col class="w-[10%]">
+                        <col class="w-[14%]">
+                        <col class="w-[26%]">
+                        <col class="w-[10%]">
+                        <col class="w-[28%]">
+                    </colgroup>
                     <thead>
                     <tr class="text-left border-b border-emerald-400">
-                        <th class="py-2">Date</th>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Description</th>
-                        <th>Receipt</th>
-                        <th>Actions</th>
+                        <th class="py-2 px-2">Date</th>
+                        <th class="px-2">Type</th>
+                        <th class="px-2">Amount</th>
+                        <th class="px-2">Description</th>
+                        <th class="pl-1 pr-6 text-left">Receipt</th>
+                        <th class="pl-6 pr-2">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($transactions as $row): ?>
                         <tr class="border-b border-emerald-300 align-top">
-                            <td class="py-3"><?= e($row['transaction_date']) ?></td>
-                            <td class="py-3"><?= e($row['type']) ?></td>
-                            <td class="py-3">₱<?= number_format((float) $row['amount'], 2) ?></td>
-                            <td class="py-3"><?= e($row['description']) ?></td>
-                            <td class="py-3">
+                            <td class="py-3 px-2 whitespace-nowrap"><?= e($row['transaction_date']) ?></td>
+                            <td class="py-3 px-2 whitespace-nowrap"><?= e($row['type']) ?></td>
+                            <td class="py-3 px-2 whitespace-nowrap">₱<?= number_format((float) $row['amount'], 2) ?></td>
+                            <td class="py-3 px-2 break-words"><?= e($row['description']) ?></td>
+                            <td class="py-3 pl-1 pr-6 text-left">
                                 <?php if (!empty($row['receipt_path'])): ?>
-                                    <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-center p-2 text-indigo-700 underline"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
+                                    <a href="<?= e($row['receipt_path']) ?>" target="_blank" class="row-action-hit-target inline-flex min-w-[44px] min-h-[44px] items-center justify-start p-2 text-indigo-700 underline"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
                                 <?php else: ?>
                                     <span class="text-gray-400">-</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="py-3 space-y-1 min-w-56">
-                                <form method="post" class="grid grid-cols-2 gap-1">
+                            <td class="py-3 pl-6 pr-2 space-y-2">
+                                <form method="post" class="grid grid-cols-2 gap-2">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="update_transaction">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                    <select name="type" class="border rounded px-2 py-1 text-xs">
+                                    <select name="type" class="border rounded px-2 py-1.5 text-xs w-full">
                                         <option value="income" <?= $row['type'] === 'income' ? 'selected' : '' ?>>Income</option>
                                         <option value="expense" <?= $row['type'] === 'expense' ? 'selected' : '' ?>>Expense</option>
                                     </select>
-                                    <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1 text-xs" data-currency>
-                                    <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1 text-xs">
-                                    <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1 text-xs">
-                                    <button class="row-action-hit-target inline-flex items-center justify-center px-2 py-1 bg-blue-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
+                                    <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1.5 text-xs w-full" data-currency>
+                                    <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1.5 text-xs w-full">
+                                    <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1.5 text-xs w-full">
+                                    <button class="row-action-hit-target col-span-2 inline-flex items-center justify-center px-2 py-1.5 bg-blue-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>
                                 </form>
                                 <form method="post" onsubmit="return confirm('Delete transaction?')">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="delete_transaction">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                    <button class="row-action-hit-target inline-flex items-center justify-center px-2 py-1 bg-red-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
+                                    <button class="row-action-hit-target w-full inline-flex items-center justify-center px-2 py-1.5 bg-red-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span></button>
                                 </form>
                             </td>
                         </tr>

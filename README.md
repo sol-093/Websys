@@ -201,6 +201,55 @@ Redirect URI examples:
 - `http://localhost/websys/index.php?page=google_callback`
 - `http://localhost:8000/index.php?page=google_callback`
 
+SMTP Configuration (Required for Forgot/Reset Password Emails)
+
+This app reads SMTP values from environment variables via `src/core/config.php`.
+
+Required variables:
+
+- `SMTP_HOST` (for Gmail: `smtp.gmail.com`)
+- `SMTP_PORT` (for Gmail TLS: `587`)
+- `SMTP_USER` (your Gmail address)
+- `SMTP_PASS` (Google App Password, not your normal account password)
+- `SMTP_FROM` (sender address, usually same as `SMTP_USER`)
+- `SMTP_FROM_NAME` (display sender name)
+
+Optional but recommended:
+
+- `APP_URL` or `BASE_URL` so reset links point to the correct host.
+
+Example (Windows PowerShell session):
+
+```powershell
+$env:SMTP_HOST = "smtp.gmail.com"
+$env:SMTP_PORT = "587"
+$env:SMTP_USER = "youraddress@gmail.com"
+$env:SMTP_PASS = "your-16-char-app-password"
+$env:SMTP_FROM = "youraddress@gmail.com"
+$env:SMTP_FROM_NAME = "Student Organization Management"
+$env:APP_URL = "http://localhost/websys"
+```
+
+Example (persist for current user):
+
+```powershell
+setx SMTP_HOST "smtp.gmail.com"
+setx SMTP_PORT "587"
+setx SMTP_USER "youraddress@gmail.com"
+setx SMTP_PASS "your-16-char-app-password"
+setx SMTP_FROM "youraddress@gmail.com"
+setx SMTP_FROM_NAME "Student Organization Management"
+setx APP_URL "http://localhost/websys"
+```
+
+Password Reset Token Maintenance
+
+Run this cleanup periodically (Task Scheduler/Cron) to clear expired password reset tokens:
+
+```bash
+php scripts/maintenance/cleanup_expired_reset_tokens.php
+```
+
 PHP Configuration (Recommended)
 
 ```ini

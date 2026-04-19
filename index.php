@@ -411,7 +411,7 @@ if ($page === 'forgot_password') {
 }
 
 if ($page === 'reset_password') {
-    handleResetPasswordPage();
+    handleResetPasswordPage($db);
 }
 
 requireLogin();

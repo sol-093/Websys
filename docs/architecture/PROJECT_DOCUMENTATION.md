@@ -189,6 +189,8 @@ Primary Tables
 `security_notifications`
 - Purpose: track generated account security notifications
 
+Reset-password tokens are stored on the `users` table and should be cleared when they expire. Run `scripts/maintenance/cleanup_expired_reset_tokens.php` periodically through Task Scheduler or cron to remove stale reset tokens and keep the auth flow clean.
+
 `organizations`
 - Purpose: organization profiles and ownership
 - Important fields:

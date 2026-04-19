@@ -366,6 +366,12 @@ function handleForgotPasswordAction(PDO $db): void
     $email = trim((string) ($_POST['email'] ?? ''));
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $forgotRateKey = 'forgot_password:' . strtolower($email) . ':' . $clientIp;
+
+    if (!passwordResetEmailConfigured()) {
+        error_log('Password reset requested but SMTP is not fully configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS.');
+        setFlash('error', 'Password reset is temporarily unavailable. Please contact administrator.');
+        redirect('?page=forgot_password');
+    }
     
     // Rate limit: 3 requests per hour
     if (rateLimitIsBlocked($forgotRateKey, 3, 3600)) {
@@ -428,6 +434,12 @@ function handleResetPasswordAction(PDO $db): void
     
     if (strlen($password) < 8) {
         setFlash('error', 'Password must be at least 8 characters long.');
+        redirect('?page=reset_password&token=' . urlencode($token));
+    }
+
+    $passwordStrengthError = validatePasswordStrength($password);
+    if ($passwordStrengthError !== null) {
+        setFlash('error', $passwordStrengthError);
         redirect('?page=reset_password&token=' . urlencode($token));
     }
     

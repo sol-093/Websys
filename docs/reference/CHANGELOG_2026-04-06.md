@@ -81,8 +81,6 @@ Files:
 
 Files:
 - src/actions/workflows.php
-
-Files:
 - src/core/db.php
 - src/actions/content_actions.php
 - src/pages/owner_pages.php
@@ -92,6 +90,34 @@ Files:
 - src/lib/maintenance.php
 - scripts/seed/seed_dummy_data.php
 - schema.sql
+
+### J) Organization switcher icon update (April 7)
+- Replaced chevron icon with building/organization SVG icon in organization switcher buttons.
+- Updated all organization-related icons (`'orgs'` and `'my-org'` in uiIcon) to use the new building design.
+- Added new `'admin'` icon using briefcase SVG for all admin-related UI elements.
+- Updated public homepage to use the new `'admin'` icon instead of `'audit'` in the "For Admin" section.
+- Icons provide clearer visual indication of organization selection and admin context across the UI.
+
+Files:
+- src/pages/admin_pages.php
+- src/pages/owner_pages.php
+- src/pages/public_pages.php
+- src/core/helpers.php
+
+### K) Auth recovery implementation start (April 7)
+- Fixed reset-password page DB wiring by updating reset page handler signature to accept PDO directly instead of relying on global DB state.
+- Updated route dispatch to pass DB into reset-password page handler.
+- Aligned reset-password validation with registration policy by enforcing `validatePasswordStrength()` during reset.
+- Added SMTP guardrail for forgot-password flow: requests now fail fast with explicit user/admin feedback when SMTP is not fully configured.
+- Added maintenance cleanup script to clear expired reset tokens (`scripts/maintenance/cleanup_expired_reset_tokens.php`).
+
+Files:
+- index.php
+- src/pages/public_pages.php
+- src/actions/auth_flows.php
+- src/lib/email.php
+- scripts/maintenance/cleanup_expired_reset_tokens.php
+- README.md
 
 ## 1) Security and request handling
 - Added centralized security headers and CSP setup during bootstrap.

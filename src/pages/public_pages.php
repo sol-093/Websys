@@ -63,7 +63,7 @@ function handleHomePage(PDO $db, ?array $user): void
         </div>
 
         <div class="glass lg:col-span-4 p-5">
-            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>For Admin</span></h3>
+            <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('admin', 'ui-icon') ?><span>For Admin</span></h3>
             <p class="text-sm text-slate-600">Create organizations, assign one owner, and filter all student records.</p>
         </div>
         <div class="glass lg:col-span-4 p-5">
@@ -391,10 +391,8 @@ function handleForgotPasswordPage(): void
     exit;
 }
 
-function handleResetPasswordPage(): void
+function handleResetPasswordPage(PDO $db): void
 {
-    global $db;
-    
     $token = $_GET['token'] ?? '';
     $tokenValid = false;
     

@@ -737,7 +737,7 @@ function renderHeader(string $title = 'Dashboard'): void
             .nav-utility-controls {
                 display: inline-flex;
                 align-items: center;
-                gap: 0.4rem;
+                gap: 0.3rem;
             }
 
             @media (max-width: 480px) {
@@ -751,11 +751,11 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
 
                 .nav-mobile-controls {
-                    gap: 0.35rem;
+                    gap: 0.3rem;
                 }
 
                 .nav-mobile {
-                    gap: 0.35rem;
+                    gap: 0.3rem;
                 }
             }
 
@@ -767,7 +767,7 @@ function renderHeader(string $title = 'Dashboard'): void
 
                 .nav-desktop {
                     display: flex !important;
-                    gap: 0.85rem;
+                    gap: 0.7rem;
                 }
 
                 .nav-mobile {
@@ -2273,11 +2273,11 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
             })();
         </script>
-        <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-2 sm:mx-3 mt-2 text-slate-800">
-            <div class="max-w-7xl mx-auto px-4 py-3">
+        <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-1.5 sm:mx-2.5 mt-1.5 text-slate-800">
+            <div class="max-w-7xl mx-auto px-3 py-2">
                 <div class="flex items-center justify-between gap-2 min-w-0">
                     <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title"><?= e($config['app_name']) ?></a>
-                    <div class="nav-desktop hidden lg:flex gap-4 text-sm items-center">
+                    <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">
                         <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
                         <?php if ($user): ?>
                             <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
@@ -2294,18 +2294,17 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php if ($user['role'] !== 'admin'): ?>
                                 <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
                             <?php endif; ?>
-                            <span class="nav-greeting">Hi, <?= e($displayName) ?></span>
                             <div class="nav-utility-controls">
                                 <button type="button" id="globalSearchOpen" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
                                     <?= icon('search') ?>
                                 </button>
                                 <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
                                 <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
-                                <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-1 rounded hover:bg-indigo-950">Logout</a>
+                                <a href="?page=logout" class="bg-indigo-900 text-white px-2.5 py-1 rounded hover:bg-indigo-950">Logout</a>
                             </div>
                         <?php else: ?>
                             <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
-                            <a href="?page=register" class="bg-emerald-600 text-white px-3 py-1 rounded hover:bg-emerald-700 shadow-sm <?= $isRegisterActive ? 'ring-2 ring-emerald-300/70' : '' ?>">Register</a>
+                            <a href="?page=register" class="bg-emerald-600 text-white px-2.5 py-1 rounded hover:bg-emerald-700 shadow-sm <?= $isRegisterActive ? 'ring-2 ring-emerald-300/70' : '' ?>">Register</a>
                             <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
                             <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
                         <?php endif; ?>
@@ -2345,7 +2344,6 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php if ($user['role'] !== 'admin'): ?>
                                 <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
                             <?php endif; ?>
-                            <div class="text-xs text-slate-600">Hi, <?= e($displayName) ?></div>
                             <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-2 rounded text-center hover:bg-indigo-950">Logout</a>
                         <?php else: ?>
                             <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
