@@ -148,6 +148,10 @@ function initializeDatabaseSqlite(PDO $pdo): void
         program TEXT NULL,
         year_level INTEGER NULL,
         section TEXT NULL,
+        profile_picture_path TEXT NULL,
+        profile_picture_crop_x REAL NOT NULL DEFAULT 50,
+        profile_picture_crop_y REAL NOT NULL DEFAULT 50,
+        profile_picture_zoom REAL NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -159,6 +163,10 @@ function initializeDatabaseSqlite(PDO $pdo): void
         target_institute TEXT NULL,
         target_program TEXT NULL,
         owner_id INTEGER NULL,
+        logo_path TEXT NULL,
+        logo_crop_x REAL NOT NULL DEFAULT 50,
+        logo_crop_y REAL NOT NULL DEFAULT 50,
+        logo_zoom REAL NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE SET NULL
     );
@@ -258,6 +266,7 @@ function initializeDatabaseSqlite(PDO $pdo): void
     ensureAnnouncementPinColumns($pdo);
     ensureAnnouncementLifecycleColumns($pdo);
     ensureAuthEnhancementColumns($pdo);
+    ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
 }
@@ -276,6 +285,10 @@ function initializeDatabaseMySql(PDO $pdo): void
         program VARCHAR(191) NULL,
         year_level TINYINT NULL,
         section VARCHAR(50) NULL,
+        profile_picture_path VARCHAR(255) NULL,
+        profile_picture_crop_x DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+        profile_picture_crop_y DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+        profile_picture_zoom DECIMAL(5,2) NOT NULL DEFAULT 1.00,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -287,6 +300,10 @@ function initializeDatabaseMySql(PDO $pdo): void
         target_institute VARCHAR(191) NULL,
         target_program VARCHAR(191) NULL,
         owner_id INT NULL,
+        logo_path VARCHAR(255) NULL,
+        logo_crop_x DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+        logo_crop_y DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+        logo_zoom DECIMAL(5,2) NOT NULL DEFAULT 1.00,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_organizations_owner FOREIGN KEY (owner_id)
             REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
@@ -406,8 +423,54 @@ function initializeDatabaseMySql(PDO $pdo): void
     ensureAnnouncementPinColumns($pdo);
     ensureAnnouncementLifecycleColumns($pdo);
     ensureAuthEnhancementColumns($pdo);
+    ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
+}
+
+function ensureProfileMediaColumns(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if (!tableColumnExists($pdo, 'users', 'profile_picture_path')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN profile_picture_path VARCHAR(255) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN profile_picture_path TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'profile_picture_crop_x')) {
+        $pdo->exec($driver === 'mysql' ? 'ALTER TABLE users ADD COLUMN profile_picture_crop_x DECIMAL(5,2) NOT NULL DEFAULT 50.00' : 'ALTER TABLE users ADD COLUMN profile_picture_crop_x REAL NOT NULL DEFAULT 50');
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'profile_picture_crop_y')) {
+        $pdo->exec($driver === 'mysql' ? 'ALTER TABLE users ADD COLUMN profile_picture_crop_y DECIMAL(5,2) NOT NULL DEFAULT 50.00' : 'ALTER TABLE users ADD COLUMN profile_picture_crop_y REAL NOT NULL DEFAULT 50');
+    }
+
+    if (!tableColumnExists($pdo, 'users', 'profile_picture_zoom')) {
+        $pdo->exec($driver === 'mysql' ? 'ALTER TABLE users ADD COLUMN profile_picture_zoom DECIMAL(5,2) NOT NULL DEFAULT 1.00' : 'ALTER TABLE users ADD COLUMN profile_picture_zoom REAL NOT NULL DEFAULT 1');
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'logo_path')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE organizations ADD COLUMN logo_path VARCHAR(255) NULL');
+        } else {
+            $pdo->exec('ALTER TABLE organizations ADD COLUMN logo_path TEXT NULL');
+        }
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'logo_crop_x')) {
+        $pdo->exec($driver === 'mysql' ? 'ALTER TABLE organizations ADD COLUMN logo_crop_x DECIMAL(5,2) NOT NULL DEFAULT 50.00' : 'ALTER TABLE organizations ADD COLUMN logo_crop_x REAL NOT NULL DEFAULT 50');
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'logo_crop_y')) {
+        $pdo->exec($driver === 'mysql' ? 'ALTER TABLE organizations ADD COLUMN logo_crop_y DECIMAL(5,2) NOT NULL DEFAULT 50.00' : 'ALTER TABLE organizations ADD COLUMN logo_crop_y REAL NOT NULL DEFAULT 50');
+    }
+
+    if (!tableColumnExists($pdo, 'organizations', 'logo_zoom')) {
+        $pdo->exec($driver === 'mysql' ? 'ALTER TABLE organizations ADD COLUMN logo_zoom DECIMAL(5,2) NOT NULL DEFAULT 1.00' : 'ALTER TABLE organizations ADD COLUMN logo_zoom REAL NOT NULL DEFAULT 1');
+    }
 }
 
 function ensureAcademicAndVisibilityColumns(PDO $pdo): void

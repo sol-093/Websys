@@ -8,11 +8,11 @@ function handleAdminStudentsPage(PDO $db): void
     $q = trim((string) ($_GET['q'] ?? ''));
 
     if ($q !== '') {
-        $stmt = $db->prepare("SELECT id, name, email, role, created_at FROM users WHERE role IN ('student','owner') AND (name LIKE ? OR email LIKE ?) ORDER BY name");
+        $stmt = $db->prepare("SELECT id, name, email, role, created_at, profile_picture_path, profile_picture_crop_x, profile_picture_crop_y, profile_picture_zoom FROM users WHERE role IN ('student','owner') AND (name LIKE ? OR email LIKE ?) ORDER BY name");
         $stmt->execute(['%' . $q . '%', '%' . $q . '%']);
         $students = $stmt->fetchAll();
     } else {
-        $students = $db->query("SELECT id, name, email, role, created_at FROM users WHERE role IN ('student','owner') ORDER BY name")->fetchAll();
+        $students = $db->query("SELECT id, name, email, role, created_at, profile_picture_path, profile_picture_crop_x, profile_picture_crop_y, profile_picture_zoom FROM users WHERE role IN ('student','owner') ORDER BY name")->fetchAll();
     }
     $studentsPagination = paginateArray($students, 'pg_admin_students', 12);
     $students = $studentsPagination['items'];
@@ -41,7 +41,12 @@ function handleAdminStudentsPage(PDO $db): void
                 <tbody>
                 <?php foreach ($students as $student): ?>
                     <tr class="border-b">
-                        <td class="py-2"><?= e($student['name']) ?></td>
+                        <td class="py-2">
+                            <span class="inline-flex items-center gap-2">
+                                <?= renderProfileMedia((string) ($student['name'] ?? ''), (string) ($student['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($student['profile_picture_crop_x'] ?? 50), (float) ($student['profile_picture_crop_y'] ?? 50), (float) ($student['profile_picture_zoom'] ?? 1)) ?>
+                                <span><?= e($student['name']) ?></span>
+                            </span>
+                        </td>
                         <td><?= e($student['email']) ?></td>
                         <td><?= e($student['role']) ?></td>
                         <td><?= e($student['created_at']) ?></td>
@@ -62,7 +67,7 @@ function handleAdminRequestsPage(PDO $db): void
 {
     requireRole(['admin']);
 
-    $requests = $db->query("SELECT r.*, o.name AS organization_name, u.name AS requester_name
+    $requests = $db->query("SELECT r.*, o.name AS organization_name, o.logo_path AS organization_logo_path, o.logo_crop_x AS organization_logo_crop_x, o.logo_crop_y AS organization_logo_crop_y, o.logo_zoom AS organization_logo_zoom, u.name AS requester_name, u.profile_picture_path AS requester_profile_picture_path, u.profile_picture_crop_x AS requester_profile_picture_crop_x, u.profile_picture_crop_y AS requester_profile_picture_crop_y, u.profile_picture_zoom AS requester_profile_picture_zoom
         FROM transaction_change_requests r
         JOIN organizations o ON o.id = r.organization_id
         JOIN users u ON u.id = r.requested_by
@@ -90,8 +95,18 @@ function handleAdminRequestsPage(PDO $db): void
             <tbody>
             <?php foreach ($requests as $req): ?>
                 <tr class="border-b align-top">
-                    <td class="py-4 px-4 align-top break-words"><?= e($req['organization_name']) ?></td>
-                    <td class="py-4 px-4 align-top break-words"><?= e($req['requester_name']) ?></td>
+                    <td class="py-4 px-4 align-top break-words">
+                        <span class="inline-flex items-center gap-2">
+                            <?= renderProfileMedia((string) ($req['organization_name'] ?? ''), (string) ($req['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($req['organization_logo_crop_x'] ?? 50), (float) ($req['organization_logo_crop_y'] ?? 50), (float) ($req['organization_logo_zoom'] ?? 1)) ?>
+                            <span><?= e($req['organization_name']) ?></span>
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 align-top break-words">
+                        <span class="inline-flex items-center gap-2">
+                            <?= renderProfileMedia((string) ($req['requester_name'] ?? ''), (string) ($req['requester_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($req['requester_profile_picture_crop_x'] ?? 50), (float) ($req['requester_profile_picture_crop_y'] ?? 50), (float) ($req['requester_profile_picture_zoom'] ?? 1)) ?>
+                            <span><?= e($req['requester_name']) ?></span>
+                        </span>
+                    </td>
                     <td class="py-4 px-4 align-top capitalize break-words"><?= e($req['action_type']) ?></td>
                     <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words">
                         <?php if ($req['action_type'] === 'update'): ?>
@@ -363,10 +378,10 @@ function handleMyOrgAdminPage(PDO $db): void
             $adminTxPagination = paginateArray($tx, 'pg_myorg_admin_tx', 12);
             $tx = $adminTxPagination['items'];
 
-            $memberStmt = $db->prepare('SELECT u.name FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
+            $memberStmt = $db->prepare('SELECT u.name, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
             $memberStmt->execute([(int) $org['id']]);
-            $orgMemberNames = array_map(static fn (array $row): string => (string) $row['name'], $memberStmt->fetchAll());
-            $orgMemberCount = count($orgMemberNames);
+            $orgMembers = $memberStmt->fetchAll();
+            $orgMemberCount = count($orgMembers);
 
             $viewer = currentUser();
             $viewerId = (int) ($viewer['id'] ?? 0);
@@ -392,9 +407,9 @@ function handleMyOrgAdminPage(PDO $db): void
             </div>
 
             <?php if ($canSeeMemberNames): ?>
-                <div id="adminOrgMembersModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
-                    <div class="mx-auto mt-12 w-full max-w-xl">
-                        <div class="admin-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                <div id="adminOrgMembersModal" class="updates-modal-overlay hidden admin-org-members-modal" data-modal-close>
+                    <div class="mx-auto mt-8 w-full max-w-2xl">
+                        <div class="admin-org-members-panel glass p-6 max-h-[92dvh] overflow-y-auto" data-modal-panel>
                             <div class="flex items-start justify-between gap-3 mb-4">
                                 <div>
                                     <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
@@ -405,12 +420,16 @@ function handleMyOrgAdminPage(PDO $db): void
                             <div class="mb-3">
                                 <input type="text" id="adminOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
                             </div>
-                            <div class="max-h-[48vh] overflow-auto rounded border border-slate-200/60">
+                            <div class="max-h-[62vh] overflow-auto rounded border border-slate-200/60">
                                 <div id="adminOrgMembersList" class="divide-y divide-slate-200/50">
                                     <?php if ($orgMemberCount > 0): ?>
-                                        <?php foreach ($orgMemberNames as $memberName): ?>
+                                        <?php foreach ($orgMembers as $member): ?>
+                                            <?php $memberName = (string) ($member['name'] ?? 'Member'); ?>
                                             <div class="admin-org-member-item px-3 py-2 text-sm text-slate-800 transition-colors" data-member-name="<?= e(strtolower($memberName)) ?>">
-                                                <?= e($memberName) ?>
+                                                <span class="inline-flex items-center gap-2">
+                                                    <?= renderProfileMedia($memberName, (string) ($member['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($member['profile_picture_crop_x'] ?? 50), (float) ($member['profile_picture_crop_y'] ?? 50), (float) ($member['profile_picture_zoom'] ?? 1)) ?>
+                                                    <span><?= e($memberName) ?></span>
+                                                </span>
                                             </div>
                                         <?php endforeach; ?>
                                     <?php else: ?>
@@ -835,10 +854,10 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     $userTxPagination = paginateArray($transactions, 'pg_myorg_user_tx', 12);
     $transactions = $userTxPagination['items'];
 
-    $memberStmt = $db->prepare('SELECT u.name FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
+    $memberStmt = $db->prepare('SELECT u.name, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
     $memberStmt->execute([(int) $selectedOrgId]);
-    $orgMemberNames = array_map(static fn (array $row): string => (string) $row['name'], $memberStmt->fetchAll());
-    $orgMemberCount = count($orgMemberNames);
+    $orgMembers = $memberStmt->fetchAll();
+    $orgMemberCount = count($orgMembers);
 
     $viewerMembershipStmt = $db->prepare('SELECT 1 FROM organization_members WHERE organization_id = ? AND user_id = ? LIMIT 1');
     $viewerMembershipStmt->execute([(int) $selectedOrgId, (int) $user['id']]);
@@ -924,9 +943,9 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         </form>
 
         <?php if ($canSeeMemberNames): ?>
-            <div id="userOrgMembersModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
-                <div class="mx-auto mt-12 w-full max-w-xl">
-                    <div class="user-org-members-panel rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] max-h-[90dvh] overflow-y-auto" data-modal-panel>
+            <div id="userOrgMembersModal" class="updates-modal-overlay hidden user-org-members-modal" data-modal-close>
+                <div class="mx-auto mt-8 w-full max-w-2xl">
+                    <div class="user-org-members-panel glass p-6 max-h-[92dvh] overflow-y-auto" data-modal-panel>
                         <div class="flex items-start justify-between gap-3 mb-4">
                             <div>
                                 <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
@@ -937,12 +956,16 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                         <div class="mb-3">
                             <input type="text" id="userOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
                         </div>
-                        <div class="max-h-[48vh] overflow-auto rounded border border-slate-200/60">
+                        <div class="max-h-[62vh] overflow-auto rounded border border-slate-200/60">
                             <div id="userOrgMembersList" class="divide-y divide-slate-200/50">
                                 <?php if ($orgMemberCount > 0): ?>
-                                    <?php foreach ($orgMemberNames as $memberName): ?>
+                                    <?php foreach ($orgMembers as $member): ?>
+                                        <?php $memberName = (string) ($member['name'] ?? 'Member'); ?>
                                         <div class="user-org-member-item px-3 py-2 text-sm text-slate-800 transition-colors" data-member-name="<?= e(strtolower($memberName)) ?>">
-                                            <?= e($memberName) ?>
+                                            <span class="inline-flex items-center gap-2">
+                                                <?= renderProfileMedia($memberName, (string) ($member['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($member['profile_picture_crop_x'] ?? 50), (float) ($member['profile_picture_crop_y'] ?? 50), (float) ($member['profile_picture_zoom'] ?? 1)) ?>
+                                                <span><?= e($memberName) ?></span>
+                                            </span>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -954,16 +977,22 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                 </div>
             </div>
             <style>
+                #adminOrgMembersModal .admin-org-member-item:hover,
                 #userOrgMembersModal .user-org-member-item:hover {
-                    background: rgba(167, 243, 208, 0.24);
+                    background: rgba(16, 185, 129, 0.14);
                 }
 
+                body.theme-dark #adminOrgMembersModal .admin-org-members-panel,
                 body.theme-dark #userOrgMembersModal .user-org-members-panel {
-                    background: rgba(2, 22, 18, 0.96);
+                    background: rgba(4, 24, 18, 0.72);
                     border-color: rgba(110, 231, 183, 0.28);
-                    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+                    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
                 }
 
+                body.theme-dark #adminOrgMembersModal h3,
+                body.theme-dark #adminOrgMembersModal p,
+                body.theme-dark #adminOrgMembersModal .admin-org-member-item,
+                body.theme-dark #adminOrgMembersModal .text-slate-800,
                 body.theme-dark #userOrgMembersModal h3,
                 body.theme-dark #userOrgMembersModal p,
                 body.theme-dark #userOrgMembersModal .user-org-member-item,
@@ -971,17 +1000,21 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                     color: #ecfdf5 !important;
                 }
 
+                body.theme-dark #adminOrgMembersModal .text-slate-600,
+                body.theme-dark #adminOrgMembersModal .text-slate-500,
                 body.theme-dark #userOrgMembersModal .text-slate-600,
                 body.theme-dark #userOrgMembersModal .text-slate-500 {
                     color: #a7f3d0 !important;
                 }
 
+                body.theme-dark #adminOrgMembersSearch,
                 body.theme-dark #userOrgMembersSearch {
-                    background: rgba(2, 44, 34, 0.66);
+                    background: rgba(2, 44, 34, 0.42);
                     border-color: rgba(110, 231, 183, 0.35);
                     color: #ecfdf5;
                 }
 
+                body.theme-dark #adminOrgMembersModal .admin-org-member-item:hover,
                 body.theme-dark #userOrgMembersModal .user-org-member-item:hover {
                     background: rgba(6, 78, 59, 0.62);
                 }
@@ -1074,7 +1107,7 @@ function handleAdminOrgsPage(PDO $db): void
     $programOptions = array_keys($programInstituteMap);
     $orgCategoryOptions = getOrgCategoryOptions();
 
-    $orgs = $db->query("SELECT o.*, u.name AS owner_name, oa.status AS assignment_status, su.name AS assigned_student_name
+    $orgs = $db->query("SELECT o.*, u.name AS owner_name, u.profile_picture_path AS owner_profile_picture_path, u.profile_picture_crop_x AS owner_profile_picture_crop_x, u.profile_picture_crop_y AS owner_profile_picture_crop_y, u.profile_picture_zoom AS owner_profile_picture_zoom, oa.status AS assignment_status, su.name AS assigned_student_name, su.profile_picture_path AS assigned_student_profile_picture_path, su.profile_picture_crop_x AS assigned_student_profile_picture_crop_x, su.profile_picture_crop_y AS assigned_student_profile_picture_crop_y, su.profile_picture_zoom AS assigned_student_profile_picture_zoom
         FROM organizations o
         LEFT JOIN users u ON u.id = o.owner_id
         LEFT JOIN owner_assignments oa ON oa.organization_id = o.id AND oa.status = 'pending'
@@ -1089,11 +1122,43 @@ function handleAdminOrgsPage(PDO $db): void
     <div class="grid md:grid-cols-3 gap-4">
         <div class="bg-white shadow rounded p-4">
             <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Create Organization</span></h2>
-            <form method="post" class="space-y-2">
+            <form method="post" enctype="multipart/form-data" class="space-y-2">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="create_org">
                 <input name="name" placeholder="Organization name" required class="w-full border rounded px-3 py-2">
                 <textarea name="description" placeholder="Description" class="w-full border rounded px-3 py-2"></textarea>
+                <div class="space-y-3">
+                    <label class="block text-xs text-gray-600 mb-1">Organization Logo (optional)</label>
+                    <div class="space-y-3" data-image-crop-form>
+                        <div class="flex items-center gap-3">
+                            <div class="shrink-0">
+                                <?= renderProfilePlaceholder('Organization', 'organization', 'sm') ?>
+                            </div>
+                            <label for="adminCreateOrgLogo" class="inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 transition-colors hover:bg-emerald-100/70">
+                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
+                                    <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="currentColor" aria-hidden="true"><path d="M12 5c-3.3 0-6 2.7-6 6 0 1.4.5 2.7 1.3 3.7L12 20l4.7-5.3c.8-1 1.3-2.3 1.3-3.7 0-3.3-2.7-6-6-6zm0 8.3A2.3 2.3 0 1 1 12 8.7a2.3 2.3 0 0 1 0 4.6z"/></svg>
+                                </span>
+                                <span class="font-medium">Choose organization logo</span>
+                                <span class="text-xs text-emerald-700/80">Click to browse</span>
+                            </label>
+                            <input id="adminCreateOrgLogo" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
+                        </div>
+                        <div class="hidden grid grid-cols-1 md:grid-cols-3 gap-3" aria-hidden="true">
+                            <label class="space-y-1 text-xs text-slate-600">
+                                <span>Crop X</span>
+                                <input type="range" min="0" max="100" step="1" name="logo_crop_x" value="50" class="w-full" data-crop-x>
+                            </label>
+                            <label class="space-y-1 text-xs text-slate-600">
+                                <span>Crop Y</span>
+                                <input type="range" min="0" max="100" step="1" name="logo_crop_y" value="50" class="w-full" data-crop-y>
+                            </label>
+                            <label class="space-y-1 text-xs text-slate-600">
+                                <span>Zoom</span>
+                                <input type="range" min="0.75" max="2.25" step="0.05" name="logo_zoom" value="1" class="w-full" data-crop-zoom>
+                            </label>
+                        </div>
+                    </div>
+                </div>
                 <select name="org_category" class="w-full border rounded px-3 py-2" required>
                     <?php foreach ($orgCategoryOptions as $categoryKey => $categoryLabel): ?>
                         <option value="<?= e($categoryKey) ?>"><?= e($categoryLabel) ?></option>
@@ -1131,16 +1196,27 @@ function handleAdminOrgsPage(PDO $db): void
                 <tbody>
                 <?php foreach ($orgs as $org): ?>
                     <tr class="border-b align-top">
-                        <td class="py-4 px-4 font-medium break-words leading-relaxed"><?= e($org['name']) ?></td>
+                        <td class="py-4 px-4 font-medium break-words leading-relaxed">
+                            <span class="inline-flex items-center gap-2">
+                                <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'xs', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                                <span><?= e($org['name']) ?></span>
+                            </span>
+                        </td>
                         <td class="py-4 px-4 break-words leading-relaxed"><?= e($org['description']) ?></td>
                         <td class="py-4 px-4">
                             <span class="text-xs"><?= e(getOrganizationVisibilityLabel($org)) ?></span>
                         </td>
                         <td class="py-4 px-4">
                             <div class="space-y-2">
-                                <div class="text-sm font-medium"><?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                <div class="text-sm font-medium inline-flex items-center gap-2">
+                                    <?= renderProfileMedia((string) ($org['owner_name'] ?? 'Unassigned'), (string) ($org['owner_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($org['owner_profile_picture_crop_x'] ?? 50), (float) ($org['owner_profile_picture_crop_y'] ?? 50), (float) ($org['owner_profile_picture_zoom'] ?? 1)) ?>
+                                    <span><?= e($org['owner_name'] ?? 'Unassigned') ?></span>
+                                </div>
                                 <?php if (!empty($org['assignment_status'])): ?>
-                                    <div class="text-[11px] text-amber-200">Pending: <?= e($org['assigned_student_name'] ?? 'Student') ?> (awaiting response)</div>
+                                    <div class="text-[11px] text-amber-200 inline-flex items-center gap-2">
+                                        <?= renderProfileMedia((string) ($org['assigned_student_name'] ?? 'Student'), (string) ($org['assigned_student_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($org['assigned_student_profile_picture_crop_x'] ?? 50), (float) ($org['assigned_student_profile_picture_crop_y'] ?? 50), (float) ($org['assigned_student_profile_picture_zoom'] ?? 1)) ?>
+                                        <span>Pending: <?= e($org['assigned_student_name'] ?? 'Student') ?> (awaiting response)</span>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </td>
@@ -1155,6 +1231,7 @@ function handleAdminOrgsPage(PDO $db): void
                                 data-org-target-institute="<?= e((string) ($org['target_institute'] ?? '')) ?>"
                                 data-org-target-program="<?= e((string) ($org['target_program'] ?? '')) ?>"
                                 data-org-owner-id="<?= (int) ($org['owner_id'] ?? 0) ?>"
+                                data-org-logo-path="<?= e((string) ($org['logo_path'] ?? '')) ?>"
                                 class="bg-blue-600 text-white text-sm px-3.5 py-2 rounded inline-flex items-center gap-2 hover:bg-blue-700 transition-colors"
                             >
                                 <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Update</span>
@@ -1179,7 +1256,7 @@ function handleAdminOrgsPage(PDO $db): void
                     <button type="button" id="orgEditModalClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
                 </div>
 
-                <form method="post" id="orgEditModalForm" class="space-y-6">
+                <form method="post" id="orgEditModalForm" enctype="multipart/form-data" class="space-y-6">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="update_org_admin">
                     <input type="hidden" name="org_id" id="orgEditModalOrgId" value="">
@@ -1192,6 +1269,39 @@ function handleAdminOrgsPage(PDO $db): void
                         <div class="space-y-2 md:col-span-2">
                             <label for="orgEditModalDescription" class="block text-sm font-medium text-slate-700">Description</label>
                             <textarea id="orgEditModalDescription" name="description" rows="4" class="w-full border rounded px-3 py-3"></textarea>
+                        </div>
+                        <div class="space-y-2 md:col-span-2">
+                            <label for="orgEditModalLogo" class="block text-sm font-medium text-slate-700">Organization Logo</label>
+                            <div class="space-y-3" data-image-crop-form>
+                                <div class="flex items-center gap-3">
+                                    <div class="shrink-0" data-crop-preview>
+                                        <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                                    </div>
+                                    <label for="orgEditModalLogo" class="inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 transition-colors hover:bg-emerald-100/70">
+                                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
+                                            <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="currentColor" aria-hidden="true"><path d="M12 5c-3.3 0-6 2.7-6 6 0 1.4.5 2.7 1.3 3.7L12 20l4.7-5.3c.8-1 1.3-2.3 1.3-3.7 0-3.3-2.7-6-6-6zm0 8.3A2.3 2.3 0 1 1 12 8.7a2.3 2.3 0 0 1 0 4.6z"/></svg>
+                                        </span>
+                                        <span class="font-medium">Choose organization logo</span>
+                                        <span class="text-xs text-emerald-700/80">Click to browse</span>
+                                    </label>
+                                    <input id="orgEditModalLogo" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
+                                </div>
+                                <div class="hidden grid grid-cols-1 md:grid-cols-3 gap-3" aria-hidden="true">
+                                    <label class="space-y-1 text-xs text-slate-600">
+                                        <span>Crop X</span>
+                                        <input type="range" min="0" max="100" step="1" name="logo_crop_x" value="<?= (float) ($org['logo_crop_x'] ?? 50) ?>" class="w-full" data-crop-x>
+                                    </label>
+                                    <label class="space-y-1 text-xs text-slate-600">
+                                        <span>Crop Y</span>
+                                        <input type="range" min="0" max="100" step="1" name="logo_crop_y" value="<?= (float) ($org['logo_crop_y'] ?? 50) ?>" class="w-full" data-crop-y>
+                                    </label>
+                                    <label class="space-y-1 text-xs text-slate-600">
+                                        <span>Zoom</span>
+                                        <input type="range" min="0.75" max="2.25" step="0.05" name="logo_zoom" value="<?= (float) ($org['logo_zoom'] ?? 1) ?>" class="w-full" data-crop-zoom>
+                                    </label>
+                                </div>
+                            </div>
+                            <p id="orgEditModalLogoHint" class="text-xs text-slate-600">Leave empty to keep current logo.</p>
                         </div>
                         <div class="space-y-2">
                             <label for="orgEditModalCategory" class="block text-sm font-medium text-slate-700">Organization Category</label>

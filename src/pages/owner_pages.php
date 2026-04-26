@@ -56,7 +56,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
     $txRequestStmt->execute([(int) $org['id'], (int) $user['id']]);
     $myTxRequests = $txRequestStmt->fetchAll();
 
-    $joinRequestStmt = $db->prepare("SELECT r.id, r.created_at, u.name, u.email
+    $joinRequestStmt = $db->prepare("SELECT r.id, r.created_at, u.name, u.email, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom
         FROM organization_join_requests r
         JOIN users u ON u.id = r.user_id
         WHERE r.organization_id = ? AND r.status = 'pending'
@@ -83,7 +83,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <?php foreach ($pendingJoinRequests as $request): ?>
                         <div class="border rounded p-3 flex flex-wrap justify-between items-center gap-3">
                             <div>
-                                <div class="font-medium"><?= e($request['name']) ?></div>
+                                <div class="font-medium inline-flex items-center gap-2"><?= renderProfileMedia((string) ($request['name'] ?? ''), (string) ($request['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($request['profile_picture_crop_x'] ?? 50), (float) ($request['profile_picture_crop_y'] ?? 50), (float) ($request['profile_picture_zoom'] ?? 1)) ?><span><?= e($request['name']) ?></span></div>
                                 #userOrgMembersModal .user-org-members-panel {
                                     background: rgba(83, 255, 183, 0.43);
                                     border-color: rgba(148, 163, 184, 0.35);
@@ -169,10 +169,15 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 </div>
                 <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
-            <form method="post" class="grid md:grid-cols-2 gap-3">
+            <form method="post" enctype="multipart/form-data" class="grid md:grid-cols-2 gap-3">
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="update_my_org">
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                <?php
+                $orgLogoCropX = (float) ($org['logo_crop_x'] ?? 50);
+                $orgLogoCropY = (float) ($org['logo_crop_y'] ?? 50);
+                $orgLogoZoom = (float) ($org['logo_zoom'] ?? 1);
+                ?>
                 <div>
                     <label class="text-sm text-gray-600">Organization Name</label>
                     <input name="name" value="<?= e($org['name']) ?>" class="w-full border rounded px-3 py-2">
@@ -180,6 +185,38 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <div>
                     <label class="text-sm text-gray-600">Description</label>
                     <textarea name="description" class="w-full border rounded px-3 py-2"><?= e($org['description']) ?></textarea>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-sm text-gray-600">Organization Logo</label>
+                    <div class="mt-2 space-y-3" data-image-crop-form>
+                        <div class="flex items-center gap-3">
+                            <div class="shrink-0" data-crop-preview>
+                                <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', $orgLogoCropX, $orgLogoCropY, $orgLogoZoom) ?>
+                            </div>
+                            <label for="orgLogoInput" class="inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 transition-colors hover:bg-emerald-100/70">
+                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
+                                    <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="currentColor" aria-hidden="true"><path d="M12 5c-3.3 0-6 2.7-6 6 0 1.4.5 2.7 1.3 3.7L12 20l4.7-5.3c.8-1 1.3-2.3 1.3-3.7 0-3.3-2.7-6-6-6zm0 8.3A2.3 2.3 0 1 1 12 8.7a2.3 2.3 0 0 1 0 4.6z"/></svg>
+                                </span>
+                                <span class="font-medium">Choose organization logo</span>
+                                <span class="text-xs text-emerald-700/80">Click to browse</span>
+                            </label>
+                            <input id="orgLogoInput" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
+                        </div>
+                        <div class="hidden grid grid-cols-1 md:grid-cols-3 gap-3" aria-hidden="true">
+                            <label class="space-y-1 text-xs text-slate-600">
+                                <span>Crop X</span>
+                                <input type="range" min="0" max="100" step="1" name="logo_crop_x" value="<?= (float) $orgLogoCropX ?>" class="w-full" data-crop-x>
+                            </label>
+                            <label class="space-y-1 text-xs text-slate-600">
+                                <span>Crop Y</span>
+                                <input type="range" min="0" max="100" step="1" name="logo_crop_y" value="<?= (float) $orgLogoCropY ?>" class="w-full" data-crop-y>
+                            </label>
+                            <label class="space-y-1 text-xs text-slate-600">
+                                <span>Zoom</span>
+                                <input type="range" min="0.75" max="2.25" step="0.05" name="logo_zoom" value="<?= (float) $orgLogoZoom ?>" class="w-full" data-crop-zoom>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="md:col-span-2">
                     <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Organization Info</span></span></button>

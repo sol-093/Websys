@@ -557,12 +557,29 @@ function handleChangePasswordAction(PDO $db, array $user): void
 
 function handleUpdateProfileAction(PDO $db, array $user): void
 {
+    $config = require __DIR__ . '/../core/config.php';
     $email = trim((string) ($_POST['email'] ?? ''));
     $name = (string) ($user['name'] ?? '');
     $program = trim((string) ($user['program'] ?? ''));
     $section = trim((string) ($user['section'] ?? ''));
     $institute = trim((string) ($user['institute'] ?? ''));
     $yearLevel = isset($user['year_level']) && $user['year_level'] !== '' ? (int) $user['year_level'] : null;
+    $profilePicturePath = trim((string) ($user['profile_picture_path'] ?? ''));
+    $profilePictureCropX = (float) ($_POST['profile_picture_crop_x'] ?? ($user['profile_picture_crop_x'] ?? 50));
+    $profilePictureCropY = (float) ($_POST['profile_picture_crop_y'] ?? ($user['profile_picture_crop_y'] ?? 50));
+    $profilePictureZoom = (float) ($_POST['profile_picture_zoom'] ?? ($user['profile_picture_zoom'] ?? 1));
+
+    if (isset($_FILES['profile_picture']) && !empty($_FILES['profile_picture']['name'])) {
+        $uploadedProfilePicture = handleProfileImageUpload($_FILES['profile_picture'], (string) $config['upload_dir'], 'user_');
+        if ($uploadedProfilePicture === false) {
+            redirect('?page=profile');
+        }
+
+        if ($profilePicturePath !== '' && $profilePicturePath !== $uploadedProfilePicture) {
+            deleteStoredUpload($profilePicturePath);
+        }
+        $profilePicturePath = $uploadedProfilePicture;
+    }
     
     if ($email === '') {
         setFlash('error', 'Email is required.');
@@ -600,12 +617,16 @@ function handleUpdateProfileAction(PDO $db, array $user): void
                 program = ?,
                 section = ?,
                 year_level = ?,
+                profile_picture_path = ?,
+                profile_picture_crop_x = ?,
+                profile_picture_crop_y = ?,
+                profile_picture_zoom = ?,
                 email_verified = 0, 
                 activation_token = ?, 
                 activation_expires = ?
             WHERE id = ?
         ');
-        $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $activationTokenHash, $activationExpires, (int) $user['id']]);
+        $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, $activationTokenHash, $activationExpires, (int) $user['id']]);
 
         $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
         if ($removedMemberships !== []) {
@@ -625,8 +646,8 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         redirect('?page=login');
     } else {
         // Update editable profile fields
-        $updateStmt = $db->prepare('UPDATE users SET email = ?, institute = ?, program = ?, section = ?, year_level = ? WHERE id = ?');
-        $updateStmt->execute([$email, $institute, $program, $section, $yearLevel, (int) $user['id']]);
+        $updateStmt = $db->prepare('UPDATE users SET email = ?, institute = ?, program = ?, section = ?, year_level = ?, profile_picture_path = ?, profile_picture_crop_x = ?, profile_picture_crop_y = ?, profile_picture_zoom = ? WHERE id = ?');
+        $updateStmt->execute([$email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, (int) $user['id']]);
 
         $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
         if ($removedMemberships !== []) {

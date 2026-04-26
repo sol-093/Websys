@@ -2,7 +2,6 @@ FROM php:8.4-cli
 
 # core/db.php
 RUN docker-php-ext-install pdo_mysql
-
 WORKDIR /app
 COPY . /app
 

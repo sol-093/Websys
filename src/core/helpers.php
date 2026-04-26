@@ -57,6 +57,86 @@ function icon(string $name, string $classes = 'ui-icon', bool $ariaHidden = true
     return uiIcon($name, $classes, $ariaHidden, $label);
 }
 
+function getNameInitials(string $label, int $maxLetters = 2): string
+{
+    $normalized = trim($label);
+    if ($normalized === '') {
+        return 'NA';
+    }
+
+    $parts = preg_split('/\s+/', $normalized) ?: [];
+    $initials = '';
+
+    foreach ($parts as $part) {
+        if ($part === '') {
+            continue;
+        }
+
+        $initials .= strtoupper(substr($part, 0, 1));
+        if (strlen($initials) >= $maxLetters) {
+            break;
+        }
+    }
+
+    if ($initials === '') {
+        $initials = strtoupper(substr($normalized, 0, $maxLetters));
+    }
+
+    return substr($initials, 0, $maxLetters);
+}
+
+function renderProfilePlaceholder(string $label, string $entity = 'user', string $size = 'md'): string
+{
+    $sizes = [
+        'xs' => 'w-6 h-6 text-[10px]',
+        'sm' => 'w-8 h-8 text-xs',
+        'md' => 'w-10 h-10 text-sm',
+        'lg' => 'w-12 h-12 text-base',
+    ];
+
+    $palette = $entity === 'organization'
+        ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+        : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+
+    $sizeClasses = $sizes[$size] ?? $sizes['md'];
+    $initials = e(getNameInitials($label));
+    $ariaLabel = $entity === 'organization' ? 'Organization profile placeholder' : 'User profile placeholder';
+
+    return '<span class="inline-flex shrink-0 items-center justify-center rounded-full border font-semibold ' . $sizeClasses . ' ' . $palette . '" aria-label="' . e($ariaLabel) . '">' . $initials . '</span>';
+}
+
+function renderProfileMedia(
+    string $label,
+    ?string $imagePath,
+    string $entity = 'user',
+    string $size = 'md',
+    ?float $cropX = null,
+    ?float $cropY = null,
+    ?float $zoom = null
+): string
+{
+    $sizes = [
+        'xs' => 'w-6 h-6',
+        'sm' => 'w-8 h-8',
+        'md' => 'w-10 h-10',
+        'lg' => 'w-12 h-12',
+    ];
+
+    $normalizedPath = trim((string) $imagePath);
+    if ($normalizedPath === '') {
+        return renderProfilePlaceholder($label, $entity, $size);
+    }
+
+    $sizeClasses = $sizes[$size] ?? $sizes['md'];
+    $alt = $entity === 'organization' ? 'Organization profile picture' : 'User profile picture';
+    $cropX = $cropX === null ? 50.0 : max(0.0, min(100.0, $cropX));
+    $cropY = $cropY === null ? 50.0 : max(0.0, min(100.0, $cropY));
+    $zoom = $zoom === null ? 1.0 : max(0.5, min(2.5, $zoom));
+    $wrapperStyle = sprintf('--media-crop-x:%s%%;--media-crop-y:%s%%;--media-zoom:%s;', rtrim(rtrim(number_format($cropX, 2, '.', ''), '0'), '.'), rtrim(rtrim(number_format($cropY, 2, '.', ''), '0'), '.'), rtrim(rtrim(number_format($zoom, 2, '.', ''), '0'), '.'));
+
+    return '<span class="inline-flex shrink-0 overflow-hidden rounded-full border border-emerald-200/50 bg-slate-100 ' . $sizeClasses . '" style="' . e($wrapperStyle) . '"><img src="' . e($normalizedPath) . '" alt="' . e($alt) . '" class="h-full w-full object-cover" style="object-position: var(--media-crop-x) var(--media-crop-y); transform: scale(var(--media-zoom)); transform-origin: center center;" loading="lazy"></span>';
+}
+
 function redirect(string $url): void
 {
     header('Location: ' . $url);

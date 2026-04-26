@@ -2,10 +2,18 @@
 
 A centralized web platform for student organization operations, announcements, and finance transparency.
 
-Version: 1.1.1  
-Last Updated: April 7, 2026
+Version: 1.1.3  
+Last Updated: April 26, 2026
 
 Recent Updates:
+- About page rollout: added public About route and page sections for mission, vision, core values, and team cards
+- Media UI refresh: profile and organization avatars/logos now render consistently across dashboard, admin, owner, and community pages
+- Cropper workflow fixes: added reusable modal cropper (`static/js/image-cropper.js`) with drag, zoom, accurate guide-frame export, preview sync, and profile auto-submit save behavior
+- Members modal polish: increased Organization Members dialog size and list viewport for easier browsing
+- Auth recovery maintenance: Added expired token cleanup script and SMTP configuration guardrails
+- Security: Enforced password complexity requirements during password reset flows
+- Profile picture support: Added image upload with integrated client-side cropping and zoom controls
+- Owner assignment guards: Enforced eligibility checks based on organization visibility (institute/program)
 - Pagination sizing refinement: reduced Prev/Next control footprint to better match page-number buttons while remaining slightly larger
 - Footer modernization pass: responsive accordion/grid refinement with compact spacing and improved alignment
 - Footer simplification pass: removed branding strip and collapsed preview lines for a smaller mobile footprint

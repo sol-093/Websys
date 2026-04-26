@@ -394,6 +394,10 @@ if ($page === 'home') {
     handleHomePage($db, $user);
 }
 
+if ($page === 'about') {
+    handleAboutPage($user);
+}
+
 if ($page === 'login') {
     handleLoginPage($config);
 }

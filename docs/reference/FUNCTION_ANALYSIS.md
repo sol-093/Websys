@@ -1,7 +1,18 @@
 Student Organization Management and Budget Transparency System - Function Analysis
-Last Updated: April 19, 2026
+Last Updated: April 26, 2026
 
 Recent Functional Updates
+
+- April 26, 2026: Cropper and Profile/Org Media Workflow Stabilization
+  - Added reusable cropper client module in `static/js/image-cropper.js` (modal lifecycle, drag/zoom, guide-frame crop export, preview refresh).
+  - Added cache-busted script registration in `renderFooter()` so clients always receive latest cropper logic.
+  - Updated profile form behavior (`src/pages/community_pages.php`) to support action-menu edit/view flow and auto-submit on crop save (`data-crop-auto-submit`).
+  - Extended media rendering adoption through `renderProfileMedia()` usage in members lists, org tables, dashboard summaries, and profile sections.
+  - Updated organization members modal sizing in admin/user org pages for larger viewport coverage.
+
+- April 7, 2026: Image Handling & Profile Persistence
+  - Updated `handleUpdateProfileAction()` to process `profile_picture` uploads via `handleProfileImageUpload()`.
+  - Added coordinate persistence for `crop_x`, `crop_y`, and `zoom` levels in the users table.
 
 - April 19, 2026: Password reset maintenance and SMTP guardrails
   - Added `passwordResetEmailConfigured()` in `src/lib/email.php` to block forgot-password requests until SMTP credentials are configured.
@@ -304,6 +315,7 @@ Used by: POST action dispatch in `index.php`.
 
 - **`handleLogoutPage()`**: destroys session and redirects to home.
 - **`handleHomePage(PDO $db, ?array $user)`**: renders landing page with organization preview.
+- **`handleAboutPage(?array $user)`**: renders public About page for guests, students, and owners; redirects admin users to dashboard.
 - **`handleLoginPage(array $config)`**: renders login page (Google OAuth and resend-verification support).
 - **`handleRegisterPage()`**: renders registration page and privacy consent modal; supports `privacy=1` query to open the modal on load.
 - **`handleVerifyEmailPage()`**: email verification result screen.

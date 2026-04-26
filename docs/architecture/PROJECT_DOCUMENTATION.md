@@ -1,12 +1,28 @@
 Student Organization Management and Budget Transparency System
 Comprehensive Project Documentation
 
-Version: 1.0.0  
-Last Updated: April 3, 2026  
+Version: 1.1.0  
+Last Updated: April 26, 2026  
 Platform: PHP 8.2+ / MySQL or SQLite / Tailwind CSS
 
 Recent Change Log
 
+- April 26, 2026: About Page, Media Cropper Stabilization, and Modal UX Updates
+  - Added public `about` route and About page renderer with mission/vision/core values and team profile cards.
+  - Completed profile/organization media pipeline rollout (`path`, `crop_x`, `crop_y`, `zoom`) across admin, owner, dashboard, and community views.
+  - Added reusable client-side cropper modal (`static/js/image-cropper.js`) with drag reposition, zoom, and guide-aligned crop export.
+  - Added cache-busted cropper asset loading in shared layout to prevent stale browser script behavior.
+  - Improved profile media flow with action menu (view/edit), larger preview modal, and auto-submit on profile crop save.
+  - Enlarged Organization Members modals for both admin and user contexts for better visibility and scanning.
+- April 19, 2026: Password Reset Maintenance & SMTP Guards
+  - Added `passwordResetEmailConfigured()` check to block forgot-password requests if SMTP is missing.
+  - Enforced `validatePasswordStrength()` during password resets.
+  - Implemented token cleanup script for expired reset tokens.
+- April 7, 2026: Profile Customization & Ownership Guards
+  - Added profile picture upload with client-side cropping coordinates and zoom persistence.
+  - Enforced organization visibility eligibility for all owner assignments (Admin and Owner flows).
+  - Added announcement labels and duration-based expiry (7, 14, 30, 60, 90 days).
+  - Updated UI icons: Building icon for organizations and Briefcase for admin functions.
 - April 4, 2026: Light-Mode Organization Modal Polish
   - Brightened the organization search modal surface, search field, and list rows in light mode for better contrast.
   - Kept dark-mode modal styling intact while tightening the light-mode white panel treatment.
@@ -137,7 +153,7 @@ websys/
 |   |   |-- admin_pages.php      # Admin page route handlers (admin_orgs, students, requests, audit)
 |   |   |-- community_pages.php  # Announcements and organizations pages
 |   |   |-- owner_pages.php      # Owner page renderer for my_org route
-|   |   |-- public_pages.php     # Home/login/register/logout page handlers
+|   |   |-- public_pages.php     # Home/about/login/register/logout page handlers
 |   |   |-- dashboard_page.php   # Dashboard page renderer (server-side)
 |   |   `-- dashboard_page_markup.php # Dashboard HTML partial (cards/tables/modals)
 |   `-- services/

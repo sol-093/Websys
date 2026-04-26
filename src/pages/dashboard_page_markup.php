@@ -255,11 +255,14 @@
             <div class="space-y-2">
                 <?php foreach ($dashboardOrganizationsPreview as $org): ?>
                     <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between">
-                        <div>
-                            <div class="dashboard-feed-title"><?= e($org['name']) ?></div>
-                            <div class="dashboard-feed-body mt-1"><?= e($org['description']) ?></div>
-                            <div class="dashboard-feed-meta mt-2">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
-                            <div class="dashboard-feed-meta mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                        <div class="flex items-start gap-3 text-left">
+                            <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                            <div>
+                                <div class="dashboard-feed-title"><?= e($org['name']) ?></div>
+                                <div class="dashboard-feed-body mt-1"><?= e($org['description']) ?></div>
+                                <div class="dashboard-feed-meta mt-2">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                <div class="dashboard-feed-meta mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                            </div>
                         </div>
                         <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                             <form method="post">
@@ -319,7 +322,12 @@
                     <?php foreach ($transactions as $tx): ?>
                         <tr class="border-b">
                             <td class="py-2"><?= e($tx['transaction_date']) ?></td>
-                            <td><?= e($tx['organization_name']) ?></td>
+                            <td>
+                                <span class="inline-flex items-center gap-2">
+                                    <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
+                                    <span><?= e($tx['organization_name']) ?></span>
+                                </span>
+                            </td>
                             <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
                             <td>₱<?= number_format((float) $tx['amount'], 2) ?></td>
                             <td>
@@ -358,7 +366,12 @@
                     <?php foreach ($summary as $row): ?>
                         <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
                         <tr class="border-b">
-                            <td class="py-2 pr-4"><?= e($row['name']) ?></td>
+                            <td class="py-2 pr-4">
+                                <span class="inline-flex items-center gap-2">
+                                    <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
+                                    <span><?= e($row['name']) ?></span>
+                                </span>
+                            </td>
                             <td class="py-2 pr-3 text-green-700 whitespace-nowrap">₱<?= number_format((float) $row['total_income'], 2) ?></td>
                             <td class="py-2 pr-3 text-red-700 whitespace-nowrap">₱<?= number_format((float) $row['total_expense'], 2) ?></td>
                             <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">₱<?= number_format($balance, 2) ?></td>
@@ -382,11 +395,14 @@
             <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
                 <?php foreach ($orgs as $org): ?>
                     <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
-                        <div>
-                            <div class="font-medium"><?= e($org['name']) ?></div>
-                            <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
-                            <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
-                            <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                        <div class="flex items-start gap-3 text-left">
+                            <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                            <div>
+                                <div class="font-medium"><?= e($org['name']) ?></div>
+                                <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
+                                <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                            </div>
                         </div>
                         <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                             <form method="post">

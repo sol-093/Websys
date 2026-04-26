@@ -27,7 +27,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $announcementsStmt->execute([$activeAnnouncementCutoff]);
     $announcements = $announcementsStmt->fetchAll();
 
-    $transactionsStmt = $db->prepare('SELECT t.*, o.name AS organization_name
+    $transactionsStmt = $db->prepare('SELECT t.*, o.name AS organization_name, o.logo_path AS organization_logo_path, o.logo_crop_x AS organization_logo_crop_x, o.logo_crop_y AS organization_logo_crop_y, o.logo_zoom AS organization_logo_zoom
         FROM financial_transactions t
         JOIN organizations o ON o.id = t.organization_id
         WHERE t.transaction_date >= ?
@@ -40,13 +40,13 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $summary = [];
     if (count($visibleOrganizationIds) > 0) {
         $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
-        $summaryStmt = $db->prepare("SELECT o.id, o.name,
+        $summaryStmt = $db->prepare("SELECT o.id, o.name, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom,
             COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
             COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
             FROM organizations o
             LEFT JOIN financial_transactions t ON t.organization_id = o.id
             WHERE o.id IN ($summaryPlaceholders)
-            GROUP BY o.id, o.name
+            GROUP BY o.id, o.name, o.logo_path
             ORDER BY o.name");
         $summaryStmt->execute($visibleOrganizationIds);
         $summary = $summaryStmt->fetchAll();

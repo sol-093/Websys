@@ -146,11 +146,14 @@ function handleOrganizationsPage(PDO $db, array $user): void
         <div class="space-y-3 max-h-[36rem] overflow-y-auto themed-scroll pr-1">
             <?php foreach ($allOrgs as $org): ?>
                 <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
-                    <div>
-                        <div class="font-medium"><?= e($org['name']) ?></div>
-                        <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
-                        <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
-                        <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                    <div class="flex items-start gap-3 text-left">
+                        <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                        <div>
+                            <div class="font-medium"><?= e($org['name']) ?></div>
+                            <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
+                            <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                        </div>
                     </div>
                     <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
                         <form method="post">
@@ -198,18 +201,18 @@ function handleProfilePage(array $user): void
     $currentProgram = trim((string) ($user['program'] ?? ''));
     $currentInstitute = trim((string) ($user['institute'] ?? ''));
     $currentSection = trim((string) ($user['section'] ?? ''));
-    
+
     // Get owned organization
     $ownedOrg = null;
     if ($user['role'] === 'owner' || $user['role'] === 'admin') {
-        $stmt = $db->prepare('SELECT name, org_category, created_at FROM organizations WHERE owner_id = ? LIMIT 1');
+        $stmt = $db->prepare('SELECT name, org_category, created_at, logo_path, logo_crop_x, logo_crop_y, logo_zoom FROM organizations WHERE owner_id = ? LIMIT 1');
         $stmt->execute([(int) $user['id']]);
         $ownedOrg = $stmt->fetch();
     }
-    
+
     // Get joined organizations
     $stmt = $db->prepare('
-        SELECT o.name, o.org_category, om.joined_at 
+        SELECT o.name, o.org_category, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom, om.joined_at
         FROM organization_members om
         JOIN organizations o ON o.id = om.organization_id
         WHERE om.user_id = ?
@@ -221,7 +224,45 @@ function handleProfilePage(array $user): void
     renderHeader('My Profile');
     ?>
     <section class="glass p-6 max-w-4xl mx-auto profile-page">
-        <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('user', 'ui-icon') ?><span>My Profile</span></h1>
+        <?php
+            $profilePictureCropX = (float) ($user['profile_picture_crop_x'] ?? 50);
+            $profilePictureCropY = (float) ($user['profile_picture_crop_y'] ?? 50);
+            $profilePictureZoom = (float) ($user['profile_picture_zoom'] ?? 1);
+            $profilePicturePath = (string) ($user['profile_picture_path'] ?? '');
+        ?>
+        <div class="flex items-center gap-3 mb-1">
+            <div class="relative shrink-0" data-profile-picture-actions>
+                <button type="button"
+                        class="inline-flex rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
+                        data-profile-picture-toggle
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                        aria-label="Open profile picture actions">
+                    <span data-crop-preview><?= renderProfileMedia((string) ($user['name'] ?? ''), $profilePicturePath, 'user', 'lg', $profilePictureCropX, $profilePictureCropY, $profilePictureZoom) ?></span>
+                </button>
+                <div id="profilePictureActionsMenu" class="absolute left-0 top-full z-20 mt-2 hidden min-w-56 overflow-hidden rounded-2xl border border-emerald-200/60 bg-white/95 p-2 shadow-[0_22px_45px_rgba(15,23,42,0.18)] backdrop-blur-md" data-profile-picture-menu role="menu" aria-label="Profile picture actions">
+                    <button type="button" class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-900 transition-colors hover:bg-emerald-50 profile-picture-menu-action" data-profile-picture-view>
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 profile-picture-menu-icon">
+                            <?= uiIcon('view', 'ui-icon ui-icon-sm') ?>
+                        </span>
+                        <span>
+                            <span class="block font-medium">View profile</span>
+                            <span class="block text-xs text-slate-600">Open a larger preview</span>
+                        </span>
+                    </button>
+                    <button type="button" class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-900 transition-colors hover:bg-emerald-50 profile-picture-menu-action" data-profile-picture-edit>
+                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 profile-picture-menu-icon">
+                            <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?>
+                        </span>
+                        <span>
+                            <span class="block font-medium">Edit profile</span>
+                            <span class="block text-xs text-slate-600">Choose a new photo</span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <h1 class="text-2xl font-semibold icon-label"><?= uiIcon('user', 'ui-icon') ?><span>My Profile</span></h1>
+        </div>
         <p class="text-sm text-slate-600 mb-4">Manage your account settings and preferences</p>
         
         <?php $flash = getFlash(); if ($flash && $flash['type'] === 'success'): ?>
@@ -250,12 +291,74 @@ function handleProfilePage(array $user): void
             </div>
         <?php endif; ?>
         
-        <form action="?page=profile" method="POST" class="space-y-5">
+        <form action="?page=profile" method="POST" enctype="multipart/form-data" class="space-y-5" data-image-crop-form data-crop-auto-submit>
                 <input type="hidden" name="_csrf" value="<?php echo htmlspecialchars(csrfToken()); ?>">
                 <input type="hidden" name="action" value="update_profile">
+                <input type="file" id="profile_picture" name="profile_picture" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
+            <div class="hidden" aria-hidden="true">
+                <input type="hidden" name="profile_picture_crop_x" value="<?= (float) $profilePictureCropX ?>" data-crop-x>
+                <input type="hidden" name="profile_picture_crop_y" value="<?= (float) $profilePictureCropY ?>" data-crop-y>
+                <input type="hidden" name="profile_picture_zoom" value="<?= (float) $profilePictureZoom ?>" data-crop-zoom>
+            </div>
                 
                 <div class="space-y-4">
                     <div>
+
+                    <style>
+                        .profile-picture-preview-modal {
+                            width: min(100%, 56rem);
+                        }
+
+                        .profile-picture-preview-frame {
+                            width: min(86vw, 30rem);
+                            height: min(86vw, 30rem);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            overflow: hidden;
+                            border-radius: 1.5rem;
+                            background: rgba(15, 23, 42, 0.04);
+                            border: 1px solid rgba(148, 163, 184, 0.18);
+                            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+                        }
+
+                        .profile-picture-preview-image {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            display: block;
+                        }
+
+                        body.theme-dark #profilePictureActionsMenu {
+                            background: rgba(2, 24, 18, 0.92);
+                            border-color: rgba(110, 231, 183, 0.28);
+                            box-shadow: 0 22px 45px rgba(0, 0, 0, 0.35);
+                        }
+
+                        body.theme-dark #profilePictureActionsMenu .profile-picture-menu-icon {
+                            background: rgba(6, 78, 59, 0.92) !important;
+                            color: #d1fae5 !important;
+                        }
+
+                        body.theme-dark .profile-picture-preview-frame {
+                            background: rgba(2, 24, 18, 0.84);
+                            border-color: rgba(110, 231, 183, 0.2);
+                            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+                        }
+
+                        body.theme-dark #profilePictureActionsMenu .profile-picture-menu-action {
+                            color: #ecfdf5 !important;
+                        }
+
+                        body.theme-dark #profilePictureActionsMenu .profile-picture-menu-action:hover {
+                            background: rgba(6, 78, 59, 0.58);
+                        }
+
+                        body.theme-dark #profilePictureActionsMenu .profile-picture-menu-action .text-slate-600,
+                        body.theme-dark #profilePictureActionsMenu .profile-picture-menu-action .text-slate-500 {
+                            color: #a7f3d0 !important;
+                        }
+                    </style>
                         <label for="name" class="block text-sm font-medium text-slate-700">Full Name</label>
                         <input type="text"
                                id="name"
@@ -274,6 +377,28 @@ function handleProfilePage(array $user): void
                                required
                                class="w-full border rounded px-3 py-2">
                         <p class="mt-1 text-xs text-slate-600">Changing your email will require re-verification.</p>
+                    </div>
+
+                    <div id="profilePicturePreviewModal" class="updates-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="profilePicturePreviewTitle" aria-hidden="true">
+                        <div class="glass modal-panel profile-picture-preview-modal w-full max-w-4xl p-6 max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                            <div class="modal-drag-handle" aria-hidden="true"></div>
+                            <div class="flex items-start justify-between gap-3 mb-4">
+                                <div>
+                                    <h2 id="profilePicturePreviewTitle" class="text-lg font-semibold icon-label"><?= uiIcon('user', 'ui-icon') ?><span>Profile Picture</span></h2>
+                                    <p class="text-sm text-slate-600">Preview your current profile picture.</p>
+                                </div>
+                                <button type="button" id="profilePicturePreviewClose" class="text-slate-600 hover:text-slate-900 text-xl leading-none" aria-label="Close preview">&times;</button>
+                            </div>
+                            <div class="flex justify-center">
+                                <div class="profile-picture-preview-frame" data-profile-picture-preview-large>
+                                    <?php if ($profilePicturePath !== ''): ?>
+                                        <img src="<?= e($profilePicturePath) ?>" alt="<?= e((string) ($user['name'] ?? 'Profile picture')) ?>" class="profile-picture-preview-image">
+                                    <?php else: ?>
+                                        <?= renderProfilePlaceholder((string) ($user['name'] ?? ''), 'user', 'lg') ?>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="space-y-3 text-sm text-slate-800 border-t border-emerald-200/40 pt-4 profile-meta">
@@ -307,17 +432,20 @@ function handleProfilePage(array $user): void
                         <?php if ($ownedOrg): ?>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-slate-700 mb-2 profile-org-label">Owned Organization</label>
-                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/50 profile-org-card profile-org-card-owned">
-                                    <p class="text-sm font-semibold text-emerald-900">
-                                        <?php echo htmlspecialchars($ownedOrg['name']); ?>
-                                    </p>
-                                    <p class="text-xs text-emerald-700 mt-1">
-                                        <?php echo htmlspecialchars($ownedOrg['org_category']); ?>
-                                        • Created <?php 
-                                            $orgDate = new DateTime($ownedOrg['created_at']);
-                                            echo htmlspecialchars($orgDate->format('F j, Y'));
-                                        ?>
-                                    </p>
+                                <div class="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/50 profile-org-card profile-org-card-owned flex items-start gap-3">
+                                    <?= renderProfileMedia((string) ($ownedOrg['name'] ?? ''), (string) ($ownedOrg['logo_path'] ?? ''), 'organization', 'sm', (float) ($ownedOrg['logo_crop_x'] ?? 50), (float) ($ownedOrg['logo_crop_y'] ?? 50), (float) ($ownedOrg['logo_zoom'] ?? 1)) ?>
+                                    <div>
+                                        <p class="text-sm font-semibold text-emerald-900">
+                                            <?php echo htmlspecialchars($ownedOrg['name']); ?>
+                                        </p>
+                                        <p class="text-xs text-emerald-700 mt-1">
+                                            <?php echo htmlspecialchars($ownedOrg['org_category']); ?>
+                                            • Created <?php 
+                                                $orgDate = new DateTime($ownedOrg['created_at']);
+                                                echo htmlspecialchars($orgDate->format('F j, Y'));
+                                            ?>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -327,17 +455,20 @@ function handleProfilePage(array $user): void
                             <?php if (count($joinedOrgs) > 0): ?>
                                 <div class="space-y-2">
                                     <?php foreach ($joinedOrgs as $org): ?>
-                                        <div class="p-3 rounded-xl bg-white/10 border border-emerald-100/25 profile-org-card profile-org-card-joined">
-                                            <p class="text-sm font-medium text-slate-900">
-                                                <?php echo htmlspecialchars($org['name']); ?>
-                                            </p>
-                                            <p class="text-xs text-slate-600 mt-1">
-                                                <?php echo htmlspecialchars($org['org_category']); ?>
-                                                • Joined <?php 
-                                                    $joinDate = new DateTime($org['joined_at']);
-                                                    echo htmlspecialchars($joinDate->format('F j, Y'));
-                                                ?>
-                                            </p>
+                                        <div class="p-3 rounded-xl bg-white/10 border border-emerald-100/25 profile-org-card profile-org-card-joined flex items-start gap-3">
+                                            <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                                            <div>
+                                                <p class="text-sm font-medium text-slate-900">
+                                                    <?php echo htmlspecialchars($org['name']); ?>
+                                                </p>
+                                                <p class="text-xs text-slate-600 mt-1">
+                                                    <?php echo htmlspecialchars($org['org_category']); ?>
+                                                    • Joined <?php 
+                                                        $joinDate = new DateTime($org['joined_at']);
+                                                        echo htmlspecialchars($joinDate->format('F j, Y'));
+                                                    ?>
+                                                </p>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -426,7 +557,7 @@ function handleProfilePage(array $user): void
         </div>
     </div>
         
-        <script>
+    <script>
         // Change Password Modal Handlers
         const modal = document.getElementById('changePasswordModal');
         const openBtn = document.getElementById('changePasswordBtn');
@@ -452,8 +583,93 @@ function handleProfilePage(array $user): void
             }
         });
 
-        </script>
-    </section>
+        (function () {
+            const profileActionsWrap = document.querySelector('[data-profile-picture-actions]');
+            const profileToggle = document.querySelector('[data-profile-picture-toggle]');
+            const profileMenu = document.querySelector('[data-profile-picture-menu]');
+            const profileViewButton = document.querySelector('[data-profile-picture-view]');
+            const profileEditButton = document.querySelector('[data-profile-picture-edit]');
+            const profileFileInput = document.getElementById('profile_picture');
+            const profilePreviewModal = document.getElementById('profilePicturePreviewModal');
+            const profilePreviewClose = document.getElementById('profilePicturePreviewClose');
+
+            if (!profileActionsWrap || !profileToggle || !profileMenu || !profileViewButton || !profileEditButton || !profileFileInput || !profilePreviewModal || !profilePreviewClose) {
+                return;
+            }
+
+            function openMenu() {
+                profileMenu.classList.remove('hidden');
+                profileToggle.setAttribute('aria-expanded', 'true');
+            }
+
+            function closeMenu() {
+                profileMenu.classList.add('hidden');
+                profileToggle.setAttribute('aria-expanded', 'false');
+            }
+
+            function openPreview() {
+                closeMenu();
+                profilePreviewModal.classList.remove('hidden');
+                profilePreviewModal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closePreview() {
+                profilePreviewModal.classList.add('hidden');
+                profilePreviewModal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            profileToggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (profileMenu.classList.contains('hidden')) {
+                    openMenu();
+                } else {
+                    closeMenu();
+                }
+            });
+
+            profileViewButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openPreview();
+            });
+
+            profileEditButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                closeMenu();
+                profileFileInput.click();
+            });
+
+            profilePreviewClose.addEventListener('click', function () {
+                closePreview();
+            });
+
+            profilePreviewModal.addEventListener('click', function (event) {
+                if (event.target === profilePreviewModal) {
+                    closePreview();
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!profileActionsWrap.contains(event.target)) {
+                    closeMenu();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeMenu();
+                    if (!profilePreviewModal.classList.contains('hidden')) {
+                        closePreview();
+                    }
+                }
+            });
+        })();
+
+    </script>
     <?php
     renderFooter();
     exit;

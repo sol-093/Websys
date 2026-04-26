@@ -3,6 +3,49 @@
 Baseline: `8a74fda` (April 4, 2026: Polish organization modals in light mode)
 Scope: all current workspace updates compared to baseline
 
+## Addendum (April 26, 2026 follow-up)
+
+### L) About page and public routing expansion
+- Added new `about` route and renderer with mission/vision/core values and team member cards.
+- Added contextual About CTA from home hero while keeping admin redirect protections in place.
+
+Files:
+- index.php
+- src/pages/public_pages.php
+
+### M) Profile and organization media pipeline completion
+- Added profile and organization media columns (`path`, `crop_x`, `crop_y`, `zoom`) across schema bootstrap and compatibility migrators.
+- Added reusable media rendering helpers for placeholders + cropped media output (`renderProfilePlaceholder()`, `renderProfileMedia()`).
+- Rolled media rendering into admin tables, owner flows, dashboard summaries, and profile/org list cards.
+
+Files:
+- schema.sql
+- src/core/db.php
+- src/core/helpers.php
+- src/core/auth.php
+- src/pages/admin_pages.php
+- src/pages/owner_pages.php
+- src/pages/dashboard_page_markup.php
+- src/pages/community_pages.php
+- src/services/dashboard_data.php
+
+### N) Cropper modal implementation and stabilization
+- Added reusable cropper module (`static/js/image-cropper.js`) with drag reposition, zoom control, and canvas export.
+- Fixed crop export to align with the visible guide frame instead of full stage bounds.
+- Added profile-specific improvements: larger preview modal sync and auto-submit save behavior after crop.
+- Added cache-busted script include in layout to prevent stale client-side cropper bundles.
+
+Files:
+- static/js/image-cropper.js
+- src/core/layout.php
+- src/pages/community_pages.php
+
+### O) Organization members modal enlargement
+- Increased admin/user Organization Members modal width and list height for better scanning of long member lists.
+
+Files:
+- src/pages/admin_pages.php
+
 ## Addendum (post-summary updates)
 
 ### A) Navigation active-state hotfix

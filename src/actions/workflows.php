@@ -39,6 +39,7 @@ function assertOwnerAssignmentEligibility(PDO $db, int $orgId, int $ownerId): vo
 function handleCreateOrgAction(PDO $db, array $user): void
 {
     requireRole(['admin']);
+    $config = require __DIR__ . '/../core/config.php';
     $name = trim((string) ($_POST['name'] ?? ''));
     $description = trim((string) ($_POST['description'] ?? ''));
     $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
@@ -74,9 +75,21 @@ function handleCreateOrgAction(PDO $db, array $user): void
         $targetProgram = '';
     }
 
+    $logoPath = null;
+    $logoCropX = (float) ($_POST['logo_crop_x'] ?? 50);
+    $logoCropY = (float) ($_POST['logo_crop_y'] ?? 50);
+    $logoZoom = (float) ($_POST['logo_zoom'] ?? 1);
+    if (isset($_FILES['logo']) && !empty($_FILES['logo']['name'])) {
+        $uploadedLogo = handleProfileImageUpload($_FILES['logo'], (string) $config['upload_dir'], 'org_');
+        if ($uploadedLogo === false) {
+            redirect('?page=admin_orgs');
+        }
+        $logoPath = $uploadedLogo;
+    }
+
     try {
-        $stmt = $db->prepare('INSERT INTO organizations (name, description, org_category, target_institute, target_program) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null]);
+        $stmt = $db->prepare('INSERT INTO organizations (name, description, org_category, target_institute, target_program, logo_path, logo_crop_x, logo_crop_y, logo_zoom) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $logoPath, $logoCropX, $logoCropY, $logoZoom]);
         auditLog((int) $user['id'], 'organization.create', 'organization', (int) $db->lastInsertId(), 'Created organization: ' . $name);
         setFlash('success', 'Organization created.');
     } catch (Throwable $e) {
@@ -89,6 +102,7 @@ function handleCreateOrgAction(PDO $db, array $user): void
 function handleUpdateOrgAdminAction(PDO $db, array $user): void
 {
     requireRole(['admin']);
+    $config = require __DIR__ . '/../core/config.php';
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $ownerId = (int) ($_POST['owner_id'] ?? 0);
     $name = trim((string) ($_POST['name'] ?? ''));
@@ -121,7 +135,7 @@ function handleUpdateOrgAdminAction(PDO $db, array $user): void
         $targetProgram = '';
     }
 
-    $orgStmt = $db->prepare('SELECT owner_id FROM organizations WHERE id = ? LIMIT 1');
+    $orgStmt = $db->prepare('SELECT owner_id, logo_path FROM organizations WHERE id = ? LIMIT 1');
     $orgStmt->execute([$orgId]);
     $existingOrg = $orgStmt->fetch();
     if (!$existingOrg) {
@@ -130,12 +144,28 @@ function handleUpdateOrgAdminAction(PDO $db, array $user): void
     }
 
     $existingOwnerId = (int) ($existingOrg['owner_id'] ?? 0);
+    $logoPath = trim((string) ($existingOrg['logo_path'] ?? ''));
+    $logoCropX = (float) ($_POST['logo_crop_x'] ?? ($existingOrg['logo_crop_x'] ?? 50));
+    $logoCropY = (float) ($_POST['logo_crop_y'] ?? ($existingOrg['logo_crop_y'] ?? 50));
+    $logoZoom = (float) ($_POST['logo_zoom'] ?? ($existingOrg['logo_zoom'] ?? 1));
+
+    if (isset($_FILES['logo']) && !empty($_FILES['logo']['name'])) {
+        $uploadedLogo = handleProfileImageUpload($_FILES['logo'], (string) $config['upload_dir'], 'org_');
+        if ($uploadedLogo === false) {
+            redirect('?page=admin_orgs');
+        }
+
+        if ($logoPath !== '' && $logoPath !== $uploadedLogo) {
+            deleteStoredUpload($logoPath);
+        }
+        $logoPath = $uploadedLogo;
+    }
 
     try {
         $db->beginTransaction();
 
-        $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, org_category = ?, target_institute = ?, target_program = ? WHERE id = ?');
-        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $orgId]);
+        $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, org_category = ?, target_institute = ?, target_program = ?, logo_path = ?, logo_crop_x = ?, logo_crop_y = ?, logo_zoom = ? WHERE id = ?');
+        $stmt->execute([$name, $description, $orgCategory, $targetInstitute !== '' ? $targetInstitute : null, $targetProgram !== '' ? $targetProgram : null, $logoPath !== '' ? $logoPath : null, $logoCropX, $logoCropY, $logoZoom, $orgId]);
 
         if ($ownerId <= 0) {
             $stmt = $db->prepare('UPDATE organizations SET owner_id = NULL WHERE id = ?');

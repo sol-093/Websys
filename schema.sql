@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     program VARCHAR(191) NULL,
     year_level TINYINT NULL,
     section VARCHAR(50) NULL,
+    profile_picture_path VARCHAR(255) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(191) NOT NULL UNIQUE,
     description TEXT,
+    logo_path VARCHAR(255) NULL,
     owner_id INT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_organizations_owner FOREIGN KEY (owner_id)

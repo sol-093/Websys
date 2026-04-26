@@ -5,6 +5,7 @@ declare(strict_types=1);
 function handleUpdateMyOrgAction(PDO $db, array $user): void
 {
     requireRole(['owner']);
+    $config = require __DIR__ . '/../core/config.php';
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     if (!$org) {
@@ -19,8 +20,24 @@ function handleUpdateMyOrgAction(PDO $db, array $user): void
         redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
     }
 
-    $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ? WHERE id = ?');
-    $stmt->execute([$name, $description, (int) $org['id']]);
+    $logoPath = trim((string) ($org['logo_path'] ?? ''));
+    $logoCropX = (float) ($_POST['logo_crop_x'] ?? ($org['logo_crop_x'] ?? 50));
+    $logoCropY = (float) ($_POST['logo_crop_y'] ?? ($org['logo_crop_y'] ?? 50));
+    $logoZoom = (float) ($_POST['logo_zoom'] ?? ($org['logo_zoom'] ?? 1));
+    if (isset($_FILES['logo']) && !empty($_FILES['logo']['name'])) {
+        $uploadedLogo = handleProfileImageUpload($_FILES['logo'], (string) $config['upload_dir'], 'org_');
+        if ($uploadedLogo === false) {
+            redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
+        }
+
+        if ($logoPath !== '' && $logoPath !== $uploadedLogo) {
+            deleteStoredUpload($logoPath);
+        }
+        $logoPath = $uploadedLogo;
+    }
+
+    $stmt = $db->prepare('UPDATE organizations SET name = ?, description = ?, logo_path = ?, logo_crop_x = ?, logo_crop_y = ?, logo_zoom = ? WHERE id = ?');
+    $stmt->execute([$name, $description, $logoPath !== '' ? $logoPath : null, $logoCropX, $logoCropY, $logoZoom, (int) $org['id']]);
     setFlash('success', 'Organization details updated.');
     redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
 }

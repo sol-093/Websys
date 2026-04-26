@@ -37,6 +37,7 @@ function handleHomePage(PDO $db, ?array $user): void
             <div class="mt-6 flex flex-wrap gap-3">
                 <?php if ($user): ?>
                     <a href="?page=dashboard" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]"><span class="icon-label"><?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?><span>Open Dashboard</span></span></a>
+                    <a href="?page=about" class="inline-flex items-center border border-emerald-200/50 text-emerald-800 font-medium px-4 py-2 rounded-lg text-sm hover:bg-white/30 transition"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>About</span></span></a>
                 <?php else: ?>
                     <a href="?page=register" class="bg-emerald-500 text-slate-900 font-semibold px-5 py-2.5 rounded-lg transition shadow-[0_0_22px_rgba(45,212,191,0.45)] hover:shadow-[0_0_30px_rgba(45,212,191,0.62)]"><span class="icon-label"><?= uiIcon('register', 'ui-icon ui-icon-sm') ?><span>Get Started</span></span></a>
                     <a href="?page=login" class="border border-emerald-200/50 text-emerald-800 px-5 py-2.5 rounded-lg hover:bg-white/30"><span class="icon-label"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Login</span></span></a>
@@ -73,6 +74,168 @@ function handleHomePage(PDO $db, ?array $user): void
         <div class="glass lg:col-span-4 p-5">
             <h3 class="font-semibold mb-2 icon-label"><?= uiIcon('students-owners', 'ui-icon') ?><span>For Students</span></h3>
             <p class="text-sm text-slate-600">Join organizations and monitor complete budget reports with transparency.</p>
+        </div>
+    </section>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function handleAboutPage(?array $user): void
+{
+    if ($user && ($user['role'] ?? '') === 'admin') {
+        setFlash('error', 'About page is not available for admin accounts.');
+        redirect('?page=dashboard');
+    }
+
+    renderHeader('About');
+    $teamMembers = [
+        [
+            'name' => 'Mark Russel Cas',
+            'role' => 'Project Lead/Full Stack Developer',
+            'image' => 'public/uploads/cas.png',
+            'linkedin' => 'https://www.linkedin.com/in/markcas093/',
+            'facebook' => 'https://www.facebook.com/mark.cas.334',
+            'github' => 'https://github.com/sol-093',
+        ],
+        [
+            'name' => 'Cj Cantor',
+            'role' => 'System Analyst',
+            'image' => 'public/uploads/cj.jpg',
+            'linkedin' => 'https://www.linkedin.com/in/cj-cantor-a57432405/',
+            'facebook' => 'https://www.facebook.com/shiijeeeee.07?rdid=alujSvI93igammWn&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1E2e8RbXxF%2F#',
+            'github' => '#',
+        ],
+        [
+            'name' => 'John Joshua Catan',
+            'role' => 'Backend Developer',
+            'image' => 'public/uploads/josh.png',
+            'linkedin' => '#',
+            'facebook' => 'https://www.facebook.com/joshuacatan26',
+            'github' => '#',
+        ],
+        [
+            'name' => 'Eunice Comandante',
+            'role' => 'Frontend Developer',
+            'image' => 'public/uploads/eunice.png',
+            'linkedin' => '#',
+            'facebook' => 'https://www.facebook.com/euniiii.7?rdid=X1UKVVDZuVKIUvgv&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1CgVMwE3CK%2F#',
+            'github' => '#',
+        ],
+        [
+            'name' => 'Jhon Mike Cariño',
+            'role' => 'QA / Documentation',
+            'image' => 'public/uploads/jm.png',
+            'linkedin' => 'https://www.linkedin.com/in/jhon-mike-cari%C3%B1o-9b1160406/',
+            'facebook' => 'https://www.facebook.com/jaycarl.delacruz.5?rdid=SuDmC9eg0adz20W1&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18eLUY53dF#',
+            'github' => 'https://github.com/jhonmikecarino0-source',
+        ],
+    ];
+    ?>
+    <section class="max-w-5xl mx-auto space-y-5">
+        <div class="glass p-6 md:p-8">
+            <div class="hero-kicker inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-300/20 text-xs font-semibold mb-4 border border-emerald-200/30">
+                <?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?>
+                About the Platform
+            </div>
+            <h1 class="modern-title text-3xl md:text-5xl font-bold tracking-tight leading-tight">Student Organization Management and Budget Transparency System</h1>
+            <p class="mt-4 text-slate-600 max-w-3xl text-base md:text-lg">
+                A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+            <article class="glass p-5">
+                <h2 class="font-semibold mb-2 icon-label\"><?= uiIcon('open', 'ui-icon') ?><span>Mission</span></h2>
+                <p class="text-sm text-slate-700">
+                    To provide a reliable digital system that helps student organizations manage operations and finances with accuracy,
+                    accountability, and timely access to information.
+                </p>
+            </article>
+            <article class="glass p-5">
+                <h2 class="font-semibold mb-2 icon-label\"><?= uiIcon('dashboard', 'ui-icon') ?><span>Vision</span></h2>
+                <p class="text-sm text-slate-700">
+                    To be the trusted standard for student organization transparency where every member can confidently view,
+                    understand, and participate in responsible financial stewardship.
+                </p>
+            </article>
+        </div>
+
+        <div class="glass p-5 md:p-6">
+            <h2 class="text-lg font-semibold mb-3 icon-label\"><?= uiIcon('students-owners', 'ui-icon') ?><span>Core Values</span></h2>
+            <ul class="space-y-2 text-sm text-slate-700 list-disc pl-5">
+                <li><strong>Transparency:</strong> clear and accessible organization updates and financial reports.</li>
+                <li><strong>Integrity:</strong> honest reporting, responsible approvals, and policy-aligned decisions.</li>
+                <li><strong>Service:</strong> tools designed to support students, officers, and campus administrators.</li>
+                <li><strong>Collaboration:</strong> shared visibility that encourages participation and trust.</li>
+            </ul>
+        </div>
+
+        <div class="glass p-5 md:p-6">
+            <h2 class="text-lg font-semibold mb-1 icon-label\"><?= uiIcon('owner', 'ui-icon') ?><span>The Team Behind This Project</span></h2>
+            <p class="text-sm text-slate-600 mb-4">The Five minds with One Control. </p>
+            <div class="flex flex-wrap justify-center gap-5">
+                <?php foreach ($teamMembers as $index => $member): ?>
+                    <?php
+                    $cardThemes = [
+                        'from-slate-200 to-slate-300 border-slate-300/50',
+                        'from-emerald-100 to-emerald-200 border-emerald-200/70',
+                        'from-sky-100 to-blue-200 border-sky-200/70',
+                        'from-amber-100 to-orange-200 border-amber-200/70',
+                        'from-rose-100 to-pink-200 border-rose-200/70',
+                    ];
+                    $themeClass = $cardThemes[$index % count($cardThemes)];
+                    $imagePath = trim((string) ($member['image'] ?? ''));
+                    $imagePath = str_replace('\\', '/', $imagePath);
+                    $displayName = trim((string) ($member['name'] ?? ''));
+                    $linkedinUrl = trim((string) ($member['linkedin'] ?? '#'));
+                    $facebookUrl = trim((string) ($member['facebook'] ?? '#'));
+                    $githubUrl = trim((string) ($member['github'] ?? '#'));
+                    if ($displayName === '') {
+                        $displayName = 'Name Placeholder';
+                    }
+                    ?>
+                    <article class="relative w-full max-w-[16rem] h-[23rem] rounded-2xl overflow-hidden border <?= e($themeClass) ?> bg-gradient-to-b shadow-[0_18px_36px_rgba(15,23,42,0.15)]">
+                        <?php if ($imagePath !== ''): ?>
+                            <img src="<?= e($imagePath) ?>" alt="<?= e($displayName) ?>" class="absolute inset-0 w-full h-full object-cover object-top" loading="lazy">
+                        <?php else: ?>
+                            <div class="absolute inset-0 flex items-center justify-center px-4">
+                                <div class="text-center">
+                                    <div class="mx-auto mb-2 w-fit">
+                                        <?= renderProfilePlaceholder($displayName, 'user', 'lg') ?>
+                                    </div>
+                                    <p class="text-xs text-slate-600 tracking-wide uppercase">Photo Placeholder</p>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-900/40 to-transparent pointer-events-none"></div>
+
+                        <div class="absolute left-3 right-3 bottom-3 rounded-xl px-3 py-2 shadow-[0_10px_20px_rgba(15,23,42,0.15)]" style="background-color:#ffffff !important;border:1px solid #cbd5e1 !important;opacity:1 !important;">
+                            <h3 class="font-semibold text-sm leading-tight" style="color:#0f172a !important;opacity:1 !important;"><?= e($displayName) ?></h3>
+                            <p class="text-[11px] font-medium mt-0.5" style="color:#0f766e !important;opacity:1 !important;"><?= e((string) $member['role']) ?></p>
+                            <div class="mt-2 h-px bg-slate-200"></div>
+                            <div class="mt-2 flex items-center gap-2">
+                                <a href="<?= e($linkedinUrl !== '' ? $linkedinUrl : '#') ?>" class="inline-flex items-center justify-center w-6 h-6 rounded-md transition-colors" style="background-color:#ffffff !important;border:1px solid #cbd5e1 !important;color:#334155 !important;opacity:1 !important;" aria-label="LinkedIn" title="LinkedIn" target="_blank" rel="noopener noreferrer">
+                                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor" aria-hidden="true">
+                                        <path d="M4.98 3.5C4.98 4.88 3.86 6 2.48 6S0 4.88 0 3.5 1.12 1 2.5 1s2.48 1.12 2.48 2.5zM.5 8h4V23h-4V8zM8 8h3.83v2.05h.05c.53-1.01 1.84-2.08 3.79-2.08 4.05 0 4.8 2.66 4.8 6.12V23h-4v-7.89c0-1.88-.03-4.29-2.62-4.29-2.62 0-3.02 2.04-3.02 4.15V23H8V8z"/>
+                                    </svg>
+                                </a>
+                                <a href="<?= e($facebookUrl !== '' ? $facebookUrl : '#') ?>" class="inline-flex items-center justify-center w-6 h-6 rounded-md transition-colors" style="background-color:#ffffff !important;border:1px solid #cbd5e1 !important;color:#334155 !important;opacity:1 !important;" aria-label="Facebook" title="Facebook" target="_blank" rel="noopener noreferrer">
+                                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor" aria-hidden="true">
+                                        <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.99 3.66 9.12 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.88 3.78-3.88 1.1 0 2.25.2 2.25.2v2.46H15.2c-1.25 0-1.64.78-1.64 1.57V12h2.8l-.45 2.89h-2.35v6.99C18.34 21.12 22 16.99 22 12z"/>
+                                    </svg>
+                                </a>
+                                <a href="<?= e($githubUrl !== '' ? $githubUrl : '#') ?>" class="inline-flex items-center justify-center w-6 h-6 rounded-md transition-colors" style="background-color:#ffffff !important;border:1px solid #cbd5e1 !important;color:#334155 !important;opacity:1 !important;" aria-label="GitHub" title="GitHub" target="_blank" rel="noopener noreferrer">
+                                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor" aria-hidden="true">
+                                        <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.01c-3.2.7-3.88-1.36-3.88-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.71 1.25 3.37.95.1-.75.4-1.25.73-1.53-2.55-.29-5.24-1.27-5.24-5.66 0-1.25.44-2.27 1.17-3.07-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.14 1.17a10.8 10.8 0 0 1 5.72 0c2.18-1.48 3.14-1.17 3.14-1.17.62 1.59.23 2.76.11 3.05.73.8 1.17 1.82 1.17 3.07 0 4.4-2.69 5.36-5.25 5.65.41.35.78 1.04.78 2.1v3.11c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
         </div>
     </section>
     <?php

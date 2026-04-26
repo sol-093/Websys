@@ -2867,6 +2867,8 @@ function renderFooter(): void
             });
         </script>
 
+        <script src="static/js/image-cropper.js?v=<?= e((string) @filemtime(__DIR__ . '/../../static/js/image-cropper.js')) ?>"></script>
+
         <script>
             (function () {
                 var container = document.getElementById('toast-container');
