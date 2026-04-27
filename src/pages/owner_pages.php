@@ -145,12 +145,12 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <a href="?page=my_org&org_id=<?= (int) $org['id'] ?>" class="text-sm text-indigo-700 underline whitespace-nowrap mt-1"><span class="icon-label"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Back to My Organization</span></span></a>
             </div>
             <?php $selectedOrgName = (string) ($org['name'] ?? 'Select organization'); ?>
-            <form method="get" class="mb-4 flex gap-2 items-start relative" id="myOrgSwitcherForm" data-dropdown-root>
+            <form method="get" class="mb-4 flex flex-wrap gap-2 items-stretch sm:items-start relative" id="myOrgSwitcherForm" data-dropdown-root>
                 <input type="hidden" name="page" value="my_org_manage">
                 <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
                 <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
                 <input type="hidden" name="org_id" id="myOrgOrgId" data-dropdown-value value="<?= (int) $org['id'] ?>">
-                <div class="relative min-w-[16rem]" data-dropdown-wrapper>
+                <div class="relative w-full min-w-0 sm:min-w-[16rem] sm:flex-1" data-dropdown-wrapper>
                     <button type="button" id="myOrgSwitcherButton" data-dropdown-toggle="myOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                         <span id="myOrgSwitcherLabel" data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
                     </button>
@@ -167,7 +167,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                         </ul>
                     </div>
                 </div>
-                <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+                <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
             <form method="post" enctype="multipart/form-data" class="grid md:grid-cols-2 gap-3">
                 <?= csrfField() ?>
@@ -189,16 +189,16 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <div class="md:col-span-2">
                     <label class="text-sm text-gray-600">Organization Logo</label>
                     <div class="mt-2 space-y-3" data-image-crop-form>
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                             <div class="shrink-0" data-crop-preview>
                                 <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', $orgLogoCropX, $orgLogoCropY, $orgLogoZoom) ?>
                             </div>
-                            <label for="orgLogoInput" class="org-logo-upload-trigger inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors">
+                            <label for="orgLogoInput" class="org-logo-upload-trigger flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors sm:flex-1">
                                 <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
                                     <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
                                 </span>
-                                <span class="font-medium">Choose organization logo</span>
-                                <span class="org-logo-upload-trigger-subtext text-xs">Click to browse</span>
+                                <span class="min-w-0 flex-1 font-medium">Choose organization logo</span>
+                                <span class="org-logo-upload-trigger-subtext shrink-0 text-xs">Click to browse</span>
                             </label>
                             <input id="orgLogoInput" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
                         </div>
@@ -274,7 +274,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="add_transaction">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                    <div class="grid grid-cols-2 gap-2" data-dropdown-root>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" data-dropdown-root>
                         <input type="hidden" name="type" data-dropdown-value value="income">
                         <div class="relative w-full" data-dropdown-wrapper>
                             <button type="button" data-dropdown-toggle="myOrgAddTypeMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
@@ -292,14 +292,14 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     </div>
                     <input type="date" name="transaction_date" value="<?= date('Y-m-d') ?>" class="w-full border rounded px-3 py-2" required>
                     <input name="description" placeholder="Description" class="w-full border rounded px-3 py-2" required>
-                    <div class="w-full border rounded px-3 py-2 flex items-center gap-3">
-                        <label for="myOrgReceiptInput" class="inline-flex items-center justify-center bg-indigo-700 text-white px-3 py-1.5 rounded text-xs cursor-pointer hover:bg-indigo-800 transition-colors">
+                    <div class="w-full border rounded px-3 py-2 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        <label for="myOrgReceiptInput" class="inline-flex w-full sm:w-auto items-center justify-center bg-indigo-700 text-white px-3 py-1.5 rounded text-xs cursor-pointer hover:bg-indigo-800 transition-colors">
                             Upload Receipt
                         </label>
-                        <span id="myOrgReceiptFilename" class="text-sm text-slate-500 truncate">No file chosen</span>
+                        <span id="myOrgReceiptFilename" class="min-w-0 sm:flex-1 text-sm text-slate-500 truncate">No file chosen</span>
                         <input id="myOrgReceiptInput" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="sr-only" onchange="var f=this.files&&this.files[0]?this.files[0].name:'No file chosen'; var n=document.getElementById('myOrgReceiptFilename'); if(n){ n.textContent=f; }">
                     </div>
-                    <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
+                    <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
                 </form>
             </div>
         </div>
@@ -414,10 +414,10 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <div class="mobile-cards sm:hidden space-y-3">
                 <?php foreach ($transactions as $row): ?>
                     <?php $type = (string) $row['type']; ?>
-                    <article class="rounded-lg border border-emerald-200 bg-white p-3 shadow-sm">
+                    <article class="tx-mobile-card rounded-lg border border-emerald-200 bg-white p-3 shadow-sm">
                         <div class="flex items-start justify-between gap-2">
                             <div class="text-xs font-semibold uppercase tracking-wide text-slate-500"><?= e((string) $org['name']) ?></div>
-                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold <?= $type === 'income' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' ?>"><?= e(ucfirst($type)) ?></span>
+                            <span class="tx-mobile-type-badge inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold <?= $type === 'income' ? 'tx-mobile-type-income bg-emerald-100 text-emerald-700' : 'tx-mobile-type-expense bg-red-100 text-red-700' ?>"><?= e(ucfirst($type)) ?></span>
                         </div>
                         <div class="mt-2 text-2xl font-bold leading-tight text-slate-900">₱<?= number_format((float) $row['amount'], 2) ?></div>
                         <div class="mt-2 text-xs text-slate-600"><?= e((string) $row['transaction_date']) ?></div>
