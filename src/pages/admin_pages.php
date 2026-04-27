@@ -1134,12 +1134,12 @@ function handleAdminOrgsPage(PDO $db): void
                             <div class="shrink-0">
                                 <?= renderProfilePlaceholder('Organization', 'organization', 'sm') ?>
                             </div>
-                            <label for="adminCreateOrgLogo" class="inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 transition-colors hover:bg-emerald-100/70">
-                                <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
-                                    <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="currentColor" aria-hidden="true"><path d="M12 5c-3.3 0-6 2.7-6 6 0 1.4.5 2.7 1.3 3.7L12 20l4.7-5.3c.8-1 1.3-2.3 1.3-3.7 0-3.3-2.7-6-6-6zm0 8.3A2.3 2.3 0 1 1 12 8.7a2.3 2.3 0 0 1 0 4.6z"/></svg>
+                            <label for="adminCreateOrgLogo" class="org-logo-upload-trigger inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors">
+                                <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
+                                    <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
                                 </span>
                                 <span class="font-medium">Choose organization logo</span>
-                                <span class="text-xs text-emerald-700/80">Click to browse</span>
+                                <span class="org-logo-upload-trigger-subtext text-xs">Click to browse</span>
                             </label>
                             <input id="adminCreateOrgLogo" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
                         </div>
@@ -1277,12 +1277,12 @@ function handleAdminOrgsPage(PDO $db): void
                                     <div class="shrink-0" data-crop-preview>
                                         <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                                     </div>
-                                    <label for="orgEditModalLogo" class="inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-900 transition-colors hover:bg-emerald-100/70">
-                                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-emerald-700 shadow-sm">
-                                            <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="currentColor" aria-hidden="true"><path d="M12 5c-3.3 0-6 2.7-6 6 0 1.4.5 2.7 1.3 3.7L12 20l4.7-5.3c.8-1 1.3-2.3 1.3-3.7 0-3.3-2.7-6-6-6zm0 8.3A2.3 2.3 0 1 1 12 8.7a2.3 2.3 0 0 1 0 4.6z"/></svg>
+                                    <label for="orgEditModalLogo" class="org-logo-upload-trigger inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors">
+                                        <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
+                                            <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
                                         </span>
                                         <span class="font-medium">Choose organization logo</span>
-                                        <span class="text-xs text-emerald-700/80">Click to browse</span>
+                                        <span class="org-logo-upload-trigger-subtext text-xs">Click to browse</span>
                                     </label>
                                     <input id="orgEditModalLogo" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
                                 </div>

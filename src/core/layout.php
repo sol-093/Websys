@@ -1283,6 +1283,46 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #f87171 !important;
             }
 
+            .org-logo-upload-trigger {
+                background: rgba(236, 253, 245, 0.84) !important;
+                border-color: rgba(16, 185, 129, 0.42) !important;
+                color: #065f46 !important;
+            }
+
+            .org-logo-upload-trigger:hover {
+                background: rgba(220, 252, 231, 0.94) !important;
+            }
+
+            .org-logo-upload-trigger-icon {
+                background: rgba(255, 255, 255, 0.94) !important;
+                color: #059669 !important;
+                border: 1px solid rgba(16, 185, 129, 0.24);
+            }
+
+            .org-logo-upload-trigger-subtext {
+                color: rgba(6, 95, 70, 0.76) !important;
+            }
+
+            body.theme-dark .org-logo-upload-trigger {
+                background: rgba(2, 44, 34, 0.84) !important;
+                border-color: rgba(110, 231, 183, 0.38) !important;
+                color: #ecfdf5 !important;
+            }
+
+            body.theme-dark .org-logo-upload-trigger:hover {
+                background: rgba(4, 69, 53, 0.9) !important;
+            }
+
+            body.theme-dark .org-logo-upload-trigger-icon {
+                background: rgba(6, 78, 59, 0.9) !important;
+                color: #a7f3d0 !important;
+                border-color: rgba(110, 231, 183, 0.32);
+            }
+
+            body.theme-dark .org-logo-upload-trigger-subtext {
+                color: rgba(167, 243, 208, 0.88) !important;
+            }
+
             body.theme-dark .text-amber-700 {
                 color: #fef08a !important;
             }
@@ -2860,9 +2900,12 @@ function renderFooter(): void
                     return;
                 }
 
+                var onboardingStorageKey = <?= json_encode('websys_onboarding_done_' . (string) (($footerUser['id'] ?? '') !== '' ? (int) $footerUser['id'] : 'guest')) ?>;
+                var onboardingStepKey = <?= json_encode('websys_onboarding_step_' . (string) (($footerUser['id'] ?? '') !== '' ? (int) $footerUser['id'] : 'guest')) ?>;
+
                 restartForm.addEventListener('submit', function () {
-                    localStorage.removeItem('websys_onboarding_done');
-                    sessionStorage.removeItem('websys_onboarding_step');
+                    localStorage.removeItem(onboardingStorageKey);
+                    sessionStorage.removeItem(onboardingStepKey);
                 });
             });
         </script>
@@ -3591,7 +3634,9 @@ function renderFooter(): void
             </style>
             <script>
                 (function () {
-                    const storageKey = 'websys_onboarding_done';
+                    const userStorageSuffix = <?= json_encode((string) (($footerUser['id'] ?? '') !== '' ? (int) $footerUser['id'] : 'guest')) ?>;
+                    const storageKey = 'websys_onboarding_done_' + userStorageSuffix;
+                    const stepStorageKey = 'websys_onboarding_step_' + userStorageSuffix;
                     if (localStorage.getItem(storageKey) === '1') {
                         return;
                     }
@@ -3642,7 +3687,7 @@ function renderFooter(): void
                     root.appendChild(tooltip);
                     document.body.appendChild(root);
 
-                    let stepIndex = Number.parseInt(sessionStorage.getItem('websys_onboarding_step') || '0', 10);
+                    let stepIndex = Number.parseInt(sessionStorage.getItem(stepStorageKey) || '0', 10);
                     if (!Number.isFinite(stepIndex) || stepIndex < 0) {
                         stepIndex = 0;
                     }
@@ -3674,7 +3719,7 @@ function renderFooter(): void
 
                     const navigateToStepPage = function (index) {
                         const page = stepPages[index] || 'dashboard';
-                        sessionStorage.setItem('websys_onboarding_step', String(index));
+                        sessionStorage.setItem(stepStorageKey, String(index));
                         const targetUrl = '?page=' + encodeURIComponent(page);
                         if (currentPage !== page) {
                             window.location.href = targetUrl;
@@ -3686,7 +3731,7 @@ function renderFooter(): void
 
                     const completeOnboarding = function () {
                         localStorage.setItem(storageKey, '1');
-                        sessionStorage.removeItem('websys_onboarding_step');
+                        sessionStorage.removeItem(stepStorageKey);
 
                         return fetch('?action=complete_onboarding', {
                             method: 'POST',
@@ -3718,7 +3763,7 @@ function renderFooter(): void
 
                             if (getStepElement(index)) {
                                 stepIndex = index;
-                                sessionStorage.setItem('websys_onboarding_step', String(index));
+                                sessionStorage.setItem(stepStorageKey, String(index));
                                 return false;
                             }
                         }
@@ -3756,7 +3801,7 @@ function renderFooter(): void
                     const renderStep = function () {
                         const step = steps[stepIndex];
                         if (!step) {
-                            sessionStorage.removeItem('websys_onboarding_step');
+                            sessionStorage.removeItem(stepStorageKey);
                             root.remove();
                             return;
                         }
@@ -3811,7 +3856,7 @@ function renderFooter(): void
                             }
 
                             const nextIndex = stepIndex + 1;
-                            sessionStorage.setItem('websys_onboarding_step', String(nextIndex));
+                            sessionStorage.setItem(stepStorageKey, String(nextIndex));
                             const nextPage = stepPages[nextIndex] || 'dashboard';
                             if (nextPage !== currentPage) {
                                 window.location.href = '?page=' + encodeURIComponent(nextPage);
@@ -3868,7 +3913,7 @@ function renderFooter(): void
                     document.addEventListener('keydown', function (event) {
                         if (event.key === 'Escape') {
                             localStorage.setItem(storageKey, '1');
-                            sessionStorage.removeItem('websys_onboarding_step');
+                            sessionStorage.removeItem(stepStorageKey);
                             root.remove();
                         }
                     });

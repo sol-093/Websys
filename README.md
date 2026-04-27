@@ -1,711 +1,114 @@
 # Student Organization Management and Budget Transparency System
 
-A centralized web platform for student organization operations, announcements, and finance transparency.
-
-Version: 1.1.3  
-Last Updated: April 26, 2026
-
-Recent Updates:
-- About page rollout: added public About route and page sections for mission, vision, core values, and team cards
-- Media UI refresh: profile and organization avatars/logos now render consistently across dashboard, admin, owner, and community pages
-- Cropper workflow fixes: added reusable modal cropper (`static/js/image-cropper.js`) with drag, zoom, accurate guide-frame export, preview sync, and profile auto-submit save behavior
-- Members modal polish: increased Organization Members dialog size and list viewport for easier browsing
-- Auth recovery maintenance: Added expired token cleanup script and SMTP configuration guardrails
-- Security: Enforced password complexity requirements during password reset flows
-- Profile picture support: Added image upload with integrated client-side cropping and zoom controls
-- Owner assignment guards: Enforced eligibility checks based on organization visibility (institute/program)
-- Pagination sizing refinement: reduced Prev/Next control footprint to better match page-number buttons while remaining slightly larger
-- Footer modernization pass: responsive accordion/grid refinement with compact spacing and improved alignment
-- Footer simplification pass: removed branding strip and collapsed preview lines for a smaller mobile footprint
-- Footer social links update: moved to inline SVG icons and removed external icon CDN dependency
-- Mobile footer compression update: tighter typography, spacing, and controls for denser layout
-- Navbar utility spacing update: desktop search/theme/logout controls grouped closer together (same control sizes)
-- Admin/owner/dashboard responsive polish: added table wrappers and viewport-safe modal panel scrolling
-- Pagination accessibility update: larger touch-friendly prev/next controls
-- Navbar active-state hotfix: Organizations no longer highlights Dashboard at the same time
-- Onboarding stability hotfix: improved step fallback/completion behavior to prevent repeated or stuck tours
-- Static demo onboarding hotfix: improved resume/completion state and tooltip positioning reliability
-- Added presentation-ready static brief: `static/FRONTEND_IDEAS.md`
-- Full baseline comparison summary documented in `docs/reference/CHANGELOG_2026-04-06.md`
-- First-login onboarding tooltip tour for new student users with completion tracking
-- Global command palette search with `Ctrl+K` / `Cmd+K` for users, organizations, and announcements
-- Dashboard redesign with KPI cards, trend charts, and modal drill-downs
-- Organization visibility categories (collegewide, institutewide, program-based)
-- Owner assignment workflow (pending, accepted, declined)
-- Join request approval flow for organization owners
-- Transaction update/delete now uses admin approval requests
-- Announcement pin/unpin support for admin
-- Audit logging for critical actions
-- Google OAuth login option
-- Email verification flow (verify/resend) for newly registered users
-- Password recovery flow (forgot/reset) with token expiry and email notifications
-- Profile management page with modal change-password flow (non-admin accounts only)
-- Owner transaction history filter by type (all/income/expense) and date sort
-- Dark theme polish: removed per-card dark gradient artifacts and increased background gradient visibility
-- Dark theme follow-up: restored frosted glass blur on dark cards while retaining cleaner panel surfaces
-- Registration update: replaced the registration dropdown from class/program selection to institute selection
-- Registration UI update: rebuilt the registration form layout (class-registration style) while using institute in place of class/program
-- Registration compliance update: restyled the consent checkbox line and upgraded modal text to formal Terms and Conditions
-- Registration consent refinement: positioned checkbox directly beside "I agree" text in horizontal layout
-- Registration checkbox visibility fix: enforced explicit checkbox rendering in light/dark themes so the consent box stays visible beside the terms text
-- Dashboard theme sync fix: charts now update colors immediately when switching theme without requiring page refresh
-- Dashboard chart contrast update: improved axis/legend readability and enforced dark text in light mode
-- Data realism update: expanded seed scenarios across users, organizations, memberships, announcements, join requests, owner assignments, and transaction change requests
-- Organization panel UI update: standardized join button sizing and reduced width for better layout consistency
-- Shared custom dropdown rollout: introduced themed click-open dropdown component rendered with Tailwind classes in PHP pages and shared behavior script in static/js/owner-org-switcher.js
-- Transaction history fix: corrected custom dropdown filter bindings to ensure accurate transaction filtering
-- Transaction table readability: increased row separators contrast and row padding in owner transaction history
-- Transaction export update: added CSV export links for owner and admin transaction reports, plus print-friendly report styling
-
-Version History
-
-- 1.1.1 (2026-04-06)
-    - Added compressed footer redesign refinements (desktop/mobile), inline SVG social icons, navbar utility spacing polish, and responsive admin/owner/dashboard table-modal usability updates.
-- 1.1.0 (2026-04-06)
-    - Commit: b783bce
-    - Added onboarding tour + replay control, global search palette, security hardening, SMTP/PHPMailer path, upload safety helper, report export updates, and full documentation refresh.
-- 1.0.3 (2026-04-04)
-    - Commit: 8a74fda
-    - Polished organization modal behavior and light-mode presentation details.
-- 1.0.2 (2026-04-03)
-    - Commits: dfe17e5, cbf54ad
-    - Added organization membership automation, profile integrity updates, dashboard/dropdown improvements, and seed/doc refinements.
-- 1.0.1 (2026-03-28)
-    - Commits: 9e6ec8c, d906ec8, a9f604d, 1a6f8e1, 5f79c64, cb63c39, 9f59665, 55a74e9
-    - Refined registration and consent UX, improved dark theme treatment, and adjusted footer/layout polish.
-
----
-
-Table of Contents
-
-1. Version History
-2. Overview
-3. Quick Start
-4. Installation
-5. Configuration
-6. Default Credentials
-7. Project Structure
-8. Post-Reorg Map
-9. Features
-10. User Roles
-11. Technology Stack
-12. Database Setup
-13. Security Features
-14. Routes and Actions
-15. File Management
-16. Development Guide
-17. Troubleshooting
-18. Documentation
-19. Support
-
----
-
-Overview
-
-This system helps admins, student owners, and students manage organization records and keep finances visible.
-
-Key Objectives
-
-- Centralized management of student organizations
-- Transparent tracking of income and expenses
-- Approval-based workflow for sensitive finance changes
-- Role-based access to admin and owner tools
-- Simple deployment on XAMPP with minimal setup
-
----
-
-Quick Start
-
-Prerequisites
-
-- PHP 8.2 or higher
-- MySQL/MariaDB 10.4+ (when using MySQL mode)
-- Apache web server (XAMPP/LAMP/WAMP) or PHP built-in server
-- Modern web browser
-
-Minimum Requirements
-
-- PHP: 8.2+
-- MySQL: 10.4+ (optional if using SQLite mode)
-- Apache: 2.4+
-- Memory: 128MB PHP memory limit
-- Disk Space: 100MB minimum
-
----
-
-Installation
-
-Step 1: Place Project in Web Root
-
-```bash
-cd C:\xampp\htdocs
-```
-
-Copy project folder as `websys`:
-
-```bash
-C:\xampp\htdocs\websys
-```
-
-Step 2: Start Services
-
-1. Open XAMPP Control Panel
-2. Start Apache
-3. Start MySQL (only required for MySQL driver)
-
-Step 3: Configure (Optional)
-
-Edit `src/core/config.php` if you need custom DB credentials or app URL.
-
-Step 4: Access the App
-
-- Main URL: `http://localhost/websys/index.php`
-
-On first run, the app initializes required tables automatically.
-
----
-
-Configuration
-
-Database Configuration
-
-All settings are in `src/core/config.php`:
-
-```php
-'db' => [
-    'driver' => 'mysql', // mysql or sqlite
-    'host' => '127.0.0.1',
-    'port' => 3306,
-    'database' => 'websys_db',
-    'username' => 'root',
-    'password' => '',
-    'sqlite_path' => __DIR__ . '/../storage/database.sqlite',
-],
-```
-
-Application Settings
-
-```php
-'app_name' => 'Student Organization Management',
-'upload_dir' => __DIR__ . '/../public/uploads',
-'base_url' => '',
-```
-
-If `base_url` is blank, the app auto-detects URL from the request.
-
-Google OAuth Configuration
-
-In `src/core/config.php`:
-
-```php
-'google_oauth' => [
-    'client_id' => '',
-    'client_secret' => '',
-],
-```
-
-Redirect URI examples:
-
-- `http://localhost/websys/index.php?page=google_callback`
-- `http://localhost:8000/index.php?page=google_callback`
-
-SMTP Configuration (Required for Forgot/Reset Password Emails)
-
-This app reads SMTP values from environment variables via `src/core/config.php`.
-
-Required variables:
-
-- `SMTP_HOST` (for Gmail: `smtp.gmail.com`)
-- `SMTP_PORT` (for Gmail TLS: `587`)
-- `SMTP_USER` (your Gmail address)
-- `SMTP_PASS` (Google App Password, not your normal account password)
-- `SMTP_FROM` (sender address, usually same as `SMTP_USER`)
-- `SMTP_FROM_NAME` (display sender name)
-
-Optional but recommended:
-
-- `APP_URL` or `BASE_URL` so reset links point to the correct host.
-
-Example (Windows PowerShell session):
-
-```powershell
-$env:SMTP_HOST = "smtp.gmail.com"
-$env:SMTP_PORT = "587"
-$env:SMTP_USER = "youraddress@gmail.com"
-$env:SMTP_PASS = "your-16-char-app-password"
-$env:SMTP_FROM = "youraddress@gmail.com"
-$env:SMTP_FROM_NAME = "Student Organization Management"
-$env:APP_URL = "http://localhost/websys"
-```
-
-Example (persist for current user):
-
-```powershell
-setx SMTP_HOST "smtp.gmail.com"
-setx SMTP_PORT "587"
-setx SMTP_USER "youraddress@gmail.com"
-setx SMTP_PASS "your-16-char-app-password"
-setx SMTP_FROM "youraddress@gmail.com"
-setx SMTP_FROM_NAME "Student Organization Management"
-setx APP_URL "http://localhost/websys"
-```
-
-Password Reset Token Maintenance
-
-Run this cleanup periodically (Task Scheduler/Cron) to clear expired password reset tokens:
-
-```bash
-php scripts/maintenance/cleanup_expired_reset_tokens.php
-```
-
-PHP Configuration (Recommended)
-
-```ini
-upload_max_filesize = 10M
-post_max_size = 10M
-max_execution_time = 300
-memory_limit = 128M
-```
-
----
-
-Default Credentials
-
-The system auto-creates one admin account if no admin exists.
-
-Administrator
-
-- Email: `admin@campus.local`
-- Password: `admin123`
-- Role: Admin
-- Access: Full admin controls in this system
-
-Important: Change default credentials after first login.
-
----
-
-Project Structure
-
-```text
-websys/
-|-- index.php                    # Main router, views, and form action handling
-|-- README.md                    # Project documentation
-|-- schema.sql                   # MySQL schema reference
-|-- public/
-|   `-- uploads/                 # Uploaded receipt files
-|-- scripts/
-|   |-- seed/
-|   |   |-- seed_dummy_data.php  # Seed users, orgs, announcements, and requests
-|   |   `-- seed_dummy_reports.php # Seed transaction history
-|   `-- tests/
-|       `-- test_organization_helpers.php # Helper regression test
-|-- src/
-|   |-- core/                    # Runtime foundation (config/db/auth/helpers/layout)
-|   |-- lib/                     # Shared reusable helpers
-|   |-- actions/                 # POST/action handlers
-|   |-- pages/                   # Page render handlers
-|   `-- services/                # Data assembly/services
-|-- static/
-|   |-- README.md                # Static demo documentation
-|   |-- demo/
-|   |   |-- system-static-demo.css
-|   |   |-- system-static-demo.html
-|   |   `-- system-static-demo.js
-|   `-- js/
-|       `-- dashboard-page.js
-|-- docs/
-|   |-- architecture/
-|   |   `-- PROJECT_DOCUMENTATION.md
-|   `-- reference/
-|       `-- FUNCTION_ANALYSIS.md
-`-- storage/                     # SQLite database storage (if sqlite driver is used)
-```
-
----
-
-Post-Reorg Map
-
-This repository now follows a layered organization to keep routing, actions, rendering, and shared logic separated.
-
-- `src/core/`: bootstrap/runtime foundation (`config.php`, `db.php`, `auth.php`, `helpers.php`, `layout.php`)
-- `src/lib/`: reusable helper modules used by multiple pages/actions
-- `src/actions/`: state-changing handlers (form posts, approvals, workflow transitions)
-- `src/pages/`: page-level render handlers and page markup composition
-- `src/services/`: data assembly logic used by complex pages (for example dashboard aggregation)
-- `scripts/seed/`: seeders for dummy records and sample reports
-- `scripts/tests/`: lightweight regression scripts for core helper behaviors
-- `static/demo/`: standalone static prototype assets
-- `static/js/`: production JS assets used by runtime pages
-- `docs/architecture/`: architecture-level system documentation
-- `docs/reference/`: function-level reference and behavior analysis
-
----
-
-Features
-
-Public and Shared Features
-
-Authentication
-- Email/password registration and login
-- Google OAuth login (optional)
-- Logout with session cleanup
-- Email verification requirement for unverified accounts
-- Forgot/reset password flow with secure reset tokens
-- Profile update and password change (owner/student accounts)
-
-Dashboard
-- KPI cards (income, expense, balance)
-- Monthly trend chart using Chart.js
-- Recent announcements and transactions
-- Financial summary per organization
-- Modal views for organizations, announcements, and chart snapshot
-- Global command palette search for fast navigation across users, organizations, and announcements
-
-Announcements
-- Organization announcements feed
-- 30-day visibility window
-- Admin pin/unpin for important announcement priority
-
-Organizations
-- Browse organizations with visibility labels
-- Join request submission and status tracking
-- Institute/program eligibility checks for restricted organizations
-
-Administrative Features
-
-Organizations Management (`?page=admin_orgs`)
-- Create, update, and delete organizations
-- Configure visibility category and target institute/program
-- Assign student as owner (pending acceptance flow)
-
-Student Directory (`?page=admin_students`)
-- View all student/owner accounts
-- Filter by name or email
-
-Transaction Request Review (`?page=admin_requests`)
-- Review owner requests to update/delete transactions
-- Approve or reject with optional admin note
-
-Audit Logs (`?page=admin_audit`)
-- Browse action logs by date range
-- Track actor, action, entity, and details
-
-Owner Features (`?page=my_org`)
-
-- Edit owned organization details
-- Post and delete announcements
-- Add income/expense with optional receipt file
-- Submit update/delete transaction requests for admin approval
-- Review status of submitted transaction requests
-- Approve/decline pending membership requests
-
----
-
-User Roles
-
-Admin
-
-Permissions:
-- Manage organizations (create/update/delete)
-- Assign owners to organizations
-- Approve/reject transaction change requests
-- Pin/unpin announcements
-- View student directory
-- View audit logs
-- View any organization overview
-
-Owner
-
-Permissions:
-- Manage own organization profile
-- Post/delete own organization announcements
-- Add financial transactions
-- Request transaction updates/deletes (admin approval required)
-- Approve/decline join requests for owned organizations
-
-Student
-
-Permissions:
-- Register and login
-- View dashboard data and announcements
-- Request to join eligible organizations
-- Accept/decline owner assignments from admin
-
----
-
-Technology Stack
-
-Backend
-- PHP 8.2+ (single-entry procedural style with helper modules)
-- PDO for database access
-- MySQL or SQLite support
-
-Frontend
-- HTML5
-- Tailwind CSS via CDN
-- Vanilla JavaScript
-- Chart.js for data visualization
-
-Architecture
-- Single entry point: `index.php`
-- Module helpers in `src/`
-- Session-based authentication and flash messaging
-
----
-
-Database Setup
-
-Supported Database Modes
-
-- MySQL (default)
-- SQLite (file-based)
-
-Main Tables
-
-- `users`
-- `organizations`
-- `organization_members`
-- `announcements`
-- `financial_transactions`
-- `owner_assignments`
-- `organization_join_requests`
-- `transaction_change_requests`
-- `audit_logs`
-
-Initialization Behavior
-
-- `src/core/db.php` creates missing database/tables automatically
-- Default admin account is auto-generated when no admin exists
-- Missing columns for new features are added safely during boot
-
-Optional Manual SQL
-
-- Reference schema: `schema.sql`
-
----
-
-Security Features
-
-Authentication and Sessions
-
-- Password hashing with `password_hash()`
-- Password verification with `password_verify()`
-- Session ID regeneration after login
-- Role guards via `requireRole()`
-- Account status checks on login (`active`, `suspended`, `banned`)
-
-CSRF Protection
-
-- CSRF token generation and verification on all form posts
-
-Rate Limiting
-
-- Login attempt throttling
-- Registration attempt throttling
-- Resend verification throttling
-- Forgot-password request throttling
-
-Validation and Upload Security
-
-- Password complexity checks
-- File extension + MIME validation for receipts
-- Receipt size limit: 5MB
-- Allowed receipt types: JPG, JPEG, PNG, PDF
-
-Auditability
-
-- Important user and admin actions logged to `audit_logs`
-- Password changes and resets logged with notification support
-
----
-
-Routes and Actions
-
-Page Routes (`GET ?page=`)
-
-- `home`
-- `login`
-- `register`
-- `verify_email`
-- `forgot_password`
-- `reset_password`
-- `dashboard` (default after login)
-- `admin_orgs`
-- `admin_students`
-- `admin_requests`
-- `admin_audit`
-- `announcements`
-- `organizations`
-- `my_org`
-- `profile` (not available to admins)
-- `google_login`
-- `google_callback`
-- `logout`
-
-Form Actions (`POST action=`)
-
-Authentication
-- `register`
-- `login`
-- `resend_verification`
-- `forgot_password`
-- `reset_password`
-- `change_password`
-- `update_profile`
-
-Admin
-- `create_org`
-- `update_org_admin`
-- `delete_org`
-- `assign_owner`
-- `process_tx_change_request`
-- `pin_announcement_admin`
-- `unpin_announcement_admin`
-
-Student/Owner
-- `respond_owner_assignment`
-- `join_org`
-
-Owner
-- `respond_join_request`
-- `update_my_org`
-- `add_announcement`
-- `delete_announcement`
-- `add_transaction`
-- `update_transaction` (creates approval request)
-- `delete_transaction` (creates approval request)
-
----
-
-File Management
-
-Upload Directory
-
-- `public/uploads/` - receipt files for financial transactions
-
-Receipt Rules
-
-- Allowed extensions: `.jpg`, `.jpeg`, `.png`, `.pdf`
-- MIME type is validated server-side
-- Max file size: 5MB
-- Stored path format: `public/uploads/receipt_[random].ext`
-
----
-
-Development Guide
-
-Useful Scripts
-
-Seed core dummy data:
-
-```bash
-php scripts/seed/seed_dummy_data.php
-```
-
-Seed dummy financial reports:
-
-```bash
-php scripts/seed/seed_dummy_reports.php
-```
-
-Run with PHP built-in server:
+## Summary
+- **Version:** 1.1.3
+- **Updated:** April 27, 2026
+- **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
+- **Entry point:** `index.php`
+
+## Version History
+- **1.1.3** (April 27, 2026): documentation standardization, UI consistency pass, upload control polish
+- **1.1.1** (April 6, 2026): footer refinement, navbar spacing polish, responsive table/modal updates
+- **1.1.0** (April 6, 2026): onboarding tour, global search palette, security hardening, documentation refresh
+- **1.0.3** (April 4, 2026): organization modal polish and light-mode presentation improvements
+- **1.0.2** (April 3, 2026): membership automation, profile integrity updates, dashboard/dropdown refinements
+- **1.0.1** (March 28, 2026): registration, consent, dark theme, and footer/layout polish
+
+## Purpose
+This repository provides a role-based web application for student organizations, including organization operations, announcements, and finance transparency with approval workflows.
+
+## Audience
+- Administrators managing organizations, approvals, and audits
+- Organization owners handling announcements and transactions
+- Students viewing organizations, announcements, and budget updates
+- Developers maintaining and extending the system
+
+## Core Content
+
+### Quick Start
+1. Start the app:
 
 ```bash
 php -S localhost:8000
 ```
 
-Then open:
+2. Open:
 
-- `http://localhost:8000/index.php`
+```text
+http://localhost:8000/index.php
+```
 
-Core Development Files
+3. (Optional) Seed demo data:
 
-- `index.php` - routing, rendering, and action handling
-- `src/core/db.php` - DB bootstrap and migrations-like column checks
-- `src/core/helpers.php` - security helpers, flash messages, uploads, audit logging
-- `src/core/layout.php` - shared shell, styling, navigation, and role-aware footer behavior
+```bash
+php scripts/seed/seed_dummy_data.php
+php scripts/seed/seed_dummy_reports.php
+```
 
----
+4. Run the repository regression script:
 
-Troubleshooting
+```bash
+php scripts/tests/test_organization_helpers.php
+```
 
-Database Connection Errors
+### Configuration
+- Main runtime config: `src/core/config.php`
+- Database bootstrap and compatibility: `src/core/db.php`
+- Upload destination: `public/uploads/`
+- SMTP/OAuth values are read from environment variables and config.
 
-Symptoms: App fails during load or cannot query tables.
+### Architecture Snapshot
+- `src/core/`: runtime bootstrap, shared helpers, auth/session guards, layout shell
+- `src/lib/`: reusable domain and utility helpers
+- `src/actions/`: POST mutation handlers
+- `src/pages/`: route/page renderers
+- `src/services/`: data aggregation and service orchestration
 
-Solutions:
-- Verify DB credentials in `src/core/config.php`
-- Ensure MySQL service is running (if using MySQL driver)
-- Confirm `db.driver` matches your environment (`mysql` or `sqlite`)
-- Check that `storage/` is writable for SQLite mode
+### Project Structure
+```text
+websys/
+├── index.php                 # Single entry point for routing and action dispatch
+├── README.md                 # Main repository overview and quick-start guide
+├── schema.sql                # Baseline schema reference
+├── docs/
+│   ├── architecture/         # Architecture and system design docs
+│   └── reference/            # Function analysis and changelog docs
+├── public/
+│   ├── uploads/              # Writable upload storage for receipts and media
+│   └── vendor/               # Vendor assets when present in local builds
+├── scripts/
+│   ├── maintenance/          # Cleanup and maintenance scripts
+│   ├── seed/                 # Demo/seeding scripts
+│   └── tests/                # Regression/utility scripts
+├── src/
+│   ├── actions/              # POST/action handlers
+│   ├── core/                 # Bootstrap, auth, DB, helpers, layout
+│   ├── lib/                  # Reusable domain helpers
+│   ├── pages/                # Route/page renderers
+│   └── services/             # Aggregated data and service logic
+└── static/
+    ├── demo/                 # Frontend-only static demo assets
+    └── js/                   # Shared client-side scripts
+```
 
-Login Problems
+### Key Project Files
+- `index.php`: routes pages and dispatches POST actions
+- `src/core/layout.php`: shared shell, styles, and global behavior
+- `src/core/db.php`: database bootstrap and compatibility initialization
+- `src/pages/dashboard_page.php`: dashboard page controller
+- `src/pages/dashboard_page_markup.php`: dashboard markup partials
+- `src/services/dashboard_data.php`: dashboard data aggregation
+- `static/js/dashboard-page.js`: dashboard client-side charts, filters, and modal behavior
 
-Symptoms: Invalid credentials or repeated lockouts.
+## Related Docs
+- [Project Architecture](docs/architecture/PROJECT_DOCUMENTATION.md)
+- [Function Analysis](docs/reference/FUNCTION_ANALYSIS.md)
+- [Changelog (Baseline Comparison)](docs/reference/CHANGELOG_2026-04-06.md)
+- [Source Folder Guide](src/README.md)
+- [Static Demo Guide](static/README.md)
+- [Frontend Pitch Notes](static/FRONTEND_IDEAS.md)
 
-Solutions:
-- Confirm admin default account: `admin@campus.local` / `admin123`
-- Wait for rate-limit window to reset after repeated failures
-- Verify session/cookie settings in PHP environment
-
-Google Login Not Working
-
-Symptoms: OAuth errors or callback failure.
-
-Solutions:
-- Set `google_oauth.client_id` and `google_oauth.client_secret`
-- Ensure callback URL matches Google Console exactly
-- Confirm `base_url` or host path is correct
-
-File Upload Errors
-
-Symptoms: Receipt upload rejected or not saved.
-
-Solutions:
-- Confirm file is JPG/JPEG/PNG/PDF
-- Keep file size under 5MB
-- Ensure `public/uploads/` is writable
-
----
-
-Documentation
-
-Primary Documentation
-
-- `README.md` - complete setup and feature reference
-- `docs/architecture/PROJECT_DOCUMENTATION.md` - comprehensive system documentation
-- `docs/reference/FUNCTION_ANALYSIS.md` - reusable function and helper reference
-- `schema.sql` - SQL schema reference
-- `static/README.md` - static frontend demo guide
-
-Static Demo Files
-
-- `static/demo/system-static-demo.html`
-- `static/demo/system-static-demo.css`
-- `static/demo/system-static-demo.js`
-
----
-
-Support
-
-If you encounter issues:
-
-1. Check `src/core/config.php` values first
-2. Verify DB service and credentials
-3. Review PHP/Apache error logs
-4. Re-run seed scripts if you need demo data
-
-Backup Recommendations
-
-- Database backup before major updates
-- Backup `public/uploads/` when receipt history is important
-
----
-
-License
-
-Internal academic use.
-
----
-
-Version history is maintained in the commit-based section near the top of this README.
+## Maintenance
+- Keep behavior changes and documentation updates in the same change set.
+- Prefer extending the layered structure instead of adding new top-level patterns.
+- Use prepared statements, CSRF checks, and role guards for all mutating/authenticated flows.

@@ -250,13 +250,13 @@ function handleProfilePage(array $user): void
                             <span class="block text-xs text-slate-600">Open a larger preview</span>
                         </span>
                     </button>
-                    <button type="button" class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-900 transition-colors hover:bg-emerald-50 profile-picture-menu-action" data-profile-picture-edit>
-                        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 profile-picture-menu-icon">
+                    <button type="button" class="org-logo-upload-trigger profile-picture-menu-action flex w-full items-center gap-3 rounded-xl border border-dashed px-3 py-2 text-left text-sm transition-colors" data-profile-picture-edit>
+                        <span class="org-logo-upload-trigger-icon profile-picture-menu-icon inline-flex h-8 w-8 items-center justify-center rounded-full">
                             <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?>
                         </span>
                         <span>
                             <span class="block font-medium">Edit profile</span>
-                            <span class="block text-xs text-slate-600">Choose a new photo</span>
+                            <span class="org-logo-upload-trigger-subtext block text-xs">Choose a new photo</span>
                         </span>
                     </button>
                 </div>

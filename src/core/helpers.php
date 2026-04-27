@@ -95,7 +95,7 @@ function renderProfilePlaceholder(string $label, string $entity = 'user', string
     ];
 
     $palette = $entity === 'organization'
-        ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
         : 'bg-emerald-100 text-emerald-800 border-emerald-200';
 
     $sizeClasses = $sizes[$size] ?? $sizes['md'];
