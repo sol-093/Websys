@@ -405,11 +405,19 @@ function handleForgotPasswordAction(PDO $db): void
     }
     
     // Find user by email
-    $stmt = $db->prepare('SELECT id, name, email, account_status FROM users WHERE email = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT id, name, email, account_status, password_reset_at FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     
     if ($user && in_array($user['account_status'] ?? 'active', ['active', 'pending'], true)) {
+        $lastPasswordResetAt = (string) ($user['password_reset_at'] ?? '');
+        if ($lastPasswordResetAt !== '' && strtotime($lastPasswordResetAt . ' +7 days') > time()) {
+            rateLimitIncrement($forgotRateKey, 3600);
+            auditLog((int) $user['id'], 'auth.forgot_password_cooldown', 'user', (int) $user['id'], 'Password reset request blocked by 7-day cooldown');
+            setFlash('success', 'If your account exists and is eligible, a password reset link has been sent to your email.');
+            redirect('?page=login');
+        }
+
         // Generate reset token
         $resetToken = bin2hex(random_bytes(32));
         $resetTokenHash = hash('sha256', $resetToken);
@@ -430,7 +438,7 @@ function handleForgotPasswordAction(PDO $db): void
     }
     
     // Always show generic success message (prevent email enumeration)
-    setFlash('success', 'If your account exists, a password reset link has been sent to your email.');
+    setFlash('success', 'If your account exists and is eligible, a password reset link has been sent to your email.');
     redirect('?page=login');
 }
 
@@ -469,7 +477,7 @@ function handleResetPasswordAction(PDO $db): void
     $tokenHash = hash('sha256', $token);
 
     // Find user by reset token hash
-    $stmt = $db->prepare('SELECT id, email, name, reset_expires, reset_token FROM users WHERE reset_token = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT id, email, name, reset_expires, reset_token, password_reset_at FROM users WHERE reset_token = ? LIMIT 1');
     $stmt->execute([$tokenHash]);
     $user = $stmt->fetch();
 
@@ -482,8 +490,19 @@ function handleResetPasswordAction(PDO $db): void
     // Check if token is expired
     $resetExpires = $user['reset_expires'] ?? '';
     if ($resetExpires === '' || strtotime($resetExpires) < time()) {
+        $clearExpiredStmt = $db->prepare('UPDATE users SET reset_token = NULL, reset_expires = NULL WHERE id = ?');
+        $clearExpiredStmt->execute([(int) $user['id']]);
         setFlash('error', 'This password reset link has expired. Please request a new one.');
         redirect('?page=forgot_password');
+    }
+
+    $lastPasswordResetAt = (string) ($user['password_reset_at'] ?? '');
+    if ($lastPasswordResetAt !== '' && strtotime($lastPasswordResetAt . ' +7 days') > time()) {
+        $clearCooldownStmt = $db->prepare('UPDATE users SET reset_token = NULL, reset_expires = NULL WHERE id = ?');
+        $clearCooldownStmt->execute([(int) $user['id']]);
+        auditLog((int) $user['id'], 'auth.password_reset_cooldown', 'user', (int) $user['id'], 'Password reset blocked by 7-day cooldown');
+        setFlash('error', 'Your password was recently reset. Please wait 7 days before requesting another forgot-password reset.');
+        redirect('?page=login');
     }
     
     // Hash new password
@@ -495,10 +514,17 @@ function handleResetPasswordAction(PDO $db): void
         SET password_hash = ?, 
             reset_token = NULL, 
             reset_expires = NULL,
-            password_changed_at = ?
-        WHERE id = ?
+            password_changed_at = ?,
+            password_reset_at = ?
+        WHERE id = ? AND reset_token = ?
     ');
-    $updateStmt->execute([$hashedPassword, date('Y-m-d H:i:s'), (int) $user['id']]);
+    $passwordChangedAt = date('Y-m-d H:i:s');
+    $updateStmt->execute([$hashedPassword, $passwordChangedAt, $passwordChangedAt, (int) $user['id'], $tokenHash]);
+
+    if ($updateStmt->rowCount() !== 1) {
+        setFlash('error', 'This password reset link has already been used. Please request a new one.');
+        redirect('?page=forgot_password');
+    }
     
     // Log password change in password_history table
     $historyStmt = $db->prepare('INSERT INTO password_history (user_id, password_hash, created_at) VALUES (?, ?, ?)');
