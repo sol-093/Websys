@@ -7,6 +7,39 @@ declare(strict_types=1);
  * Handles sending emails for authentication and security notifications
  */
 
+function ensurePhpMailerAvailable(): bool
+{
+    $mailerClass = '\\PHPMailer\\PHPMailer\\PHPMailer';
+    if (class_exists($mailerClass)) {
+        return true;
+    }
+
+    $phpMailerDir = __DIR__ . '/PHPMailer-master/src';
+    $requiredFiles = [
+        $phpMailerDir . '/Exception.php',
+        $phpMailerDir . '/PHPMailer.php',
+        $phpMailerDir . '/SMTP.php',
+    ];
+
+    foreach ($requiredFiles as $file) {
+        if (!is_file($file)) {
+            error_log('PHPMailer fallback file missing: ' . $file);
+            return false;
+        }
+    }
+
+    foreach ($requiredFiles as $file) {
+        require_once $file;
+    }
+
+    return class_exists($mailerClass, false);
+}
+
+function emailHtml(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
 function sendEmail(string $to, string $subject, string $htmlBody, string $textBody = ''): bool
 {
     $config = require __DIR__ . '/../core/config.php';
@@ -49,8 +82,8 @@ function sendEmail(string $to, string $subject, string $htmlBody, string $textBo
 
     try {
         $mailerClass = '\\PHPMailer\\PHPMailer\\PHPMailer';
-        if (!class_exists($mailerClass)) {
-            error_log('PHPMailer class not found. Ensure composer dependencies are installed.');
+        if (!ensurePhpMailerAvailable()) {
+            error_log('PHPMailer class not found. Ensure composer dependencies are installed or bundled PHPMailer files exist.');
             return false;
         }
 
@@ -96,13 +129,17 @@ function passwordResetEmailConfigured(): bool
 
 function buildEmailTemplate(string $subject, string $content, string $appName, string $baseUrl): string
 {
+    $safeSubject = emailHtml($subject);
+    $safeAppName = emailHtml($appName);
+    $safeBaseUrl = emailHtml($baseUrl);
+
     return <<<HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{$subject}</title>
+    <title>{$safeSubject}</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
@@ -119,14 +156,14 @@ function buildEmailTemplate(string $subject, string $content, string $appName, s
 <body>
     <div class="container">
         <div class="header">
-            <h1>{$appName}</h1>
+            <h1>{$safeAppName}</h1>
         </div>
         <div class="content">
             {$content}
         </div>
         <div class="footer">
-            <p>This is an automated message from {$appName}.</p>
-            <p><a href="{$baseUrl}">Visit Dashboard</a></p>
+            <p>This is an automated message from {$safeAppName}.</p>
+            <p><a href="{$safeBaseUrl}">Visit Dashboard</a></p>
         </div>
     </div>
 </body>
@@ -139,16 +176,18 @@ function sendActivationEmail(string $email, string $name, string $activationToke
     $config = require __DIR__ . '/../core/config.php';
     $baseUrl = appBaseUrl($config);
     $verifyUrl = $baseUrl . '/index.php?page=verify_email&token=' . urlencode($activationToken);
+    $safeName = emailHtml($name);
+    $safeVerifyUrl = emailHtml($verifyUrl);
     
     $subject = 'Verify Your Email Address';
     $htmlBody = <<<HTML
-<p>Hello {$name},</p>
+<p>Hello {$safeName},</p>
 <p>Thank you for registering with our Student Organization Management System. To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
 <p style="text-align: center;">
-    <a href="{$verifyUrl}" class="button">Verify Email Address</a>
+    <a href="{$safeVerifyUrl}" class="button">Verify Email Address</a>
 </p>
 <p>Or copy and paste this link into your browser:</p>
-<p style="word-break: break-all; color: #6b7280; font-size: 14px;">{$verifyUrl}</p>
+<p style="word-break: break-all; color: #6b7280; font-size: 14px;">{$safeVerifyUrl}</p>
 <p>This verification link will expire in 24 hours for security reasons.</p>
 <p>If you did not create this account, please ignore this email.</p>
 <p>Best regards,<br>Student Organization Management Team</p>
@@ -162,16 +201,18 @@ function sendPasswordResetEmail(string $email, string $name, string $resetToken)
     $config = require __DIR__ . '/../core/config.php';
     $baseUrl = appBaseUrl($config);
     $resetUrl = $baseUrl . '/index.php?page=reset_password&token=' . urlencode($resetToken);
+    $safeName = emailHtml($name);
+    $safeResetUrl = emailHtml($resetUrl);
     
     $subject = 'Password Reset Request';
     $htmlBody = <<<HTML
-<p>Hello {$name},</p>
+<p>Hello {$safeName},</p>
 <p>We received a request to reset your password. Click the button below to choose a new password:</p>
 <p style="text-align: center;">
-    <a href="{$resetUrl}" class="button">Reset Password</a>
+    <a href="{$safeResetUrl}" class="button">Reset Password</a>
 </p>
 <p>Or copy and paste this link into your browser:</p>
-<p style="word-break: break-all; color: #6b7280; font-size: 14px;">{$resetUrl}</p>
+<p style="word-break: break-all; color: #6b7280; font-size: 14px;">{$safeResetUrl}</p>
 <p>This password reset link will expire in 1 hour for security reasons.</p>
 <p><strong>If you did not request a password reset, please ignore this email.</strong> Your password will remain unchanged.</p>
 <p>Best regards,<br>Student Organization Management Team</p>
@@ -182,15 +223,17 @@ HTML;
 
 function sendPasswordChangedNotification(string $email, string $name, string $ipAddress): bool
 {
-    $timestamp = date('F j, Y \a\t g:i A');
+    $timestamp = emailHtml(date('F j, Y \a\t g:i A'));
+    $safeName = emailHtml($name);
+    $safeIpAddress = emailHtml($ipAddress);
     $subject = 'Your Password Has Been Changed';
     $htmlBody = <<<HTML
-<p>Hello {$name},</p>
+<p>Hello {$safeName},</p>
 <p>This is a confirmation that your password was successfully changed.</p>
 <p><strong>Change Details:</strong></p>
 <ul>
     <li>Date: {$timestamp}</li>
-    <li>IP Address: {$ipAddress}</li>
+    <li>IP Address: {$safeIpAddress}</li>
 </ul>
 <p>If you did not make this change, please contact the administrator immediately and secure your account.</p>
 <p>Best regards,<br>Student Organization Management Team</p>
@@ -202,16 +245,19 @@ HTML;
 function sendLoginNotification(string $email, string $name, string $ipAddress, string $userAgent): bool
 {
     $subject = 'New Login to Your Account';
-    $timestamp = date('F j, Y \a\t g:i A');
+    $timestamp = emailHtml(date('F j, Y \a\t g:i A'));
+    $safeName = emailHtml($name);
+    $safeIpAddress = emailHtml($ipAddress);
+    $safeUserAgent = emailHtml($userAgent);
     
     $htmlBody = <<<HTML
-<p>Hello {$name},</p>
+<p>Hello {$safeName},</p>
 <p>We detected a new login to your account:</p>
 <p><strong>Login Details:</strong></p>
 <ul>
     <li>Date: {$timestamp}</li>
-    <li>IP Address: {$ipAddress}</li>
-    <li>Device: {$userAgent}</li>
+    <li>IP Address: {$safeIpAddress}</li>
+    <li>Device: {$safeUserAgent}</li>
 </ul>
 <p>If this was you, you can safely ignore this email.</p>
 <p><strong>If you did not perform this login, please secure your account immediately by changing your password.</strong></p>
@@ -224,15 +270,18 @@ HTML;
 function sendSecurityAlert(string $email, string $name, string $eventType, string $details): bool
 {
     $subject = 'Security Alert for Your Account';
-    $timestamp = date('F j, Y \a\t g:i A');
+    $timestamp = emailHtml(date('F j, Y \a\t g:i A'));
+    $safeName = emailHtml($name);
+    $safeEventType = emailHtml($eventType);
+    $safeDetails = nl2br(emailHtml($details));
     
     $htmlBody = <<<HTML
-<p>Hello {$name},</p>
+<p>Hello {$safeName},</p>
 <p>We detected the following security event on your account:</p>
-<p><strong>Event:</strong> {$eventType}</p>
+<p><strong>Event:</strong> {$safeEventType}</p>
 <p><strong>Date:</strong> {$timestamp}</p>
 <p><strong>Details:</strong></p>
-<p>{$details}</p>
+<p>{$safeDetails}</p>
 <p>If you recognize this activity, you can safely ignore this email.</p>
 <p><strong>If you did not perform this action, please secure your account immediately.</strong></p>
 <p>Best regards,<br>Student Organization Management Team</p>
@@ -251,14 +300,16 @@ function sendAccountStatusNotification(string $email, string $name, string $stat
     
     $message = $statusMessages[$status] ?? 'Your account status has been updated.';
     $subject = 'Account Status Update';
+    $safeName = emailHtml($name);
+    $safeMessage = emailHtml($message);
     
     $htmlBody = <<<HTML
-<p>Hello {$name},</p>
-<p>{$message}</p>
+<p>Hello {$safeName},</p>
+<p>{$safeMessage}</p>
 HTML;
     
     if ($reason !== '') {
-        $htmlBody .= "<p><strong>Reason:</strong> {$reason}</p>";
+        $htmlBody .= '<p><strong>Reason:</strong> ' . emailHtml($reason) . '</p>';
     }
     
     $htmlBody .= <<<HTML

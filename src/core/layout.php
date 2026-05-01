@@ -1335,6 +1335,76 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #fde68a !important;
             }
 
+            .auth-notice {
+                border: 1px solid rgba(16, 185, 129, 0.22);
+                background: rgba(236, 253, 245, 0.82);
+                color: #065f46;
+            }
+
+            .auth-notice a,
+            .auth-notice h3 {
+                color: #047857;
+            }
+
+            .auth-notice-warning {
+                border-color: rgba(245, 158, 11, 0.35);
+                background: rgba(255, 251, 235, 0.88);
+                color: #92400e;
+            }
+
+            .auth-notice-warning a,
+            .auth-notice-warning h3 {
+                color: #92400e;
+            }
+
+            .auth-notice-success {
+                border-color: rgba(16, 185, 129, 0.35);
+            }
+
+            .auth-notice-error {
+                border-color: rgba(248, 113, 113, 0.35);
+                background: rgba(254, 242, 242, 0.88);
+                color: #991b1b;
+            }
+
+            .auth-notice-error a,
+            .auth-notice-error h3 {
+                color: #991b1b;
+            }
+
+            body.theme-dark .auth-notice {
+                background: rgba(6, 78, 59, 0.34);
+                border-color: rgba(110, 231, 183, 0.28);
+                color: #d1fae5;
+            }
+
+            body.theme-dark .auth-notice a,
+            body.theme-dark .auth-notice h3 {
+                color: #6ee7b7;
+            }
+
+            body.theme-dark .auth-notice-warning {
+                background: rgba(120, 53, 15, 0.18);
+                border-color: rgba(251, 191, 36, 0.32);
+                color: #fde68a;
+            }
+
+            body.theme-dark .auth-notice-warning a,
+            body.theme-dark .auth-notice-warning h3 {
+                color: #fcd34d;
+            }
+
+            body.theme-dark .auth-notice-error {
+                background: rgba(127, 29, 29, 0.2);
+                border-color: rgba(248, 113, 113, 0.34);
+                color: #fecaca;
+            }
+
+            body.theme-dark .auth-notice-error a,
+            body.theme-dark .auth-notice-error h3 {
+                color: #fca5a5;
+            }
+
             body.theme-dark .text-slate-900 {
                 color: #f0fdf4 !important;
             }

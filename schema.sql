@@ -15,6 +15,19 @@ CREATE TABLE IF NOT EXISTS users (
     year_level TINYINT NULL,
     section VARCHAR(50) NULL,
     profile_picture_path VARCHAR(255) NULL,
+    profile_picture_crop_x DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+    profile_picture_crop_y DECIMAL(5,2) NOT NULL DEFAULT 50.00,
+    profile_picture_zoom DECIMAL(5,2) NOT NULL DEFAULT 1.00,
+    email_verified TINYINT(1) NOT NULL DEFAULT 1,
+    email_verified_at TIMESTAMP NULL DEFAULT NULL,
+    activation_token VARCHAR(64) NULL,
+    activation_expires TIMESTAMP NULL DEFAULT NULL,
+    reset_token VARCHAR(64) NULL,
+    reset_expires TIMESTAMP NULL DEFAULT NULL,
+    account_status ENUM('active','suspended','banned') NOT NULL DEFAULT 'active',
+    last_login_at TIMESTAMP NULL DEFAULT NULL,
+    last_login_ip VARCHAR(45) NULL,
+    password_changed_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -65,4 +78,32 @@ CREATE TABLE IF NOT EXISTS financial_transactions (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tx_org FOREIGN KEY (organization_id)
         REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    session_token VARCHAR(64) NOT NULL UNIQUE,
+    ip_address VARCHAR(45) NULL,
+    user_agent VARCHAR(500) NULL,
+    device_fingerprint VARCHAR(64) NULL,
+    last_activity TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    is_remembered TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_session_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_session_token (session_token),
+    INDEX idx_session_user (user_id),
+    INDEX idx_session_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS password_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_password_history_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX idx_password_history_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

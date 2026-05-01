@@ -49,7 +49,7 @@ function handleAdminStudentsPage(PDO $db): void
                         </td>
                         <td><?= e($student['email']) ?></td>
                         <td><?= e($student['role']) ?></td>
-                        <td><?= e($student['created_at']) ?></td>
+                        <td><?= e(date('F/D/Y', strtotime((string)$student['created_at']))) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -112,7 +112,7 @@ function handleAdminRequestsPage(PDO $db): void
                         <?php if ($req['action_type'] === 'update'): ?>
                             <div class="text-xs">Type: <?= e((string) $req['proposed_type']) ?></div>
                             <div class="text-xs">Amount: ₱<?= number_format((float) $req['proposed_amount'], 2) ?></div>
-                            <div class="text-xs">Date: <?= e((string) $req['proposed_transaction_date']) ?></div>
+                            <div class="text-xs">Date: <?= e(date('F d, Y', strtotime((string)$req['proposed_transaction_date']))) ?></div>
                             <div class="text-xs">Desc: <?= e((string) $req['proposed_description']) ?></div>
                         <?php else: ?>
                             <div class="text-xs">Delete transaction #<?= (int) $req['transaction_id'] ?></div>
@@ -296,7 +296,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
                     <tbody>
                         <?php foreach ($logs as $log): ?>
                             <tr class="border-b align-top">
-                                <td class="py-2 pr-3 whitespace-nowrap"><?= e($log['created_at']) ?></td>
+                                <td class="py-2 pr-3 whitespace-nowrap"><?= e(date('F d, Y', strtotime((string)$log['created_at']))) ?></td>
                                 <td class="py-2 pr-3"><?= e($log['actor_name'] ?: ('User#' . (int) $log['user_id'])) ?></td>
                                 <td class="py-2 pr-3"><?= e($log['action']) ?></td>
                                 <td class="py-2 pr-3"><?= e($log['entity_type'] ?? '-') ?></td>
@@ -480,7 +480,7 @@ function handleMyOrgAdminPage(PDO $db): void
                 <tbody>
                 <?php foreach ($tx as $row): ?>
                     <tr class="border-b">
-                        <td class="py-2"><?= e($row['transaction_date']) ?></td>
+                        <td class="py-2"><?= e(date('F d, Y', strtotime((string)$row['transaction_date']))) ?></td>
                         <td class="<?= $row['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($row['type']) ?></td>
                         <td>₱<?= number_format((float) $row['amount'], 2) ?></td>
                         <td><?= e($row['description']) ?></td>
@@ -1082,7 +1082,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <tbody>
             <?php foreach ($transactions as $row): ?>
                 <tr class="border-b">
-                    <td class="py-2"><?= e((string) $row['transaction_date']) ?></td>
+                    <td class="py-2"><?= e(date('F d, Y', strtotime((string) $row['transaction_date']))) ?></td>
                     <td class="<?= (string) $row['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e((string) $row['type']) ?></td>
                     <td>₱<?= number_format((float) $row['amount'], 2) ?></td>
                     <td><?= e((string) $row['description']) ?></td>

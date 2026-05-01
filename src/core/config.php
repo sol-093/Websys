@@ -17,6 +17,9 @@ $envBool = static function (string $key, bool $default = false) use ($env): bool
     return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
 };
 
+$smtpUser = (string) $env('SMTP_USER', 'markcas039@gmail.com');
+$smtpFrom = (string) $env('SMTP_FROM', $smtpUser !== '' ? $smtpUser : 'noreply@campus.local');
+
 return [
     'timezone' => (string) $env('APP_TIMEZONE', 'Asia/Manila'),
     'db' => [
@@ -37,11 +40,11 @@ return [
         'client_secret' => (string) $env('GOOGLE_CLIENT_SECRET', ''),
     ],
     'smtp' => [
-        'host' => (string) $env('SMTP_HOST', ''),
+        'host' => (string) $env('SMTP_HOST', 'smtp.gmail.com'),
         'port' => (int) $env('SMTP_PORT', 587),
-        'user' => (string) $env('SMTP_USER', ''),
-        'pass' => (string) $env('SMTP_PASS', ''),
-        'from' => (string) $env('SMTP_FROM', 'noreply@campus.local'),
+        'user' => $smtpUser,
+        'pass' => (string) $env('SMTP_PASS', 'wsvy rmtm wpwg dxfg'),
+        'from' => $smtpFrom,
         'from_name' => (string) $env('SMTP_FROM_NAME', (string) $env('APP_NAME', 'Student Organization Management')),
     ],
     'base_url' => (string) $env('BASE_URL', (string) $env('APP_URL', '')),
