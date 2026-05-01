@@ -18,6 +18,9 @@ function renderHeader(string $title = 'Dashboard'): void
     $isProfileActive = $currentPage === 'profile';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
+    $navAppName = (string) $config['app_name'];
+    $logoLight = 'public/uploads/logodark.png';
+    $logoDark = 'public/uploads/logolight.png';
     $showOnboarding = false;
     if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
         $_SESSION['show_onboarding'] = true;
@@ -548,7 +551,7 @@ function renderHeader(string $title = 'Dashboard'): void
 
             .nav-link {
                 color: #065f46;
-                transition: all 0.2s ease;
+                transition: color 0.2s ease, text-shadow 0.2s ease, transform 0.2s ease;
                 position: relative;
                 display: inline-flex;
                 align-items: center;
@@ -678,10 +681,13 @@ function renderHeader(string $title = 'Dashboard'): void
 
             .nav-link:hover {
                 color: #064e3b;
+                transform: translateY(-2px);
+                text-shadow: 0 0 14px rgba(16, 185, 129, 0.32);
             }
 
             body.theme-dark .nav-link:hover {
                 color: #f4fff9;
+                text-shadow: 0 0 18px rgba(110, 231, 183, 0.34);
             }
 
             .nav-link-active {
@@ -711,12 +717,84 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .nav-brand {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.65rem;
                 min-width: 0;
                 flex: 1 1 auto;
                 max-width: calc(100% - 5.5rem);
                 line-height: 1.15;
                 overflow-wrap: anywhere;
                 word-break: break-word;
+                text-decoration: none;
+                transition: transform 0.22s ease, filter 0.22s ease;
+            }
+
+            .nav-logo {
+                width: 3.35rem;
+                height: 3.35rem;
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                transition: transform 0.24s ease, filter 0.24s ease;
+            }
+
+            .nav-logo-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                padding: 0.2rem;
+                transition: transform 0.24s ease;
+            }
+
+            .nav-logo-dark {
+                display: none;
+            }
+
+            body.theme-dark .nav-logo-light {
+                display: none;
+            }
+
+            body.theme-dark .nav-logo-dark {
+                display: block;
+            }
+
+            .nav-brand-text {
+                min-width: 0;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .nav-brand:hover {
+                transform: translateY(-1px);
+                filter: brightness(1.04);
+            }
+
+            .nav-brand:hover .nav-logo {
+                transform: rotate(-3deg) scale(1.06);
+                filter: drop-shadow(0 8px 14px rgba(16, 185, 129, 0.2));
+            }
+
+            .nav-brand:hover .nav-logo-img {
+                transform: scale(1.05);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .nav-link,
+                .nav-brand,
+                .nav-logo,
+                .nav-logo-img {
+                    transition: none;
+                }
+
+                .nav-link:hover,
+                .nav-brand:hover,
+                .nav-brand:hover .nav-logo,
+                .nav-brand:hover .nav-logo-img {
+                    transform: none;
+                }
             }
 
             .nav-mobile-controls {
@@ -748,6 +826,12 @@ function renderHeader(string $title = 'Dashboard'): void
                     letter-spacing: -0.01em;
                     overflow-wrap: normal;
                     word-break: normal;
+                }
+
+                .nav-logo {
+                    width: 3rem;
+                    height: 3rem;
+                    border-radius: 0.6rem;
                 }
 
                 .nav-mobile-controls {
@@ -2386,7 +2470,13 @@ function renderHeader(string $title = 'Dashboard'): void
         <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-1.5 sm:mx-2.5 mt-1.5 text-slate-800">
             <div class="max-w-7xl mx-auto px-3 py-2">
                 <div class="flex items-center justify-between gap-2 min-w-0">
-                    <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title"><?= e($config['app_name']) ?></a>
+                    <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title" aria-label="<?= e($navAppName) ?> home">
+                        <span class="nav-logo" aria-hidden="true">
+                            <img src="<?= e($logoLight) ?>" alt="" class="nav-logo-img nav-logo-light">
+                            <img src="<?= e($logoDark) ?>" alt="" class="nav-logo-img nav-logo-dark">
+                        </span>
+                        <span class="nav-brand-text"><?= e($navAppName) ?></span>
+                    </a>
                     <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">
                         <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
                         <?php if ($user): ?>
