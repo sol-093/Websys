@@ -399,7 +399,7 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         }
     }
 
-    $linesPerPage = 52;
+    $linesPerPage = 38;
     $pages = array_chunk($normalizedLines, $linesPerPage);
     if ($pages === []) {
         $pages = [['No data available.']];
@@ -412,17 +412,96 @@ function handleExportTransactionsAction(PDO $db, array $user): void
     $objects = [];
     $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
 
+    $readPdfPngTemplate = static function (string $path): ?array {
+        if (!is_file($path) || !is_readable($path)) {
+            return null;
+        }
+
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return null;
+        }
+
+        $signature = fread($handle, 8);
+        if ($signature !== "\x89PNG\x0D\x0A\x1A\x0A") {
+            fclose($handle);
+            return null;
+        }
+
+        $width = 0;
+        $height = 0;
+        $bits = 0;
+        $colorType = 0;
+        $idat = '';
+
+        while (!feof($handle)) {
+            $lengthBytes = fread($handle, 4);
+            if (strlen($lengthBytes) !== 4) {
+                break;
+            }
+
+            $length = (int) unpack('N', $lengthBytes)[1];
+            $type = fread($handle, 4);
+            if (strlen($type) !== 4) {
+                break;
+            }
+
+            $data = $length > 0 ? fread($handle, $length) : '';
+            fread($handle, 4);
+
+            if ($type === 'IHDR') {
+                $header = unpack('Nwidth/Nheight/Cbits/CcolorType/Ccompression/Cfilter/Cinterlace', $data);
+                $width = (int) $header['width'];
+                $height = (int) $header['height'];
+                $bits = (int) $header['bits'];
+                $colorType = (int) $header['colorType'];
+            } elseif ($type === 'IDAT') {
+                $idat .= $data;
+            } elseif ($type === 'IEND') {
+                break;
+            }
+        }
+
+        fclose($handle);
+
+        if ($width <= 0 || $height <= 0 || $bits !== 8 || $colorType !== 2 || $idat === '') {
+            return null;
+        }
+
+        return [
+            'width' => $width,
+            'height' => $height,
+            'data' => $idat,
+        ];
+    };
+
+    $templateImage = $readPdfPngTemplate(dirname(__DIR__, 2) . '/public/uploads/pdftemplate.png');
+
     $pageCount = count($pages);
-    $pageObjectStart = 4;
+    $templateObjectId = $templateImage !== null ? 4 : null;
+    $pageObjectStart = $templateImage !== null ? 5 : 4;
     $contentObjectStart = $pageObjectStart + $pageCount;
     $pageRefs = [];
+
+    if ($templateImage !== null && $templateObjectId !== null) {
+        $imageStream = (string) $templateImage['data'];
+        $objects[$templateObjectId] = '<< /Type /XObject /Subtype /Image /Width ' . (int) $templateImage['width']
+            . ' /Height ' . (int) $templateImage['height']
+            . ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode'
+            . ' /DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns ' . (int) $templateImage['width'] . ' >>'
+            . ' /Length ' . strlen($imageStream) . " >>\nstream\n" . $imageStream . "\nendstream";
+    }
 
     for ($i = 0; $i < $pageCount; $i++) {
         $pageObjId = $pageObjectStart + $i;
         $contentObjId = $contentObjectStart + $i;
         $pageRefs[] = $pageObjId . ' 0 R';
 
-        $stream = "BT\n/F1 10 Tf\n14 TL\n40 802 Td\n";
+        $stream = '';
+        if ($templateObjectId !== null) {
+            $stream .= "q\n595 0 0 842 0 0 cm\n/TPL Do\nQ\n";
+        }
+        $stream .= "BT\n/F1 9 Tf\n13 TL\n58 694 Td\n";
         foreach ($pages[$i] as $lineIndex => $lineText) {
             $escaped = $escapePdfText($lineText);
             if ($lineIndex === 0) {
@@ -433,7 +512,8 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         }
         $stream .= "ET";
 
-        $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ' . $contentObjId . ' 0 R >>';
+        $xObjectResource = $templateObjectId !== null ? ' /XObject << /TPL ' . $templateObjectId . ' 0 R >>' : '';
+        $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >>' . $xObjectResource . ' >> /Contents ' . $contentObjId . ' 0 R >>';
         $objects[$contentObjId] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
     }
 

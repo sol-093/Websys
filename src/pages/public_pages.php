@@ -133,13 +133,16 @@ function handleAboutPage(?array $user): void
     ];
     ?>
     <section class="max-w-5xl mx-auto space-y-5">
-        <div class="glass p-6 md:p-8">
+        <div class="glass p-6 md:p-8 about-hero">
             <div class="hero-kicker inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-300/20 text-xs font-semibold mb-4 border border-emerald-200/30">
                 <?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?>
                 About the Platform
             </div>
-            <h1 class="modern-title text-3xl md:text-5xl font-bold tracking-tight leading-tight">Student Organization Management and Budget Transparency System</h1>
-            <p class="mt-4 text-slate-600 max-w-3xl text-base md:text-lg">
+            <h1 class="about-wordmark nav-wordmark" aria-label="NEXUS Student Organization Management and Budget Transparency System">
+                <span class="nav-wordmark-main">NEXUS</span>
+                <span class="nav-wordmark-subtitle">Student Organization Management<br>and Budget Transparency System</span>
+            </h1>
+            <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.
             </p>
         </div>
