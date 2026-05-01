@@ -140,7 +140,6 @@ function handleAboutPage(?array $user): void
             </div>
             <h1 class="about-wordmark nav-wordmark" aria-label="NEXUS Student Organization Management and Budget Transparency System">
                 <span class="nav-wordmark-main">NEXUS</span>
-                <span class="nav-wordmark-subtitle">Student Organization Management<br>and Budget Transparency System</span>
             </h1>
             <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.

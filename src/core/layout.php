@@ -57,14 +57,6 @@ function renderHeader(string $title = 'Dashboard'): void
     
             }
 
-            @font-face {
-                font-family: 'Space Odyssey';
-                src: url('static/fonts/space-odyssey-demo.otf') format('opentype');
-                font-weight: 700;
-                font-style: normal;
-                font-display: swap;
-            }
-
             :root {
                 --green-500: #34d399;
                 --green-700: #10b981;
@@ -748,8 +740,8 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .nav-logo {
-                width: 4.2rem;
-                height: 4.2rem;
+                width: 3.0rem;
+                height: 3.0rem;
                 flex: 0 0 auto;
                 display: inline-flex;
                 align-items: center;
@@ -762,7 +754,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
-                padding: 0.2rem;
+                padding: 0.1rem;
                 transition: transform 0.24s ease;
             }
 
@@ -801,21 +793,9 @@ function renderHeader(string $title = 'Dashboard'): void
 
             .nav-wordmark-main {
                 display: block;
-                font-size: clamp(1.05rem, 8vw, 1.65rem);
+                font-size: clamp(1.05rem, 8vw, 1.00rem);
                 line-height: 0.72;
                 white-space: nowrap;
-            }
-
-            .nav-wordmark-subtitle {
-                display: block;
-                font-family: 'Space Odyssey', 'Akira Expanded', Impact, Haettenschweiler, 'Arial Black', sans-serif;
-                font-size: clamp(0.25rem, 2.6vw, 0.42rem);
-                line-height: 1.00;
-                margin-top: 0.28rem;
-                max-width: 9.5rem;
-                text-align: center;
-                letter-spacing: 0.10em;
-                white-space: normal;
             }
 
             body.theme-dark .nav-wordmark {
@@ -853,33 +833,15 @@ function renderHeader(string $title = 'Dashboard'): void
                 line-height: 0.82;
             }
 
-            .about-wordmark .nav-wordmark-subtitle {
-                font-size: clamp(0.44rem, 2.65vw, 0.86rem);
-                line-height: 1.12;
-                margin-top: 0.45rem;
-                max-width: min(100%, 31rem);
-                text-align: left;
-            }
-
             @media (min-width: 768px) {
                 .about-wordmark .nav-wordmark-main {
                     font-size: clamp(4rem, 8vw, 6rem);
-                }
-
-                .about-wordmark .nav-wordmark-subtitle {
-                    font-size: clamp(0.8rem, 1.35vw, 1.08rem);
-                    max-width: min(100%, 33rem);
                 }
             }
 
             @media (max-width: 420px) {
                 .about-wordmark .nav-wordmark-main {
                     font-size: clamp(1.85rem, 12.5vw, 3.15rem);
-                }
-
-                .about-wordmark .nav-wordmark-subtitle {
-                    font-size: clamp(0.36rem, 2.35vw, 0.64rem);
-                    margin-top: 0.34rem;
                 }
             }
 
@@ -955,13 +917,6 @@ function renderHeader(string $title = 'Dashboard'): void
                     font-size: clamp(1rem, 6.3vw, 1.38rem);
                 }
 
-                .nav-wordmark-subtitle {
-                    font-size: clamp(0.22rem, 1.8vw, 0.34rem);
-                    line-height: 1.05;
-                    margin-top: 0.2rem;
-                    max-width: 7.75rem;
-                }
-
                 .nav-mobile-controls {
                     gap: 0.3rem;
                 }
@@ -989,11 +944,6 @@ function renderHeader(string $title = 'Dashboard'): void
 
                 .nav-wordmark-main {
                     font-size: clamp(0.92rem, 5.8vw, 1.18rem);
-                }
-
-                .nav-wordmark-subtitle {
-                    font-size: clamp(0.2rem, 1.55vw, 0.28rem);
-                    max-width: 6.65rem;
                 }
 
                 .nav-mobile-controls,
@@ -1031,11 +981,6 @@ function renderHeader(string $title = 'Dashboard'): void
 
                 .nav-wordmark-main {
                     font-size: clamp(1.85rem, 3.3vw, 3.00rem);
-                }
-
-                .nav-wordmark-subtitle {
-                    font-size: clamp(0.7rem, 0.50vw, 0.50rem);
-                    max-width: 18.5rem;
                 }
 
                 .nav-desktop {
@@ -2665,7 +2610,6 @@ function renderHeader(string $title = 'Dashboard'): void
                         </span>
                         <span class="nav-brand-text nav-wordmark" aria-hidden="true">
                             <span class="nav-wordmark-main">NEXUS</span>
-                            <span class="nav-wordmark-subtitle">Student Organization Management<br>and Budget Transparency System</span>
                         </span>
                     </a>
                     <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">
