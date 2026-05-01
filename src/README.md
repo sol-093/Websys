@@ -2,7 +2,7 @@
 
 ## Summary
 - **Scope:** `src/` runtime application layers
-- **Updated:** April 27, 2026
+- **Updated:** May 1, 2026
 - **Pattern:** Layered single-entry PHP architecture
 
 ## Purpose
@@ -15,8 +15,8 @@ This document explains how source code is organized and where new functionality 
 ## Core Content
 
 ### Layer Responsibilities
-- `core/`: runtime bootstrap, auth/session, DB bootstrap, shared layout, generic helpers
-- `lib/`: reusable domain and utility helpers
+- `core/`: runtime bootstrap, auth/session, DB bootstrap, shared layout, mail transport, generic helpers
+- `lib/`: reusable domain, email, notification, upload, maintenance, and utility helpers
 - `actions/`: POST mutation handlers and workflow command handlers
 - `pages/`: page renderers and route output handlers
 - `services/`: data aggregation and service-level composition
@@ -25,6 +25,8 @@ This document explains how source code is organized and where new functionality 
 - `index.php` is the single entry point.
 - Route rendering and action dispatch are coordinated from `index.php`.
 - Shared shell rendering is handled through `src/core/layout.php`.
+- Email verification and forgot-password delivery use `src/core/mailer.php` and `src/lib/email.php`.
+- Navbar logo source paths and logo sizing are maintained inline in `src/core/layout.php`.
 
 ### Placement Rules
 - Put reusable runtime concerns in `src/core/`.
@@ -42,3 +44,4 @@ This document explains how source code is organized and where new functionality 
 - Keep edits small and local to the correct layer.
 - Avoid introducing new top-level architectural patterns unless required.
 - Keep action handlers CSRF-protected and route guards role-aware.
+- Keep account recovery changes aligned with token expiry, one-use reset behavior, and reset cooldown tracking.

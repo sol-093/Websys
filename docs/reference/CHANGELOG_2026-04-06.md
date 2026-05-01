@@ -2,10 +2,11 @@
 
 ## Summary
 - **Baseline reference date:** April 6, 2026
-- **Document updated:** April 27, 2026
+- **Document updated:** May 1, 2026
 - **Scope:** High-level grouped change summary after the April 6 baseline
 
 ## Version History
+- **1.2.0** (May 1, 2026): PHPMailer-backed verification/reset flows, stricter one-use reset tokens, reset cooldown tracking, navbar branding/logo and hover motion
 - **1.1.3** (April 27, 2026): documentation cleanup, consistent layout, upload control visual alignment
 - **1.1.1** (April 6, 2026): footer and navigation presentation refinements, responsive usability updates
 - **1.1.0** (April 6, 2026): onboarding tour, search palette, auth hardening, and documentation refresh
@@ -27,12 +28,16 @@ This document tracks major change categories for quick historical context withou
 - Hardened request processing and CSRF handling across POST workflows.
 - Added/strengthened account flows: verification, reset, login updates, onboarding persistence.
 - Added SMTP guardrails for password recovery and maintenance cleanup script for expired reset tokens.
+- Activated PHPMailer-backed verification and reset delivery using configured SMTP credentials.
+- Password reset links are now one-use, expired tokens are cleared when encountered, and successful forgot-password resets are tracked with `password_reset_at`.
+- Forgot-password reset requests are blocked for seven days after a successful emailed reset, while normal profile password changes remain separate.
 
 ### Dashboard and UX
 - Introduced onboarding tour improvements and reliability fixes.
 - Added global command palette interactions.
 - Improved chart readability/theme synchronization and empty-state behavior.
 - Expanded responsive polish for tables, modals, footer, pagination, and navigation states.
+- Added inline navbar logo support with separate light/dark assets and subtle hover animation for nav links and brand/logo.
 
 ### Organization and Workflow Logic
 - Added/expanded owner assignment and join workflow guardrails.
@@ -51,6 +56,7 @@ This document tracks major change categories for quick historical context withou
 ### Documentation and Project Hygiene
 - Refreshed documentation set and standardized layout.
 - Added/updated reference docs and static presentation notes.
+- Updated documentation to reflect the May 1, 2026 auth/email and navbar branding changes.
 
 ### Previous Release Notes
 - Earlier versions focused on the baseline system foundation: organization management, announcements, transactions, dashboard views, and account workflows.

@@ -2,7 +2,7 @@
 
 ## Summary
 - **Scope:** Key reusable functions and handler responsibilities across the codebase
-- **Updated:** April 27, 2026
+- **Updated:** May 1, 2026
 - **Focus:** Practical navigation of where logic lives
 
 ## Purpose
@@ -21,18 +21,19 @@ This document maps core functions by file/layer so contributors can quickly loca
 - `auth.php`: current-user resolution and role/auth guards
 - `helpers.php`: escaping, redirects, flash, CSRF, validation, utility helpers, audit helpers
 - `layout.php`: shared header/footer shell and global client-side behavior injection
+- `mailer.php`: PHPMailer setup and message-send helper layer for account email flows
 
 ### Domain Helpers (`src/lib/`)
 - `organization.php`: ownership lookup, visibility rules, join eligibility, category helpers
 - `notifications.php`: login update aggregation and popup marker generation
 - `pagination.php`: pagination data shaping and UI rendering helpers
-- `email.php`: outbound mail and SMTP readiness checks
+- `email.php`: verification/reset email composition, outbound mail, and SMTP readiness checks
 - `integrations.php`: base URL resolution, OAuth checks, JSON fetch utility
 - `maintenance.php`: lifecycle cleanup helpers
 - `uploads.php`: upload-related validation/storage helper logic
 
 ### Action Handlers (`src/actions/`)
-- `auth_flows.php`: register/login/verify/resend/forgot/reset/change-password/profile update handlers
+- `auth_flows.php`: register/login/verify/resend/forgot/reset/change-password/profile update handlers, including one-use reset token validation and reset cooldown tracking
 - `content_actions.php`: announcement and transaction mutation handlers
 - `workflows.php`: admin/owner approval and organization workflow handlers
 
@@ -51,6 +52,10 @@ This document maps core functions by file/layer so contributors can quickly loca
 - `owner-org-switcher.js`: shared custom dropdown component behavior
 - `image-cropper.js`: reusable cropper workflow for profile/org image flows
 - `register-form.js`: registration page client UX enhancements
+
+### Shared UI Notes
+- Navbar logo paths, sizing, light/dark asset switching, and hover animation live in `src/core/layout.php`.
+- Current navbar assets are served from `public/uploads/logodark.png` for light mode and `public/uploads/logolight.png` for dark mode.
 
 ## Related Docs
 - [Repository Overview](../../README.md)

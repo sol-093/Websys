@@ -1,12 +1,13 @@
 # Student Organization Management and Budget Transparency System
 
 ## Summary
-- **Version:** 1.1.3
-- **Updated:** April 27, 2026
+- **Version:** 1.2.0
+- **Updated:** May 1, 2026
 - **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
 
 ## Version History
+- **1.2.0** (May 1, 2026): PHPMailer-backed verification/reset flows, one-use password reset hardening, reset cooldown tracking, navbar logo and hover polish
 - **1.1.3** (April 27, 2026): documentation standardization, UI consistency pass, upload control polish
 - **1.1.1** (April 6, 2026): footer refinement, navbar spacing polish, responsive table/modal updates
 - **1.1.0** (April 6, 2026): onboarding tour, global search palette, security hardening, documentation refresh
@@ -56,6 +57,7 @@ php scripts/tests/test_organization_helpers.php
 - Database bootstrap and compatibility: `src/core/db.php`
 - Upload destination: `public/uploads/`
 - SMTP/OAuth values are read from environment variables and config.
+- Navbar logo image paths are set inline in `src/core/layout.php` and currently map light mode to `public/uploads/logodark.png` and dark mode to `public/uploads/logolight.png`.
 
 ### Architecture Snapshot
 - `src/core/`: runtime bootstrap, shared helpers, auth/session guards, layout shell
@@ -95,6 +97,7 @@ websys/
 - `index.php`: routes pages and dispatches POST actions
 - `src/core/layout.php`: shared shell, styles, and global behavior
 - `src/core/db.php`: database bootstrap and compatibility initialization
+- `src/core/mailer.php`: PHPMailer transport configuration and send helpers
 - `src/pages/dashboard_page.php`: dashboard page controller
 - `src/pages/dashboard_page_markup.php`: dashboard markup partials
 - `src/services/dashboard_data.php`: dashboard data aggregation

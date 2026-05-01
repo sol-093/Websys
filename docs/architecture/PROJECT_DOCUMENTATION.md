@@ -1,12 +1,13 @@
 # Project Architecture Documentation
 
 ## Summary
-- **Version:** 1.1.x architecture baseline
-- **Updated:** April 27, 2026
+- **Version:** 1.2.x architecture baseline
+- **Updated:** May 1, 2026
 - **Runtime:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
 
 ## Version History
+- **1.2.0**: email verification/reset delivery, reset-token hardening, navbar brand/logo polish
 - **1.1.x**: current layered architecture baseline with single-entry routing
 - **1.1.1**: presentation/layout refinements and responsive shell updates
 - **1.1.0**: onboarding, global search, security hardening, and doc refresh baseline
@@ -67,18 +68,22 @@ websys/
 - PDO prepared statements for database access
 - Escaped output via helper rendering functions
 - Audit logging for critical actions
+- PHPMailer-backed email delivery for verification and password reset flows
+- One-use forgot-password reset tokens with expiry cleanup and reset cooldown tracking
 
 ### Data and Schema Notes
 - Schema bootstrap and compatibility checks live in `src/core/db.php`.
 - Schema reference file: `schema.sql`.
 - App supports MySQL and SQLite through PDO.
 - Uploaded receipts/media are stored in `public/uploads/`.
+- Compatibility migrations include `password_reset_at` for forgot-password reset cooldown enforcement.
 
 ### Route and Feature Domains
 - Public/auth routes: login, registration, account recovery, informational pages
 - Student domains: dashboard, organizations, announcements
 - Owner domains: organization management, announcements, transactions, join responses
 - Admin domains: organization administration, ownership assignment, approval workflows, audit logs
+- Shared layout domain: global navigation, light/dark theme switching, inline navbar logo assets, search, onboarding, and modal shell behavior
 
 ### Operational Scripts
 - Seed scripts:
