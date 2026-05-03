@@ -120,35 +120,43 @@ $provider = null;
 
 switch ($providerName) {
     case 'Google':
-        $provider = new Google($params);
-        $options = [
-            'scope' => [
-                'https://mail.google.com/'
-            ]
-        ];
+        if (class_exists('League\OAuth2\Client\Provider\Google')) {
+            $provider = new Google($params);
+            $options = [
+                'scope' => [
+                    'https://mail.google.com/'
+                ]
+            ];
+        }
         break;
     case 'Yahoo':
-        $provider = new Yahoo($params);
+        if (class_exists('Hayageek\OAuth2\Client\Provider\Yahoo')) {
+            $provider = new Yahoo($params);
+        }
         break;
     case 'Microsoft':
-        $provider = new Microsoft($params);
-        $options = [
-            'scope' => [
-                'wl.imap',
-                'wl.offline_access'
-            ]
-        ];
+        if (class_exists('Stevenmaguire\OAuth2\Client\Provider\Microsoft')) {
+            $provider = new Microsoft($params);
+            $options = [
+                'scope' => [
+                    'wl.imap',
+                    'wl.offline_access'
+                ]
+            ];
+        }
         break;
     case 'Azure':
-        $params['tenantId'] = $tenantId;
+        if (class_exists('Greew\OAuth2\Client\Provider\Azure')) {
+            $params['tenantId'] = $tenantId;
 
-        $provider = new Azure($params);
-        $options = [
-            'scope' => [
-                'https://outlook.office.com/SMTP.Send',
-                'offline_access'
-            ]
-        ];
+            $provider = new Azure($params);
+            $options = [
+                'scope' => [
+                    'https://outlook.office.com/SMTP.Send',
+                    'offline_access'
+                ]
+            ];
+        }
         break;
 }
 
