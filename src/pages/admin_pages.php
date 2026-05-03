@@ -49,7 +49,7 @@ function handleAdminStudentsPage(PDO $db): void
                         </td>
                         <td><?= e($student['email']) ?></td>
                         <td><?= e($student['role']) ?></td>
-                        <td><?= e(date('F/D/Y', strtotime((string)$student['created_at']))) ?></td>
+                        <td><?= e(date('F d, Y', strtotime((string)$student['created_at']))) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

@@ -45,6 +45,8 @@ http://localhost:8000/index.php
 ```bash
 php scripts/seed/seed_dummy_data.php
 php scripts/seed/seed_dummy_reports.php
+php scripts/seed/seed_extra_dummy_data.php
+php scripts/seed/seed_extra_dummy_reports.php
 ```
 
 4. Run the repository regression script:
