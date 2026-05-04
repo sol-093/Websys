@@ -809,6 +809,36 @@ function renderHeader(string $title = 'Dashboard'): void
                 display: block;
             }
 
+            .about-meaning-card {
+                border: 1px solid rgba(16, 185, 129, 0.28);
+                background: rgba(236, 253, 245, 0.78);
+                color: #334155;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+            }
+
+            .about-meaning-title {
+                color: #047857;
+            }
+
+            .about-meaning-copy {
+                color: #475569;
+            }
+
+            body.theme-dark .about-meaning-card {
+                border-color: rgba(94, 234, 212, 0.32);
+                background: rgba(6, 78, 59, 0.42);
+                color: #d1fae5;
+                box-shadow: inset 0 1px 0 rgba(209, 250, 229, 0.08);
+            }
+
+            body.theme-dark .about-meaning-title {
+                color: #5eead4;
+            }
+
+            body.theme-dark .about-meaning-copy {
+                color: #ecfdf5;
+            }
+
             .nav-brand:hover {
                 transform: translateY(-1px);
                 filter: brightness(1.04);

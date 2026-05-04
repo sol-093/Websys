@@ -145,33 +145,33 @@ function handleAboutPage(?array $user): void
         <div class="glass p-5 md:p-6">
             <h2 class="text-lg font-semibold mb-3 icon-label\"><?= uiIcon('open', 'ui-icon') ?><span>What INVOLVE Means</span></h2>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
-                    <p class="text-sm font-semibold text-emerald-800">I - Innovation</p>
-                    <p class="mt-1 text-xs text-slate-700">Using technology to improve student organization management.</p>
+                <div class="about-meaning-card rounded-lg p-3">
+                    <p class="about-meaning-title text-sm font-semibold">I - Innovation</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Using technology to improve student organization management.</p>
                 </div>
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
-                    <p class="text-sm font-semibold text-emerald-800">N - Navigation</p>
-                    <p class="mt-1 text-xs text-slate-700">Helping users easily access organizations, announcements, records, and reports.</p>
+                <div class="about-meaning-card rounded-lg p-3">
+                    <p class="about-meaning-title text-sm font-semibold">N - Navigation</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Helping users easily access organizations, announcements, records, and reports.</p>
                 </div>
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
-                    <p class="text-sm font-semibold text-emerald-800">V - Visibility</p>
-                    <p class="mt-1 text-xs text-slate-700">Making organization information and financial records easier to view and monitor.</p>
+                <div class="about-meaning-card rounded-lg p-3">
+                    <p class="about-meaning-title text-sm font-semibold">V - Visibility</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Making organization information and financial records easier to view and monitor.</p>
                 </div>
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
-                    <p class="text-sm font-semibold text-emerald-800">O - Organization</p>
-                    <p class="mt-1 text-xs text-slate-700">Keeping members, requests, announcements, and transactions in one system.</p>
+                <div class="about-meaning-card rounded-lg p-3">
+                    <p class="about-meaning-title text-sm font-semibold">O - Organization</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Keeping members, requests, announcements, and transactions in one system.</p>
                 </div>
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
-                    <p class="text-sm font-semibold text-emerald-800">L - Leadership</p>
-                    <p class="mt-1 text-xs text-slate-700">Supporting organization owners and admins in managing responsibilities.</p>
+                <div class="about-meaning-card rounded-lg p-3">
+                    <p class="about-meaning-title text-sm font-semibold">L - Leadership</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Supporting organization owners and admins in managing responsibilities.</p>
                 </div>
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
-                    <p class="text-sm font-semibold text-emerald-800">V - Verification</p>
-                    <p class="mt-1 text-xs text-slate-700">Protecting accounts and actions through verification, permissions, and secure processes.</p>
+                <div class="about-meaning-card rounded-lg p-3">
+                    <p class="about-meaning-title text-sm font-semibold">V - Verification</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Protecting accounts and actions through verification, permissions, and secure processes.</p>
                 </div>
-                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3 sm:col-span-2 lg:col-span-3">
-                    <p class="text-sm font-semibold text-emerald-800">E - Engagement</p>
-                    <p class="mt-1 text-xs text-slate-700">Encouraging students to join organizations and stay updated with activities.</p>
+                <div class="about-meaning-card rounded-lg p-3 sm:col-span-2 lg:col-span-3">
+                    <p class="about-meaning-title text-sm font-semibold">E - Engagement</p>
+                    <p class="about-meaning-copy mt-1 text-xs">Encouraging students to join organizations and stay updated with activities.</p>
                 </div>
             </div>
         </div>
