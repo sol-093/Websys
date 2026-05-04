@@ -54,8 +54,8 @@ This document maps core functions by file/layer so contributors can quickly loca
 - `register-form.js`: registration page client UX enhancements
 
 ### Shared UI Notes
-- Navbar logo paths, sizing, light/dark asset switching, and hover animation live in `src/core/layout.php`.
-- Current navbar assets are served from `public/uploads/logodark.png` for light mode and `public/uploads/logolight.png` for dark mode.
+- Navbar logo paths, sizing, light/dark asset switching, footer branding, and shared shell behavior live in `src/core/layout.php`.
+- Current navbar assets are served from `public/uploads/involvelogo dark.png` for light mode and `public/uploads/involvelogo light.png` for dark mode.
 
 ## Related Docs
 - [Repository Overview](../../README.md)
