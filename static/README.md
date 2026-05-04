@@ -2,7 +2,7 @@
 
 ## Summary
 - **Scope:** Frontend-only static demonstration assets
-- **Updated:** April 27, 2026
+- **Updated:** May 1, 2026
 - **Primary entry file:** `static/demo/system-static-demo.html`
 
 ## Purpose
@@ -27,6 +27,7 @@ This document explains how to use the static demo bundle that mirrors current UI
 - Modal interactions and dashboard chart states
 - Command-palette/onboarding simulation
 - Role switch simulation (`guest`, `student`, `owner`, `admin`)
+- Runtime navbar branding now includes inline light/dark logo assets and hover motion in `src/core/layout.php`; keep the static demo aligned when presentation assets are refreshed.
 
 ### Run Instructions
 - XAMPP route:

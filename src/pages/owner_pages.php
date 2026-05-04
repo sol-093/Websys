@@ -372,7 +372,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <tbody>
                     <?php foreach ($transactions as $row): ?>
                         <tr class="border-b border-emerald-300 align-top">
-                            <td class="py-3 px-2 whitespace-nowrap"><?= e($row['transaction_date']) ?></td>
+                            <td class="py-3 px-2 whitespace-nowrap"><?= e(date('F d, Y', strtotime((string)$row['transaction_date']))) ?></td>
                             <td class="py-3 px-2 whitespace-nowrap"><?= e($row['type']) ?></td>
                             <td class="py-3 px-2 whitespace-nowrap">₱<?= number_format((float) $row['amount'], 2) ?></td>
                             <td class="py-3 px-2 break-words"><?= e($row['description']) ?></td>
@@ -420,7 +420,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                             <span class="tx-mobile-type-badge inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold <?= $type === 'income' ? 'tx-mobile-type-income bg-emerald-100 text-emerald-700' : 'tx-mobile-type-expense bg-red-100 text-red-700' ?>"><?= e(ucfirst($type)) ?></span>
                         </div>
                         <div class="mt-2 text-2xl font-bold leading-tight text-slate-900">₱<?= number_format((float) $row['amount'], 2) ?></div>
-                        <div class="mt-2 text-xs text-slate-600"><?= e((string) $row['transaction_date']) ?></div>
+                        <div class="mt-2 text-xs text-slate-600"><?= e(date('F d, Y', strtotime((string) $row['transaction_date']))) ?></div>
                         <p class="mt-2 text-sm text-slate-700" style="display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                             <?= e((string) $row['description']) ?>
                         </p>
@@ -445,7 +445,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                     <tbody>
                     <?php foreach ($myTxRequests as $req): ?>
                         <tr class="border-b">
-                            <td class="py-2"><?= e((string) $req['created_at']) ?></td>
+                            <td class="py-2"><?= e(date('F d, Y', strtotime((string)$req['created_at']))) ?></td>
                             <td><?= e((string) $req['action_type']) ?></td>
                             <td><?= e((string) $req['status']) ?></td>
                             <td><?= e((string) ($req['admin_note'] ?? '')) ?></td>
@@ -460,7 +460,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
 
     <div id="myOrgAnnouncementsModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
         <div class="mx-auto mt-12 w-full max-w-3xl">
-            <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] max-h-[90dvh] overflow-y-auto" data-modal-panel>
+            <div class="rounded-2xl border border-slate-200/70 bg-white/95 p-5 shadow-[0_24px_60px_rgba(15,23,42,0.38)] dark:border-emerald-300/25 dark:bg-[#021a14]/95 max-h-[90dvh] overflow-y-auto" data-modal-panel>
                 <div class="flex items-start justify-between gap-3 mb-4">
                     <div>
                         <h3 class="text-lg font-semibold icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>All Organization Announcements</span></h3>

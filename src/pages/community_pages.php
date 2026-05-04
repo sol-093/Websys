@@ -43,7 +43,13 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1"><?= e($item['organization_name']) ?> · <?= e($item['created_at']) ?> · Expires <?= e((string) ($item['expires_at'] ?? '')) ?></div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        <?= e($item['organization_name']) ?> · 
+                                        <?= e(date('F d, Y', strtotime((string)$item['created_at']))) ?> 
+                                        <?php if (!empty($item['expires_at'])): ?>
+                                            · Expires <?= e(date('F d, Y', strtotime((string)$item['expires_at']))) ?>
+                                        <?php endif; ?>
+                                    </div>
                                     <p class="text-sm mt-2"><?= e($item['content']) ?></p>
                                     <?php if (($user['role'] ?? '') === 'admin'): ?>
                                         <form method="post" class="mt-2">
@@ -418,7 +424,7 @@ function handleProfilePage(array $user): void
                             $createdAt = $user['created_at'] ?? 'Unknown';
                             if ($createdAt !== 'Unknown') {
                                 $date = new DateTime($createdAt);
-                                echo htmlspecialchars($date->format('F j, Y'));
+                                echo e($date->format('F d, Y'));
                             } else {
                                 echo 'Unknown';
                             }
@@ -442,7 +448,7 @@ function handleProfilePage(array $user): void
                                             <?php echo htmlspecialchars($ownedOrg['org_category']); ?>
                                             • Created <?php 
                                                 $orgDate = new DateTime($ownedOrg['created_at']);
-                                                echo htmlspecialchars($orgDate->format('F j, Y'));
+                                                echo e($orgDate->format('F d, Y'));
                                             ?>
                                         </p>
                                     </div>
@@ -465,7 +471,7 @@ function handleProfilePage(array $user): void
                                                     <?php echo htmlspecialchars($org['org_category']); ?>
                                                     • Joined <?php 
                                                         $joinDate = new DateTime($org['joined_at']);
-                                                        echo htmlspecialchars($joinDate->format('F j, Y'));
+                                                        echo e($joinDate->format('F d, Y'));
                                                     ?>
                                                 </p>
                                             </div>

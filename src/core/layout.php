@@ -18,6 +18,9 @@ function renderHeader(string $title = 'Dashboard'): void
     $isProfileActive = $currentPage === 'profile';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
+    $navAppName = (string) $config['app_name'];
+    $logoLight = 'public/uploads/logodark.png';
+    $logoDark = 'public/uploads/logolight.png';
     $showOnboarding = false;
     if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
         $_SESSION['show_onboarding'] = true;
@@ -45,6 +48,15 @@ function renderHeader(string $title = 'Dashboard'): void
         <title><?= e($title) ?> - <?= e($config['app_name']) ?></title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
+            @font-face {
+                font-family: 'Akira Expanded';
+                src: url('static/fonts/akira-expanded-demo.otf') format('opentype');
+                font-weight: 500;
+                font-style: normal;
+                font-display: swap;
+    
+            }
+
             :root {
                 --green-500: #34d399;
                 --green-700: #10b981;
@@ -548,7 +560,7 @@ function renderHeader(string $title = 'Dashboard'): void
 
             .nav-link {
                 color: #065f46;
-                transition: all 0.2s ease;
+                transition: color 0.2s ease, text-shadow 0.2s ease, transform 0.2s ease;
                 position: relative;
                 display: inline-flex;
                 align-items: center;
@@ -678,10 +690,13 @@ function renderHeader(string $title = 'Dashboard'): void
 
             .nav-link:hover {
                 color: #064e3b;
+                transform: translateY(-2px);
+                text-shadow: 0 0 14px rgba(16, 185, 129, 0.32);
             }
 
             body.theme-dark .nav-link:hover {
                 color: #f4fff9;
+                text-shadow: 0 0 18px rgba(110, 231, 183, 0.34);
             }
 
             .nav-link-active {
@@ -711,12 +726,153 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .nav-brand {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.65rem;
                 min-width: 0;
                 flex: 1 1 auto;
                 max-width: calc(100% - 5.5rem);
                 line-height: 1.15;
                 overflow-wrap: anywhere;
                 word-break: break-word;
+                text-decoration: none;
+                transition: transform 0.22s ease, filter 0.22s ease;
+            }
+
+            .nav-logo {
+                width: 3.0rem;
+                height: 3.0rem;
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+                transition: transform 0.24s ease, filter 0.24s ease;
+            }
+
+            .nav-logo-img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                padding: 0.1rem;
+                transition: transform 0.24s ease;
+            }
+
+            .nav-logo-dark {
+                display: none;
+            }
+
+            body.theme-dark .nav-logo-light {
+                display: none;
+            }
+
+            body.theme-dark .nav-logo-dark {
+                display: block;
+            }
+
+            .nav-brand-text {
+                min-width: 0;
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .nav-wordmark {
+                color: #0c2b22;
+                display: inline-flex;
+                flex-direction: column;
+                font-family: 'Akira Expanded', Impact, Haettenschweiler, 'Arial Black', sans-serif;
+                letter-spacing: 0;
+                line-height: 0.82;
+                min-width: 0;
+                overflow-wrap: normal;
+                text-shadow: none;
+                text-transform: uppercase;
+                white-space: nowrap;
+                word-break: normal;
+            }
+
+            .nav-wordmark-main {
+                display: block;
+                font-size: clamp(1.05rem, 8vw, 1.00rem);
+                line-height: 0.72;
+                white-space: nowrap;
+            }
+
+            body.theme-dark .nav-wordmark {
+                color: #d9ffef;
+                text-shadow: 0 0 18px rgba(110, 231, 183, 0.01);
+            }
+
+            .about-hero {
+                text-align: left;
+            }
+
+            .about-hero .hero-kicker,
+            .about-hero .about-wordmark,
+            .about-hero .about-copy {
+                margin-left: 0;
+                margin-right: auto;
+            }
+
+            .about-copy {
+                text-align: left;
+            }
+
+            .about-wordmark {
+                align-items: flex-start;
+                display: flex;
+                margin: 0.85rem 0 0;
+                max-width: 100%;
+                overflow: visible;
+                text-align: left;
+                width: 100%;
+            }
+
+            .about-wordmark .nav-wordmark-main {
+                font-size: clamp(2.15rem, 13vw, 4.4rem);
+                line-height: 0.82;
+            }
+
+            @media (min-width: 768px) {
+                .about-wordmark .nav-wordmark-main {
+                    font-size: clamp(4rem, 8vw, 6rem);
+                }
+            }
+
+            @media (max-width: 420px) {
+                .about-wordmark .nav-wordmark-main {
+                    font-size: clamp(1.85rem, 12.5vw, 3.15rem);
+                }
+            }
+
+            .nav-brand:hover {
+                transform: translateY(-1px);
+                filter: brightness(1.04);
+            }
+
+            .nav-brand:hover .nav-logo {
+                transform: rotate(-3deg) scale(1.06);
+                filter: drop-shadow(0 8px 14px rgba(16, 185, 129, 0.2));
+            }
+
+            .nav-brand:hover .nav-logo-img {
+                transform: scale(1.05);
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                .nav-link,
+                .nav-brand,
+                .nav-logo,
+                .nav-logo-img {
+                    transition: none;
+                }
+
+                .nav-link:hover,
+                .nav-brand:hover,
+                .nav-brand:hover .nav-logo,
+                .nav-brand:hover .nav-logo-img {
+                    transform: none;
+                }
             }
 
             .nav-mobile-controls {
@@ -742,12 +898,23 @@ function renderHeader(string $title = 'Dashboard'): void
 
             @media (max-width: 480px) {
                 .nav-brand {
-                    max-width: calc(100% - 6.5rem);
+                    gap: 0.45rem;
+                    max-width: calc(100% - 8.25rem);
                     font-size: 0.9rem;
                     line-height: 1.05;
                     letter-spacing: -0.01em;
                     overflow-wrap: normal;
                     word-break: normal;
+                }
+
+                .nav-logo {
+                    width: 2.55rem;
+                    height: 2.55rem;
+                    border-radius: 0.6rem;
+                }
+
+                .nav-wordmark-main {
+                    font-size: clamp(1rem, 6.3vw, 1.38rem);
                 }
 
                 .nav-mobile-controls {
@@ -759,10 +926,61 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
             }
 
+            @media (max-width: 380px) {
+                #appNav .max-w-7xl {
+                    padding-left: 0.55rem;
+                    padding-right: 0.55rem;
+                }
+
+                .nav-brand {
+                    gap: 0.35rem;
+                    max-width: calc(100% - 7.25rem);
+                }
+
+                .nav-logo {
+                    width: 2.2rem;
+                    height: 2.2rem;
+                }
+
+                .nav-wordmark-main {
+                    font-size: clamp(0.92rem, 5.8vw, 1.18rem);
+                }
+
+                .nav-mobile-controls,
+                .nav-mobile {
+                    gap: 0.2rem;
+                }
+
+                .theme-switch {
+                    width: 34px;
+                    height: 40px;
+                }
+
+                .hamburger-btn {
+                    min-width: 40px;
+                    min-height: 40px;
+                    border-radius: 0.7rem;
+                }
+
+                .global-search-trigger {
+                    width: 1.65rem;
+                    height: 1.65rem;
+                }
+            }
+
             @media (min-width: 1024px) {
                 .nav-brand {
-                    flex: 1 1 17rem;
-                    max-width: 22rem;
+                    flex: 1 1 24rem;
+                    max-width: 25rem;
+                }
+
+                .nav-brand-text {
+                    overflow-wrap: normal;
+                    word-break: normal;
+                }
+
+                .nav-wordmark-main {
+                    font-size: clamp(1.85rem, 3.3vw, 3.00rem);
                 }
 
                 .nav-desktop {
@@ -777,9 +995,8 @@ function renderHeader(string $title = 'Dashboard'): void
 
             @media (min-width: 1024px) and (max-width: 1180px) {
                 .nav-brand {
-                    max-width: 15rem;
-                    font-size: 1.55rem;
-                    line-height: 1.05;
+                    flex-basis: 19rem;
+                    max-width: 19rem;
                 }
 
                 .nav-desktop {
@@ -1333,6 +1550,76 @@ function renderHeader(string $title = 'Dashboard'): void
 
             body.theme-dark .text-amber-200 {
                 color: #fde68a !important;
+            }
+
+            .auth-notice {
+                border: 1px solid rgba(16, 185, 129, 0.22);
+                background: rgba(236, 253, 245, 0.82);
+                color: #065f46;
+            }
+
+            .auth-notice a,
+            .auth-notice h3 {
+                color: #047857;
+            }
+
+            .auth-notice-warning {
+                border-color: rgba(245, 158, 11, 0.35);
+                background: rgba(255, 251, 235, 0.88);
+                color: #92400e;
+            }
+
+            .auth-notice-warning a,
+            .auth-notice-warning h3 {
+                color: #92400e;
+            }
+
+            .auth-notice-success {
+                border-color: rgba(16, 185, 129, 0.35);
+            }
+
+            .auth-notice-error {
+                border-color: rgba(248, 113, 113, 0.35);
+                background: rgba(254, 242, 242, 0.88);
+                color: #991b1b;
+            }
+
+            .auth-notice-error a,
+            .auth-notice-error h3 {
+                color: #991b1b;
+            }
+
+            body.theme-dark .auth-notice {
+                background: rgba(6, 78, 59, 0.34);
+                border-color: rgba(110, 231, 183, 0.28);
+                color: #d1fae5;
+            }
+
+            body.theme-dark .auth-notice a,
+            body.theme-dark .auth-notice h3 {
+                color: #6ee7b7;
+            }
+
+            body.theme-dark .auth-notice-warning {
+                background: rgba(120, 53, 15, 0.18);
+                border-color: rgba(251, 191, 36, 0.32);
+                color: #fde68a;
+            }
+
+            body.theme-dark .auth-notice-warning a,
+            body.theme-dark .auth-notice-warning h3 {
+                color: #fcd34d;
+            }
+
+            body.theme-dark .auth-notice-error {
+                background: rgba(127, 29, 29, 0.2);
+                border-color: rgba(248, 113, 113, 0.34);
+                color: #fecaca;
+            }
+
+            body.theme-dark .auth-notice-error a,
+            body.theme-dark .auth-notice-error h3 {
+                color: #fca5a5;
             }
 
             body.theme-dark .text-slate-900 {
@@ -2382,7 +2669,15 @@ function renderHeader(string $title = 'Dashboard'): void
         <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-1.5 sm:mx-2.5 mt-1.5 text-slate-800">
             <div class="max-w-7xl mx-auto px-3 py-2">
                 <div class="flex items-center justify-between gap-2 min-w-0">
-                    <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title"><?= e($config['app_name']) ?></a>
+                    <a href="?page=home" class="nav-brand font-bold tracking-tight text-emerald-900 text-xl modern-title" aria-label="<?= e($navAppName) ?> home">
+                        <span class="nav-logo" aria-hidden="true">
+                            <img src="<?= e($logoLight) ?>" alt="" class="nav-logo-img nav-logo-light">
+                            <img src="<?= e($logoDark) ?>" alt="" class="nav-logo-img nav-logo-dark">
+                        </span>
+                        <span class="nav-brand-text nav-wordmark" aria-hidden="true">
+                            <span class="nav-wordmark-main">NEXUS</span>
+                        </span>
+                    </a>
                     <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">
                         <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
                         <?php if ($user): ?>

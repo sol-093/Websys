@@ -711,6 +711,14 @@ function ensureAuthEnhancementColumns(PDO $pdo): void
             $pdo->exec('ALTER TABLE users ADD COLUMN password_changed_at TEXT NULL');
         }
     }
+
+    if (!tableColumnExists($pdo, 'users', 'password_reset_at')) {
+        if ($driver === 'mysql') {
+            $pdo->exec('ALTER TABLE users ADD COLUMN password_reset_at TIMESTAMP NULL DEFAULT NULL');
+        } else {
+            $pdo->exec('ALTER TABLE users ADD COLUMN password_reset_at TEXT NULL');
+        }
+    }
 }
 
 function ensureAuthEnhancementTables(PDO $pdo): void

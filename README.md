@@ -1,12 +1,14 @@
 # Student Organization Management and Budget Transparency System
 
 ## Summary
-- **Version:** 1.1.3
-- **Updated:** April 27, 2026
+- **Version:** 1.2.1
+- **Updated:** May 1, 2026
 - **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
 
 ## Version History
+- **1.2.1** (May 1, 2026): NEXUS wordmark font integration, About page wordmark refresh, responsive navbar wordmark updates, and PDF export template background support
+- **1.2.0** (May 1, 2026): PHPMailer-backed verification/reset flows, one-use password reset hardening, reset cooldown tracking, navbar logo and hover polish
 - **1.1.3** (April 27, 2026): documentation standardization, UI consistency pass, upload control polish
 - **1.1.1** (April 6, 2026): footer refinement, navbar spacing polish, responsive table/modal updates
 - **1.1.0** (April 6, 2026): onboarding tour, global search palette, security hardening, documentation refresh
@@ -43,6 +45,8 @@ http://localhost:8000/index.php
 ```bash
 php scripts/seed/seed_dummy_data.php
 php scripts/seed/seed_dummy_reports.php
+php scripts/seed/seed_extra_dummy_data.php
+php scripts/seed/seed_extra_dummy_reports.php
 ```
 
 4. Run the repository regression script:
@@ -56,6 +60,9 @@ php scripts/tests/test_organization_helpers.php
 - Database bootstrap and compatibility: `src/core/db.php`
 - Upload destination: `public/uploads/`
 - SMTP/OAuth values are read from environment variables and config.
+- Navbar logo image paths are set inline in `src/core/layout.php` and currently map light mode to `public/uploads/logodark.png` and dark mode to `public/uploads/logolight.png`.
+- NEXUS wordmark font assets live in `static/fonts/`; active wordmark styles are defined in `src/core/layout.php`.
+- Transaction PDF exports use `public/uploads/pdftemplate.png` as the page background template.
 
 ### Architecture Snapshot
 - `src/core/`: runtime bootstrap, shared helpers, auth/session guards, layout shell
@@ -88,6 +95,7 @@ websys/
 │   └── services/             # Aggregated data and service logic
 └── static/
     ├── demo/                 # Frontend-only static demo assets
+    ├── fonts/                # Wordmark font assets
     └── js/                   # Shared client-side scripts
 ```
 
@@ -95,6 +103,8 @@ websys/
 - `index.php`: routes pages and dispatches POST actions
 - `src/core/layout.php`: shared shell, styles, and global behavior
 - `src/core/db.php`: database bootstrap and compatibility initialization
+- `src/core/mailer.php`: PHPMailer transport configuration and send helpers
+- `src/actions/content_actions.php`: content mutations and transaction PDF export generation
 - `src/pages/dashboard_page.php`: dashboard page controller
 - `src/pages/dashboard_page_markup.php`: dashboard markup partials
 - `src/services/dashboard_data.php`: dashboard data aggregation

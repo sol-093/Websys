@@ -117,6 +117,7 @@ function handleRegisterAction(PDO $db): void
     $name = trim((string) ($_POST['name'] ?? ''));
     $email = trim((string) ($_POST['email'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
+    $confirmPassword = (string) ($_POST['confirm_password'] ?? '');
     $program = trim((string) ($_POST['program'] ?? ''));
     $section = trim((string) ($_POST['section'] ?? ''));
     $yearLevel = null;
@@ -166,6 +167,12 @@ function handleRegisterAction(PDO $db): void
         redirect('?page=register');
     }
 
+    if ($password !== $confirmPassword) {
+        rateLimitIncrement($registerRateKey, 300);
+        setFlash('error', 'Passwords do not match.');
+        redirect('?page=register');
+    }
+
     try {
         $activationToken = bin2hex(random_bytes(32));
         $activationTokenHash = hash('sha256', $activationToken);
@@ -189,10 +196,18 @@ function handleRegisterAction(PDO $db): void
         $newUserId = (int) $db->lastInsertId();
         rateLimitClear($registerRateKey);
         
-        sendActivationEmail($email, $name, $activationToken);
+        $emailSent = sendActivationEmail($email, $name, $activationToken);
+        if (!$emailSent) {
+            error_log('Verification email failed for new user id ' . $newUserId . ' (' . $email . ').');
+        }
         
-        auditLog($newUserId, 'auth.register_success', 'user', $newUserId, 'Student registration completed, verification email sent');
-        setFlash('success', 'Registration successful! Please check your email to verify your account before logging in.');
+        auditLog($newUserId, 'auth.register_success', 'user', $newUserId, $emailSent ? 'Student registration completed, verification email sent' : 'Student registration completed, verification email failed');
+        setFlash(
+            $emailSent ? 'success' : 'error',
+            $emailSent
+                ? 'Registration successful! Please check your email to verify your account before logging in.'
+                : 'Registration successful, but the verification email could not be sent. Please try resending it from the login page or contact the administrator.'
+        );
         redirect('?page=login');
     } catch (Throwable $e) {
         rateLimitIncrement($registerRateKey, 300);
@@ -351,10 +366,15 @@ function handleResendVerificationAction(PDO $db): void
         $updateStmt = $db->prepare('UPDATE users SET activation_token = ?, activation_expires = ? WHERE id = ?');
         $updateStmt->execute([$activationTokenHash, $activationExpires, (int) $user['id']]);
         
-        sendActivationEmail($user['email'], $user['name'], $activationToken);
+        $emailSent = sendActivationEmail($user['email'], $user['name'], $activationToken);
         rateLimitIncrement($resendRateKey, 3600);
         
-        auditLog((int) $user['id'], 'auth.resend_verification', 'user', (int) $user['id'], 'Verification email resent');
+        auditLog((int) $user['id'], 'auth.resend_verification', 'user', (int) $user['id'], $emailSent ? 'Verification email resent' : 'Verification email resend failed');
+        if (!$emailSent) {
+            error_log('Verification email resend failed for user id ' . (int) $user['id'] . ' (' . $user['email'] . ').');
+            setFlash('error', 'We found your account, but the verification email could not be sent. Please contact the administrator.');
+            redirect('?page=login');
+        }
     }
     
     setFlash('success', 'If your account exists and is unverified, a verification email has been sent.');
@@ -385,11 +405,19 @@ function handleForgotPasswordAction(PDO $db): void
     }
     
     // Find user by email
-    $stmt = $db->prepare('SELECT id, name, email, account_status FROM users WHERE email = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT id, name, email, account_status, password_reset_at FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     
     if ($user && in_array($user['account_status'] ?? 'active', ['active', 'pending'], true)) {
+        $lastPasswordResetAt = (string) ($user['password_reset_at'] ?? '');
+        if ($lastPasswordResetAt !== '' && strtotime($lastPasswordResetAt . ' +7 days') > time()) {
+            rateLimitIncrement($forgotRateKey, 3600);
+            auditLog((int) $user['id'], 'auth.forgot_password_cooldown', 'user', (int) $user['id'], 'Password reset request blocked by 7-day cooldown');
+            setFlash('success', 'If your account exists and is eligible, a password reset link has been sent to your email.');
+            redirect('?page=login');
+        }
+
         // Generate reset token
         $resetToken = bin2hex(random_bytes(32));
         $resetTokenHash = hash('sha256', $resetToken);
@@ -400,14 +428,17 @@ function handleForgotPasswordAction(PDO $db): void
         $updateStmt->execute([$resetTokenHash, $resetExpires, (int) $user['id']]);
         
         // Send password reset email
-        sendPasswordResetEmail($user['email'], $user['name'], $resetToken);
+        $emailSent = sendPasswordResetEmail($user['email'], $user['name'], $resetToken);
         rateLimitIncrement($forgotRateKey, 3600);
         
-        auditLog((int) $user['id'], 'auth.forgot_password', 'user', (int) $user['id'], 'Password reset requested');
+        auditLog((int) $user['id'], 'auth.forgot_password', 'user', (int) $user['id'], $emailSent ? 'Password reset requested' : 'Password reset requested, email failed');
+        if (!$emailSent) {
+            error_log('Password reset email failed for user id ' . (int) $user['id'] . ' (' . $user['email'] . ').');
+        }
     }
     
     // Always show generic success message (prevent email enumeration)
-    setFlash('success', 'If your account exists, a password reset link has been sent to your email.');
+    setFlash('success', 'If your account exists and is eligible, a password reset link has been sent to your email.');
     redirect('?page=login');
 }
 
@@ -446,7 +477,7 @@ function handleResetPasswordAction(PDO $db): void
     $tokenHash = hash('sha256', $token);
 
     // Find user by reset token hash
-    $stmt = $db->prepare('SELECT id, email, name, reset_expires, reset_token FROM users WHERE reset_token = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT id, email, name, reset_expires, reset_token, password_reset_at FROM users WHERE reset_token = ? LIMIT 1');
     $stmt->execute([$tokenHash]);
     $user = $stmt->fetch();
 
@@ -459,8 +490,19 @@ function handleResetPasswordAction(PDO $db): void
     // Check if token is expired
     $resetExpires = $user['reset_expires'] ?? '';
     if ($resetExpires === '' || strtotime($resetExpires) < time()) {
+        $clearExpiredStmt = $db->prepare('UPDATE users SET reset_token = NULL, reset_expires = NULL WHERE id = ?');
+        $clearExpiredStmt->execute([(int) $user['id']]);
         setFlash('error', 'This password reset link has expired. Please request a new one.');
         redirect('?page=forgot_password');
+    }
+
+    $lastPasswordResetAt = (string) ($user['password_reset_at'] ?? '');
+    if ($lastPasswordResetAt !== '' && strtotime($lastPasswordResetAt . ' +7 days') > time()) {
+        $clearCooldownStmt = $db->prepare('UPDATE users SET reset_token = NULL, reset_expires = NULL WHERE id = ?');
+        $clearCooldownStmt->execute([(int) $user['id']]);
+        auditLog((int) $user['id'], 'auth.password_reset_cooldown', 'user', (int) $user['id'], 'Password reset blocked by 7-day cooldown');
+        setFlash('error', 'Your password was recently reset. Please wait 7 days before requesting another forgot-password reset.');
+        redirect('?page=login');
     }
     
     // Hash new password
@@ -472,10 +514,17 @@ function handleResetPasswordAction(PDO $db): void
         SET password_hash = ?, 
             reset_token = NULL, 
             reset_expires = NULL,
-            password_changed_at = ?
-        WHERE id = ?
+            password_changed_at = ?,
+            password_reset_at = ?
+        WHERE id = ? AND reset_token = ?
     ');
-    $updateStmt->execute([$hashedPassword, date('Y-m-d H:i:s'), (int) $user['id']]);
+    $passwordChangedAt = date('Y-m-d H:i:s');
+    $updateStmt->execute([$hashedPassword, $passwordChangedAt, $passwordChangedAt, (int) $user['id'], $tokenHash]);
+
+    if ($updateStmt->rowCount() !== 1) {
+        setFlash('error', 'This password reset link has already been used. Please request a new one.');
+        redirect('?page=forgot_password');
+    }
     
     // Log password change in password_history table
     $historyStmt = $db->prepare('INSERT INTO password_history (user_id, password_hash, created_at) VALUES (?, ?, ?)');
@@ -634,12 +683,20 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         }
         
         // Send verification email to new address
-        sendActivationEmail($email, $name, $activationToken);
+        $emailSent = sendActivationEmail($email, $name, $activationToken);
+        if (!$emailSent) {
+            error_log('Verification email failed after profile email change for user id ' . (int) $user['id'] . ' (' . $email . ').');
+        }
         
         // Audit log
         auditLog((int) $user['id'], 'profile.email_change', 'user', (int) $user['id'], 'Email changed from ' . $user['email'] . ' to ' . $email);
         
-        setFlash('success', 'Profile updated. Please verify your new email address. A verification link has been sent to ' . htmlspecialchars($email) . '.');
+        setFlash(
+            $emailSent ? 'success' : 'error',
+            $emailSent
+                ? 'Profile updated. Please verify your new email address. A verification link has been sent to ' . htmlspecialchars($email) . '.'
+                : 'Profile updated, but the verification email could not be sent. Please use resend verification from the login page or contact the administrator.'
+        );
         
         // Log out user since email changed and needs verification
         session_destroy();

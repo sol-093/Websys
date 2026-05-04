@@ -321,7 +321,7 @@
                     <tbody>
                     <?php foreach ($transactions as $tx): ?>
                         <tr class="border-b">
-                            <td class="py-2"><?= e($tx['transaction_date']) ?></td>
+                            <td class="py-2"><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></td>
                             <td>
                                 <span class="inline-flex items-center gap-2">
                                     <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>

@@ -133,13 +133,15 @@ function handleAboutPage(?array $user): void
     ];
     ?>
     <section class="max-w-5xl mx-auto space-y-5">
-        <div class="glass p-6 md:p-8">
+        <div class="glass p-6 md:p-8 about-hero">
             <div class="hero-kicker inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-300/20 text-xs font-semibold mb-4 border border-emerald-200/30">
                 <?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?>
                 About the Platform
             </div>
-            <h1 class="modern-title text-3xl md:text-5xl font-bold tracking-tight leading-tight">Student Organization Management and Budget Transparency System</h1>
-            <p class="mt-4 text-slate-600 max-w-3xl text-base md:text-lg">
+            <h1 class="about-wordmark nav-wordmark" aria-label="NEXUS Student Organization Management and Budget Transparency System">
+                <span class="nav-wordmark-main">NEXUS</span>
+            </h1>
+            <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.
             </p>
         </div>
@@ -261,8 +263,8 @@ function handleLoginPage(array $config): void
             <button class="bg-indigo-700 text-white px-4 py-2 rounded w-full"><span class="icon-label justify-center"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Login</span></span></button>
         </form>
         <?php if ($showResend): ?>
-            <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded">
-                <p class="text-sm text-amber-800 mb-2">Didn't receive the verification email?</p>
+            <div class="auth-notice auth-notice-warning mt-4 p-3 rounded">
+                <p class="text-sm mb-2">Didn't receive the verification email?</p>
                 <form method="post" class="space-y-2">
                     <input type="hidden" name="action" value="resend_verification">
                     <input type="hidden" name="_csrf" value="<?= csrfToken() ?>">
@@ -496,18 +498,18 @@ function handleVerifyEmailPage(): void
         <p class="text-sm text-slate-600 mb-4">Verifying your email address...</p>
         
         <?php if ($success): ?>
-            <div class="mb-3 p-4 bg-green-50 border border-green-200 rounded">
-                <h3 class="text-sm font-semibold text-green-800 mb-2 icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Email Verified Successfully!</span></h3>
-                <p class="text-sm text-green-700 mb-3">Your email has been verified. You can now log in to your account.</p>
-                <a href="?page=login" class="text-sm font-medium text-green-800 hover:underline">
+            <div class="auth-notice auth-notice-success mb-3 p-4 rounded">
+                <h3 class="text-sm font-semibold mb-2 icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Email Verified Successfully!</span></h3>
+                <p class="text-sm mb-3">Your email has been verified. You can now log in to your account.</p>
+                <a href="?page=login" class="text-sm font-medium hover:underline">
                     Go to Login →
                 </a>
             </div>
         <?php else: ?>
-            <div class="mb-3 p-4 bg-red-50 border border-red-200 rounded">
-                <h3 class="text-sm font-semibold text-red-800 mb-2">Verification Failed</h3>
-                <p class="text-sm text-red-700 mb-3"><?php echo htmlspecialchars($error); ?></p>
-                <a href="?page=login&show_resend=1" class="text-sm font-medium text-red-800 hover:underline">
+            <div class="auth-notice auth-notice-error mb-3 p-4 rounded">
+                <h3 class="text-sm font-semibold mb-2">Verification Failed</h3>
+                <p class="text-sm mb-3"><?php echo htmlspecialchars($error); ?></p>
+                <a href="?page=login&show_resend=1" class="text-sm font-medium hover:underline">
                     Request New Verification Link →
                 </a>
             </div>
