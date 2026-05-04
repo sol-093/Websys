@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 // Array of scripts to execute in order
 $seeders = [
-    'unseed.php',                // Clear existing data
+    //'unseed.php',                // Clear existing data
     'seed_dummy_data.php',        // Base users and orgs
     'seed_dummy1_data.php',  // More variety[cite: 2]
     'seed_dummy_reports.php',     // Standard transactions[cite: 1]
