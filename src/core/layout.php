@@ -741,7 +741,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 align-items: center;
                 justify-content: center;
                 overflow: hidden;
-                transition: transform 0.24s ease, filter 0.24s ease;
+                transition: filter 0.24s ease;
             }
 
             .nav-logo-img {
@@ -749,7 +749,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 height: 100%;
                 object-fit: contain;
                 padding: 0;
-                transition: transform 0.24s ease;
+                transition: filter 0.24s ease;
             }
 
             .nav-logo-dark {
@@ -815,12 +815,13 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .nav-brand:hover .nav-logo {
-                transform: rotate(-3deg) scale(1.06);
-                filter: drop-shadow(0 8px 14px rgba(16, 185, 129, 0.2));
+                filter:
+                    drop-shadow(0 0 8px rgba(16, 185, 129, 0.48))
+                    drop-shadow(0 0 18px rgba(45, 212, 191, 0.32));
             }
 
             .nav-brand:hover .nav-logo-img {
-                transform: scale(1.05);
+                filter: brightness(1.08);
             }
 
             @media (prefers-reduced-motion: reduce) {
