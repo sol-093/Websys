@@ -48,7 +48,7 @@ function renderHeader(string $title = 'Dashboard'): void
         <title><?= e($title) ?> - <?= e($config['app_name']) ?></title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @font-face {
@@ -65,6 +65,8 @@ function renderHeader(string $title = 'Dashboard'): void
                 --green-700: #10b981;
                 --green-800: #0f766e;
                 --line: rgba(16, 185, 129, 0.28);
+                --wordmark-font-weight: 700;
+                --wordmark-font-grade: 0;
                 --page-texture-image: url('public/uploads/kldbuilding.jpg');
             }
 
@@ -783,8 +785,10 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #0c2b22;
                 display: inline-flex;
                 flex-direction: column;
-                font-family: 'IBM Plex Sans', sans-serif;
-                font-weight: 600;
+                font-family: 'Google Sans', sans-serif;
+                font-optical-sizing: auto;
+                font-variation-settings: 'wght' var(--wordmark-font-weight), 'GRAD' var(--wordmark-font-grade);
+                font-weight: var(--wordmark-font-weight);
                 font-size: 1.1rem;
                 letter-spacing: 0.05em;
                 line-height: 0.82;
