@@ -783,7 +783,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #0c2b22;
                 display: inline-flex;
                 flex-direction: column;
-                font-family: 'Playfair Display', Impact, Haettenschweiler, 'Arial Black', sans-serif;
+                font-family: 'IBM Plex Sans', Impact, Haettenschweiler, 'Arial Black', sans-serif;
                 letter-spacing: 0;
                 line-height: 0.82;
                 min-width: 0;
