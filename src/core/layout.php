@@ -1003,7 +1003,7 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .app-footer-link {
-                color: #065f46;
+                color: #2f6f5d;
                 text-decoration: none;
                 transition: color 0.2s ease;
             }
@@ -1014,29 +1014,32 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .app-footer-muted {
-                color: #334155;
+                color: #48645d;
+            }
+
+            .footer-shell {
+                max-width: 72rem;
             }
 
             body.theme-dark .app-footer {
-                border-top-color: rgba(110, 231, 183, 0.34);
+                border-top-color: rgba(110, 231, 183, 0.22);
                 background: rgba(0, 0, 0, 0.2);
             }
 
-            body.theme-dark .app-footer-link,
+            body.theme-dark .app-footer-link {
+                color: #bddbcf;
+            }
+
             body.theme-dark .app-footer-muted {
-                color: #d1fae5;
+                color: #b7d4c8;
             }
 
             body.theme-dark .app-footer-link:hover {
-                color: #bbf7d0;
+                color: #ecfdf5;
             }
 
-            .footer-section {
-                min-width: 0;
-            }
-
-            .footer-main-grid {
-                align-items: start;
+            body.theme-dark .footer-bottom-bar {
+                border-top-color: rgba(110, 231, 183, 0.16);
             }
 
             .footer-bottom-bar {
@@ -1045,6 +1048,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 justify-content: space-between;
                 flex-wrap: wrap;
                 gap: 0.5rem;
+                border-top-color: rgba(16, 185, 129, 0.16);
             }
 
             .footer-bottom-actions {
@@ -1089,140 +1093,14 @@ function renderHeader(string $title = 'Dashboard'): void
                 height: 0.95rem;
             }
 
-            .footer-accordion-toggle {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 0.75rem;
-                background: transparent;
-                border: 0;
-                padding: 0;
-                text-align: left;
-                color: inherit;
-                touch-action: manipulation;
-            }
-
-            .footer-accordion-title-wrap {
-                display: flex;
-                flex-direction: column;
-                gap: 0.1rem;
-                min-width: 0;
-            }
-
-            .footer-section-title {
-                margin: 0;
-                line-height: 1.15;
-            }
-
-            .footer-accordion-toggle:focus-visible {
-                outline: 2px solid rgba(16, 185, 129, 0.7);
-                outline-offset: 3px;
-                border-radius: 0.35rem;
-            }
-
-            .footer-accordion-icon {
-                width: 0.7rem;
-                height: 0.7rem;
-                border-right: 2px solid #0f766e;
-                border-bottom: 2px solid #0f766e;
-                transform: rotate(45deg);
-                transition: transform 0.2s ease;
-                flex: 0 0 auto;
-                margin-right: 0.2rem;
-            }
-
-            .footer-accordion-toggle[aria-expanded="true"] .footer-accordion-icon {
-                transform: rotate(-135deg);
-            }
-
-            body.theme-dark .footer-accordion-icon {
-                border-color: #d1fae5;
-            }
-
-            .footer-accordion-panel {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.28s ease, padding-top 0.28s ease;
-                padding-top: 0;
-            }
-
-            .footer-accordion-panel.is-open {
-                max-height: 250px;
-                padding-top: 0.5rem;
-            }
-
             @media (max-width: 767px) {
-                .app-footer .grid {
-                    grid-template-columns: 1fr;
-                    gap: 0;
-                }
-
-                .footer-main-grid {
-                    padding-top: 0.12rem;
-                    padding-bottom: 0.12rem;
-                }
-
-                .footer-accordion-toggle {
-                    min-height: 34px;
-                    padding: 0.16rem 0;
-                    justify-content: flex-start;
-                    gap: 0.3rem;
-                }
-
-                .footer-accordion-icon {
-                    display: none;
-                }
-
-                .footer-accordion-toggle[aria-expanded="true"] {
-                    color: #065f46;
-                }
-
-                .footer-section {
-                    padding: 0.24rem 0;
-                    border-bottom: 1px solid rgba(16, 185, 129, 0.24);
-                }
-
-                .footer-section-title {
-                    font-size: 0.76rem;
-                    letter-spacing: 0.04em;
-                    line-height: 1;
-                }
-
-                .footer-accordion-panel.is-open {
-                    padding-top: 0.12rem;
-                }
-
-                .footer-accordion-panel ul {
-                    font-size: 0.7rem;
-                }
-
-                .footer-accordion-panel li {
-                    line-height: 1.04;
-                }
-
-                .footer-accordion-panel li + li {
-                    margin-top: 0.02rem;
-                }
-
-                .footer-accordion-panel address {
-                    line-height: 1.04;
-                }
-
-                .footer-section:last-child {
-                    border-bottom: 0;
-                }
-
-                body.theme-dark .footer-accordion-toggle[aria-expanded="true"] {
-                    color: #6ee7b7;
-                }
-
                 .footer-bottom-bar {
                     flex-direction: column;
                     align-items: center;
                     text-align: center;
-                    padding-top: 0.2rem;
-                    padding-bottom: 0.2rem;
+                    padding-top: 0.45rem;
+                    padding-bottom: 0.5rem;
+                    gap: 0.28rem;
                 }
 
                 .footer-bottom-bar p {
@@ -1233,133 +1111,42 @@ function renderHeader(string $title = 'Dashboard'): void
                 .footer-bottom-actions {
                     width: 100%;
                     justify-content: center;
-                    flex-direction: column-reverse;
-                    gap: 0.14rem;
+                    flex-direction: row;
+                    flex-wrap: wrap;
+                    gap: 0.45rem;
                 }
 
                 .footer-social-links {
                     justify-content: center;
-                    gap: 0.08rem;
+                    gap: 0.22rem;
                 }
 
                 .app-footer-icon-link {
-                    width: 1.2rem;
-                    height: 1.2rem;
+                    width: 1.35rem;
+                    height: 1.35rem;
                 }
 
                 .app-footer-icon-link svg {
-                    width: 0.58rem;
-                    height: 0.58rem;
+                    width: 0.66rem;
+                    height: 0.66rem;
                 }
 
                 #backToTop {
                     font-size: 0.64rem;
-                    line-height: 1;
-                }
-            }
-
-            @media (min-width: 768px) {
-                .footer-accordion-icon {
-                    display: none;
-                }
-
-                .footer-accordion-panel {
-                    max-height: none !important;
-                    overflow: visible !important;
-                    padding-top: 0;
-                }
-
-                .footer-accordion-toggle {
-                    cursor: default;
+                    line-height: 1.2;
                 }
             }
 
             @media (min-width: 1024px) {
-                .footer-main-grid {
-                    display: grid;
-                    grid-template-columns: repeat(4, minmax(0, 1fr));
-                    column-gap: 1.2rem;
-                    row-gap: 0.55rem;
-                    align-items: start;
-                    padding-top: 0.55rem;
-                    padding-bottom: 0.55rem;
-                }
-
-                .footer-section {
-                    display: block;
-                    min-width: 0;
-                }
-
-                .footer-section-support {
-                    grid-column: auto;
-                }
-
-                .footer-accordion-toggle {
-                    width: 100%;
-                    justify-content: flex-start;
-                    pointer-events: none;
-                    margin-bottom: 0.12rem;
-                }
-
-                .footer-accordion-title-wrap {
-                    display: block;
-                }
-
-                .footer-section-title {
-                    font-size: 0.62rem;
-                    letter-spacing: 0.12em;
-                    white-space: nowrap;
-                    opacity: 0.75;
-                    font-weight: 700;
-                    line-height: 1.05;
-                }
-
-                .footer-accordion-panel ul {
-                    display: block;
-                    margin: 0;
-                }
-
-                .footer-accordion-panel li {
-                    display: block;
-                    line-height: 1.18;
-                }
-
-                .footer-accordion-panel li + li::before {
-                    content: none;
-                    margin-right: 0;
-                }
-
-                .footer-accordion-panel li + li {
-                    margin-top: 0.14rem;
-                }
-
-                .footer-accordion-panel address {
-                    display: block;
-                    line-height: 1.16;
-                }
-
-                .footer-accordion-panel address br {
-                    display: block;
-                }
-
-                .footer-accordion-panel .pt-1 {
-                    padding-top: 0;
-                }
-
-                .footer-main-grid .app-footer-link,
-                .footer-main-grid .app-footer-muted {
-                    font-size: 0.8rem;
-                }
-
                 .footer-bottom-bar {
                     align-items: center;
-                    padding-top: 0.5rem;
-                    padding-bottom: 0.5rem;
+                    padding-top: 0.58rem;
+                    padding-bottom: 0.58rem;
                 }
 
                 .footer-bottom-actions {
                     align-items: center;
-                    gap: 0.4rem;
+                    gap: 0.55rem;
                 }
 
                 .footer-social-links {
@@ -1381,12 +1168,6 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
             }
 
-            @media (min-width: 1440px) {
-                .footer-section-support {
-                    grid-column: auto;
-                }
-            }
-
             body.theme-dark .app-footer-icon-link {
                 color: #d1fae5;
                 border-color: rgba(110, 231, 183, 0.35);
@@ -1396,10 +1177,6 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #bbf7d0;
                 border-color: rgba(110, 231, 183, 0.65);
                 background-color: rgba(110, 231, 183, 0.08);
-            }
-
-            body.theme-dark .footer-accordion-panel li + li::before {
-                color: rgba(209, 250, 229, 0.7);
             }
 
             .hero-kicker {
@@ -3096,119 +2873,11 @@ function renderHeader(string $title = 'Dashboard'): void
 function renderFooter(): void
 {
     $footerUser = currentUser();
-    $footerRole = (string) ($footerUser['role'] ?? '');
     ?>
         </main>
-        <footer class="app-footer" data-default-open="<?= ($footerUser === null ? 0 : 3) ?>">
-            <div class="mx-auto w-full max-w-7xl">
-                <div class="footer-main-grid grid grid-cols-1 gap-3 px-4 py-2 sm:grid-cols-2 lg:grid-cols-4 lg:py-3 text-sm">
-                    <div class="footer-section">
-                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-platform">
-                            <span class="footer-accordion-title-wrap">
-                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Platform</span>
-                            </span>
-                            <span class="footer-accordion-icon" aria-hidden="true"></span>
-                        </button>
-                        <div id="footer-panel-platform" class="footer-accordion-panel">
-                            <ul class="space-y-0.5 app-footer-muted font-medium">
-                                <li><a href="?page=home" class="app-footer-link">Home</a></li>
-                                <?php if ($footerUser === null): ?>
-                                    <li><a href="?page=login" class="app-footer-link">Login</a></li>
-                                    <li><a href="?page=register" class="app-footer-link">Register</a></li>
-                                <?php elseif ($footerRole === 'student'): ?>
-                                    <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
-                                    <li><a href="?page=organizations" class="app-footer-link">Organizations</a></li>
-                                    <li><a href="?page=profile" class="app-footer-link">Profile</a></li>
-                                <?php elseif ($footerRole === 'owner'): ?>
-                                    <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
-                                    <li><a href="?page=my_org" class="app-footer-link">My Organization</a></li>
-                                    <li><a href="?page=profile" class="app-footer-link">Profile</a></li>
-                                <?php elseif ($footerRole === 'admin'): ?>
-                                    <li><a href="?page=dashboard" class="app-footer-link">Dashboard</a></li>
-                                    <li><a href="?page=admin_orgs" class="app-footer-link">Admin Panel</a></li>
-                                    <li><a href="?page=profile" class="app-footer-link">Profile</a></li>
-                                <?php else: ?>
-                                    <li><a href="?page=login" class="app-footer-link">Login</a></li>
-                                    <li><a href="?page=register" class="app-footer-link">Register</a></li>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="footer-section">
-                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-resources">
-                            <span class="footer-accordion-title-wrap">
-                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Resources</span>
-                            </span>
-                            <span class="footer-accordion-icon" aria-hidden="true"></span>
-                        </button>
-                        <div id="footer-panel-resources" class="footer-accordion-panel">
-                            <ul class="space-y-0.5 app-footer-muted font-medium">
-                                <li><a href="?page=organizations" class="app-footer-link">Organization Directory</a></li>
-                                <li><a href="?page=organizations" class="app-footer-link">Financial Reports</a></li>
-                                <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Privacy Notice</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="footer-section">
-                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-governance">
-                            <span class="footer-accordion-title-wrap">
-                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Governance &amp; Security</span>
-                            </span>
-                            <span class="footer-accordion-icon" aria-hidden="true"></span>
-                        </button>
-                        <div id="footer-panel-governance" class="footer-accordion-panel">
-                            <ul class="space-y-0.5 app-footer-muted font-medium">
-                                <?php if ($footerRole === 'admin'): ?>
-                                    <li><a href="?page=admin_audit" class="app-footer-link">Audit Log Policy</a></li>
-                                <?php endif; ?>
-                                <li><a href="?page=register&amp;privacy=1" class="app-footer-link">Data Privacy Notice</a></li>
-                                <li>
-                                    <div class="flex items-center gap-2 app-footer-muted">
-                                        <span class="relative flex h-2.5 w-2.5">
-                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70"></span>
-                                            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                        </span>
-                                        <span>All Systems Operational</span>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="footer-section footer-section-support">
-                        <button type="button" class="footer-accordion-toggle" aria-expanded="false" aria-controls="footer-panel-support">
-                            <span class="footer-accordion-title-wrap">
-                                <span class="footer-section-title text-xs font-semibold tracking-wide uppercase app-footer-muted">Support</span>
-                            </span>
-                            <span class="footer-accordion-icon" aria-hidden="true"></span>
-                        </button>
-                        <div id="footer-panel-support" class="footer-accordion-panel">
-                            <ul class="space-y-0.5 app-footer-muted font-medium">
-                                <li>
-                                    <address style="font-style: normal;">
-                                        <strong>Student Affairs Office</strong><br>
-                                        <a href="mailto:studentaffairs@campus.local" class="app-footer-link">studentaffairs@campus.local</a><br>
-                                        <span class="app-footer-muted">2nd Floor, Student Services Building</span><br>
-                                        <span class="app-footer-muted">Main Campus, City 1000</span>
-                                    </address>
-                                </li>
-                                <?php if ($footerUser && ($footerUser['role'] ?? '') === 'student'): ?>
-                                    <li class="pt-1">
-                                        <form method="post" id="restartOnboardingForm" class="inline-flex">
-                                            <?= csrfField() ?>
-                                            <input type="hidden" name="action" value="restart_onboarding">
-                                            <button type="submit" class="app-footer-link underline decoration-dotted">Replay onboarding tour</button>
-                                        </form>
-                                    </li>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="footer-bottom-bar px-4 py-2 border-t border-emerald-200/40 flex items-center justify-between flex-wrap">
+        <footer class="app-footer">
+            <div class="footer-shell mx-auto w-full">
+                <div class="footer-bottom-bar px-4 py-2 flex items-center justify-between flex-wrap">
                     <p class="text-xs app-footer-muted"><?php echo date('Y') > 2026 ? '&copy; 2026–' . date('Y') : '&copy; 2026'; ?> INVOLVE. All rights reserved.</p>
                     <div class="footer-bottom-actions">
                         <nav class="footer-social-links" aria-label="Footer social links">
@@ -3232,23 +2901,6 @@ function renderFooter(): void
         </footer>
 
         <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var restartForm = document.getElementById('restartOnboardingForm');
-                if (!restartForm) {
-                    return;
-                }
-
-                var onboardingStorageKey = <?= json_encode('websys_onboarding_done_' . (string) (($footerUser['id'] ?? '') !== '' ? (int) $footerUser['id'] : 'guest')) ?>;
-                var onboardingStepKey = <?= json_encode('websys_onboarding_step_' . (string) (($footerUser['id'] ?? '') !== '' ? (int) $footerUser['id'] : 'guest')) ?>;
-
-                restartForm.addEventListener('submit', function () {
-                    localStorage.removeItem(onboardingStorageKey);
-                    sessionStorage.removeItem(onboardingStepKey);
-                });
-            });
-        </script>
 
         <script src="static/js/image-cropper.js?v=<?= e((string) @filemtime(__DIR__ . '/../../static/js/image-cropper.js')) ?>"></script>
 
@@ -3796,70 +3448,6 @@ function renderFooter(): void
                     });
                 }
 
-                const footerToggles = document.querySelectorAll('.footer-accordion-toggle');
-                const footer = document.querySelector('footer.app-footer');
-                const defaultOpenIndex = footer ? parseInt(footer.getAttribute('data-default-open') || '0', 10) : 0;
-                const footerDesktopQuery = window.matchMedia('(min-width: 768px)');
-
-                const setFooterPanels = function () {
-                    const isDesktop = footerDesktopQuery.matches;
-                    footerToggles.forEach(function (toggle, index) {
-                        const panelId = toggle.getAttribute('aria-controls');
-                        if (!panelId) {
-                            return;
-                        }
-
-                        const panel = document.getElementById(panelId);
-                        if (!panel) {
-                            return;
-                        }
-
-                        const isOpen = isDesktop || index === defaultOpenIndex;
-                        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                        panel.classList.toggle('is-open', isOpen);
-                    });
-                };
-
-                footerToggles.forEach(function (toggle) {
-                    toggle.addEventListener('click', function () {
-                        if (footerDesktopQuery.matches) {
-                            return;
-                        }
-
-                        const panelId = toggle.getAttribute('aria-controls');
-                        if (!panelId) {
-                            return;
-                        }
-
-                        const panel = document.getElementById(panelId);
-                        if (!panel) {
-                            return;
-                        }
-
-                        const currentlyOpen = toggle.getAttribute('aria-expanded') === 'true';
-
-                        footerToggles.forEach(function (itemToggle) {
-                            const itemPanelId = itemToggle.getAttribute('aria-controls');
-                            const itemPanel = itemPanelId ? document.getElementById(itemPanelId) : null;
-                            itemToggle.setAttribute('aria-expanded', 'false');
-                            if (itemPanel) {
-                                itemPanel.classList.remove('is-open');
-                            }
-                        });
-
-                        if (!currentlyOpen) {
-                            toggle.setAttribute('aria-expanded', 'true');
-                            panel.classList.add('is-open');
-                        }
-                    });
-                });
-
-                setFooterPanels();
-                if (typeof footerDesktopQuery.addEventListener === 'function') {
-                    footerDesktopQuery.addEventListener('change', setFooterPanels);
-                } else if (typeof footerDesktopQuery.addListener === 'function') {
-                    footerDesktopQuery.addListener(setFooterPanels);
-                }
             })();
         </script>
         <?php if (!empty($_SESSION['show_onboarding'])): ?>
