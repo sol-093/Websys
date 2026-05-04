@@ -5,3 +5,7 @@ Thumbs.db
 *.log
 /public/uploads/*
 !/public/uploads/.gitkeep
+!/public/uploads/logodark.png
+!/public/uploads/logolight.png
+!/public/uploads/pdftemplate.png
+!/public/uploads/kldbuilding.jpg
