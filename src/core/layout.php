@@ -46,6 +46,9 @@ function renderHeader(string $title = 'Dashboard'): void
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?= e($title) ?> - <?= e($config['app_name']) ?></title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @font-face {
@@ -780,7 +783,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #0c2b22;
                 display: inline-flex;
                 flex-direction: column;
-                font-family: 'The Solstice', Impact, Haettenschweiler, 'Arial Black', sans-serif;
+                font-family: 'Playfair Display', Impact, Haettenschweiler, 'Arial Black', sans-serif;
                 letter-spacing: 0;
                 line-height: 0.82;
                 min-width: 0;
