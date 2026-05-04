@@ -783,8 +783,10 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #0c2b22;
                 display: inline-flex;
                 flex-direction: column;
-                font-family: 'IBM Plex Sans', Impact, Haettenschweiler, 'Arial Black', sans-serif;
-                letter-spacing: 0;
+                font-family: 'IBM Plex Sans', sans-serif;
+                font-weight: 600;
+                font-size: 1.1rem;
+                letter-spacing: 0.05em;
                 line-height: 0.82;
                 min-width: 0;
                 overflow-wrap: normal;
