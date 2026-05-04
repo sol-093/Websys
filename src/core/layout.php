@@ -19,8 +19,8 @@ function renderHeader(string $title = 'Dashboard'): void
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
     $navAppName = (string) $config['app_name'];
-    $logoLight = 'public/uploads/logodark.png';
-    $logoDark = 'public/uploads/logolight.png';
+    $logoLight = 'public/uploads/involvelogo dark.png';
+    $logoDark = 'public/uploads/involvelogo light.png';
     $showOnboarding = false;
     if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
         $_SESSION['show_onboarding'] = true;
@@ -51,22 +51,11 @@ function renderHeader(string $title = 'Dashboard'): void
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            @font-face {
-                font-family: 'The Solstice';
-                src: url('static/fonts/THE SOLSTICE.otf') format('opentype'),
-                     url('static/fonts/THE SOLSTICE.ttf') format('truetype');
-                font-weight: 400;
-                font-style: normal;
-                font-display: swap;
-            }
-
             :root {
                 --green-500: #34d399;
                 --green-700: #10b981;
                 --green-800: #0f766e;
                 --line: rgba(16, 185, 129, 0.28);
-                --wordmark-font-weight: 800;
-                --wordmark-font-grade: 200;
                 --page-texture-image: url('public/uploads/kldbuilding.jpg');
             }
 
@@ -745,7 +734,7 @@ function renderHeader(string $title = 'Dashboard'): void
             }
 
             .nav-logo {
-                width: 3.0rem;
+                width: 10.75rem;
                 height: 3.0rem;
                 flex: 0 0 auto;
                 display: inline-flex;
@@ -759,7 +748,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
-                padding: 0.1rem;
+                padding: 0;
                 transition: transform 0.24s ease;
             }
 
@@ -775,49 +764,15 @@ function renderHeader(string $title = 'Dashboard'): void
                 display: block;
             }
 
-            .nav-brand-text {
-                min-width: 0;
-                overflow-wrap: anywhere;
-                word-break: break-word;
-            }
-
-            .nav-wordmark {
-                color: #0c2b22;
-                display: inline-flex;
-                flex-direction: column;
-                font-family: 'Google Sans', sans-serif;
-                font-optical-sizing: auto;
-                font-variation-settings: 'wght' var(--wordmark-font-weight), 'GRAD' var(--wordmark-font-grade);
-                font-weight: var(--wordmark-font-weight);
-                font-size: 1.1rem;
-                letter-spacing: 0.05em;
-                line-height: 0.82;
-                min-width: 0;
-                overflow-wrap: normal;
-                text-shadow: none;
-                text-transform: uppercase;
-                white-space: nowrap;
-                word-break: normal;
-            }
-
-            .nav-wordmark-main {
-                display: block;
-                font-size: clamp(1.05rem, 8vw, 1.00rem);
-                line-height: 0.72;
-                white-space: nowrap;
-            }
-
-            body.theme-dark .nav-wordmark {
-                color: #d9ffef;
-                text-shadow: 0 0 18px rgba(110, 231, 183, 0.01);
-            }
-
             .about-hero {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
                 text-align: left;
             }
 
             .about-hero .hero-kicker,
-            .about-hero .about-wordmark,
+            .about-hero .about-logo,
             .about-hero .about-copy {
                 margin-left: 0;
                 margin-right: auto;
@@ -827,31 +782,31 @@ function renderHeader(string $title = 'Dashboard'): void
                 text-align: left;
             }
 
-            .about-wordmark {
-                align-items: flex-start;
-                display: flex;
+            .about-logo {
+                display: inline-flex;
+                align-items: center;
+                width: min(100%, 22rem);
+                height: auto;
                 margin: 0.85rem 0 0;
-                max-width: 100%;
-                overflow: visible;
-                text-align: left;
+            }
+
+            .about-logo-img {
+                display: block;
                 width: 100%;
+                height: auto;
+                object-fit: contain;
             }
 
-            .about-wordmark .nav-wordmark-main {
-                font-size: clamp(2.15rem, 13vw, 4.4rem);
-                line-height: 0.82;
+            .about-logo .nav-logo-dark {
+                display: none;
             }
 
-            @media (min-width: 768px) {
-                .about-wordmark .nav-wordmark-main {
-                    font-size: clamp(4rem, 8vw, 6rem);
-                }
+            body.theme-dark .about-logo .nav-logo-light {
+                display: none;
             }
 
-            @media (max-width: 420px) {
-                .about-wordmark .nav-wordmark-main {
-                    font-size: clamp(1.85rem, 12.5vw, 3.15rem);
-                }
+            body.theme-dark .about-logo .nav-logo-dark {
+                display: block;
             }
 
             .nav-brand:hover {
@@ -917,13 +872,9 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
 
                 .nav-logo {
-                    width: 2.55rem;
+                    width: 7.5rem;
                     height: 2.55rem;
                     border-radius: 0.6rem;
-                }
-
-                .nav-wordmark-main {
-                    font-size: clamp(1rem, 6.3vw, 1.38rem);
                 }
 
                 .nav-mobile-controls {
@@ -947,12 +898,8 @@ function renderHeader(string $title = 'Dashboard'): void
                 }
 
                 .nav-logo {
-                    width: 2.2rem;
+                    width: 6.7rem;
                     height: 2.2rem;
-                }
-
-                .nav-wordmark-main {
-                    font-size: clamp(0.92rem, 5.8vw, 1.18rem);
                 }
 
                 .nav-mobile-controls,
@@ -981,15 +928,6 @@ function renderHeader(string $title = 'Dashboard'): void
                 .nav-brand {
                     flex: 1 1 24rem;
                     max-width: 25rem;
-                }
-
-                .nav-brand-text {
-                    overflow-wrap: normal;
-                    word-break: normal;
-                }
-
-                .nav-wordmark-main {
-                    font-size: clamp(1.85rem, 3.3vw, 3.00rem);
                 }
 
                 .nav-desktop {
@@ -2683,9 +2621,6 @@ function renderHeader(string $title = 'Dashboard'): void
                             <img src="<?= e($logoLight) ?>" alt="" class="nav-logo-img nav-logo-light">
                             <img src="<?= e($logoDark) ?>" alt="" class="nav-logo-img nav-logo-dark">
                         </span>
-                        <span class="nav-brand-text nav-wordmark" aria-hidden="true">
-                            <span class="nav-wordmark-main">Involve</span>
-                        </span>
                     </a>
                     <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">
                         <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
@@ -3239,7 +3174,7 @@ function renderFooter(): void
                 </div>
 
                 <div class="footer-bottom-bar px-4 py-2 border-t border-emerald-200/40 flex items-center justify-between flex-wrap">
-                    <p class="text-xs app-footer-muted"><?php echo date('Y') > 2026 ? '&copy; 2026–' . date('Y') : '&copy; 2026'; ?> Student Organization Management System. All rights reserved.</p>
+                    <p class="text-xs app-footer-muted"><?php echo date('Y') > 2026 ? '&copy; 2026–' . date('Y') : '&copy; 2026'; ?> INVOLVE. All rights reserved.</p>
                     <div class="footer-bottom-actions">
                         <nav class="footer-social-links" aria-label="Footer social links">
                             <a href="https://x.com" target="_blank" rel="noopener noreferrer" class="app-footer-icon-link" aria-label="Visit X">

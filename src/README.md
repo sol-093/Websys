@@ -2,7 +2,7 @@
 
 ## Summary
 - **Scope:** `src/` runtime application layers
-- **Updated:** May 1, 2026
+- **Updated:** May 5, 2026
 - **Pattern:** Layered single-entry PHP architecture
 
 ## Purpose
@@ -26,7 +26,7 @@ This document explains how source code is organized and where new functionality 
 - Route rendering and action dispatch are coordinated from `index.php`.
 - Shared shell rendering is handled through `src/core/layout.php`.
 - Email verification and forgot-password delivery use `src/core/mailer.php` and `src/lib/email.php`.
-- Navbar logo source paths and logo sizing are maintained inline in `src/core/layout.php`.
+- Navbar logo source paths, About page brand image behavior, and footer branding are maintained inline in `src/core/layout.php`.
 
 ### Placement Rules
 - Put reusable runtime concerns in `src/core/`.

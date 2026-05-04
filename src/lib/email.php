@@ -244,18 +244,18 @@ function sendActivationEmail(string $email, string $name, string $activationToke
     $safeName = emailHtml($name);
     $safeVerifyUrl = emailHtml($verifyUrl);
     
-    $subject = 'Verify Your Email Address';
+    $subject = 'Be Involved - Verify Your Email';
     $htmlBody = <<<HTML
 <p>Hello {$safeName},</p>
-<p>Thank you for registering with our Student Organization Management System. To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
+<p>Thank you for joining INVOLVE. To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
 <p style="text-align: center;">
-    <a href="{$safeVerifyUrl}" class="button">Verify Email Address</a>
+    <a href="{$safeVerifyUrl}" class="button">Be Involved</a>
 </p>
 <p>Or copy and paste this link into your browser:</p>
 <p style="word-break: break-all; color: #6b7280; font-size: 14px;">{$safeVerifyUrl}</p>
 <p>This verification link will expire in 24 hours for security reasons.</p>
 <p>If you did not create this account, please ignore this email.</p>
-<p>Best regards,<br>Student Organization Management Team</p>
+<p>Best regards,<br>INVOLVE Team</p>
 HTML;
     
     return sendEmail($email, $subject, $htmlBody);

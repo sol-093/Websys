@@ -2,7 +2,7 @@
 
 ## Summary
 - **Baseline reference date:** April 6, 2026
-- **Document updated:** May 1, 2026
+- **Document updated:** May 5, 2026
 - **Scope:** High-level grouped change summary after the April 6 baseline
 
 ## Version History
@@ -37,7 +37,7 @@ This document tracks major change categories for quick historical context withou
 - Added global command palette interactions.
 - Improved chart readability/theme synchronization and empty-state behavior.
 - Expanded responsive polish for tables, modals, footer, pagination, and navigation states.
-- Added inline navbar logo support with separate light/dark assets and subtle hover animation for nav links and brand/logo.
+- Added inline INVOLVE navbar logo support with separate light/dark assets and subtle hover animation for nav links and brand/logo.
 
 ### Organization and Workflow Logic
 - Added/expanded owner assignment and join workflow guardrails.
@@ -56,7 +56,7 @@ This document tracks major change categories for quick historical context withou
 ### Documentation and Project Hygiene
 - Refreshed documentation set and standardized layout.
 - Added/updated reference docs and static presentation notes.
-- Updated documentation to reflect the May 1, 2026 auth/email and navbar branding changes.
+- Updated documentation to reflect the May 1, 2026 auth/email and INVOLVE branding changes.
 
 ### Previous Release Notes
 - Earlier versions focused on the baseline system foundation: organization management, announcements, transactions, dashboard views, and account workflows.

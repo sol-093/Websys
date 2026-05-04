@@ -1,13 +1,13 @@
-# Student Organization Management and Budget Transparency System
+# INVOLVE Student Organization Management and Budget Transparency System
 
 ## Summary
 - **Version:** 1.2.1
-- **Updated:** May 1, 2026
+- **Updated:** May 5, 2026
 - **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
 
 ## Version History
-- **1.2.1** (May 1, 2026): NEXUS wordmark font integration, About page wordmark refresh, responsive navbar wordmark updates, and PDF export template background support
+- **1.2.1** (May 1, 2026): INVOLVE brand asset integration, About page brand refresh, responsive navbar logo updates, and PDF export template background support
 - **1.2.0** (May 1, 2026): PHPMailer-backed verification/reset flows, one-use password reset hardening, reset cooldown tracking, navbar logo and hover polish
 - **1.1.3** (April 27, 2026): documentation standardization, UI consistency pass, upload control polish
 - **1.1.1** (April 6, 2026): footer refinement, navbar spacing polish, responsive table/modal updates
@@ -60,8 +60,9 @@ php scripts/tests/test_organization_helpers.php
 - Database bootstrap and compatibility: `src/core/db.php`
 - Upload destination: `public/uploads/`
 - SMTP/OAuth values are read from environment variables and config.
-- Navbar logo image paths are set inline in `src/core/layout.php` and currently map light mode to `public/uploads/logodark.png` and dark mode to `public/uploads/logolight.png`.
-- NEXUS wordmark font assets live in `static/fonts/`; active wordmark styles are defined in `src/core/layout.php`.
+- Navbar logo image paths are set inline in `src/core/layout.php` and currently map light mode to `public/uploads/involvelogo dark.png` and dark mode to `public/uploads/involvelogo light.png`.
+- INVOLVE brand image assets live in `public/uploads/`; active navbar and About page logo styles are defined in `src/core/layout.php`.
+- Account emails currently use text-based `involve` header branding for broader email-client compatibility.
 - Transaction PDF exports use `public/uploads/pdftemplate.png` as the page background template.
 
 ### Architecture Snapshot

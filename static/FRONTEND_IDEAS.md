@@ -2,7 +2,7 @@
 
 ## Summary
 - **Scope:** Teacher-friendly explanation of the current frontend design direction
-- **Updated:** May 1, 2026
+- **Updated:** May 5, 2026
 - **Theme:** Glass-style dashboard UX with green/teal visual identity
 
 ## Purpose
@@ -28,7 +28,7 @@ This platform is a student organization management website that centralizes anno
 - **Color direction:** green/teal palette to suggest growth, balance, and trust
 - **Typography:** clean sans-serif presentation for readability
 - **Dual-mode support:** light and dark themes for viewing comfort
-- **Branding:** navbar logo support with separate light/dark image assets and subtle hover motion
+- **Branding:** INVOLVE navbar logo support with separate light/dark image assets and a presentation-friendly identity
 
 ### Functional Experience Shown in Demo
 - Home/login/register surfaces
@@ -39,7 +39,7 @@ This platform is a student organization management website that centralizes anno
 - Email verification and password reset flows are part of the live system behavior.
 
 ### Short Spoken Script
-> Our website is a student organization management system built for schools. It uses a modern glass-inspired layout, light and dark branding, and clear green/teal styling to make information calm and trustworthy. The goal is to help teachers and staff monitor organization activity, account access, and financial transparency in one readable dashboard.
+> INVOLVE is a student organization management system built for schools. It uses a modern glass-inspired layout, light and dark branding, and clear green/teal styling to make information calm and trustworthy. The goal is to help teachers and staff monitor organization activity, account access, and financial transparency in one readable dashboard.
 
 ## Related Docs
 - [Static Demo Guide](README.md)

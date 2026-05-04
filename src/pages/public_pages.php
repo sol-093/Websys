@@ -83,11 +83,6 @@ function handleHomePage(PDO $db, ?array $user): void
 
 function handleAboutPage(?array $user): void
 {
-    if ($user && ($user['role'] ?? '') === 'admin') {
-        setFlash('error', 'About page is not available for admin accounts.');
-        redirect('?page=dashboard');
-    }
-
     renderHeader('About');
     $teamMembers = [
         [
@@ -138,27 +133,62 @@ function handleAboutPage(?array $user): void
                 <?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?>
                 About the Platform
             </div>
-            <h1 class="about-wordmark nav-wordmark" aria-label="INVOLVE Student Organization Management and Budget Transparency System">
-                <span class="nav-wordmark-main">involve</span>
+            <h1 class="about-logo" aria-label="INVOLVE Student Organization Management and Budget Transparency System">
+                <img src="public/uploads/involvelogo dark.png" alt="" class="about-logo-img nav-logo-light">
+                <img src="public/uploads/involvelogo light.png" alt="" class="about-logo-img nav-logo-dark">
             </h1>
             <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.
             </p>
         </div>
 
+        <div class="glass p-5 md:p-6">
+            <h2 class="text-lg font-semibold mb-3 icon-label\"><?= uiIcon('open', 'ui-icon') ?><span>What INVOLVE Means</span></h2>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
+                    <p class="text-sm font-semibold text-emerald-800">I - Innovation</p>
+                    <p class="mt-1 text-xs text-slate-700">Using technology to improve student organization management.</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
+                    <p class="text-sm font-semibold text-emerald-800">N - Navigation</p>
+                    <p class="mt-1 text-xs text-slate-700">Helping users easily access organizations, announcements, records, and reports.</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
+                    <p class="text-sm font-semibold text-emerald-800">V - Visibility</p>
+                    <p class="mt-1 text-xs text-slate-700">Making organization information and financial records easier to view and monitor.</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
+                    <p class="text-sm font-semibold text-emerald-800">O - Organization</p>
+                    <p class="mt-1 text-xs text-slate-700">Keeping members, requests, announcements, and transactions in one system.</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
+                    <p class="text-sm font-semibold text-emerald-800">L - Leadership</p>
+                    <p class="mt-1 text-xs text-slate-700">Supporting organization owners and admins in managing responsibilities.</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3">
+                    <p class="text-sm font-semibold text-emerald-800">V - Verification</p>
+                    <p class="mt-1 text-xs text-slate-700">Protecting accounts and actions through verification, permissions, and secure processes.</p>
+                </div>
+                <div class="rounded-lg border border-emerald-200/45 bg-white/35 p-3 sm:col-span-2 lg:col-span-3">
+                    <p class="text-sm font-semibold text-emerald-800">E - Engagement</p>
+                    <p class="mt-1 text-xs text-slate-700">Encouraging students to join organizations and stay updated with activities.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid md:grid-cols-2 gap-4">
             <article class="glass p-5">
                 <h2 class="font-semibold mb-2 icon-label\"><?= uiIcon('open', 'ui-icon') ?><span>Mission</span></h2>
                 <p class="text-sm text-slate-700">
-                    To provide a reliable digital system that helps student organizations manage operations and finances with accuracy,
-                    accountability, and timely access to information.
+                    To provide a centralized and secure platform that helps student organizations manage members, announcements,
+                    requests, and financial records with transparency, accountability, and ease of access.
                 </p>
             </article>
             <article class="glass p-5">
                 <h2 class="font-semibold mb-2 icon-label\"><?= uiIcon('dashboard', 'ui-icon') ?><span>Vision</span></h2>
                 <p class="text-sm text-slate-700">
-                    To be the trusted standard for student organization transparency where every member can confidently view,
-                    understand, and participate in responsible financial stewardship.
+                    To become a trusted digital system for campus organization management where students, owners, and administrators
+                    can collaborate, monitor activities, and promote responsible financial transparency.
                 </p>
             </article>
         </div>

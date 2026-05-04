@@ -2,7 +2,7 @@
 
 ## Summary
 - **Scope:** Key reusable functions and handler responsibilities across the codebase
-- **Updated:** May 1, 2026
+- **Updated:** May 5, 2026
 - **Focus:** Practical navigation of where logic lives
 
 ## Purpose
@@ -38,7 +38,7 @@ This document maps core functions by file/layer so contributors can quickly loca
 - `workflows.php`: admin/owner approval and organization workflow handlers
 
 ### Render Handlers (`src/pages/`)
-- `public_pages.php`: public/auth pages and logout routing output
+- `public_pages.php`: public/auth pages, About page content/branding, and logout routing output
 - `community_pages.php`: student/community-facing page renderers
 - `owner_pages.php`: owner-facing page renderers
 - `admin_pages.php`: admin-facing page renderers
