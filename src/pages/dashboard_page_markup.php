@@ -1,49 +1,4 @@
 <div class="dashboard-shell space-y-3">
-    <?php
-        $renderDeltaBadge = static function (float $deltaPct, bool $hasPreviousData): void {
-            if (!$hasPreviousData || abs($deltaPct) < 0.0001) {
-                echo '<div class="text-xs text-gray-500 mt-1">—</div>';
-                return;
-            }
-
-            if ($deltaPct > 0) {
-                echo '<div class="text-xs text-emerald-600 mt-1">↑ ' . number_format($deltaPct, 1) . '%</div>';
-                return;
-            }
-
-            echo '<div class="text-xs text-red-500 mt-1">↓ ' . number_format(abs($deltaPct), 1) . '%</div>';
-        };
-
-        $formatAnnouncementExpiry = static function (?string $expiresAt): string {
-            $expiresAt = trim((string) ($expiresAt ?? ''));
-            if ($expiresAt === '') {
-                return 'No expiry';
-            }
-
-            try {
-                $now = new DateTimeImmutable('now');
-                $expiry = new DateTimeImmutable($expiresAt);
-                $daysLeft = (int) $now->diff($expiry)->format('%r%a');
-            } catch (Throwable) {
-                return 'Expires soon';
-            }
-
-            if ($daysLeft < 0) {
-                return 'Expired';
-            }
-
-            if ($daysLeft === 0) {
-                return 'Expires today';
-            }
-
-            if ($daysLeft === 1) {
-                return 'Expires in 1 day';
-            }
-
-            return 'Expires in ' . $daysLeft . ' days';
-        };
-    ?>
-
     <section class="grid xl:grid-cols-12 gap-3">
         <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -56,12 +11,12 @@
             </div>
             <div class="dashboard-metric-grid mt-4">
                 <div class="dashboard-metric-card">
-                    <div class="dashboard-metric-value">₱<?= number_format($kpiIncome, 2) ?></div>
+                    <div class="dashboard-metric-value">&#8369;<?= number_format($kpiIncome, 2) ?></div>
                     <?php $renderDeltaBadge((float) $income_delta_pct, ((int) $incomePreviousMonthCount) > 0); ?>
                     <div class="dashboard-metric-label">Total income recorded</div>
                 </div>
                 <div class="dashboard-metric-card">
-                    <div class="dashboard-metric-value <?= $kpiBalance >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($kpiBalance, 2) ?></div>
+                    <div class="dashboard-metric-value <?= $kpiBalance >= 0 ? 'text-green-300' : 'text-red-300' ?>">&#8369;<?= number_format($kpiBalance, 2) ?></div>
                     <?php $renderDeltaBadge((float) $balance_delta_pct, ((int) $previousMonthTransactionCount) > 0); ?>
                     <div class="dashboard-metric-label">Current net balance</div>
                 </div>
@@ -158,7 +113,7 @@
             </div>
             <div class="dashboard-metric-grid mb-3">
                 <div class="dashboard-metric-card">
-                    <div class="dashboard-metric-value text-red-300">₱<?= number_format($kpiExpense, 2) ?></div>
+                    <div class="dashboard-metric-value text-red-300">&#8369;<?= number_format($kpiExpense, 2) ?></div>
                     <?php $renderDeltaBadge((float) $expenses_delta_pct, ((int) $expensePreviousMonthCount) > 0); ?>
                     <div class="dashboard-metric-label">Expense total</div>
                 </div>
@@ -181,7 +136,7 @@
                     <div>
                         <div class="dashboard-feed-title">Current month net</div>
                         <div class="dashboard-feed-meta mt-1 <?= $latestTrendNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">
-                            ₱<?= number_format($latestTrendNet, 2) ?>
+                            &#8369;<?= number_format($latestTrendNet, 2) ?>
                         </div>
                         <div class="dashboard-feed-body mt-1"><?= e($latestTrendDirectionLabel) ?></div>
                     </div>
@@ -191,7 +146,7 @@
                     <div>
                         <div class="dashboard-feed-title">Peak expense month</div>
                         <div class="dashboard-feed-meta mt-1"><?= e($peakExpenseMonth) ?></div>
-                        <div class="dashboard-feed-body mt-1">₱<?= number_format($peakExpenseValue, 2) ?> spent</div>
+                        <div class="dashboard-feed-body mt-1">&#8369;<?= number_format($peakExpenseValue, 2) ?> spent</div>
                     </div>
                 </div>
                 <div class="dashboard-feed-item trend-insight-card">
@@ -224,7 +179,7 @@
                                     <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40"><?= e((string) $item['label']) ?></span>
                                 <?php endif; ?>
                             </div>
-                            <div class="dashboard-feed-meta mt-1"><?= e($item['organization_name']) ?> · <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['organization_name']) ?> &middot; <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
                             <div class="dashboard-feed-body mt-1"><?= e($item['content']) ?></div>
                         </div>
                     </div>
@@ -234,7 +189,7 @@
                         <span class="dashboard-feed-dot"></span>
                         <div>
                             <div class="dashboard-feed-title"><?= e($item['label']) ?></div>
-                            <div class="dashboard-feed-meta mt-1"><?= e($item['type']) ?> · <?= e($item['created_at']) ?></div>
+                            <div class="dashboard-feed-meta mt-1"><?= e($item['type']) ?> &middot; <?= e($item['created_at']) ?></div>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -329,7 +284,7 @@
                                 </span>
                             </td>
                             <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
-                            <td>₱<?= number_format((float) $tx['amount'], 2) ?></td>
+                            <td>&#8369;<?= number_format((float) $tx['amount'], 2) ?></td>
                             <td>
                                 <?php if (!empty($tx['receipt_path'])): ?>
                                     <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
@@ -372,9 +327,9 @@
                                     <span><?= e($row['name']) ?></span>
                                 </span>
                             </td>
-                            <td class="py-2 pr-3 text-green-700 whitespace-nowrap">₱<?= number_format((float) $row['total_income'], 2) ?></td>
-                            <td class="py-2 pr-3 text-red-700 whitespace-nowrap">₱<?= number_format((float) $row['total_expense'], 2) ?></td>
-                            <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">₱<?= number_format($balance, 2) ?></td>
+                            <td class="py-2 pr-3 text-green-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_income'], 2) ?></td>
+                            <td class="py-2 pr-3 text-red-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></td>
+                            <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">&#8369;<?= number_format($balance, 2) ?></td>
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -460,7 +415,7 @@
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> · <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
+                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> &middot; <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
                         <div class="text-sm mt-1"><?= e($item['content']) ?></div>
                         <?php if (($user['role'] ?? '') === 'admin'): ?>
                             <form method="post" class="mt-2">
@@ -491,15 +446,15 @@
             <div class="p-3 space-y-2 max-h-[calc(100dvh-8.5rem)] overflow-y-auto themed-scroll pr-1">
                 <div class="grid md:grid-cols-3 gap-1">
                     <div class="dashboard-metric-card">
-                        <div class="dashboard-metric-value text-green-300">₱<?= number_format($summaryIncomeTotal, 2) ?></div>
+                        <div class="dashboard-metric-value text-green-300">&#8369;<?= number_format($summaryIncomeTotal, 2) ?></div>
                         <div class="dashboard-metric-label">Total income (all organizations)</div>
                     </div>
                     <div class="dashboard-metric-card">
-                        <div class="dashboard-metric-value text-red-300">₱<?= number_format($summaryExpenseTotal, 2) ?></div>
+                        <div class="dashboard-metric-value text-red-300">&#8369;<?= number_format($summaryExpenseTotal, 2) ?></div>
                         <div class="dashboard-metric-label">Total expense (all organizations)</div>
                     </div>
                     <div class="dashboard-metric-card">
-                        <div class="dashboard-metric-value <?= $summaryNetTotal >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($summaryNetTotal, 2) ?></div>
+                        <div class="dashboard-metric-value <?= $summaryNetTotal >= 0 ? 'text-green-300' : 'text-red-300' ?>">&#8369;<?= number_format($summaryNetTotal, 2) ?></div>
                         <div class="dashboard-metric-label">Net balance (all organizations)</div>
                     </div>
                 </div>
@@ -516,7 +471,7 @@
                                 <div>
                                     <div class="dashboard-feed-title">Top performer</div>
                                     <div class="dashboard-feed-meta mt-1"><?= e((string) ($topPerformer['name'] ?? 'N/A')) ?></div>
-                                    <div class="dashboard-feed-body mt-1 text-green-300">₱<?= number_format((float) ($topPerformer['balance'] ?? 0), 2) ?></div>
+                                    <div class="dashboard-feed-body mt-1 text-green-300">&#8369;<?= number_format((float) ($topPerformer['balance'] ?? 0), 2) ?></div>
                                 </div>
                             </div>
                             <div class="dashboard-feed-item trend-insight-card">
@@ -530,7 +485,7 @@
                                 <div>
                                     <div class="dashboard-feed-title">Average net</div>
                                     <div class="dashboard-feed-meta mt-1">Across <?= count($summaryRankingRows) ?> organizations</div>
-                                    <div class="dashboard-feed-body mt-1 <?= $averageNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">₱<?= number_format($averageNet, 2) ?></div>
+                                    <div class="dashboard-feed-body mt-1 <?= $averageNet >= 0 ? 'text-green-300' : 'text-red-300' ?>">&#8369;<?= number_format($averageNet, 2) ?></div>
                                 </div>
                             </div>
                         </div>
@@ -545,7 +500,7 @@
                                 <div class="dashboard-feed-item trend-insight-card items-center justify-between">
                                     <div>
                                         <div class="dashboard-feed-title"><?= e($row['name']) ?></div>
-                                        <div class="dashboard-feed-meta mt-1">Net: ₱<?= number_format((float) $row['balance'], 2) ?></div>
+                                        <div class="dashboard-feed-meta mt-1">Net: &#8369;<?= number_format((float) $row['balance'], 2) ?></div>
                                     </div>
                                     <span class="px-2 py-0.5 rounded-full border text-[11px] font-medium <?= e($row['status_class']) ?>"><?= e($row['status']) ?></span>
                                 </div>
@@ -558,7 +513,7 @@
                                     <p class="dashboard-section-copy">No organizations are currently flagged for risk or heavy spend pressure.</p>
                                 <?php else: ?>
                                     <?php foreach ($summaryAttentionRows as $row): ?>
-                                        <div class="dashboard-feed-meta"><?= e($row['name']) ?> · Expense ratio <?= (int) round($row['expense_ratio'] * 100) ?>%</div>
+                                        <div class="dashboard-feed-meta"><?= e($row['name']) ?> &middot; Expense ratio <?= (int) round($row['expense_ratio'] * 100) ?>%</div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </div>
