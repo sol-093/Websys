@@ -1786,6 +1786,72 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #ffffff !important;
             }
 
+            body.theme-dark .tx-mobile-card {
+                background: rgba(2, 30, 22, 0.88) !important;
+                border-color: rgba(110, 231, 183, 0.32) !important;
+                box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+            }
+
+            body.theme-dark .tx-mobile-card .tx-mobile-type-income {
+                background: rgba(16, 185, 129, 0.22) !important;
+                border: 1px solid rgba(52, 211, 153, 0.38);
+                color: #a7f3d0 !important;
+            }
+
+            body.theme-dark .tx-mobile-card .tx-mobile-type-expense {
+                background: rgba(220, 38, 38, 0.2) !important;
+                border: 1px solid rgba(248, 113, 113, 0.35);
+                color: #fecaca !important;
+            }
+
+            .admin-mobile-card {
+                padding: 0.85rem;
+                border-radius: 0.85rem;
+            }
+
+            .admin-mobile-title {
+                font-size: 0.92rem;
+                line-height: 1.4;
+                font-weight: 700;
+                color: #0f172a;
+            }
+
+            .admin-mobile-copy {
+                font-size: 0.86rem;
+                line-height: 1.5;
+                color: #334155;
+            }
+
+            .admin-mobile-meta {
+                font-size: 0.76rem;
+                line-height: 1.45;
+                color: #475569;
+            }
+
+            .admin-mobile-chip {
+                font-size: 0.68rem;
+                font-weight: 600;
+                letter-spacing: 0.01em;
+            }
+
+            body.theme-dark .admin-mobile-card {
+                background: rgba(2, 30, 22, 0.88) !important;
+                border-color: rgba(110, 231, 183, 0.32) !important;
+                box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+            }
+
+            body.theme-dark .admin-mobile-title {
+                color: #ecfdf5 !important;
+            }
+
+            body.theme-dark .admin-mobile-copy {
+                color: #d1fae5 !important;
+            }
+
+            body.theme-dark .admin-mobile-meta {
+                color: #a7f3d0 !important;
+            }
+
             body:not(.theme-dark) input::placeholder,
             body:not(.theme-dark) textarea::placeholder,
             body:not(.theme-dark) select::placeholder {

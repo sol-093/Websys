@@ -21,15 +21,15 @@ function handleAdminStudentsPage(PDO $db): void
     ?>
     <div class="bg-white shadow rounded p-4">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Filter All Student Information</span></h1>
-        <form method="get" class="flex gap-2 mb-4">
+        <form method="get" class="flex flex-wrap gap-2 mb-4 items-stretch sm:items-center">
             <input type="hidden" name="page" value="admin_students">
             <input name="q" value="<?= e($q) ?>" placeholder="Search by name or email" class="border rounded px-3 py-2 w-full">
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+            <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
         </form>
 
         <div class="overflow-auto">
             <div class="table-wrapper">
-                <table class="w-full text-sm">
+                <table class="hidden md:table w-full min-w-[640px] text-sm">
                 <thead>
                 <tr class="border-b text-left">
                     <th class="py-2">Name</th>
@@ -54,6 +54,21 @@ function handleAdminStudentsPage(PDO $db): void
                 <?php endforeach; ?>
                 </tbody>
                 </table>
+            </div>
+            <div class="md:hidden space-y-3">
+                <?php foreach ($students as $student): ?>
+                    <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                        <div class="admin-mobile-title inline-flex items-center gap-2 min-w-0">
+                            <?= renderProfileMedia((string) ($student['name'] ?? ''), (string) ($student['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($student['profile_picture_crop_x'] ?? 50), (float) ($student['profile_picture_crop_y'] ?? 50), (float) ($student['profile_picture_zoom'] ?? 1)) ?>
+                            <span class="break-words leading-5"><?= e((string) $student['name']) ?></span>
+                        </div>
+                        <div class="admin-mobile-copy mt-2 break-words\"><?= e((string) $student['email']) ?></div>
+                        <div class="admin-mobile-meta mt-2 flex flex-wrap items-center gap-2">
+                            <span class="admin-mobile-chip rounded-full border border-emerald-300/40 bg-emerald-500/20 px-2 py-0.5\"><?= e((string) $student['role']) ?></span>
+                            <span class="break-words\">Joined: <?= e((string) $student['created_at']) ?></span>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
             </div>
             <?php renderPagination($studentsPagination); ?>
         </div>
@@ -80,7 +95,7 @@ function handleAdminRequestsPage(PDO $db): void
     <div class="bg-white shadow rounded p-6 overflow-auto">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
         <div class="table-wrapper">
-            <table class="w-full text-sm table-fixed">
+            <table class="hidden md:table w-full min-w-[1040px] text-sm table-fixed">
             <thead>
             <tr class="border-b text-left">
                 <th class="py-3 px-4 w-[14%]">Org</th>
@@ -146,6 +161,60 @@ function handleAdminRequestsPage(PDO $db): void
             <?php endforeach; ?>
             </tbody>
             </table>
+        </div>
+        <div class="md:hidden space-y-3">
+            <?php foreach ($requests as $req): ?>
+                <?php $requestStatus = strtolower((string) $req['status']); ?>
+                <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                    <div class="space-y-2">
+                        <div class="admin-mobile-title inline-flex items-center gap-2 min-w-0">
+                            <?= renderProfileMedia((string) ($req['organization_name'] ?? ''), (string) ($req['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($req['organization_logo_crop_x'] ?? 50), (float) ($req['organization_logo_crop_y'] ?? 50), (float) ($req['organization_logo_zoom'] ?? 1)) ?>
+                            <span class="break-words leading-5"><?= e((string) ($req['organization_name'] ?? 'Organization')) ?></span>
+                        </div>
+                        <div class="admin-mobile-meta inline-flex items-center gap-2 min-w-0">
+                            <?= renderProfileMedia((string) ($req['requester_name'] ?? ''), (string) ($req['requester_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($req['requester_profile_picture_crop_x'] ?? 50), (float) ($req['requester_profile_picture_crop_y'] ?? 50), (float) ($req['requester_profile_picture_zoom'] ?? 1)) ?>
+                            <span class="break-words">Requester: <?= e((string) ($req['requester_name'] ?? '')) ?></span>
+                        </div>
+                        <div class="admin-mobile-meta">
+                            <span class="font-semibold">Action:</span>
+                            <span class="capitalize"><?= e((string) $req['action_type']) ?></span>
+                        </div>
+                        <div class="admin-mobile-meta leading-relaxed break-words">
+                            <?php if ($req['action_type'] === 'update'): ?>
+                                <div>Type: <?= e((string) $req['proposed_type']) ?></div>
+                                <div>Amount: ₱<?= number_format((float) $req['proposed_amount'], 2) ?></div>
+                                <div>Date: <?= e((string) $req['proposed_transaction_date']) ?></div>
+                                <div>Desc: <?= e((string) $req['proposed_description']) ?></div>
+                            <?php else: ?>
+                                <div>Delete transaction #<?= (int) $req['transaction_id'] ?></div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="admin-mobile-meta break-words">
+                            <span class="font-semibold">Status:</span>
+                            <span><?= e((string) $req['status']) ?></span>
+                        </div>
+                        <?php if ((string) ($req['admin_note'] ?? '') !== ''): ?>
+                            <div class="admin-mobile-meta break-words">
+                                <span class="font-semibold">Admin note:</span>
+                                <span><?= e((string) $req['admin_note']) ?></span>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ((string) $req['status'] === 'pending'): ?>
+                            <div class="grid grid-cols-1 gap-2 pt-1">
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="w-full inline-flex items-center justify-center bg-emerald-600 text-white px-3 py-2 rounded-md text-sm hover:bg-emerald-700 transition-colors">
+                                    <span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span>
+                                </button>
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="w-full inline-flex items-center justify-center bg-red-600 text-white px-3 py-2 rounded-md text-sm hover:bg-red-700 transition-colors">
+                                    <span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span>
+                                </button>
+                            </div>
+                        <?php else: ?>
+                            <div class="text-xs text-gray-500">Processed</div>
+                        <?php endif; ?>
+                    </div>
+                </article>
+            <?php endforeach; ?>
         </div>
         <?php renderPagination($requestsPagination); ?>
     </div>
@@ -265,9 +334,9 @@ function handleAdminAuditPage(PDO $db, array $user): void
     renderHeader('Audit Logs', $user);
     ?>
     <section class="bg-white rounded shadow p-4">
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h2 class="text-lg font-semibold">Audit Logs</h2>
-            <form method="get" class="flex items-center gap-2">
+            <form method="get" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="page" value="admin_audit" />
                 <label class="text-sm text-gray-600" for="days">Last</label>
                 <select name="days" id="days" class="border rounded px-2 py-1 text-sm" onchange="this.form.submit()">
@@ -282,7 +351,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
             <p class="text-sm text-gray-600">No audit entries in the selected range.</p>
         <?php else: ?>
             <div class="table-wrapper">
-                <table class="min-w-full text-sm">
+                <table class="hidden md:table w-full min-w-[900px] text-sm">
                     <thead>
                         <tr class="border-b">
                             <th class="text-left py-2 pr-3">Time</th>
@@ -306,8 +375,23 @@ function handleAdminAuditPage(PDO $db, array $user): void
                         <?php endforeach; ?>
                     </tbody>
                 </table>
-                <?php renderPagination($logsPagination); ?>
             </div>
+            <div class="md:hidden space-y-3">
+                <?php foreach ($logs as $log): ?>
+                    <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                        <div class="admin-mobile-meta break-words\"><?= e((string) $log['created_at']) ?></div>
+                        <div class="admin-mobile-title mt-1 break-words\"><?= e((string) ($log['actor_name'] ?: ('User#' . (int) $log['user_id']))) ?></div>
+                        <div class="admin-mobile-meta mt-1"><span class="font-semibold">Action:</span> <?= e((string) $log['action']) ?></div>
+                        <div class="admin-mobile-meta mt-1"><span class="font-semibold">Entity:</span> <?= e((string) ($log['entity_type'] ?? '-')) ?><?= $log['entity_id'] !== null ? ' #' . (int) $log['entity_id'] : '' ?></div>
+                        <?php if ((string) ($log['details'] ?? '') !== ''): ?>
+                            <div class="admin-mobile-meta mt-2 break-words leading-relaxed">
+                                <span class="font-semibold">Details:</span> <?= e((string) $log['details']) ?>
+                            </div>
+                        <?php endif; ?>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+            <?php renderPagination($logsPagination); ?>
         <?php endif; ?>
     </section>
     <?php
@@ -347,16 +431,16 @@ function handleMyOrgAdminPage(PDO $db): void
     ?>
     <div class="bg-white shadow rounded p-4">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview</span></h1>
-        <form method="get" class="mb-4 flex items-start gap-2 relative">
+        <form method="get" class="mb-4 flex flex-wrap items-stretch sm:items-start gap-2 relative">
             <input type="hidden" name="page" value="my_org">
             <input type="hidden" name="org_id" id="adminOrgIdInput" value="<?= $orgId > 0 ? (int) $orgId : '' ?>">
             <input type="hidden" name="org_search_name" id="adminOrgSearchName" value="<?= e($selectedOrgName) ?>">
             <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
             <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
-            <button type="button" id="adminOrgSearchButton" class="inline-flex items-center gap-2 border rounded px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+            <button type="button" id="adminOrgSearchButton" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 border rounded px-4 py-2 bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
                 <?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Search Organizations</span>
             </button>
-            <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center gap-2 hover:bg-indigo-800 transition-colors">
+            <button type="submit" class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded inline-flex items-center justify-center gap-2 hover:bg-indigo-800 transition-colors">
                 <?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span>
             </button>
         </form>
@@ -471,7 +555,7 @@ function handleMyOrgAdminPage(PDO $db): void
             </form>
 
             <div class="table-wrapper">
-                <table class="w-full text-sm">
+                <table class="w-full min-w-[640px] text-sm">
                 <thead>
                 <tr class="text-left border-b">
                     <th class="py-2">Date</th><th>Type</th><th>Amount</th><th>Description</th>
@@ -874,12 +958,12 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <?php endif; ?>
         </div>
 
-        <form method="get" class="mb-4 flex gap-2 items-start flex-wrap relative" data-dropdown-root>
+        <form method="get" class="mb-4 flex gap-2 items-stretch sm:items-start flex-wrap relative" data-dropdown-root>
             <input type="hidden" name="page" value="my_org">
             <input type="hidden" name="org_id" data-dropdown-value value="<?= (int) $selectedOrgId ?>">
             <input type="hidden" name="tx_type" value="<?= e($txTypeFilter) ?>">
             <input type="hidden" name="tx_sort" value="<?= e($txDateSort) ?>">
-            <div class="relative min-w-[16rem]" data-dropdown-wrapper>
+            <div class="relative w-full min-w-0 sm:min-w-[16rem] sm:flex-1" data-dropdown-wrapper>
                 <button type="button" data-dropdown-toggle="userOrgSwitcherMenu" aria-expanded="false" class="w-full flex items-center border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
                     <span data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
                 </button>
@@ -900,7 +984,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                     </ul>
                 </div>
             </div>
-            <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+            <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
         </form>
 
         <h2 class="text-lg font-semibold inline-flex items-center gap-2"><?= e((string) $org['name']) ?>
@@ -1070,7 +1154,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         <?php endif; ?>
 
         <div class="table-wrapper">
-            <table class="w-full text-sm">
+            <table class="w-full min-w-[640px] text-sm">
             <thead>
             <tr class="text-left border-b">
                 <th class="py-2">Date</th>
@@ -1130,16 +1214,16 @@ function handleAdminOrgsPage(PDO $db): void
                 <div class="space-y-3">
                     <label class="block text-xs text-gray-600 mb-1">Organization Logo (optional)</label>
                     <div class="space-y-3" data-image-crop-form>
-                        <div class="flex items-center gap-3">
+                        <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                             <div class="shrink-0">
                                 <?= renderProfilePlaceholder('Organization', 'organization', 'sm') ?>
                             </div>
-                            <label for="adminCreateOrgLogo" class="org-logo-upload-trigger inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors">
+                            <label for="adminCreateOrgLogo" class="org-logo-upload-trigger flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors sm:flex-1">
                                 <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
                                     <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
                                 </span>
-                                <span class="font-medium">Choose organization logo</span>
-                                <span class="org-logo-upload-trigger-subtext text-xs">Click to browse</span>
+                                <span class="min-w-0 flex-1 font-medium">Choose organization logo</span>
+                                <span class="org-logo-upload-trigger-subtext shrink-0 text-xs">Click to browse</span>
                             </label>
                             <input id="adminCreateOrgLogo" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
                         </div>
@@ -1183,7 +1267,7 @@ function handleAdminOrgsPage(PDO $db): void
         <div class="md:col-span-2 bg-white shadow rounded p-6 overflow-auto">
             <h2 class="text-lg font-semibold mb-4 icon-label"><?= uiIcon('orgs', 'ui-icon') ?><span>All Organizations</span></h2>
             <div class="table-wrapper">
-                <table class="w-full text-sm table-fixed">
+                <table class="hidden md:table w-full text-sm table-fixed">
                 <thead>
                 <tr class="text-left border-b">
                     <th class="py-3 px-4 w-[18%]">Name</th>
@@ -1242,6 +1326,56 @@ function handleAdminOrgsPage(PDO $db): void
                 </tbody>
                 </table>
             </div>
+            <div class="md:hidden space-y-3">
+                <?php foreach ($orgs as $org): ?>
+                    <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                        <div class="space-y-2 min-w-0">
+                            <div class="admin-mobile-title inline-flex items-center gap-2 min-w-0">
+                                <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'xs', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                                <span class="break-words leading-5"><?= e((string) $org['name']) ?></span>
+                            </div>
+                            <span class="inline-flex max-w-full text-[11px] px-2 py-1 rounded-full border border-emerald-300/40 bg-emerald-500/20 whitespace-normal break-words leading-4">
+                                <?= e((string) getOrganizationVisibilityLabel($org)) ?>
+                            </span>
+                            <p class="admin-mobile-copy break-words leading-6">
+                                <?= e((string) $org['description']) ?>
+                            </p>
+                        </div>
+
+                        <div class="mt-3 rounded-lg border border-emerald-200/35 bg-emerald-500/10 p-2 admin-mobile-meta">
+                            <div class="font-semibold mb-1">Owner</div>
+                            <div class="inline-flex items-center gap-2 min-w-0">
+                                <?= renderProfileMedia((string) ($org['owner_name'] ?? 'Unassigned'), (string) ($org['owner_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($org['owner_profile_picture_crop_x'] ?? 50), (float) ($org['owner_profile_picture_crop_y'] ?? 50), (float) ($org['owner_profile_picture_zoom'] ?? 1)) ?>
+                                <span class="break-words leading-5"><?= e((string) ($org['owner_name'] ?? 'Unassigned')) ?></span>
+                            </div>
+                            <?php if (!empty($org['assignment_status'])): ?>
+                                <div class="mt-1 inline-flex items-start gap-2 text-[11px] text-amber-200 min-w-0">
+                                    <?= renderProfileMedia((string) ($org['assigned_student_name'] ?? 'Student'), (string) ($org['assigned_student_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($org['assigned_student_profile_picture_crop_x'] ?? 50), (float) ($org['assigned_student_profile_picture_crop_y'] ?? 50), (float) ($org['assigned_student_profile_picture_zoom'] ?? 1)) ?>
+                                    <span class="break-words leading-4">Pending: <?= e((string) ($org['assigned_student_name'] ?? 'Student')) ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="mt-3">
+                            <button
+                                type="button"
+                                data-org-edit-open
+                                data-org-id="<?= (int) $org['id'] ?>"
+                                data-org-name="<?= e((string) $org['name']) ?>"
+                                data-org-description="<?= e((string) $org['description']) ?>"
+                                data-org-category="<?= e((string) ($org['org_category'] ?? 'collegewide')) ?>"
+                                data-org-target-institute="<?= e((string) ($org['target_institute'] ?? '')) ?>"
+                                data-org-target-program="<?= e((string) ($org['target_program'] ?? '')) ?>"
+                                data-org-owner-id="<?= (int) ($org['owner_id'] ?? 0) ?>"
+                                data-org-logo-path="<?= e((string) ($org['logo_path'] ?? '')) ?>"
+                                class="w-full bg-blue-600 text-white text-sm px-3.5 py-2 rounded inline-flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
+                            >
+                                <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Update</span>
+                            </button>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
             <?php renderPagination($orgsPagination); ?>
         </div>
     </div>
@@ -1273,16 +1407,16 @@ function handleAdminOrgsPage(PDO $db): void
                         <div class="space-y-2 md:col-span-2">
                             <label for="orgEditModalLogo" class="block text-sm font-medium text-slate-700">Organization Logo</label>
                             <div class="space-y-3" data-image-crop-form>
-                                <div class="flex items-center gap-3">
+                                <div class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
                                     <div class="shrink-0" data-crop-preview>
                                         <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                                     </div>
-                                    <label for="orgEditModalLogo" class="org-logo-upload-trigger inline-flex min-h-[3rem] flex-1 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors">
+                                    <label for="orgEditModalLogo" class="org-logo-upload-trigger flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors sm:flex-1">
                                         <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
                                             <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
                                         </span>
-                                        <span class="font-medium">Choose organization logo</span>
-                                        <span class="org-logo-upload-trigger-subtext text-xs">Click to browse</span>
+                                        <span class="min-w-0 flex-1 font-medium">Choose organization logo</span>
+                                        <span class="org-logo-upload-trigger-subtext shrink-0 text-xs">Click to browse</span>
                                     </label>
                                     <input id="orgEditModalLogo" type="file" name="logo" accept=".jpg,.jpeg,.png,.gif,.webp" class="hidden" data-image-input>
                                 </div>
