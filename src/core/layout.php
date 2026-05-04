@@ -49,12 +49,12 @@ function renderHeader(string $title = 'Dashboard'): void
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
             @font-face {
-                font-family: 'Akira Expanded';
-                src: url('static/fonts/akira-expanded-demo.otf') format('opentype');
-                font-weight: 500;
+                font-family: 'The Solstice';
+                src: url('static/fonts/THE SOLSTICE.otf') format('opentype'),
+                     url('static/fonts/THE SOLSTICE.ttf') format('truetype');
+                font-weight: 400;
                 font-style: normal;
                 font-display: swap;
-    
             }
 
             :root {
@@ -780,7 +780,7 @@ function renderHeader(string $title = 'Dashboard'): void
                 color: #0c2b22;
                 display: inline-flex;
                 flex-direction: column;
-                font-family: 'Akira Expanded', Impact, Haettenschweiler, 'Arial Black', sans-serif;
+                font-family: 'The Solstice', Impact, Haettenschweiler, 'Arial Black', sans-serif;
                 letter-spacing: 0;
                 line-height: 0.82;
                 min-width: 0;
@@ -2609,7 +2609,7 @@ function renderHeader(string $title = 'Dashboard'): void
                             <img src="<?= e($logoDark) ?>" alt="" class="nav-logo-img nav-logo-dark">
                         </span>
                         <span class="nav-brand-text nav-wordmark" aria-hidden="true">
-                            <span class="nav-wordmark-main">NEXUS</span>
+                            <span class="nav-wordmark-main">SOM</span>
                         </span>
                     </a>
                     <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">

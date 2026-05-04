@@ -12,7 +12,7 @@ $seeders = [
     'receipts_file.php'           // Generate the physical images
 ];
 foreach ($seeders as $script) {
-    fwrite(STDOUT, "\n--- Running $script ---\n");
+    fwrite(STDOUT, "\n--- Wait binabasa pa ang $script ---\n");
     // Use the same PHP binary that is currently running this script
     passthru("php " . __DIR__ . "/$script");
 }
