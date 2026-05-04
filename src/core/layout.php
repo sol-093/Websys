@@ -65,8 +65,8 @@ function renderHeader(string $title = 'Dashboard'): void
                 --green-700: #10b981;
                 --green-800: #0f766e;
                 --line: rgba(16, 185, 129, 0.28);
-                --wordmark-font-weight: 700;
-                --wordmark-font-grade: 0;
+                --wordmark-font-weight: 800;
+                --wordmark-font-grade: 200;
                 --page-texture-image: url('public/uploads/kldbuilding.jpg');
             }
 
