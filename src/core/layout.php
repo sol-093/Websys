@@ -19,6 +19,7 @@ function renderHeader(string $title = 'Dashboard'): void
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
     $navAppName = (string) $config['app_name'];
+    $faviconPath = 'public/uploads/involvemoblight.png';
     $logoLight = 'public/uploads/involvelogo dark.png';
     $logoDark = 'public/uploads/involvelogo light.png';
     $showOnboarding = false;
@@ -46,6 +47,9 @@ function renderHeader(string $title = 'Dashboard'): void
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?= e($title) ?> - <?= e($config['app_name']) ?></title>
+        <link rel="icon" type="image/png" href="<?= e($faviconPath) ?>">
+        <link rel="shortcut icon" type="image/png" href="<?= e($faviconPath) ?>">
+        <link rel="apple-touch-icon" href="<?= e($faviconPath) ?>">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">

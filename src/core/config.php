@@ -33,7 +33,7 @@ return [
         'bootstrap_database' => $envBool('DB_BOOTSTRAP_DATABASE', true),
         'sqlite_path' => (string) $env('DB_SQLITE_PATH', dirname(__DIR__, 2) . '/storage/database.sqlite'),
     ],
-    'app_name' => (string) $env('APP_NAME', 'Student Organization Management'),
+    'app_name' => (string) $env('APP_NAME', 'INVOLVE'),
     'upload_dir' => dirname(__DIR__, 2) . '/public/uploads',
     'google_oauth' => [
         'client_id' => (string) $env('GOOGLE_CLIENT_ID', ''),
@@ -45,7 +45,7 @@ return [
         'user' => $smtpUser,
         'pass' => (string) $env('SMTP_PASS', 'wsvy rmtm wpwg dxfg'),
         'from' => $smtpFrom,
-        'from_name' => (string) $env('SMTP_FROM_NAME', (string) $env('APP_NAME', 'Student Organization Management')),
+        'from_name' => (string) $env('SMTP_FROM_NAME', (string) $env('APP_NAME', 'INVOLVE')),
     ],
     'base_url' => (string) $env('BASE_URL', (string) $env('APP_URL', '')),
 ];
