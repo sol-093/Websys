@@ -138,8 +138,8 @@ function handleAboutPage(?array $user): void
                 <?= uiIcon('dashboard', 'ui-icon ui-icon-sm') ?>
                 About the Platform
             </div>
-            <h1 class="about-wordmark nav-wordmark" aria-label="NEXUS Student Organization Management and Budget Transparency System">
-                <span class="nav-wordmark-main">NEXUS</span>
+            <h1 class="about-wordmark nav-wordmark" aria-label="INVOLVE Student Organization Management and Budget Transparency System">
+                <span class="nav-wordmark-main">involve</span>
             </h1>
             <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.

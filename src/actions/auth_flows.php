@@ -358,25 +358,34 @@ function handleResendVerificationAction(PDO $db): void
     $stmt->execute([$email]);
     $user = $stmt->fetch();
     
-    if ($user && (int) ($user['email_verified'] ?? 1) === 0) {
-        $activationToken = bin2hex(random_bytes(32));
-        $activationTokenHash = hash('sha256', $activationToken);
-        $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
-        
-        $updateStmt = $db->prepare('UPDATE users SET activation_token = ?, activation_expires = ? WHERE id = ?');
-        $updateStmt->execute([$activationTokenHash, $activationExpires, (int) $user['id']]);
-        
-        $emailSent = sendActivationEmail($user['email'], $user['name'], $activationToken);
-        rateLimitIncrement($resendRateKey, 3600);
-        
-        auditLog((int) $user['id'], 'auth.resend_verification', 'user', (int) $user['id'], $emailSent ? 'Verification email resent' : 'Verification email resend failed');
-        if (!$emailSent) {
-            error_log('Verification email resend failed for user id ' . (int) $user['id'] . ' (' . $user['email'] . ').');
-            setFlash('error', 'We found your account, but the verification email could not be sent. Please contact the administrator.');
+    if ($user) {
+        if ((int) ($user['email_verified'] ?? 1) === 0) {
+            // Unverified: allow resend
+            $activationToken = bin2hex(random_bytes(32));
+            $activationTokenHash = hash('sha256', $activationToken);
+            $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
+            $updateStmt = $db->prepare('UPDATE users SET activation_token = ?, activation_expires = ? WHERE id = ?');
+            $updateStmt->execute([$activationTokenHash, $activationExpires, (int) $user['id']]);
+
+            $emailSent = sendActivationEmail($user['email'], $user['name'], $activationToken);
+            rateLimitIncrement($resendRateKey, 3600);
+
+            auditLog((int) $user['id'], 'auth.resend_verification', 'user', (int) $user['id'], $emailSent ? 'Verification email resent' : 'Verification email resend failed');
+            if (!$emailSent) {
+                error_log('Verification email resend failed for user id ' . (int) $user['id'] . ' (' . $user['email'] . ').');
+                setFlash('error', 'We found your account, but the verification email could not be sent. Please contact the administrator.');
+                redirect('?page=login');
+            }
+            setFlash('success', 'A verification email has been sent to your address.');
+            redirect('?page=login');
+        } else {
+            // Already verified
+            setFlash('info', 'This account is already verified. Please log in.');
             redirect('?page=login');
         }
     }
-    
+    // No such account: generic message
     setFlash('success', 'If your account exists and is unverified, a verification email has been sent.');
     redirect('?page=login');
 }

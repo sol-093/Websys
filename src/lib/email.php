@@ -140,29 +140,94 @@ function buildEmailTemplate(string $subject, string $content, string $appName, s
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{$safeSubject}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; background-color: #f5f5f5; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 30px 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
-        .content { padding: 30px 20px; }
-        .content p { margin: 0 0 15px; }
-        .button { display: inline-block; padding: 12px 24px; background: #10b981; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 10px 0; }
-        .button:hover { background: #059669; }
-        .footer { background: #f9fafb; padding: 20px; text-align: center; font-size: 14px; color: #6b7280; border-top: 1px solid #e5e7eb; }
-        .footer a { color: #10b981; text-decoration: none; }
+        body {
+            font-family: 'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #0f172a;
+            background: linear-gradient(180deg, #fcfefd 0%, #f4f8f7 100%);
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 32px auto;
+            background: linear-gradient(145deg, rgba(244,255,238,0.29), rgba(212,245,229,0.18)), #fff;
+            border: 1px solid rgba(16,185,129,0.28);
+            border-radius: 1rem;
+            box-shadow: 0 10px 22px rgba(15,23,42,0.05);
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            text-shadow: 0 0 14px rgba(16,185,129,0.22);
+            font-family: 'Comfortaa', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            text-transform: lowercase;
+        }
+        .content {
+            padding: 30px 20px;
+        }
+        .content p, .content ul, .content li {
+            color: #0f172a;
+            font-size: 16px;
+            margin: 0 0 15px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #10b981;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(16,185,129,0.12);
+            transition: background 0.2s;
+        }
+        .button:hover {
+            background: #059669;
+        }
+        .footer {
+            background: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer a {
+            color: #10b981;
+            text-decoration: none;
+        }
+        @media (max-width: 600px) {
+            .container { margin: 0.5rem; border-radius: 0.5rem; }
+            .header, .content, .footer { padding: 16px 8px; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>{$safeAppName}</h1>
+            <h1>involve</h1>
         </div>
         <div class="content">
             {$content}
         </div>
         <div class="footer">
-            <p>This is an automated message from {$safeAppName}.</p>
+            <p>This is an automated message from involve.</p>
             <p><a href="{$safeBaseUrl}">Visit Dashboard</a></p>
         </div>
     </div>

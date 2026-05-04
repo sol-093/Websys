@@ -2684,7 +2684,7 @@ function renderHeader(string $title = 'Dashboard'): void
                             <img src="<?= e($logoDark) ?>" alt="" class="nav-logo-img nav-logo-dark">
                         </span>
                         <span class="nav-brand-text nav-wordmark" aria-hidden="true">
-                            <span class="nav-wordmark-main">SOM</span>
+                            <span class="nav-wordmark-main">Involve</span>
                         </span>
                     </a>
                     <div class="nav-desktop hidden lg:flex gap-3 text-sm items-center">
