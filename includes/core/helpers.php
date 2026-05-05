@@ -314,17 +314,18 @@ function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
         return ['path' => null, 'error' => 'Receipt content does not match the selected file type.'];
     }
 
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0777, true);
+    $receiptDir = rtrim($uploadDir, '/\\') . DIRECTORY_SEPARATOR . 'receipts';
+    if (!is_dir($receiptDir) && !mkdir($receiptDir, 0777, true) && !is_dir($receiptDir)) {
+        return ['path' => null, 'error' => 'Unable to prepare receipt upload directory.'];
     }
 
     $filename = 'receipt_' . bin2hex(random_bytes(16)) . '.' . $extension;
-    $target = rtrim($uploadDir, '/\\') . DIRECTORY_SEPARATOR . $filename;
+    $target = $receiptDir . DIRECTORY_SEPARATOR . $filename;
     if (!move_uploaded_file((string) $file['tmp_name'], $target)) {
         return ['path' => null, 'error' => 'Unable to save uploaded receipt. Please try again.'];
     }
 
-    return ['path' => 'uploads/' . $filename, 'error' => null];
+    return ['path' => 'uploads/receipts/' . $filename, 'error' => null];
 }
 
 function validatePasswordStrength(string $password): ?string

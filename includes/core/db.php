@@ -476,6 +476,10 @@ function normalizeLegacyUploadPaths(PDO $pdo): void
     if (tableColumnExists($pdo, 'organizations', 'logo_path')) {
         $pdo->exec("UPDATE organizations SET logo_path = REPLACE(logo_path, 'uploads/org_', 'uploads/organizations/org_') WHERE logo_path LIKE 'uploads/org_%'");
     }
+
+    if (tableColumnExists($pdo, 'financial_transactions', 'receipt_path')) {
+        $pdo->exec("UPDATE financial_transactions SET receipt_path = REPLACE(receipt_path, 'uploads/receipt_', 'uploads/receipts/receipt_') WHERE receipt_path LIKE 'uploads/receipt_%'");
+    }
 }
 
 function ensureProfileMediaColumns(PDO $pdo): void

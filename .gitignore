@@ -21,7 +21,12 @@ Thumbs.db
 !/uploads/assets/logolight.png
 !/uploads/assets/pdftemplate.png
 !/uploads/assets/kldbuilding.jpg
+!/uploads/assets/.htaccess
 !/uploads/users/
 !/uploads/users/.gitkeep
+!/uploads/users/.htaccess
 !/uploads/organizations/
 !/uploads/organizations/.gitkeep
+!/uploads/organizations/.htaccess
+!/uploads/receipts/
+!/uploads/receipts/.htaccess
