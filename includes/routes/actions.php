@@ -36,6 +36,7 @@ if ($page === 'google_callback') {
     handleGoogleCallbackPage($db, $config);
 }
 
+// All POST actions pass through the shared CSRF gate before any handler runs.
 csrfMiddleware();
 
 if (isPost()) {
@@ -61,6 +62,7 @@ if (isPost()) {
         handleResetPasswordAction($db);
     }
 
+    // Authenticated POST actions are gated here; privileged handlers add requireRole() locally.
     requireLogin();
     $user = currentUser();
 
