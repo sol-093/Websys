@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * EDIT GUIDE:
  * - Edit this file for low-level mail transport behavior.
- * - Edit src/lib/email.php for email templates/content.
+ * - Edit includes/lib/email.php for email templates/content.
  * ================================================
  */
 
@@ -22,10 +22,10 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // Include the PHPMailer library files
-require_once __DIR__ . '/../lib/PHPMailer-master/src/Exception.php';
-require_once __DIR__ . '/../lib/PHPMailer-master/src/PHPMailer.php';
+require_once __DIR__ . '/../lib/PHPMailer-master/includes/Exception.php';
+require_once __DIR__ . '/../lib/PHPMailer-master/includes/PHPMailer.php';
 require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/../lib/PHPMailer-master/src/SMTP.php';
+require_once __DIR__ . '/../lib/PHPMailer-master/includes/SMTP.php';
 
 function sendSystemEmail(string $recipientEmail, string $recipientName, string $subject, string $htmlBody): bool
 {

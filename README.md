@@ -56,63 +56,59 @@ php scripts/tests/test_organization_helpers.php
 ```
 
 ### Configuration
-- Main runtime config: `src/core/config.php`
-- Database bootstrap and compatibility: `src/core/db.php`
-- Upload destination: `public/uploads/`
+- Main runtime config: `includes/core/config.php`
+- Database bootstrap and compatibility: `includes/core/db.php`
+- Upload destination: `uploads/`
 - SMTP/OAuth values are read from environment variables and config.
-- Navbar logo image paths are set inline in `src/core/layout.php` and currently map light mode to `public/uploads/involvelogo dark.png` and dark mode to `public/uploads/involvelogo light.png`.
-- INVOLVE brand image assets live in `public/uploads/`; active navbar and About page logo styles are defined in `src/core/layout.php`.
+- Navbar logo image paths are set inline in `includes/core/layout.php` and currently map light mode to `uploads/involvelogo dark.png` and dark mode to `uploads/involvelogo light.png`.
+- INVOLVE brand image assets live in `uploads/`; active navbar and About page logo styles are defined in `includes/core/layout.php`.
 - Account emails currently use text-based `involve` header branding for broader email-client compatibility.
-- Transaction PDF exports use `public/uploads/pdftemplate.png` as the page background template.
+- Transaction PDF exports use `uploads/pdftemplate.png` as the page background template.
 
 ### Architecture Snapshot
 - `index.php`: thin web entry point that loads bootstrap and route dispatchers
-- `src/bootstrap.php`: runtime bootstrap, dependency loading, DB startup, current user/page setup
-- `src/routes/`: GET page dispatch and action/POST dispatch
-- `src/features/`: feature-oriented page, action, workflow, and data files
-- `src/shared/`: shared UI helpers split out of the layout shell
-- `src/core/`: auth/session guards, config, DB bootstrap, layout shell, generic helpers
-- `src/lib/`: reusable domain and utility helpers
+- `includes/bootstrap.php`: runtime bootstrap, dependency loading, DB startup, current user/page setup
+- `includes/routes/`: GET page dispatch and action/POST dispatch
+- `includes/features/`: feature-oriented page, action, workflow, and data files
+- `includes/shared/`: shared UI helpers split out of the layout shell
+- `includes/core/`: auth/session guards, config, DB bootstrap, layout shell, generic helpers
+- `includes/lib/`: reusable domain and utility helpers
 
 ### Project Structure
 ```text
 websys/
-├── index.php                 # Single entry point for routing and action dispatch
-├── README.md                 # Main repository overview and quick-start guide
-├── schema.sql                # Baseline schema reference
-├── docs/
-│   ├── architecture/         # Architecture and system design docs
-│   └── reference/            # Function analysis and changelog docs
-├── public/
-│   ├── uploads/              # Writable upload storage for receipts and media
-│   └── vendor/               # Vendor assets when present in local builds
-├── scripts/
-│   ├── maintenance/          # Cleanup and maintenance scripts
-│   ├── seed/                 # Demo/seeding scripts
-│   └── tests/                # Regression/utility scripts
-├── src/
-│   ├── core/                 # Bootstrap, auth, DB, helpers, layout
-│   ├── lib/                  # Reusable domain helpers
-└── assets/
-    ├── fonts/                # Wordmark font assets
-    └── js/                   # Shared client-side scripts
+|-- index.php                  # Single entry point for routing and action dispatch
+|-- README.md                  # Main repository overview and quick-start guide
+|-- assets/                    # CSS, JS, and font assets
+|-- database/                  # Schema/reference database files
+|   `-- schema.sql
+|-- docs/                      # Architecture and reference documentation
+|-- includes/                  # Application PHP code
+|   |-- core/                  # Auth, config, DB, helpers, layout
+|   |-- features/              # Feature pages, actions, workflows, data
+|   |-- lib/                   # Reusable domain helpers
+|   |-- routes/                # Page and action dispatch
+|   `-- shared/                # Shared UI helpers
+|-- scripts/                   # Maintenance, seed, and test scripts
+|-- uploads/                   # Writable upload storage and bundled media
+`-- vendor/                    # Composer dependencies
 ```
 
-Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`, and `shared/` in addition to the existing `core/` and `lib/` runtime layers.
+Source folders under `includes/` now include `bootstrap.php`, `routes/`, `features/`, and `shared/` in addition to the existing `core/` and `lib/` runtime layers.
 
 ### Key Project Files
 - `index.php`: loads bootstrap, action dispatch, and page dispatch
-- `src/bootstrap.php`: starts the app and requires feature/runtime modules
-- `src/routes/actions.php`: global action and POST dispatch
-- `src/routes/pages.php`: page dispatch
-- `src/core/layout.php`: shared shell and layout markup
-- `src/shared/ui.php`: shared breadcrumbs, empty states, and skeleton UI helpers
-- `src/core/db.php`: database bootstrap and compatibility initialization
-- `src/core/mailer.php`: PHPMailer transport configuration and send helpers
-- `src/features/transactions/actions.php`: content mutations and transaction PDF export generation
-- `src/features/dashboard/page.php`: dashboard page controller
-- `src/features/dashboard/markup.php`: dashboard markup partials
-- `src/features/dashboard/data.php`: dashboard data aggregation
+- `includes/bootstrap.php`: starts the app and requires feature/runtime modules
+- `includes/routes/actions.php`: global action and POST dispatch
+- `includes/routes/pages.php`: page dispatch
+- `includes/core/layout.php`: shared shell and layout markup
+- `includes/shared/ui.php`: shared breadcrumbs, empty states, and skeleton UI helpers
+- `includes/core/db.php`: database bootstrap and compatibility initialization
+- `includes/core/mailer.php`: PHPMailer transport configuration and send helpers
+- `includes/features/transactions/actions.php`: content mutations and transaction PDF export generation
+- `includes/features/dashboard/page.php`: dashboard page controller
+- `includes/features/dashboard/markup.php`: dashboard markup partials
+- `includes/features/dashboard/data.php`: dashboard data aggregation
 - `assets/css/app.css`: extracted global runtime styles
 - `assets/js/app.js`: extracted global runtime behavior
 - `assets/js/dashboard-page.js`: dashboard client-side charts, filters, and modal behavior
@@ -121,7 +117,7 @@ Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`,
 - [Project Architecture](docs/architecture/PROJECT_DOCUMENTATION.md)
 - [Function Analysis](docs/reference/FUNCTION_ANALYSIS.md)
 - [Changelog (Baseline Comparison)](docs/reference/CHANGELOG_2026-04-06.md)
-- [Source Folder Guide](src/README.md)
+- [Source Folder Guide](includes/README.md)
 
 ## Maintenance
 - Keep behavior changes and documentation updates in the same change set.

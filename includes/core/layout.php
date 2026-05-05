@@ -18,7 +18,7 @@ declare(strict_types=1);
  * - Edit nav/footer markup here.
  * - Edit global styles in assets/css/app.css.
  * - Edit global behavior in assets/js/theme-init.js and assets/js/app.js.
- * - Edit shared UI fragments in src/shared/ui.php.
+ * - Edit shared UI fragments in includes/shared/ui.php.
  * ================================================
  */
 
@@ -39,9 +39,9 @@ function renderHeader(string $title = 'Dashboard'): void
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
     $navAppName = (string) $config['app_name'];
-    $faviconPath = 'public/uploads/involvemoblight.png';
-    $logoLight = 'public/uploads/involvelogo dark.png';
-    $logoDark = 'public/uploads/involvelogo light.png';
+    $faviconPath = 'uploads/involvemoblight.png';
+    $logoLight = 'uploads/involvelogo dark.png';
+    $logoDark = 'uploads/involvelogo light.png';
     $showOnboarding = false;
     if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
         $_SESSION['show_onboarding'] = true;

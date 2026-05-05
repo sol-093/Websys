@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../../src/core/db.php';
+require __DIR__ . '/../../includes/core/db.php';
 
 $pdo = db();
 
@@ -32,7 +32,7 @@ try {
     }
 
     // 2. Clear physical receipt files
-    $receiptDir = __DIR__ . '/../../public/uploads/receipts/';
+    $receiptDir = __DIR__ . '/../../uploads/receipts/';
     if (is_dir($receiptDir)) {
         $files = glob($receiptDir . '*'); 
         foreach ($files as $file) {

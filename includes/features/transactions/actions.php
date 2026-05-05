@@ -629,7 +629,7 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         ];
     };
 
-    $templateImage = $readPdfPngTemplate(dirname(__DIR__, 3) . '/public/uploads/pdftemplate.png');
+    $templateImage = $readPdfPngTemplate(dirname(__DIR__, 3) . '/uploads/pdftemplate.png');
 
     $objects = [];
     $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';

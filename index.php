@@ -14,10 +14,10 @@ declare(strict_types=1);
  *
  * EDIT GUIDE:
  * - Change this file only when the top-level request pipeline changes.
- * - Add new routes in src/routes/actions.php or src/routes/pages.php.
+ * - Add new routes in includes/routes/actions.php or includes/routes/pages.php.
  * ================================================
  */
 
-require __DIR__ . '/src/bootstrap.php';
-require __DIR__ . '/src/routes/actions.php';
-require __DIR__ . '/src/routes/pages.php';
+require __DIR__ . '/includes/bootstrap.php';
+require __DIR__ . '/includes/routes/actions.php';
+require __DIR__ . '/includes/routes/pages.php';

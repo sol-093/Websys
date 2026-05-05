@@ -16,7 +16,7 @@ declare(strict_types=1);
  * EDIT GUIDE:
  * - Add ?action=... handlers in section 1.
  * - Add form action values in sections 3 or 4.
- * - Keep business logic in src/features/* files.
+ * - Keep business logic in includes/features/* files.
  * ================================================
  */
 

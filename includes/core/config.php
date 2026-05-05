@@ -50,7 +50,7 @@ return [
         'sqlite_path' => (string) $env('DB_SQLITE_PATH', dirname(__DIR__, 2) . '/storage/database.sqlite'),
     ],
     'app_name' => (string) $env('APP_NAME', 'INVOLVE'),
-    'upload_dir' => dirname(__DIR__, 2) . '/public/uploads',
+    'upload_dir' => dirname(__DIR__, 2) . '/uploads',
     'google_oauth' => [
         'client_id' => (string) $env('GOOGLE_CLIENT_ID', ''),
         'client_secret' => (string) $env('GOOGLE_CLIENT_SECRET', ''),

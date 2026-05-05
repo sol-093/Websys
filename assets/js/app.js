@@ -1,6 +1,6 @@
 /* ================================================
    INVOLVE - GLOBAL APP BEHAVIOR
-   Shared JavaScript loaded by src/core/layout.php
+   Shared JavaScript loaded by includes/core/layout.php
    ================================================
 
    TABLE OF CONTENTS:

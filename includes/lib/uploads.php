@@ -121,13 +121,17 @@ function handleProfileImageUpload(array $file, string $uploadDir, string $filena
         return false;
     }
 
-    return 'public/uploads/' . $filename;
+    return 'uploads/' . $filename;
 }
 
 function deleteStoredUpload(?string $path): void
 {
     $normalized = trim((string) $path);
-    if ($normalized === '' || !str_starts_with($normalized, 'public/uploads/')) {
+    if (str_starts_with($normalized, 'public/uploads/')) {
+        $normalized = 'uploads/' . substr($normalized, strlen('public/uploads/'));
+    }
+
+    if ($normalized === '' || !str_starts_with($normalized, 'uploads/')) {
         return;
     }
 
@@ -136,7 +140,7 @@ function deleteStoredUpload(?string $path): void
         return;
     }
 
-    $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $filename;
+    $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $filename;
     if (is_file($absolutePath)) {
         @unlink($absolutePath);
     }

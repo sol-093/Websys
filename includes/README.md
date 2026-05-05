@@ -1,7 +1,7 @@
 # Source Layer Guide
 
 ## Summary
-- **Scope:** `src/` runtime application code
+- **Scope:** `includes/` runtime application code
 - **Updated:** May 5, 2026
 - **Pattern:** Single-entry PHP architecture with feature-oriented source folders
 
@@ -24,19 +24,19 @@ This document explains how source code is organized and where new functionality 
 
 ### Entry and Dispatch
 - `index.php` is the single entry point.
-- Runtime startup is coordinated by `src/bootstrap.php`.
-- Route rendering and action dispatch are coordinated by `src/routes/pages.php` and `src/routes/actions.php`.
-- Shared shell rendering is handled through `src/core/layout.php`.
-- Email verification and forgot-password delivery use `src/core/mailer.php` and `src/lib/email.php`.
-- Navbar logo source paths and footer branding are maintained in `src/core/layout.php`.
+- Runtime startup is coordinated by `includes/bootstrap.php`.
+- Route rendering and action dispatch are coordinated by `includes/routes/pages.php` and `includes/routes/actions.php`.
+- Shared shell rendering is handled through `includes/core/layout.php`.
+- Email verification and forgot-password delivery use `includes/core/mailer.php` and `includes/lib/email.php`.
+- Navbar logo source paths and footer branding are maintained in `includes/core/layout.php`.
 - Global layout styles and behavior are extracted to `assets/css/app.css`, `assets/js/theme-init.js`, and `assets/js/app.js`.
 
 ### Placement Rules
-- Put reusable runtime concerns in `src/core/`.
-- Put domain helpers that can be reused by multiple flows in `src/lib/`.
-- Put feature-specific state-changing handlers, page renderers, and data shaping in the matching `src/features/<feature>/` directory.
-- Put route dispatch only in `src/routes/`.
-- Put shared presentation helpers in `src/shared/`.
+- Put reusable runtime concerns in `includes/core/`.
+- Put domain helpers that can be reused by multiple flows in `includes/lib/`.
+- Put feature-specific state-changing handlers, page renderers, and data shaping in the matching `includes/features/<feature>/` directory.
+- Put route dispatch only in `includes/routes/`.
+- Put shared presentation helpers in `includes/shared/`.
 
 ## Related Docs
 - [Repository Overview](../README.md)

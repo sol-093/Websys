@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require __DIR__ . '/../../src/core/db.php';
+require __DIR__ . '/../../includes/core/db.php';
 
 if (!extension_loaded('gd')) {
     fwrite(STDERR, "ERROR: GD library is not enabled.\n");
@@ -23,8 +23,8 @@ foreach ($transactions as $tx) {
     /**
      * FIX: We use realpath to find the base directory, 
      * then append the path directly from the database.
-     * Since the database now has "public/uploads/...", 
-     * we don't manually add "/public/" here anymore.
+     * Since the database now stores "uploads/...",
+     * keep generated receipt paths relative to the project root.
      */
     $basePath = realpath(__DIR__ . '/../../');
     $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $tx['receipt_path']);

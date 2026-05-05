@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__, 2) . '/src/core/helpers.php';
-require dirname(__DIR__, 2) . '/src/core/db.php';
+require dirname(__DIR__, 2) . '/includes/core/helpers.php';
+require dirname(__DIR__, 2) . '/includes/core/db.php';
 
 $db = db();
 $now = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');

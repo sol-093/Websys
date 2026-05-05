@@ -284,6 +284,7 @@ function initializeDatabaseSqlite(PDO $pdo): void
     ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
+    normalizeLegacyUploadPaths($pdo);
 }
 
 function initializeDatabaseMySql(PDO $pdo): void
@@ -441,6 +442,32 @@ function initializeDatabaseMySql(PDO $pdo): void
     ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureDefaultAdmin($pdo);
+    normalizeLegacyUploadPaths($pdo);
+}
+
+function normalizeLegacyUploadPaths(PDO $pdo): void
+{
+    $columns = [
+        ['users', 'profile_picture_path'],
+        ['organizations', 'logo_path'],
+        ['financial_transactions', 'receipt_path'],
+    ];
+
+    foreach ($columns as [$table, $column]) {
+        if (!tableColumnExists($pdo, $table, $column)) {
+            continue;
+        }
+
+        $pdo->exec(
+            sprintf(
+                "UPDATE %s SET %s = REPLACE(%s, 'public/uploads/', 'uploads/') WHERE %s LIKE 'public/uploads/%%'",
+                $table,
+                $column,
+                $column,
+                $column
+            )
+        );
+    }
 }
 
 function ensureProfileMediaColumns(PDO $pdo): void

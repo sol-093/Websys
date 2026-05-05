@@ -1,6 +1,6 @@
 /* ================================================
    INVOLVE - GLOBAL APP STYLES
-   Extracted runtime CSS used by src/core/layout.php
+   Extracted runtime CSS used by includes/core/layout.php
    ================================================
 
    TABLE OF CONTENTS:
@@ -31,7 +31,7 @@
                 --green-700: #10b981;
                 --green-800: #0f766e;
                 --line: rgba(16, 185, 129, 0.28);
-                --page-texture-image: url('../../public/uploads/kldbuilding.jpg');
+                --page-texture-image: url('../../uploads/kldbuilding.jpg');
             }
 
             html,

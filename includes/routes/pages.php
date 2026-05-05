@@ -15,7 +15,7 @@ declare(strict_types=1);
  *
  * EDIT GUIDE:
  * - Add new ?page=... routes here.
- * - Keep page markup in src/features/* page files.
+ * - Keep page markup in includes/features/* page files.
  * - Put access checks near the route they protect.
  * ================================================
  */

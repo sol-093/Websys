@@ -3,19 +3,20 @@
 .DS_Store
 Thumbs.db
 *.log
-/public/uploads/*
-!/public/uploads/.gitkeep
-!/public/uploads/cas.png
-!/public/uploads/cj.jpg
-!/public/uploads/eunice.png
-!/public/uploads/involve.png
-!/public/uploads/involvelogo dark.png
-!/public/uploads/involvelogo light.png
-!/public/uploads/involvemobdark.png
-!/public/uploads/involvemoblight.png
-!/public/uploads/jm.png
-!/public/uploads/josh.png
-!/public/uploads/logodark.png
-!/public/uploads/logolight.png
-!/public/uploads/pdftemplate.png
-!/public/uploads/kldbuilding.jpg
+/uploads/*
+!/uploads/.gitkeep
+!/uploads/.htaccess
+!/uploads/cas.png
+!/uploads/cj.jpg
+!/uploads/eunice.png
+!/uploads/involve.png
+!/uploads/involvelogo dark.png
+!/uploads/involvelogo light.png
+!/uploads/involvemobdark.png
+!/uploads/involvemoblight.png
+!/uploads/jm.png
+!/uploads/josh.png
+!/uploads/logodark.png
+!/uploads/logolight.png
+!/uploads/pdftemplate.png
+!/uploads/kldbuilding.jpg

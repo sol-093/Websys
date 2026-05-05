@@ -2,7 +2,7 @@
 
 ## Architecture
 - This is a single-entry PHP application. `index.php` loads bootstrap and route dispatchers.
-- Keep startup in `src/bootstrap.php`, dispatch in `src/routes/`, feature code in `src/features/`, shared UI helpers in `src/shared/`, runtime concerns in `src/core/`, and reusable domain helpers in `src/lib/`.
+- Keep startup in `includes/bootstrap.php`, dispatch in `includes/routes/`, feature code in `includes/features/`, shared UI helpers in `includes/shared/`, runtime concerns in `includes/core/`, and reusable domain helpers in `includes/lib/`.
 - Prefer extending the existing layered structure instead of introducing new top-level patterns.
 - Link to the longer docs instead of duplicating them: [README.md](../README.md), [docs/architecture/PROJECT_DOCUMENTATION.md](../docs/architecture/PROJECT_DOCUMENTATION.md), and [docs/reference/FUNCTION_ANALYSIS.md](../docs/reference/FUNCTION_ANALYSIS.md).
 
@@ -21,6 +21,6 @@
 - There is no Composer setup or PHPUnit suite in this repository.
 
 ## Conventions
-- `src/db.php` bootstraps and auto-initializes schema compatibility on startup, so changes to schema-related behavior should stay aligned with that flow.
-- Uploaded receipts live under `public/uploads/` and should remain writable in local environments.
+- `includes/core/db.php` bootstraps and auto-initializes schema compatibility on startup, so changes to schema-related behavior should stay aligned with that flow.
+- Uploaded receipts live under `uploads/` and should remain writable in local environments.
 - If a change affects behavior, update the relevant docs in the same change set.

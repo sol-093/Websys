@@ -25,7 +25,7 @@ This document describes the system architecture, layer boundaries, data model re
 
 ### Architecture Model
 - Single-entry application: `index.php` loads bootstrap and route dispatchers.
-- Feature-oriented organization under `src/`:
+- Feature-oriented organization under `includes/`:
   - `bootstrap.php` runtime startup and dependency loading
   - `routes/` page/action dispatch
   - `features/` feature-specific pages, actions, workflows, and data
@@ -36,30 +36,24 @@ This document describes the system architecture, layer boundaries, data model re
 ### Project Structure
 ```text
 websys/
-├── index.php                    # Single entry point for route/action dispatch
-├── schema.sql                   # Baseline schema reference
-├── README.md                    # Main repository documentation hub
-├── docs/
-│   ├── architecture/
-│   │   └── PROJECT_DOCUMENTATION.md # Architecture reference
-│   └── reference/
-│       ├── FUNCTION_ANALYSIS.md      # Function and handler map
-│       └── CHANGELOG_2026-04-06.md   # Baseline change summary
-├── public/
-│   ├── uploads/                 # Writable upload storage for receipts/media
-│   └── vendor/                  # Optional local vendor assets
-├── scripts/
-│   ├── maintenance/             # Periodic cleanup scripts
-│   ├── seed/                    # Demo data scripts
-│   └── tests/                   # Regression utilities
-├── src/
-│   ├── core/                    # Bootstrap, auth, DB, helpers, layout
-│   ├── lib/                     # Reusable domain helpers
-└── assets/
-  └── js/                      # Shared client-side behavior
+|-- index.php                  # Single entry point for route/action dispatch
+|-- README.md                  # Main repository documentation hub
+|-- assets/                    # CSS, JS, and font assets
+|-- database/                  # Schema/reference database files
+|   `-- schema.sql
+|-- docs/                      # Architecture and reference documentation
+|-- includes/                  # Application PHP code
+|   |-- core/                  # Auth, config, DB, helpers, layout
+|   |-- features/              # Feature pages, actions, workflows, data
+|   |-- lib/                   # Reusable domain helpers
+|   |-- routes/                # Page and action dispatch
+|   `-- shared/                # Shared UI helpers
+|-- scripts/                   # Maintenance, seed, and test scripts
+|-- uploads/                   # Writable upload storage and bundled media
+`-- vendor/                    # Composer dependencies
 ```
 
-Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`, and `shared/` in addition to the existing `core/` and `lib/` runtime layers.
+Source folders under `includes/` now include `bootstrap.php`, `routes/`, `features/`, and `shared/` in addition to the existing `core/` and `lib/` runtime layers.
 
 ### Security and Runtime Principles
 - Session-based authentication and role enforcement
@@ -71,10 +65,10 @@ Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`,
 - One-use forgot-password reset tokens with expiry cleanup and reset cooldown tracking
 
 ### Data and Schema Notes
-- Schema bootstrap and compatibility checks live in `src/core/db.php`.
-- Schema reference file: `schema.sql`.
+- Schema bootstrap and compatibility checks live in `includes/core/db.php`.
+- Schema reference file: `database/schema.sql`.
 - App supports MySQL and SQLite through PDO.
-- Uploaded receipts/media are stored in `public/uploads/`.
+- Uploaded receipts/media are stored in `uploads/`.
 - Compatibility migrations include `password_reset_at` for forgot-password reset cooldown enforcement.
 
 ### Route and Feature Domains
@@ -110,7 +104,7 @@ http://localhost:8000/index.php
 - [Repository Overview](../../README.md)
 - [Function Analysis](../reference/FUNCTION_ANALYSIS.md)
 - [Change Summary](../reference/CHANGELOG_2026-04-06.md)
-- [Source Layer Guide](../../src/README.md)
+- [Source Layer Guide](../../includes/README.md)
 
 ## Maintenance
 - Keep this document focused on architecture decisions and boundaries.

@@ -324,7 +324,7 @@ function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
         return ['path' => null, 'error' => 'Unable to save uploaded receipt. Please try again.'];
     }
 
-    return ['path' => 'public/uploads/' . $filename, 'error' => null];
+    return ['path' => 'uploads/' . $filename, 'error' => null];
 }
 
 function validatePasswordStrength(string $password): ?string

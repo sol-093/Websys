@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../../src/lib/organization.php';
+require __DIR__ . '/../../includes/lib/organization.php';
 
 function assertTrue(bool $condition, string $message): void
 {
