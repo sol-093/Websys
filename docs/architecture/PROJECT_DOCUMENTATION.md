@@ -55,8 +55,7 @@ websys/
 ├── src/
 │   ├── core/                    # Bootstrap, auth, DB, helpers, layout
 │   ├── lib/                     # Reusable domain helpers
-└── static/
-  ├── demo/                    # Static demo HTML/CSS/JS
+└── assets/
   └── js/                      # Shared client-side behavior
 ```
 
@@ -112,7 +111,6 @@ http://localhost:8000/index.php
 - [Function Analysis](../reference/FUNCTION_ANALYSIS.md)
 - [Change Summary](../reference/CHANGELOG_2026-04-06.md)
 - [Source Layer Guide](../../src/README.md)
-- [Static Demo Guide](../../static/README.md)
 
 ## Maintenance
 - Keep this document focused on architecture decisions and boundaries.

@@ -2,6 +2,23 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - OWNER ORGANIZATION PAGE
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Owner Organization Dashboard
+ * 2. Organization Profile Form
+ * 3. Announcements and Transactions
+ * 4. Requests and Owner Modals
+ *
+ * EDIT GUIDE:
+ * - Edit this file for owner-facing markup.
+ * - Edit transactions/actions.php or workflows.php for POST behavior.
+ * ================================================
+ */
+
 function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff): void
 {
     requireRole(['owner']);
@@ -529,7 +546,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
         })();
     </script>
 
-    <script src="static/js/owner-org-switcher.js"></script>
+    <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;

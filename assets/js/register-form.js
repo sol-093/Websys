@@ -1,3 +1,17 @@
+/* ================================================
+   INVOLVE - REGISTRATION FORM VALIDATION
+   ================================================
+
+   TABLE OF CONTENTS:
+   1. Field Lookup and Error Helpers
+   2. Name, Email, Section, and Consent Validation
+   3. Password Strength Validation
+   4. Submit Guard
+
+   EDIT GUIDE:
+   - Edit this file for registration-page browser validation only.
+   ================================================ */
+
 (function () {
     var form = document.getElementById('registerForm');
     if (!form) {

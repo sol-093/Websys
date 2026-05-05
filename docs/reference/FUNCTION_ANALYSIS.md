@@ -46,7 +46,7 @@ This document maps core functions by file/layer so contributors can quickly loca
 ### Shared UI (`src/shared/`)
 - `ui.php`: breadcrumbs, empty states, and dashboard skeleton rendering helpers
 
-### Client Scripts (`static/js/`)
+### Client Scripts (`assets/js/`)
 - `app.js`: extracted global layout behavior, toasts, CSRF form injection, theme/mobile nav, global search, currency inputs, and onboarding
 - `theme-init.js`: early dark-mode body class initialization
 - `dashboard-page.js`: dashboard charts, empty states, modal behavior, client-side table filters
@@ -56,7 +56,7 @@ This document maps core functions by file/layer so contributors can quickly loca
 
 ### Shared UI Notes
 - Navbar logo paths, sizing, light/dark asset switching, footer branding, and shared shell markup live in `src/core/layout.php`.
-- Global runtime styles live in `static/css/app.css`.
+- Global runtime styles live in `assets/css/app.css`.
 - Current navbar assets are served from `public/uploads/involvelogo dark.png` for light mode and `public/uploads/involvelogo light.png` for dark mode.
 
 ## Related Docs

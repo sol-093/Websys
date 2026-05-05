@@ -29,7 +29,7 @@ This document explains how source code is organized and where new functionality 
 - Shared shell rendering is handled through `src/core/layout.php`.
 - Email verification and forgot-password delivery use `src/core/mailer.php` and `src/lib/email.php`.
 - Navbar logo source paths and footer branding are maintained in `src/core/layout.php`.
-- Global layout styles and behavior are extracted to `static/css/app.css`, `static/js/theme-init.js`, and `static/js/app.js`.
+- Global layout styles and behavior are extracted to `assets/css/app.css`, `assets/js/theme-init.js`, and `assets/js/app.js`.
 
 ### Placement Rules
 - Put reusable runtime concerns in `src/core/`.

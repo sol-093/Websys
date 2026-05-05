@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - DASHBOARD PAGE COMPOSITION
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Local Formatter Closures
+ * 2. Dashboard Markup Include
+ * 3. Client Data JSON and Chart Scripts
+ *
+ * EDIT GUIDE:
+ * - Edit this file for dashboard composition.
+ * - Edit data.php for queries and markup.php for sections.
+ * ================================================
+ */
+
 function handleDashboardPage(array $dashboardData, array $user): void
 {
     extract($dashboardData, EXTR_OVERWRITE);
@@ -62,7 +78,7 @@ function handleDashboardPage(array $dashboardData, array $user): void
     ?>
     <script id="dashboard-client-data" type="application/json"><?= json_encode($dashboardClientData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="static/js/dashboard-page.js"></script>
+    <script src="assets/js/dashboard-page.js"></script>
     <?php
 
     renderFooter();

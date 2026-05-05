@@ -5,6 +5,17 @@ declare(strict_types=1);
 /**
  * Email Service Module
  * Handles sending emails for authentication and security notifications
+ *
+ * ================================================
+ * TABLE OF CONTENTS:
+ * 1. Transport Readiness
+ * 2. Email Template Builders
+ * 3. Activation and Password Reset Emails
+ * 4. Security and Account Status Emails
+ *
+ * EDIT GUIDE:
+ * - Edit this file for email copy, layout, and high-level account mail behavior.
+ * ================================================
  */
 
 function ensurePhpMailerAvailable(): bool

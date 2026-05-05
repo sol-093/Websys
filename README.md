@@ -93,8 +93,7 @@ websys/
 ├── src/
 │   ├── core/                 # Bootstrap, auth, DB, helpers, layout
 │   ├── lib/                  # Reusable domain helpers
-└── static/
-    ├── demo/                 # Frontend-only static demo assets
+└── assets/
     ├── fonts/                # Wordmark font assets
     └── js/                   # Shared client-side scripts
 ```
@@ -114,17 +113,15 @@ Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`,
 - `src/features/dashboard/page.php`: dashboard page controller
 - `src/features/dashboard/markup.php`: dashboard markup partials
 - `src/features/dashboard/data.php`: dashboard data aggregation
-- `static/css/app.css`: extracted global runtime styles
-- `static/js/app.js`: extracted global runtime behavior
-- `static/js/dashboard-page.js`: dashboard client-side charts, filters, and modal behavior
+- `assets/css/app.css`: extracted global runtime styles
+- `assets/js/app.js`: extracted global runtime behavior
+- `assets/js/dashboard-page.js`: dashboard client-side charts, filters, and modal behavior
 
 ## Related Docs
 - [Project Architecture](docs/architecture/PROJECT_DOCUMENTATION.md)
 - [Function Analysis](docs/reference/FUNCTION_ANALYSIS.md)
 - [Changelog (Baseline Comparison)](docs/reference/CHANGELOG_2026-04-06.md)
 - [Source Folder Guide](src/README.md)
-- [Static Demo Guide](static/README.md)
-- [Frontend Pitch Notes](static/FRONTEND_IDEAS.md)
 
 ## Maintenance
 - Keep behavior changes and documentation updates in the same change set.

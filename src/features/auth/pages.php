@@ -2,6 +2,24 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - AUTH AND PUBLIC PAGES
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Logout
+ * 2. Home and About
+ * 3. Login and Register
+ * 4. Verify Email
+ * 5. Forgot and Reset Password
+ *
+ * EDIT GUIDE:
+ * - Edit this file for public/auth page markup.
+ * - Edit src/features/auth/actions.php for POST behavior.
+ * ================================================
+ */
+
 function handleLogoutPage(): void
 {
     $logoutUserId = (int) ($_SESSION['user_id'] ?? 0);
@@ -499,7 +517,7 @@ function handleRegisterPage(): void
             }
         })();
     </script>
-    <script src="static/js/register-form.js"></script>
+    <script src="assets/js/register-form.js"></script>
     <?php
     renderFooter();
     exit;

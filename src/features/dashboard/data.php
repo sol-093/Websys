@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - DASHBOARD DATA
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. KPI Totals and Trends
+ * 2. Ranking and Chart Data
+ * 3. Announcements and Reports
+ * 4. Organization Panels
+ *
+ * EDIT GUIDE:
+ * - Edit this file when changing dashboard queries, metrics, date windows, or chart data.
+ * ================================================
+ */
+
 function buildDashboardViewData(PDO $db, array $user, array $config, string $announcementCutoff, string $recentReportCutoffDate): array
 {
     $orgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();

@@ -1,3 +1,31 @@
+/* ================================================
+   INVOLVE - GLOBAL APP STYLES
+   Extracted runtime CSS used by src/core/layout.php
+   ================================================
+
+   TABLE OF CONTENTS:
+   1. App Shell, Theme, and Base Elements
+   2. Toasts and Shared Feedback UI
+   3. Shared Cards, Empty States, Icons, and Form Controls
+   4. Navigation, Branding, and About Page Styling
+   5. Footer
+   6. Auth, Profile, Admin, Organization, and Dashboard Surfaces
+   7. Modals, Global Search, and Mobile Panels
+   8. Responsive Fixes and Print Rules
+   9. Onboarding Tour
+
+   EDIT GUIDE:
+   - Change colors/backgrounds/theme polish in sections 1, 3, and 4.
+   - Change navbar/footer styling in sections 4 and 5.
+   - Change page-specific styling in section 6.
+   - Change modal/search/onboarding styling in sections 7 and 9.
+   - Do not put behavior here; use assets/js/app.js.
+   ================================================ */
+
+/* ================================================
+   1. APP SHELL, THEME, AND BASE ELEMENTS
+   ================================================ */
+
 :root {
                 --green-500: #34d399;
                 --green-700: #10b981;
@@ -106,6 +134,10 @@
                 border-color: rgba(15, 23, 42, 0.24);
                 box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
             }
+
+/* ================================================
+   2. TOASTS AND SHARED FEEDBACK UI
+   ================================================ */
 
             #toast-container {
                 position: fixed;
@@ -418,6 +450,10 @@
                 text-shadow: 0 0 14px rgba(16, 185, 129, 0.22);
             }
 
+/* ================================================
+   3. SHARED CARDS, EMPTY STATES, ICONS, AND FORM CONTROLS
+   ================================================ */
+
             .empty-state {
                 max-width: 38rem;
                 margin: 0 auto;
@@ -498,6 +534,10 @@
                 color: var(--green-500);
                 text-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
             }
+
+/* ================================================
+   4. NAVIGATION, BRANDING, AND ABOUT PAGE STYLING
+   ================================================ */
 
             .nav-link {
                 color: #065f46;
@@ -936,6 +976,10 @@
             body.theme-dark .nav-greeting {
                 color: #d1fae5;
             }
+
+/* ================================================
+   5. FOOTER
+   ================================================ */
 
             .app-footer {
                 margin-top: 1.25rem;
@@ -1497,6 +1541,10 @@
                 color: #fecaca !important;
             }
 
+/* ================================================
+   6. AUTH, PROFILE, ADMIN, ORGANIZATION, AND DASHBOARD SURFACES
+   ================================================ */
+
             .admin-mobile-card {
                 padding: 0.85rem;
                 border-radius: 0.85rem;
@@ -1735,6 +1783,10 @@
                 background: linear-gradient(180deg, rgba(52, 211, 153, 0.95), rgba(16, 185, 129, 0.9));
                 border: 2px solid rgba(16, 185, 129, 0.2);
             }
+
+/* ================================================
+   7. MODALS, GLOBAL SEARCH, AND MOBILE PANELS
+   ================================================ */
 
             .updates-modal-overlay {
                 position: fixed;
@@ -2295,6 +2347,10 @@
                 border-color: rgba(15, 23, 42, 0.1);
             }
 
+/* ================================================
+   8. RESPONSIVE FIXES AND PRINT RULES
+   ================================================ */
+
             @media print {
                 html,
                 body {
@@ -2358,7 +2414,11 @@
                 }
             }
 
-.onboarding-layer {
+/* ================================================
+   9. ONBOARDING TOUR
+   ================================================ */
+
+                .onboarding-layer {
                     position: fixed;
                     inset: 0;
                     z-index: 10020;

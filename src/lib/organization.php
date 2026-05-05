@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - ORGANIZATION HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Ownership and Membership Helpers
+ * 2. Institute and Program Options
+ * 3. Visibility, Category, and Join Rules
+ * 4. Organization Sorting and Filtering
+ *
+ * EDIT GUIDE:
+ * - Edit this file for organization rules reused by pages and workflows.
+ * ================================================
+ */
+
 function getOwnedOrganizations(int $ownerId): array
 {
     $stmt = db()->prepare('SELECT * FROM organizations WHERE owner_id = ? ORDER BY name ASC');

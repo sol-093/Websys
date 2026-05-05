@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - RUNTIME CONFIG
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Environment Readers
+ * 2. App Settings
+ * 3. Database Settings
+ * 4. Mail and OAuth Settings
+ *
+ * EDIT GUIDE:
+ * - Edit this file when adding config keys or env variable defaults.
+ * ================================================
+ */
+
 $env = static function (string $key, mixed $default = null): mixed {
     $value = getenv($key);
     return $value === false ? $default : $value;

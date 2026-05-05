@@ -1,3 +1,17 @@
+/* ================================================
+   INVOLVE - REUSABLE IMAGE CROPPER
+   ================================================
+
+   TABLE OF CONTENTS:
+   1. Find Crop Forms
+   2. Open Crop Modal and Preview Image
+   3. Track Crop Position and Zoom
+   4. Write Crop Fields Before Submit
+
+   EDIT GUIDE:
+   - Edit this file for profile/org image cropping behavior.
+   ================================================ */
+
 (function () {
     var forms = document.querySelectorAll('[data-image-crop-form]');
     if (!forms.length) {

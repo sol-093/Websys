@@ -1,10 +1,10 @@
 # Project Guidelines
 
 ## Architecture
-- This is a single-entry PHP application. `index.php` routes requests, renders pages, and dispatches POST actions.
-- Keep runtime concerns in `src/core/`, reusable domain helpers in `src/lib/`, action handlers in `src/actions/`, page renderers in `src/pages/`, and data aggregation in `src/services/`.
+- This is a single-entry PHP application. `index.php` loads bootstrap and route dispatchers.
+- Keep startup in `src/bootstrap.php`, dispatch in `src/routes/`, feature code in `src/features/`, shared UI helpers in `src/shared/`, runtime concerns in `src/core/`, and reusable domain helpers in `src/lib/`.
 - Prefer extending the existing layered structure instead of introducing new top-level patterns.
-- Link to the longer docs instead of duplicating them: [README.md](../README.md), [docs/architecture/PROJECT_DOCUMENTATION.md](../docs/architecture/PROJECT_DOCUMENTATION.md), [docs/reference/FUNCTION_ANALYSIS.md](../docs/reference/FUNCTION_ANALYSIS.md), and [static/README.md](../static/README.md).
+- Link to the longer docs instead of duplicating them: [README.md](../README.md), [docs/architecture/PROJECT_DOCUMENTATION.md](../docs/architecture/PROJECT_DOCUMENTATION.md), and [docs/reference/FUNCTION_ANALYSIS.md](../docs/reference/FUNCTION_ANALYSIS.md).
 
 ## Code Style
 - PHP files use `declare(strict_types=1);` and a pragmatic mixed PHP/HTML style in page renderers.

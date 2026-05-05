@@ -2,6 +2,26 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - SHARED LAYOUT SHELL
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. renderHeader()
+ * 2. Navigation and Global Search Markup
+ * 3. Main Content Opening
+ * 4. renderFooter()
+ * 5. Footer, Toast Container, and Script Includes
+ *
+ * EDIT GUIDE:
+ * - Edit nav/footer markup here.
+ * - Edit global styles in assets/css/app.css.
+ * - Edit global behavior in assets/js/theme-init.js and assets/js/app.js.
+ * - Edit shared UI fragments in src/shared/ui.php.
+ * ================================================
+ */
+
 function renderHeader(string $title = 'Dashboard'): void
 {
     $config = require __DIR__ . '/config.php';
@@ -54,10 +74,10 @@ function renderHeader(string $title = 'Dashboard'): void
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
         <script src="https://cdn.tailwindcss.com"></script>
-        <link rel="stylesheet" href="static/css/app.css?v=<?= e((string) @filemtime(__DIR__ . '/../../static/css/app.css')) ?>">
+        <link rel="stylesheet" href="assets/css/app.css?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/css/app.css')) ?>">
     </head>
     <body class="min-h-screen <?= $user ? 'is-authenticated' : '' ?>" data-flash="<?= e($flashMessage) ?>" data-flash-type="<?= e($flashType) ?>" data-csrf-token="<?= e(csrfToken()) ?>" data-show-onboarding="<?= !empty($_SESSION['show_onboarding']) ? '1' : '0' ?>" data-onboarding-user-suffix="<?= e((string) (($user['id'] ?? '') !== '' ? (int) $user['id'] : 'guest')) ?>">
-        <script src="static/js/theme-init.js?v=<?= e((string) @filemtime(__DIR__ . '/../../static/js/theme-init.js')) ?>"></script>
+        <script src="assets/js/theme-init.js?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/js/theme-init.js')) ?>"></script>
         <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-1.5 sm:mx-2.5 mt-1.5 text-slate-800">
             <div class="max-w-7xl mx-auto px-3 py-2">
                 <div class="flex items-center justify-between gap-2 min-w-0">
@@ -250,8 +270,8 @@ function renderFooter(): void
 
         <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-        <script src="static/js/image-cropper.js?v=<?= e((string) @filemtime(__DIR__ . '/../../static/js/image-cropper.js')) ?>"></script>
-        <script src="static/js/app.js?v=<?= e((string) @filemtime(__DIR__ . '/../../static/js/app.js')) ?>"></script>
+        <script src="assets/js/image-cropper.js?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/js/image-cropper.js')) ?>"></script>
+        <script src="assets/js/app.js?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/js/app.js')) ?>"></script>
     </body>
     </html>
     <?php

@@ -55,7 +55,7 @@ This document tracks major change categories for quick historical context withou
 
 ### Documentation and Project Hygiene
 - Refreshed documentation set and standardized layout.
-- Added/updated reference docs and static presentation notes.
+- Added/updated reference docs and project hygiene notes.
 - Updated documentation to reflect the May 1, 2026 auth/email and INVOLVE branding changes.
 
 ### Previous Release Notes
@@ -66,7 +66,6 @@ This document tracks major change categories for quick historical context withou
 - [Repository Overview](../../README.md)
 - [Project Architecture](../architecture/PROJECT_DOCUMENTATION.md)
 - [Function Analysis](FUNCTION_ANALYSIS.md)
-- [Static Demo Guide](../../static/README.md)
 
 ## Maintenance
 - Keep this summary concise and category-based.

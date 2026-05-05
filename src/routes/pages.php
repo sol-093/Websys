@@ -2,6 +2,24 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - PAGE ROUTER
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Public Pages
+ * 2. Auth Gate
+ * 3. Authenticated Pages
+ * 4. Dashboard Fallback
+ *
+ * EDIT GUIDE:
+ * - Add new ?page=... routes here.
+ * - Keep page markup in src/features/* page files.
+ * - Put access checks near the route they protect.
+ * ================================================
+ */
+
 if ($page === 'logout') {
     handleLogoutPage();
 }

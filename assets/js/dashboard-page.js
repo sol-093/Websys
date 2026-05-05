@@ -1,3 +1,19 @@
+/* ================================================
+   INVOLVE - DASHBOARD PAGE BEHAVIOR
+   ================================================
+
+   TABLE OF CONTENTS:
+   1. Live Timestamp
+   2. Progress Bars
+   3. Chart.js Rendering and Empty States
+   4. Dark Mode Chart Refresh
+   5. Dashboard Modals
+   6. Transaction History Filters
+
+   EDIT GUIDE:
+   - Edit this file for dashboard-only browser behavior.
+   ================================================ */
+
 (function () {
     const initDashboardLiveTimestamp = function () {
         const stamp = document.getElementById('dashboardLiveTimestamp');

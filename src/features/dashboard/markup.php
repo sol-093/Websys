@@ -1,3 +1,19 @@
+<?php /*
+===============================================
+INVOLVE - DASHBOARD MARKUP
+===============================================
+
+TABLE OF CONTENTS:
+1. Hero and KPI Cards
+2. Charts and Budget Transparency
+3. Organization Panels
+4. Announcements and Transaction Sections
+
+EDIT GUIDE:
+- Edit this file for dashboard HTML only.
+- Keep data preparation in data.php.
+===============================================
+*/ ?>
 <div class="dashboard-shell space-y-3">
     <section class="grid xl:grid-cols-12 gap-3">
         <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">

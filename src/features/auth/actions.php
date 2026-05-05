@@ -2,6 +2,24 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - AUTH ACTIONS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Google OAuth
+ * 2. Register and Login
+ * 3. Email Verification
+ * 4. Forgot/Reset/Change Password
+ * 5. Profile Update
+ * 6. Onboarding State
+ *
+ * EDIT GUIDE:
+ * - Edit this file for auth/profile/onboarding POST behavior.
+ * ================================================
+ */
+
 function handleGoogleLoginPage(array $config): void
 {
     if (!googleOauthEnabled($config)) {

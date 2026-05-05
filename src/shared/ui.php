@@ -2,6 +2,21 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - SHARED UI HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. renderBreadcrumb()
+ * 2. renderEmptyState()
+ * 3. renderSkeletonDashboard()
+ *
+ * EDIT GUIDE:
+ * - Edit this file for shared UI fragments used by multiple features.
+ * ================================================
+ */
+
 function renderBreadcrumb(array $crumbs): void
 {
     if ($crumbs === []) {

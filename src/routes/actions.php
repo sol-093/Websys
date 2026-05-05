@@ -2,6 +2,24 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - ACTION ROUTER
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. GET Actions
+ * 2. OAuth Pages
+ * 3. Public POST Actions
+ * 4. Authenticated POST Actions
+ *
+ * EDIT GUIDE:
+ * - Add ?action=... handlers in section 1.
+ * - Add form action values in sections 3 or 4.
+ * - Keep business logic in src/features/* files.
+ * ================================================
+ */
+
 if (($_GET['action'] ?? '') === 'search') {
     handleGlobalSearchAction($db);
 }

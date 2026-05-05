@@ -2,6 +2,23 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - ORGANIZATION WORKFLOWS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Owner Assignment Eligibility
+ * 2. Admin Organization CRUD
+ * 3. Owner Assignment Responses
+ * 4. Join Requests and Responses
+ * 5. Transaction Change Request Decisions
+ *
+ * EDIT GUIDE:
+ * - Edit this file for organization and membership POST workflows.
+ * ================================================
+ */
+
 function assertOwnerAssignmentEligibility(PDO $db, int $orgId, int $ownerId): void
 {
     if ($ownerId <= 0) {

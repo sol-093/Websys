@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - SHARED CORE HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Output, Redirects, Flashes, and Icons
+ * 2. Request and CSRF Helpers
+ * 3. Validation Helpers
+ * 4. Security, Rate Limit, and Audit Helpers
+ *
+ * EDIT GUIDE:
+ * - Edit this file for small cross-feature helpers that do not belong to one domain.
+ * ================================================
+ */
+
 function e(?string $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');

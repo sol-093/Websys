@@ -2,6 +2,21 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - AUTHENTICATION GUARDS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. currentUser()
+ * 2. requireLogin()
+ * 3. requireRole()
+ *
+ * EDIT GUIDE:
+ * - Edit this file for login/session lookup and role guard behavior.
+ * ================================================
+ */
+
 function currentUser(): ?array
 {
     if (empty($_SESSION['user_id'])) {

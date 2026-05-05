@@ -2,6 +2,19 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - MAINTENANCE HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Expired Announcement Cleanup
+ *
+ * EDIT GUIDE:
+ * - Edit this file for scheduled/runtime cleanup helpers.
+ * ================================================
+ */
+
 function purgeExpiredAnnouncements(PDO $db, int $days = 30): void
 {
     $cutoff = (new DateTimeImmutable('now'))->modify('-' . $days . ' days')->format('Y-m-d H:i:s');

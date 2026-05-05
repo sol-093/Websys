@@ -2,6 +2,29 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - TRANSACTION AND CONTENT ACTIONS
+ * POST handlers for owner content, announcements, and finance records
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Owner Organization Profile Updates
+ * 2. Announcement Actions
+ * 3. Transaction Create/Update/Delete Actions
+ * 4. Transaction PDF Export
+ *
+ * EDIT GUIDE:
+ * - Edit section 1 for owner organization profile/logo form saves.
+ * - Edit section 2 for announcement add/delete/pin/unpin behavior.
+ * - Edit section 3 for transaction mutation and admin-approval request behavior.
+ * - Edit section 4 for PDF export output and PDF template drawing.
+ * ================================================
+ */
+
+// ================================================
+// 1. OWNER ORGANIZATION PROFILE UPDATES
+// ================================================
 function handleUpdateMyOrgAction(PDO $db, array $user): void
 {
     requireRole(['owner']);
@@ -42,6 +65,9 @@ function handleUpdateMyOrgAction(PDO $db, array $user): void
     redirect('?page=my_org_manage&org_id=' . (int) $org['id']);
 }
 
+// ================================================
+// 2. ANNOUNCEMENT ACTIONS
+// ================================================
 function handleAddAnnouncementAction(PDO $db, array $user): void
 {
     requireRole(['owner']);
@@ -159,6 +185,9 @@ function handleUnpinAnnouncementAdminAction(PDO $db, array $user): void
     redirect('?page=' . $returnPage);
 }
 
+// ================================================
+// 3. TRANSACTION CREATE/UPDATE/DELETE ACTIONS
+// ================================================
 function handleAddTransactionAction(PDO $db, array $user, array $config): void
 {
     requireRole(['owner']);
@@ -277,6 +306,9 @@ function handleDeleteTransactionAction(PDO $db, array $user): void
     redirect('?page=my_org_manage&org_id=' . (int) ($org['id'] ?? 0) . '#tx-history');
 }
 
+// ================================================
+// 4. TRANSACTION PDF EXPORT
+// ================================================
 function handleExportTransactionsAction(PDO $db, array $user): void
 {
     requireLogin();

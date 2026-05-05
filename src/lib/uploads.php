@@ -2,6 +2,21 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - UPLOAD HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Secure Generic Uploads
+ * 2. Profile/Organization Image Uploads
+ * 3. Stored Upload Deletion
+ *
+ * EDIT GUIDE:
+ * - Edit this file for upload validation, naming, storage paths, or cleanup behavior.
+ * ================================================
+ */
+
 function handleSecureUpload(array $file, string $uploadDir): string|false
 {
     if (empty($file['tmp_name']) || !is_uploaded_file((string) $file['tmp_name'])) {

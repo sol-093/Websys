@@ -2,6 +2,21 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - INTEGRATION HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Base URL Resolution
+ * 2. Google OAuth Readiness
+ * 3. JSON Fetch Helper
+ *
+ * EDIT GUIDE:
+ * - Edit this file for external integration helpers.
+ * ================================================
+ */
+
 function appBaseUrl(array $config): string
 {
     $configured = trim((string) ($config['base_url'] ?? ''));

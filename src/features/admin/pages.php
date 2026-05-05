@@ -2,6 +2,23 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - ADMIN PAGES
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Student Management
+ * 2. Requests Queue
+ * 3. Audit Logs
+ * 4. Admin My Organization View
+ * 5. Organization Management
+ *
+ * EDIT GUIDE:
+ * - Edit this file for admin-facing page markup and page-local scripts.
+ * ================================================
+ */
+
 function handleAdminStudentsPage(PDO $db): void
 {
     requireRole(['admin']);
@@ -302,7 +319,7 @@ function handleAdminRequestsPage(PDO $db): void
             });
         })();
     </script>
-    <script src="static/js/owner-org-switcher.js"></script>
+    <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;
@@ -1177,7 +1194,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         </div>
         <?php renderPagination($userTxPagination); ?>
     </div>
-    <script src="static/js/owner-org-switcher.js"></script>
+    <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;

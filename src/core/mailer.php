@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - LOW-LEVEL MAILER
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. PHPMailer Class Loading
+ * 2. sendSystemEmail()
+ * 3. Activation and Password Reset Senders
+ *
+ * EDIT GUIDE:
+ * - Edit this file for low-level mail transport behavior.
+ * - Edit src/lib/email.php for email templates/content.
+ * ================================================
+ */
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 

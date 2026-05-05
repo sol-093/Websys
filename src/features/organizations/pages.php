@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - COMMUNITY AND ORGANIZATION PAGES
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. Announcements Page
+ * 2. Organizations Directory
+ * 3. Profile Page
+ *
+ * EDIT GUIDE:
+ * - Edit this file for student/community-facing page markup.
+ * - Edit workflows.php for organization POST actions.
+ * ================================================
+ */
+
 function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): void
 {
     $activeAnnouncementCutoff = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');

@@ -2,6 +2,20 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - PAGINATION HELPERS
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. paginateArray()
+ * 2. renderPagination()
+ *
+ * EDIT GUIDE:
+ * - Edit this file for pagination behavior or markup used across features.
+ * ================================================
+ */
+
 function paginateArray(array $items, string $queryKey, int $perPage = 10): array
 {
     $totalItems = count($items);

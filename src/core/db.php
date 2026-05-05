@@ -2,6 +2,21 @@
 
 declare(strict_types=1);
 
+/*
+ * ================================================
+ * INVOLVE - DATABASE BOOTSTRAP
+ * ================================================
+ *
+ * TABLE OF CONTENTS:
+ * 1. PDO Connection
+ * 2. Baseline Schema Bootstrap
+ * 3. Compatibility Migrations
+ *
+ * EDIT GUIDE:
+ * - Edit this file for DB connection or schema compatibility changes.
+ * ================================================
+ */
+
 function db(): PDO
 {
     static $pdo = null;

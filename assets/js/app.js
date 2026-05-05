@@ -1,3 +1,28 @@
+/* ================================================
+   INVOLVE - GLOBAL APP BEHAVIOR
+   Shared JavaScript loaded by src/core/layout.php
+   ================================================
+
+   TABLE OF CONTENTS:
+   1. Navigation Scroll State
+   2. Global Search Modal
+   3. Toast Notifications
+   4. Currency Inputs
+   5. Password Visibility Toggles
+   6. Form Loading Buttons
+   7. Theme, CSRF, Mobile Nav, Modals, and Touch Drag
+   8. Student Onboarding Tour
+
+   EDIT GUIDE:
+   - Change search behavior in section 2.
+   - Change toasts/forms/theme/mobile nav in sections 3 to 7.
+   - Change onboarding steps and completion behavior in section 8.
+   - Keep page-only behavior in assets/js/<page>.js.
+   ================================================ */
+
+// ================================================
+// 1. NAVIGATION SCROLL STATE
+// ================================================
 (function () {
                 var nav = document.getElementById('appNav');
                 if (!nav) {
@@ -12,6 +37,9 @@
                 window.addEventListener('scroll', updateScrolledState, { passive: true });
             })();
 
+// ================================================
+// 2. GLOBAL SEARCH MODAL
+// ================================================
 (function () {
                     var modal = document.getElementById('globalSearchModal');
                     var openButtons = [document.getElementById('globalSearchOpen'), document.getElementById('globalSearchOpenMobile')].filter(function (button) { return Boolean(button); });
@@ -280,6 +308,9 @@
                     });
                 })();
 
+// ================================================
+// 3. TOAST NOTIFICATIONS
+// ================================================
 (function () {
                 var container = document.getElementById('toast-container');
                 if (!container) {
@@ -393,6 +424,9 @@
                 });
             })();
 
+// ================================================
+// 4. CURRENCY INPUTS
+// ================================================
 function initCurrencyInput(inputEl) {
                 if (!(inputEl instanceof HTMLInputElement) || inputEl.dataset.currencyInitialized === '1') {
                     return;
@@ -518,13 +552,19 @@ function initCurrencyInput(inputEl) {
                 inputEl.value = toFormatted(initialRaw);
             }
 
+// ================================================
+// 5. PASSWORD VISIBILITY TOGGLES
+// ================================================
             document.addEventListener('DOMContentLoaded', function () {
                 document.querySelectorAll('input[data-currency]').forEach(function (inputEl) {
                     initCurrencyInput(inputEl);
                 });
             });
 
-document.addEventListener('DOMContentLoaded', function () {
+// ================================================
+// 6. FORM LOADING BUTTONS
+// ================================================
+            document.addEventListener('DOMContentLoaded', function () {
                 var toggleInputs = document.querySelectorAll('input[data-password-toggle]');
 
                 var eyeOpenSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="ui-icon" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6z" /><circle cx="12" cy="12" r="2.25" /></svg>';
@@ -632,6 +672,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             });
 
+// ================================================
+// 7. THEME, CSRF, MOBILE NAV, MODALS, AND TOUCH DRAG
+// ================================================
 (function () {
                 const root = document.body;
                 const key = 'websys-theme';
@@ -844,6 +887,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             })();
 
+// ================================================
+// 8. STUDENT ONBOARDING TOUR
+// ================================================
 (function () {
                     if (document.body.dataset.showOnboarding !== '1') { return; }
                     const userStorageSuffix = document.body.dataset.onboardingUserSuffix || 'guest';
