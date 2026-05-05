@@ -257,7 +257,15 @@ try {
         }
     }
 
-    $detail = $showDetails ? htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') : 'Check your local database settings in .env and your PHP/MySQL service logs.';
+    $sanitizeDebugDetail = static function (string $message): string {
+        $message = preg_replace('/:\/\/([^:\s\/]+):([^@\s\/]+)@/', '://[redacted-user]:[redacted-pass]@', $message) ?? $message;
+        $message = preg_replace('/\b(DB_PASSWORD|MYSQLPASSWORD|SMTP_PASS|DATABASE_URL|MYSQL_URL)\b\s*[:=]\s*\S+/i', '$1=[redacted]', $message) ?? $message;
+        return $message;
+    };
+
+    $detail = $showDetails
+        ? htmlspecialchars($sanitizeDebugDetail($e->getMessage()), ENT_QUOTES, 'UTF-8')
+        : 'Check your local database settings in .env and your PHP/MySQL service logs.';
     if (!$showDetails && !empty($missingGroups)) {
         $detail .= ' Missing variable groups: ' . htmlspecialchars(implode(', ', $missingGroups), ENT_QUOTES, 'UTF-8') . '.';
     }
