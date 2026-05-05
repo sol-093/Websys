@@ -33,8 +33,8 @@ $envBool = static function (string $key, bool $default = false) use ($env): bool
     return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
 };
 
-$smtpUser = (string) $env('SMTP_USER', 'markcas039@gmail.com');
-$smtpFrom = (string) $env('SMTP_FROM', $smtpUser !== '' ? $smtpUser : 'noreply@campus.local');
+$smtpUser = trim((string) $env('SMTP_USER', ''));
+$smtpFrom = trim((string) $env('SMTP_FROM', $smtpUser !== '' ? $smtpUser : 'noreply@campus.local'));
 
 return [
     'timezone' => (string) $env('APP_TIMEZONE', 'Asia/Manila'),
@@ -59,7 +59,7 @@ return [
         'host' => (string) $env('SMTP_HOST', 'smtp.gmail.com'),
         'port' => (int) $env('SMTP_PORT', 587),
         'user' => $smtpUser,
-        'pass' => (string) $env('SMTP_PASS', 'wsvy rmtm wpwg dxfg'),
+        'pass' => trim((string) $env('SMTP_PASS', '')),
         'from' => $smtpFrom,
         'from_name' => (string) $env('SMTP_FROM_NAME', (string) $env('APP_NAME', 'INVOLVE')),
     ],

@@ -60,6 +60,8 @@ php scripts/tests/test_organization_helpers.php
 - Database bootstrap and compatibility: `includes/core/db.php`
 - Upload destination: `uploads/`
 - SMTP/OAuth values are read from environment variables and config.
+- Keep `APP_DEBUG=false` for normal local demos; only enable `APP_DEBUG=true` when you intentionally need detailed startup/debug output.
+- Set mail credentials in `.env` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, and `SMTP_FROM_NAME` when you want verification or password reset emails to send.
 - Navbar logo image paths are set inline in `includes/core/layout.php` and currently map light mode to `uploads/assets/involvelogo dark.png` and dark mode to `uploads/assets/involvelogo light.png`.
 - INVOLVE brand image assets live in `uploads/assets/`; active navbar and About page logo styles are defined in `includes/core/layout.php`.
 - Account emails currently use text-based `involve` header branding for broader email-client compatibility.
