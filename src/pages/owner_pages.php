@@ -393,7 +393,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                         <option value="income" <?= $row['type'] === 'income' ? 'selected' : '' ?>>Income</option>
                                         <option value="expense" <?= $row['type'] === 'expense' ? 'selected' : '' ?>>Expense</option>
                                     </select>
-                                    <input name="amount" type="number" step="0.01" value="<?= e((string) $row['amount']) ?>" class="border rounded px-2 py-1.5 text-xs w-full" data-currency>
+                                    <input name="amount" type="number" step="0.01" value="<?= e(number_format((float) $row['amount'], 2, '.', '')) ?>" class="border rounded px-2 py-1.5 text-xs w-full" data-currency>
                                     <input name="transaction_date" type="date" value="<?= e($row['transaction_date']) ?>" class="border rounded px-2 py-1.5 text-xs w-full">
                                     <input name="description" value="<?= e($row['description']) ?>" class="col-span-2 border rounded px-2 py-1.5 text-xs w-full">
                                     <button class="row-action-hit-target col-span-2 inline-flex items-center justify-center px-2 py-1.5 bg-blue-600 text-white rounded text-xs"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Request Update</span></span></button>

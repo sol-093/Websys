@@ -3051,13 +3051,14 @@ function renderFooter(): void
                 inputEl.setAttribute('inputmode', 'decimal');
                 inputEl.dataset.currencyInitialized = '1';
 
-                const toRaw = function (value) {
+                const toRaw = function (value, preserveTrailingDot) {
                     const cleaned = String(value || '').replace(/[^\d.]/g, '');
                     if (cleaned === '') {
                         return '';
                     }
 
                     const firstDotIndex = cleaned.indexOf('.');
+                    const hasTrailingDot = preserveTrailingDot === true && cleaned.endsWith('.') && firstDotIndex !== -1;
                     let integerPart = cleaned;
                     let decimalPart = '';
 
@@ -3075,6 +3076,10 @@ function renderFooter(): void
                         return '';
                     }
 
+                    if (hasTrailingDot && decimalPart === '') {
+                        return (integerPart !== '' ? integerPart : '0') + '.';
+                    }
+
                     return decimalPart !== '' ? integerPart + '.' + decimalPart : integerPart;
                 };
 
@@ -3085,6 +3090,10 @@ function renderFooter(): void
 
                     const parts = rawValue.split('.');
                     const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                    if (rawValue.endsWith('.')) {
+                        return intPart + '.';
+                    }
+
                     if (parts.length < 2) {
                         return intPart;
                     }
@@ -3092,18 +3101,34 @@ function renderFooter(): void
                     return intPart + '.' + parts[1].slice(0, 2);
                 };
 
-                const syncCurrencyValue = function (sourceValue) {
-                    const raw = toRaw(sourceValue);
+                const toFixedCurrencyRaw = function (sourceValue) {
+                    const raw = toRaw(sourceValue, false);
+                    if (raw === '') {
+                        return '';
+                    }
+
+                    const numberValue = Number.parseFloat(raw);
+                    return Number.isFinite(numberValue) ? numberValue.toFixed(2) : raw;
+                };
+
+                const syncCurrencyValue = function (sourceValue, preserveTrailingDot) {
+                    const raw = toRaw(sourceValue, preserveTrailingDot === true);
                     inputEl.dataset.currencyRaw = raw;
                     inputEl.value = toFormatted(raw);
                 };
 
                 inputEl.addEventListener('input', function () {
-                    syncCurrencyValue(inputEl.value);
+                    syncCurrencyValue(inputEl.value, true);
+                });
+
+                inputEl.addEventListener('blur', function () {
+                    const fixedRaw = toFixedCurrencyRaw(inputEl.value);
+                    inputEl.dataset.currencyRaw = fixedRaw;
+                    inputEl.value = toFormatted(fixedRaw);
                 });
 
                 inputEl.form?.addEventListener('submit', function (event) {
-                    const raw = toRaw(inputEl.value);
+                    const raw = toFixedCurrencyRaw(inputEl.value);
                     inputEl.dataset.currencyRaw = raw;
                     inputEl.value = raw;
 
@@ -3115,7 +3140,9 @@ function renderFooter(): void
                     }, 0);
                 });
 
-                syncCurrencyValue(inputEl.value);
+                const initialRaw = toFixedCurrencyRaw(inputEl.value);
+                inputEl.dataset.currencyRaw = initialRaw;
+                inputEl.value = toFormatted(initialRaw);
             }
 
             document.addEventListener('DOMContentLoaded', function () {
