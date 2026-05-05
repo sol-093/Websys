@@ -1,0 +1,14 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule ^(?:\.env|composer\.json|composer\.lock|\.gitignore)$ - [F,L,NC]
+    RewriteRule ^(?:\.git|\.github|\.vscode|includes|database|docs|scripts|vendor)(?:/|$) - [F,L,NC]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <FilesMatch "^(?:\.env|composer\.(?:json|lock)|\.gitignore)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
