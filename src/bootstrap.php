@@ -257,7 +257,7 @@ try {
         }
     }
 
-    $detail = $showDetails ? htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') : 'Check Railway variables and service logs.';
+    $detail = $showDetails ? htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') : 'Check your local database settings in .env and your PHP/MySQL service logs.';
     if (!$showDetails && !empty($missingGroups)) {
         $detail .= ' Missing variable groups: ' . htmlspecialchars(implode(', ', $missingGroups), ENT_QUOTES, 'UTF-8') . '.';
     }
@@ -266,7 +266,7 @@ try {
     echo '<h1>Application startup error</h1>';
     echo '<p>Database connection failed while starting the app.</p>';
     echo '<p><strong>Details:</strong> ' . $detail . '</p>';
-    echo '<p>Expected environment variables for MySQL: DB_DRIVER=mysql, DB_HOST/MYSQLHOST, DB_PORT/MYSQLPORT, DB_DATABASE/MYSQLDATABASE/MYSQL_DATABASE, DB_USERNAME/MYSQLUSER, DB_PASSWORD/MYSQLPASSWORD.</p>';
+    echo '<p>Expected local MySQL settings: DB_DRIVER=mysql, DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD.</p>';
     echo '</body></html>';
     exit;
 }

@@ -39,7 +39,7 @@ $smtpFrom = (string) $env('SMTP_FROM', $smtpUser !== '' ? $smtpUser : 'noreply@c
 return [
     'timezone' => (string) $env('APP_TIMEZONE', 'Asia/Manila'),
     'db' => [
-        // Railway-compatible env override with local fallback defaults.
+        // Local env override with XAMPP-friendly fallback defaults.
         'driver' => (string) $env('DB_DRIVER', 'mysql'),
         'host' => (string) $env('DB_HOST', (string) $env('MYSQLHOST', '127.0.0.1')),
         'port' => (int) $env('DB_PORT', (int) $env('MYSQLPORT', 3306)),

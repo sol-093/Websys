@@ -19,7 +19,7 @@ This document describes the system architecture, layer boundaries, data model re
 ## Audience
 - Developers implementing new features
 - Maintainers reviewing system consistency
-- Reviewers validating architecture and deployment shape
+- Reviewers validating architecture and local hosting shape
 
 ## Core Content
 

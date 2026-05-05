@@ -22,5 +22,5 @@
 
 ## Conventions
 - `src/db.php` bootstraps and auto-initializes schema compatibility on startup, so changes to schema-related behavior should stay aligned with that flow.
-- Uploaded receipts live under `public/uploads/` and should remain writable in local and deployment environments.
+- Uploaded receipts live under `public/uploads/` and should remain writable in local environments.
 - If a change affects behavior, update the relevant docs in the same change set.
