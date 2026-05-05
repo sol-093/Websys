@@ -22,5 +22,5 @@
 
 ## Conventions
 - `includes/core/db.php` bootstraps and auto-initializes schema compatibility on startup, so changes to schema-related behavior should stay aligned with that flow.
-- Uploaded receipts live under `uploads/` and should remain writable in local environments.
+- Bundled media lives under `uploads/assets/`; user profile pictures go to `uploads/users/`, organization profile images go to `uploads/organizations/`, and receipts go to `uploads/receipts/`.
 - If a change affects behavior, update the relevant docs in the same change set.

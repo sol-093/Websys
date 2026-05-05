@@ -57,7 +57,7 @@ This document maps core functions by file/layer so contributors can quickly loca
 ### Shared UI Notes
 - Navbar logo paths, sizing, light/dark asset switching, footer branding, and shared shell markup live in `includes/core/layout.php`.
 - Global runtime styles live in `assets/css/app.css`.
-- Current navbar assets are served from `uploads/involvelogo dark.png` for light mode and `uploads/involvelogo light.png` for dark mode.
+- Current navbar assets are served from `uploads/assets/involvelogo dark.png` for light mode and `uploads/assets/involvelogo light.png` for dark mode.
 
 ## Related Docs
 - [Repository Overview](../../README.md)

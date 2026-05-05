@@ -113,15 +113,22 @@ function handleProfileImageUpload(array $file, string $uploadDir, string $filena
         return false;
     }
 
+    $targetFolder = str_starts_with($filenamePrefix, 'org_') ? 'organizations' : 'users';
+    $targetDir = rtrim($uploadDir, '/\\') . DIRECTORY_SEPARATOR . $targetFolder;
+    if (!is_dir($targetDir) && !mkdir($targetDir, 0777, true) && !is_dir($targetDir)) {
+        setFlash('error', 'Unable to prepare profile image directory.');
+        return false;
+    }
+
     $filename = $filenamePrefix . bin2hex(random_bytes(16)) . '.' . $allowedMimeToExtension[$mimeType];
-    $destination = rtrim($uploadDir, '/\\') . DIRECTORY_SEPARATOR . $filename;
+    $destination = $targetDir . DIRECTORY_SEPARATOR . $filename;
 
     if (!move_uploaded_file((string) $file['tmp_name'], $destination)) {
         setFlash('error', 'Unable to store uploaded image.');
         return false;
     }
 
-    return 'uploads/' . $filename;
+    return 'uploads/' . $targetFolder . '/' . $filename;
 }
 
 function deleteStoredUpload(?string $path): void
@@ -135,12 +142,18 @@ function deleteStoredUpload(?string $path): void
         return;
     }
 
-    $filename = basename($normalized);
-    if ($filename === '' || str_contains($filename, '..')) {
+    $relativePath = substr($normalized, strlen('uploads/'));
+    $relativePath = str_replace('\\', '/', $relativePath);
+    if ($relativePath === '' || str_contains($relativePath, '..')) {
         return;
     }
 
-    $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . $filename;
+    $pathParts = array_filter(explode('/', $relativePath), static fn (string $part): bool => $part !== '');
+    if (empty($pathParts)) {
+        return;
+    }
+
+    $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $pathParts);
     if (is_file($absolutePath)) {
         @unlink($absolutePath);
     }

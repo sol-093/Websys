@@ -468,6 +468,14 @@ function normalizeLegacyUploadPaths(PDO $pdo): void
             )
         );
     }
+
+    if (tableColumnExists($pdo, 'users', 'profile_picture_path')) {
+        $pdo->exec("UPDATE users SET profile_picture_path = REPLACE(profile_picture_path, 'uploads/user_', 'uploads/users/user_') WHERE profile_picture_path LIKE 'uploads/user_%'");
+    }
+
+    if (tableColumnExists($pdo, 'organizations', 'logo_path')) {
+        $pdo->exec("UPDATE organizations SET logo_path = REPLACE(logo_path, 'uploads/org_', 'uploads/organizations/org_') WHERE logo_path LIKE 'uploads/org_%'");
+    }
 }
 
 function ensureProfileMediaColumns(PDO $pdo): void

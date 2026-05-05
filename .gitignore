@@ -6,17 +6,22 @@ Thumbs.db
 /uploads/*
 !/uploads/.gitkeep
 !/uploads/.htaccess
-!/uploads/cas.png
-!/uploads/cj.jpg
-!/uploads/eunice.png
-!/uploads/involve.png
-!/uploads/involvelogo dark.png
-!/uploads/involvelogo light.png
-!/uploads/involvemobdark.png
-!/uploads/involvemoblight.png
-!/uploads/jm.png
-!/uploads/josh.png
-!/uploads/logodark.png
-!/uploads/logolight.png
-!/uploads/pdftemplate.png
-!/uploads/kldbuilding.jpg
+!/uploads/assets/
+!/uploads/assets/cas.png
+!/uploads/assets/cj.jpg
+!/uploads/assets/eunice.png
+!/uploads/assets/involve.png
+!/uploads/assets/involvelogo dark.png
+!/uploads/assets/involvelogo light.png
+!/uploads/assets/involvemobdark.png
+!/uploads/assets/involvemoblight.png
+!/uploads/assets/jm.png
+!/uploads/assets/josh.png
+!/uploads/assets/logodark.png
+!/uploads/assets/logolight.png
+!/uploads/assets/pdftemplate.png
+!/uploads/assets/kldbuilding.jpg
+!/uploads/users/
+!/uploads/users/.gitkeep
+!/uploads/organizations/
+!/uploads/organizations/.gitkeep

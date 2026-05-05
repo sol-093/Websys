@@ -50,6 +50,10 @@ websys/
 |   `-- shared/                # Shared UI helpers
 |-- scripts/                   # Maintenance, seed, and test scripts
 |-- uploads/                   # Writable upload storage and bundled media
+|   |-- assets/                 # Bundled logos, page images, and PDF template
+|   |-- organizations/          # Organization profile/logo uploads
+|   |-- receipts/               # Transaction receipt uploads
+|   `-- users/                  # User profile picture uploads
 `-- vendor/                    # Composer dependencies
 ```
 
@@ -68,7 +72,7 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - Schema bootstrap and compatibility checks live in `includes/core/db.php`.
 - Schema reference file: `database/schema.sql`.
 - App supports MySQL and SQLite through PDO.
-- Uploaded receipts/media are stored in `uploads/`.
+- Uploaded receipts/media are stored in `uploads/`, with bundled media in `uploads/assets/`, user profile pictures in `uploads/users/`, organization profile images in `uploads/organizations/`, and receipts in `uploads/receipts/`.
 - Compatibility migrations include `password_reset_at` for forgot-password reset cooldown enforcement.
 
 ### Route and Feature Domains

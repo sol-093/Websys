@@ -39,9 +39,9 @@ function renderHeader(string $title = 'Dashboard'): void
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
     $navAppName = (string) $config['app_name'];
-    $faviconPath = 'uploads/involvemoblight.png';
-    $logoLight = 'uploads/involvelogo dark.png';
-    $logoDark = 'uploads/involvelogo light.png';
+    $faviconPath = 'uploads/assets/involvemoblight.png';
+    $logoLight = 'uploads/assets/involvelogo dark.png';
+    $logoDark = 'uploads/assets/involvelogo light.png';
     $showOnboarding = false;
     if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
         $_SESSION['show_onboarding'] = true;

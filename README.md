@@ -60,10 +60,10 @@ php scripts/tests/test_organization_helpers.php
 - Database bootstrap and compatibility: `includes/core/db.php`
 - Upload destination: `uploads/`
 - SMTP/OAuth values are read from environment variables and config.
-- Navbar logo image paths are set inline in `includes/core/layout.php` and currently map light mode to `uploads/involvelogo dark.png` and dark mode to `uploads/involvelogo light.png`.
-- INVOLVE brand image assets live in `uploads/`; active navbar and About page logo styles are defined in `includes/core/layout.php`.
+- Navbar logo image paths are set inline in `includes/core/layout.php` and currently map light mode to `uploads/assets/involvelogo dark.png` and dark mode to `uploads/assets/involvelogo light.png`.
+- INVOLVE brand image assets live in `uploads/assets/`; active navbar and About page logo styles are defined in `includes/core/layout.php`.
 - Account emails currently use text-based `involve` header branding for broader email-client compatibility.
-- Transaction PDF exports use `uploads/pdftemplate.png` as the page background template.
+- Transaction PDF exports use `uploads/assets/pdftemplate.png` as the page background template.
 
 ### Architecture Snapshot
 - `index.php`: thin web entry point that loads bootstrap and route dispatchers
@@ -91,6 +91,10 @@ websys/
 |   `-- shared/                # Shared UI helpers
 |-- scripts/                   # Maintenance, seed, and test scripts
 |-- uploads/                   # Writable upload storage and bundled media
+|   |-- assets/                 # Bundled logos, page images, and PDF template
+|   |-- organizations/          # Organization profile/logo uploads
+|   |-- receipts/               # Transaction receipt uploads
+|   `-- users/                  # User profile picture uploads
 `-- vendor/                    # Composer dependencies
 ```
 

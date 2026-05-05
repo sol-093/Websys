@@ -106,7 +106,7 @@ function handleAboutPage(?array $user): void
         [
             'name' => 'Mark Russel Cas',
             'role' => 'Project Lead/Full Stack Developer',
-            'image' => 'uploads/cas.png',
+            'image' => 'uploads/assets/cas.png',
             'linkedin' => 'https://www.linkedin.com/in/markcas093/',
             'facebook' => 'https://www.facebook.com/mark.cas.334',
             'github' => 'https://github.com/sol-093',
@@ -114,7 +114,7 @@ function handleAboutPage(?array $user): void
         [
             'name' => 'Cj Cantor',
             'role' => 'System Analyst',
-            'image' => 'uploads/cj.jpg',
+            'image' => 'uploads/assets/cj.jpg',
             'linkedin' => 'https://www.linkedin.com/in/cj-cantor-a57432405/',
             'facebook' => 'https://www.facebook.com/shiijeeeee.07?rdid=alujSvI93igammWn&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1E2e8RbXxF%2F#',
             'github' => '#',
@@ -122,7 +122,7 @@ function handleAboutPage(?array $user): void
         [
             'name' => 'John Joshua Catan',
             'role' => 'Backend Developer',
-            'image' => 'uploads/josh.png',
+            'image' => 'uploads/assets/josh.png',
             'linkedin' => '#',
             'facebook' => 'https://www.facebook.com/joshuacatan26',
             'github' => '#',
@@ -130,7 +130,7 @@ function handleAboutPage(?array $user): void
         [
             'name' => 'Eunice Comandante',
             'role' => 'Frontend Developer',
-            'image' => 'uploads/eunice.png',
+            'image' => 'uploads/assets/eunice.png',
             'linkedin' => '#',
             'facebook' => 'https://www.facebook.com/euniiii.7?rdid=X1UKVVDZuVKIUvgv&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1CgVMwE3CK%2F#',
             'github' => '#',
@@ -138,7 +138,7 @@ function handleAboutPage(?array $user): void
         [
             'name' => 'Jhon Mike Cariño',
             'role' => 'QA / Documentation',
-            'image' => 'uploads/jm.png',
+            'image' => 'uploads/assets/jm.png',
             'linkedin' => 'https://www.linkedin.com/in/jhon-mike-cari%C3%B1o-9b1160406/',
             'facebook' => 'https://www.facebook.com/jaycarl.delacruz.5?rdid=SuDmC9eg0adz20W1&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18eLUY53dF#',
             'github' => 'https://github.com/jhonmikecarino0-source',
@@ -152,8 +152,8 @@ function handleAboutPage(?array $user): void
                 About the Platform
             </div>
             <h1 class="about-logo" aria-label="INVOLVE Student Organization Management and Budget Transparency System">
-                <img src="uploads/involvelogo dark.png" alt="" class="about-logo-img nav-logo-light">
-                <img src="uploads/involvelogo light.png" alt="" class="about-logo-img nav-logo-dark">
+                <img src="uploads/assets/involvelogo dark.png" alt="" class="about-logo-img nav-logo-light">
+                <img src="uploads/assets/involvelogo light.png" alt="" class="about-logo-img nav-logo-dark">
             </h1>
             <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.
