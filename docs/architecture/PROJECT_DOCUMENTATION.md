@@ -24,13 +24,14 @@ This document describes the system architecture, layer boundaries, data model re
 ## Core Content
 
 ### Architecture Model
-- Single-entry application: `index.php` performs route dispatch and POST action dispatch.
-- Layered organization under `src/`:
+- Single-entry application: `index.php` loads bootstrap and route dispatchers.
+- Feature-oriented organization under `src/`:
+  - `bootstrap.php` runtime startup and dependency loading
+  - `routes/` page/action dispatch
+  - `features/` feature-specific pages, actions, workflows, and data
+  - `shared/` shared UI helpers
   - `core/` runtime concerns (auth, config, DB bootstrap, layout, helpers)
   - `lib/` reusable domain/helper logic
-  - `actions/` state mutation handlers
-  - `pages/` rendering handlers
-  - `services/` data aggregation and orchestration
 
 ### Project Structure
 ```text
@@ -54,13 +55,12 @@ websys/
 ├── src/
 │   ├── core/                    # Bootstrap, auth, DB, helpers, layout
 │   ├── lib/                     # Reusable domain helpers
-│   ├── actions/                 # POST/action handlers
-│   ├── pages/                   # Route/page renderers
-│   └── services/                # Data aggregation and service logic
 └── static/
   ├── demo/                    # Static demo HTML/CSS/JS
   └── js/                      # Shared client-side behavior
 ```
+
+Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`, and `shared/` in addition to the existing `core/` and `lib/` runtime layers.
 
 ### Security and Runtime Principles
 - Session-based authentication and role enforcement

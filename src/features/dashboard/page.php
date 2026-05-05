@@ -50,7 +50,7 @@ function handleDashboardPage(array $dashboardData, array $user): void
     };
 
     renderHeader('Dashboard');
-    require __DIR__ . '/dashboard_page_markup.php';
+    require __DIR__ . '/markup.php';
 
     $dashboardClientData = [
         'trendLabels' => $trendLabels,

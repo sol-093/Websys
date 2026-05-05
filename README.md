@@ -66,11 +66,13 @@ php scripts/tests/test_organization_helpers.php
 - Transaction PDF exports use `public/uploads/pdftemplate.png` as the page background template.
 
 ### Architecture Snapshot
-- `src/core/`: runtime bootstrap, shared helpers, auth/session guards, layout shell
+- `index.php`: thin web entry point that loads bootstrap and route dispatchers
+- `src/bootstrap.php`: runtime bootstrap, dependency loading, DB startup, current user/page setup
+- `src/routes/`: GET page dispatch and action/POST dispatch
+- `src/features/`: feature-oriented page, action, workflow, and data files
+- `src/shared/`: shared UI helpers split out of the layout shell
+- `src/core/`: auth/session guards, config, DB bootstrap, layout shell, generic helpers
 - `src/lib/`: reusable domain and utility helpers
-- `src/actions/`: POST mutation handlers
-- `src/pages/`: route/page renderers
-- `src/services/`: data aggregation and service orchestration
 
 ### Project Structure
 ```text
@@ -89,26 +91,31 @@ websys/
 │   ├── seed/                 # Demo/seeding scripts
 │   └── tests/                # Regression/utility scripts
 ├── src/
-│   ├── actions/              # POST/action handlers
 │   ├── core/                 # Bootstrap, auth, DB, helpers, layout
 │   ├── lib/                  # Reusable domain helpers
-│   ├── pages/                # Route/page renderers
-│   └── services/             # Aggregated data and service logic
 └── static/
     ├── demo/                 # Frontend-only static demo assets
     ├── fonts/                # Wordmark font assets
     └── js/                   # Shared client-side scripts
 ```
 
+Source folders under `src/` now include `bootstrap.php`, `routes/`, `features/`, and `shared/` in addition to the existing `core/` and `lib/` runtime layers.
+
 ### Key Project Files
-- `index.php`: routes pages and dispatches POST actions
-- `src/core/layout.php`: shared shell, styles, and global behavior
+- `index.php`: loads bootstrap, action dispatch, and page dispatch
+- `src/bootstrap.php`: starts the app and requires feature/runtime modules
+- `src/routes/actions.php`: global action and POST dispatch
+- `src/routes/pages.php`: page dispatch
+- `src/core/layout.php`: shared shell and layout markup
+- `src/shared/ui.php`: shared breadcrumbs, empty states, and skeleton UI helpers
 - `src/core/db.php`: database bootstrap and compatibility initialization
 - `src/core/mailer.php`: PHPMailer transport configuration and send helpers
-- `src/actions/content_actions.php`: content mutations and transaction PDF export generation
-- `src/pages/dashboard_page.php`: dashboard page controller
-- `src/pages/dashboard_page_markup.php`: dashboard markup partials
-- `src/services/dashboard_data.php`: dashboard data aggregation
+- `src/features/transactions/actions.php`: content mutations and transaction PDF export generation
+- `src/features/dashboard/page.php`: dashboard page controller
+- `src/features/dashboard/markup.php`: dashboard markup partials
+- `src/features/dashboard/data.php`: dashboard data aggregation
+- `static/css/app.css`: extracted global runtime styles
+- `static/js/app.js`: extracted global runtime behavior
 - `static/js/dashboard-page.js`: dashboard client-side charts, filters, and modal behavior
 
 ## Related Docs

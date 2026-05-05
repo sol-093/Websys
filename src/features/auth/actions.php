@@ -615,7 +615,7 @@ function handleChangePasswordAction(PDO $db, array $user): void
 
 function handleUpdateProfileAction(PDO $db, array $user): void
 {
-    $config = require __DIR__ . '/../core/config.php';
+    $config = require dirname(__DIR__, 2) . '/core/config.php';
     $email = trim((string) ($_POST['email'] ?? ''));
     $name = (string) ($user['name'] ?? '');
     $program = trim((string) ($user['program'] ?? ''));

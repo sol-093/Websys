@@ -39,7 +39,7 @@ function assertOwnerAssignmentEligibility(PDO $db, int $orgId, int $ownerId): vo
 function handleCreateOrgAction(PDO $db, array $user): void
 {
     requireRole(['admin']);
-    $config = require __DIR__ . '/../core/config.php';
+    $config = require dirname(__DIR__, 2) . '/core/config.php';
     $name = trim((string) ($_POST['name'] ?? ''));
     $description = trim((string) ($_POST['description'] ?? ''));
     $orgCategory = (string) ($_POST['org_category'] ?? 'collegewide');
@@ -102,7 +102,7 @@ function handleCreateOrgAction(PDO $db, array $user): void
 function handleUpdateOrgAdminAction(PDO $db, array $user): void
 {
     requireRole(['admin']);
-    $config = require __DIR__ . '/../core/config.php';
+    $config = require dirname(__DIR__, 2) . '/core/config.php';
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $ownerId = (int) ($_POST['owner_id'] ?? 0);
     $name = trim((string) ($_POST['name'] ?? ''));

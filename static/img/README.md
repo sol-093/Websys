@@ -17,4 +17,4 @@ The INVOLVE navbar logo and About page brand image are called inline from `src/c
 
 Change logo sizing in the `.nav-logo` and `.nav-logo-img` CSS rules in `src/core/layout.php`.
 Change About page brand image sizing in the `.about-logo` CSS rule in `src/core/layout.php`.
-Transaction PDF exports draw `public/uploads/pdftemplate.png` as a full-page A4 background in `src/actions/content_actions.php`.
+Transaction PDF exports draw `public/uploads/pdftemplate.png` as a full-page A4 background in `src/features/transactions/actions.php`.

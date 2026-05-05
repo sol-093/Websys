@@ -5,7 +5,7 @@ declare(strict_types=1);
 function handleUpdateMyOrgAction(PDO $db, array $user): void
 {
     requireRole(['owner']);
-    $config = require __DIR__ . '/../core/config.php';
+    $config = require dirname(__DIR__, 2) . '/core/config.php';
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     if (!$org) {
@@ -597,7 +597,7 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         ];
     };
 
-    $templateImage = $readPdfPngTemplate(dirname(__DIR__, 2) . '/public/uploads/pdftemplate.png');
+    $templateImage = $readPdfPngTemplate(dirname(__DIR__, 3) . '/public/uploads/pdftemplate.png');
 
     $objects = [];
     $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
