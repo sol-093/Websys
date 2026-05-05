@@ -337,80 +337,162 @@ function handleExportTransactionsAction(PDO $db, array $user): void
     }
     $filename = $slug . '-transactions-' . date('Y-m-d') . '.pdf';
 
+    $pageWidth = 595.28;
+    $pageHeight = 841.89;
+
     $sanitizeText = static function (string $text): string {
-        $clean = preg_replace('/[^\x20-\x7E]/', '?', $text);
-        return (string) $clean;
+        $clean = preg_replace('/[^\x20-\x7E]/', ' ', $text);
+        $clean = preg_replace('/\s+/', ' ', (string) $clean);
+        return trim((string) $clean);
     };
 
-    $wrapLine = static function (string $text, int $maxChars = 108): array {
-        if ($text === '') {
-            return [''];
-        }
+    $escapePdfText = static function (string $text): string {
+        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+    };
 
-        $wrapped = wordwrap($text, $maxChars, "\n", true);
-        return explode("\n", $wrapped);
+    $formatPdfNumber = static function (float $number): string {
+        $formatted = rtrim(rtrim(number_format($number, 2, '.', ''), '0'), '.');
+        return $formatted === '' ? '0' : $formatted;
     };
 
     $formatAmount = static function (float $amount): string {
         return 'PHP ' . number_format($amount, 2);
     };
 
-    $lines = [];
-    $lines[] = 'Student Organization Management and Budget Transparency System';
-    $lines[] = 'Transaction Report Export';
-    $lines[] = '';
-    $lines[] = 'Organization: ' . (string) $orgName;
-    $lines[] = 'Generated: ' . date('Y-m-d H:i:s');
-    $lines[] = 'Filter (Type): ' . ($txTypeFilter === 'all' ? 'All' : ucfirst($txTypeFilter));
-    $lines[] = 'Sort (Date): ' . ($txDateSort === 'asc' ? 'Oldest first' : 'Newest first');
-    $lines[] = 'Total records: ' . count($transactions);
-    $lines[] = str_repeat('-', 110);
-
-    if ($transactions === []) {
-        $lines[] = 'No transactions found for the current view.';
-    } else {
-        foreach ($transactions as $index => $row) {
-            $number = $index + 1;
-            $date = (string) ($row['transaction_date'] ?? '');
-            $type = strtoupper((string) ($row['type'] ?? ''));
-            $amount = $formatAmount((float) ($row['amount'] ?? 0));
-            $description = trim((string) ($row['description'] ?? ''));
-            $receipt = trim((string) ($row['receipt_path'] ?? ''));
-            $id = (int) ($row['id'] ?? 0);
-
-            $lines[] = $number . '. Tx ID: ' . $id . ' | Date: ' . $date . ' | Type: ' . $type . ' | Amount: ' . $amount;
-
-            foreach ($wrapLine('   Description: ' . ($description !== '' ? $description : '-')) as $wrappedLine) {
-                $lines[] = $wrappedLine;
-            }
-
-            foreach ($wrapLine('   Receipt Path: ' . ($receipt !== '' ? $receipt : '-')) as $wrappedLine) {
-                $lines[] = $wrappedLine;
-            }
-
-            $lines[] = str_repeat('-', 110);
+    $wrapText = static function (string $text, int $maxChars, int $maxLines = 2) use ($sanitizeText): array {
+        $text = $sanitizeText($text);
+        if ($text === '') {
+            return ['-'];
         }
-    }
 
-    $normalizedLines = [];
-    foreach ($lines as $line) {
-        foreach ($wrapLine($sanitizeText($line)) as $wrappedLine) {
-            $normalizedLines[] = $wrappedLine;
+        $lines = explode("\n", wordwrap($text, $maxChars, "\n", true));
+        $lines = array_values(array_filter($lines, static fn (string $line): bool => $line !== ''));
+
+        if (count($lines) > $maxLines) {
+            $lines = array_slice($lines, 0, $maxLines);
+            $lastIndex = $maxLines - 1;
+            $lines[$lastIndex] = rtrim(substr($lines[$lastIndex], 0, max(0, $maxChars - 3))) . '...';
         }
-    }
 
-    $linesPerPage = 38;
-    $pages = array_chunk($normalizedLines, $linesPerPage);
-    if ($pages === []) {
-        $pages = [['No data available.']];
-    }
-
-    $escapePdfText = static function (string $text): string {
-        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+        return $lines !== [] ? $lines : ['-'];
     };
 
-    $objects = [];
-    $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    $truncateText = static function (string $text, int $maxChars) use ($sanitizeText): string {
+        $text = $sanitizeText($text);
+        if (strlen($text) <= $maxChars) {
+            return $text;
+        }
+
+        return rtrim(substr($text, 0, max(0, $maxChars - 3))) . '...';
+    };
+
+    $incomeTotal = 0.0;
+    $expenseTotal = 0.0;
+    $tableRows = [];
+    foreach ($transactions as $index => $row) {
+        $amount = (float) ($row['amount'] ?? 0);
+        $type = strtolower((string) ($row['type'] ?? ''));
+        if ($type === 'income') {
+            $incomeTotal += $amount;
+        } elseif ($type === 'expense') {
+            $expenseTotal += $amount;
+        }
+
+        $descriptionLines = $wrapText((string) ($row['description'] ?? ''), 48, 2);
+        $receiptPath = trim((string) ($row['receipt_path'] ?? ''));
+        $receiptName = $receiptPath !== '' ? basename(str_replace('\\', '/', $receiptPath)) : '-';
+        $lineCount = max(1, count($descriptionLines));
+
+        $tableRows[] = [
+            'number' => $index + 1,
+            'id' => (int) ($row['id'] ?? 0),
+            'date' => $truncateText((string) ($row['transaction_date'] ?? ''), 10),
+            'type' => $type === 'income' ? 'Income' : 'Expense',
+            'amount' => $formatAmount($amount),
+            'description_lines' => $descriptionLines,
+            'receipt' => $truncateText($receiptName, 28),
+            'height' => 38 + ($lineCount * 10) + ($receiptName !== '-' ? 10 : 0),
+        ];
+    }
+
+    $netTotal = $incomeTotal - $expenseTotal;
+    $reportGeneratedAt = date('M d, Y h:i A');
+    $typeLabel = $txTypeFilter === 'all' ? 'All transactions' : ucfirst($txTypeFilter) . ' only';
+    $sortLabel = $txDateSort === 'asc' ? 'Oldest first' : 'Newest first';
+
+    $tableStartY = 272.0;
+    $tableHeaderHeight = 24.0;
+    $tableBottomY = 710.0;
+    $contentPages = [[]];
+    $currentPage = 0;
+    $cursorY = $tableStartY + $tableHeaderHeight;
+
+    foreach ($tableRows as $row) {
+        if ($cursorY + (float) $row['height'] > $tableBottomY && $contentPages[$currentPage] !== []) {
+            $contentPages[] = [];
+            $currentPage++;
+            $cursorY = $tableStartY + $tableHeaderHeight;
+        }
+
+        $contentPages[$currentPage][] = $row;
+        $cursorY += (float) $row['height'];
+    }
+
+    if ($contentPages === [] || ($contentPages[0] === [] && $tableRows !== [])) {
+        $contentPages = [[]];
+    }
+
+    $drawText = static function (
+        float $x,
+        float $topY,
+        string $font,
+        float $size,
+        string $text,
+        array $rgb = [0.10, 0.15, 0.13]
+    ) use ($escapePdfText, $formatPdfNumber, $pageHeight): string {
+        return 'BT ' . $formatPdfNumber((float) $rgb[0]) . ' ' . $formatPdfNumber((float) $rgb[1]) . ' ' . $formatPdfNumber((float) $rgb[2]) . ' rg '
+            . '/' . $font . ' ' . $formatPdfNumber($size) . ' Tf '
+            . $formatPdfNumber($x) . ' ' . $formatPdfNumber($pageHeight - $topY) . ' Td '
+            . '(' . $escapePdfText($text) . ") Tj ET\n";
+    };
+
+    $drawRightText = static function (
+        float $rightX,
+        float $topY,
+        string $font,
+        float $size,
+        string $text,
+        array $rgb = [0.10, 0.15, 0.13]
+    ) use ($drawText): string {
+        $estimatedWidth = strlen($text) * $size * 0.52;
+        return $drawText($rightX - $estimatedWidth, $topY, $font, $size, $text, $rgb);
+    };
+
+    $drawRect = static function (
+        float $x,
+        float $topY,
+        float $width,
+        float $height,
+        ?array $fillRgb = null,
+        ?array $strokeRgb = null,
+        ?string $graphicsState = null
+    ) use ($formatPdfNumber, $pageHeight): string {
+        $y = $pageHeight - $topY - $height;
+        $stream = "q\n";
+        if ($graphicsState !== null) {
+            $stream .= '/' . $graphicsState . " gs\n";
+        }
+        if ($fillRgb !== null) {
+            $stream .= $formatPdfNumber((float) $fillRgb[0]) . ' ' . $formatPdfNumber((float) $fillRgb[1]) . ' ' . $formatPdfNumber((float) $fillRgb[2]) . " rg\n";
+        }
+        if ($strokeRgb !== null) {
+            $stream .= $formatPdfNumber((float) $strokeRgb[0]) . ' ' . $formatPdfNumber((float) $strokeRgb[1]) . ' ' . $formatPdfNumber((float) $strokeRgb[2]) . " RG\n";
+        }
+        $stream .= $formatPdfNumber($x) . ' ' . $formatPdfNumber($y) . ' ' . $formatPdfNumber($width) . ' ' . $formatPdfNumber($height) . ' re ';
+        $stream .= $fillRgb !== null && $strokeRgb !== null ? "B\n" : ($fillRgb !== null ? "f\n" : "S\n");
+        $stream .= "Q\n";
+        return $stream;
+    };
 
     $readPdfPngTemplate = static function (string $path): ?array {
         if (!is_file($path) || !is_readable($path)) {
@@ -464,31 +546,83 @@ function handleExportTransactionsAction(PDO $db, array $user): void
 
         fclose($handle);
 
-        if ($width <= 0 || $height <= 0 || $bits !== 8 || $colorType !== 2 || $idat === '') {
+        if ($width <= 0 || $height <= 0 || $bits !== 8 || $idat === '') {
             return null;
+        }
+
+        if ($colorType !== 2) {
+            if (!function_exists('imagecreatefrompng') || !function_exists('imagejpeg')) {
+                return null;
+            }
+
+            $source = @imagecreatefrompng($path);
+            if ($source === false) {
+                return null;
+            }
+
+            $canvas = imagecreatetruecolor($width, $height);
+            if ($canvas === false) {
+                imagedestroy($source);
+                return null;
+            }
+
+            $white = imagecolorallocate($canvas, 255, 255, 255);
+            imagefilledrectangle($canvas, 0, 0, $width, $height, $white !== false ? $white : 0);
+            imagecopy($canvas, $source, 0, 0, 0, 0, $width, $height);
+
+            ob_start();
+            imagejpeg($canvas, null, 94);
+            $jpegData = (string) ob_get_clean();
+
+            imagedestroy($canvas);
+            imagedestroy($source);
+
+            if ($jpegData === '') {
+                return null;
+            }
+
+            return [
+                'width' => $width,
+                'height' => $height,
+                'data' => $jpegData,
+                'filter' => 'DCTDecode',
+            ];
         }
 
         return [
             'width' => $width,
             'height' => $height,
             'data' => $idat,
+            'filter' => 'FlateDecode',
         ];
     };
 
     $templateImage = $readPdfPngTemplate(dirname(__DIR__, 2) . '/public/uploads/pdftemplate.png');
 
-    $pageCount = count($pages);
-    $templateObjectId = $templateImage !== null ? 4 : null;
-    $pageObjectStart = $templateImage !== null ? 5 : 4;
+    $objects = [];
+    $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+    $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+    $objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+    $objects[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique >>';
+    $objects[6] = '<< /Type /ExtGState /ca 0.88 /CA 0.88 >>';
+    $objects[7] = '<< /Type /ExtGState /ca 0.72 /CA 0.72 >>';
+
+    $pageCount = count($contentPages);
+    $templateObjectId = $templateImage !== null ? 8 : null;
+    $pageObjectStart = $templateImage !== null ? 9 : 8;
     $contentObjectStart = $pageObjectStart + $pageCount;
     $pageRefs = [];
 
     if ($templateImage !== null && $templateObjectId !== null) {
         $imageStream = (string) $templateImage['data'];
+        $imageFilter = (string) ($templateImage['filter'] ?? 'FlateDecode');
+        $decodeParms = $imageFilter === 'FlateDecode'
+            ? ' /DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns ' . (int) $templateImage['width'] . ' >>'
+            : '';
         $objects[$templateObjectId] = '<< /Type /XObject /Subtype /Image /Width ' . (int) $templateImage['width']
             . ' /Height ' . (int) $templateImage['height']
-            . ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode'
-            . ' /DecodeParms << /Predictor 15 /Colors 3 /BitsPerComponent 8 /Columns ' . (int) $templateImage['width'] . ' >>'
+            . ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /' . $imageFilter
+            . $decodeParms
             . ' /Length ' . strlen($imageStream) . " >>\nstream\n" . $imageStream . "\nendstream";
     }
 
@@ -499,26 +633,70 @@ function handleExportTransactionsAction(PDO $db, array $user): void
 
         $stream = '';
         if ($templateObjectId !== null) {
-            $stream .= "q\n595 0 0 842 0 0 cm\n/TPL Do\nQ\n";
+            $stream .= "q\n" . $formatPdfNumber($pageWidth) . " 0 0 " . $formatPdfNumber($pageHeight) . " 0 0 cm\n/TPL Do\nQ\n";
         }
-        $stream .= "BT\n/F1 9 Tf\n13 TL\n58 694 Td\n";
-        foreach ($pages[$i] as $lineIndex => $lineText) {
-            $escaped = $escapePdfText($lineText);
-            if ($lineIndex === 0) {
-                $stream .= '(' . $escaped . ") Tj\n";
-            } else {
-                $stream .= 'T* (' . $escaped . ") Tj\n";
+
+        $stream .= $drawText(58, 94, 'F2', 18, 'Transaction Report', [0.06, 0.20, 0.15]);
+        $stream .= $drawText(58, 114, 'F1', 8.5, 'Student Organization Management and Budget Transparency System', [0.29, 0.36, 0.33]);
+        $stream .= $drawRightText(537, 100, 'F1', 8.2, 'Generated ' . $reportGeneratedAt, [0.36, 0.41, 0.39]);
+
+        $stream .= $drawRect(58, 140, 479, 74, [1, 1, 1], [0.78, 0.86, 0.82], 'GSPanel');
+        $stream .= $drawText(76, 163, 'F2', 10.5, $truncateText($orgName, 58), [0.07, 0.22, 0.16]);
+        $stream .= $drawText(76, 184, 'F1', 8.5, 'Type: ' . $typeLabel, [0.28, 0.34, 0.32]);
+        $stream .= $drawText(252, 184, 'F1', 8.5, 'Date sort: ' . $sortLabel, [0.28, 0.34, 0.32]);
+        $stream .= $drawText(410, 184, 'F1', 8.5, 'Records: ' . count($transactions), [0.28, 0.34, 0.32]);
+
+        $summaryY = 222.0;
+        $summaryWidth = 151.0;
+        $summaryCards = [
+            ['label' => 'Total Income', 'value' => $formatAmount($incomeTotal), 'x' => 58.0, 'fill' => [0.94, 0.99, 0.96], 'stroke' => [0.65, 0.86, 0.72], 'valueColor' => [0.05, 0.43, 0.22]],
+            ['label' => 'Total Expense', 'value' => $formatAmount($expenseTotal), 'x' => 222.0, 'fill' => [1.00, 0.96, 0.95], 'stroke' => [0.90, 0.70, 0.67], 'valueColor' => [0.61, 0.16, 0.12]],
+            ['label' => 'Net Balance', 'value' => $formatAmount($netTotal), 'x' => 386.0, 'fill' => [0.95, 0.98, 1.00], 'stroke' => [0.67, 0.80, 0.91], 'valueColor' => [0.08, 0.27, 0.45]],
+        ];
+        foreach ($summaryCards as $card) {
+            $stream .= $drawRect((float) $card['x'], $summaryY, $summaryWidth, 38, $card['fill'], $card['stroke'], 'GSPanel');
+            $stream .= $drawText((float) $card['x'] + 12, $summaryY + 15, 'F1', 7.5, (string) $card['label'], [0.40, 0.46, 0.43]);
+            $stream .= $drawText((float) $card['x'] + 12, $summaryY + 30, 'F2', 10, (string) $card['value'], $card['valueColor']);
+        }
+
+        $stream .= $drawRect(58, $tableStartY, 479, $tableHeaderHeight, [0.08, 0.27, 0.19], null);
+        $stream .= $drawText(70, $tableStartY + 16, 'F2', 7.5, 'DATE', [1, 1, 1]);
+        $stream .= $drawText(133, $tableStartY + 16, 'F2', 7.5, 'TYPE', [1, 1, 1]);
+        $stream .= $drawText(193, $tableStartY + 16, 'F2', 7.5, 'DESCRIPTION / RECEIPT', [1, 1, 1]);
+        $stream .= $drawRightText(521, $tableStartY + 16, 'F2', 7.5, 'AMOUNT', [1, 1, 1]);
+
+        $rowY = $tableStartY + $tableHeaderHeight;
+        if ($transactions === []) {
+            $stream .= $drawRect(58, $rowY, 479, 58, [1, 1, 1], [0.86, 0.90, 0.88]);
+            $stream .= $drawText(78, $rowY + 33, 'F3', 9.5, 'No transactions found for the current filters.', [0.39, 0.45, 0.42]);
+        }
+
+        foreach ($contentPages[$i] as $rowIndex => $row) {
+            $fill = $rowIndex % 2 === 0 ? [1, 1, 1] : [0.97, 0.99, 0.98];
+            $stream .= $drawRect(58, $rowY, 479, (float) $row['height'], $fill, [0.88, 0.92, 0.90], 'GSTable');
+            $stream .= $drawText(70, $rowY + 16, 'F1', 8, (string) $row['date'], [0.18, 0.24, 0.22]);
+            $stream .= $drawText(133, $rowY + 16, 'F2', 8, (string) $row['type'], $row['type'] === 'Income' ? [0.06, 0.43, 0.22] : [0.60, 0.16, 0.12]);
+            $stream .= $drawText(193, $rowY + 15, 'F1', 8, '#' . $row['number'] . '  Tx ID ' . $row['id'], [0.42, 0.47, 0.44]);
+            $descriptionY = $rowY + 27;
+            foreach ($row['description_lines'] as $line) {
+                $stream .= $drawText(193, $descriptionY, 'F1', 8.3, (string) $line, [0.12, 0.17, 0.15]);
+                $descriptionY += 11;
             }
+            $stream .= $drawText(193, $descriptionY + 2, 'F3', 7.2, 'Receipt: ' . (string) $row['receipt'], [0.45, 0.50, 0.48]);
+            $stream .= $drawRightText(521, $rowY + 20, 'F2', 8.5, (string) $row['amount'], [0.10, 0.15, 0.13]);
+            $rowY += (float) $row['height'];
         }
-        $stream .= "ET";
+
+        $stream .= $drawRect(58, 726, 479, 0.5, null, [0.72, 0.79, 0.76]);
+        $stream .= $drawText(58, 824, 'F1', 7.3, 'Report reflects transactions available to your account at export time.', [0.34, 0.39, 0.37]);
+        $stream .= $drawRightText(537, 824, 'F1', 7.3, 'Page ' . ($i + 1) . ' of ' . $pageCount, [0.34, 0.39, 0.37]);
 
         $xObjectResource = $templateObjectId !== null ? ' /XObject << /TPL ' . $templateObjectId . ' 0 R >>' : '';
-        $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >>' . $xObjectResource . ' >> /Contents ' . $contentObjId . ' 0 R >>';
+        $objects[$pageObjId] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' . $formatPdfNumber($pageWidth) . ' ' . $formatPdfNumber($pageHeight) . '] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> /ExtGState << /GSPanel 6 0 R /GSTable 7 0 R >>' . $xObjectResource . ' >> /Contents ' . $contentObjId . ' 0 R >>';
         $objects[$contentObjId] = "<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "\nendstream";
     }
 
     $objects[2] = '<< /Type /Pages /Count ' . $pageCount . ' /Kids [ ' . implode(' ', $pageRefs) . ' ] >>';
-    $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
 
     ksort($objects);
     $pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
