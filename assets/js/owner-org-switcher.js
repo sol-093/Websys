@@ -113,6 +113,8 @@
                 const optionLabel = optionButton.getAttribute('data-option-label') || optionButton.getAttribute('data-org-name') || optionButton.textContent || '';
 
                 hiddenInput.value = optionValue;
+                hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
 
                 label.textContent = optionLabel.trim();
                 setActiveItem(optionButton);

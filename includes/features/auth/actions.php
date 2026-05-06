@@ -195,7 +195,7 @@ function handleRegisterAction(PDO $db): void
         $activationToken = bin2hex(random_bytes(32));
         $activationTokenHash = hash('sha256', $activationToken);
         $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
-        
+
         $stmt = $db->prepare('INSERT INTO users (name, email, password_hash, role, institute, program, year_level, section, email_verified, activation_token, activation_expires, account_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             $name, 
@@ -213,12 +213,12 @@ function handleRegisterAction(PDO $db): void
         ]);
         $newUserId = (int) $db->lastInsertId();
         rateLimitClear($registerRateKey);
-        
+
         $emailSent = sendActivationEmail($email, $name, $activationToken);
         if (!$emailSent) {
             error_log('Verification email failed for new user id ' . $newUserId . ' (' . $email . ').');
         }
-        
+
         auditLog($newUserId, 'auth.register_success', 'user', $newUserId, $emailSent ? 'Student registration completed, verification email sent' : 'Student registration completed, verification email failed');
         setFlash(
             $emailSent ? 'success' : 'error',
@@ -361,24 +361,23 @@ function handleResendVerificationAction(PDO $db): void
     $email = trim((string) ($_POST['email'] ?? ''));
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $resendRateKey = 'resend_verification:' . strtolower($email) . ':' . $clientIp;
-    
+
     if (rateLimitIsBlocked($resendRateKey, 3, 3600)) {
         setFlash('error', 'Too many verification emails sent. Please try again later.');
         redirect('?page=login');
     }
-    
+
     if ($email === '') {
         setFlash('error', 'Please provide your email address.');
         redirect('?page=login');
     }
-    
+
     $stmt = $db->prepare('SELECT id, name, email, email_verified FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
-    
+
     if ($user) {
         if ((int) ($user['email_verified'] ?? 1) === 0) {
-            // Unverified: allow resend
             $activationToken = bin2hex(random_bytes(32));
             $activationTokenHash = hash('sha256', $activationToken);
             $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
@@ -397,13 +396,12 @@ function handleResendVerificationAction(PDO $db): void
             }
             setFlash('success', 'A verification email has been sent to your address.');
             redirect('?page=login');
-        } else {
-            // Already verified
-            setFlash('info', 'This account is already verified. Please log in.');
-            redirect('?page=login');
         }
+
+        setFlash('info', 'This account is already verified. Please log in.');
+        redirect('?page=login');
     }
-    // No such account: generic message
+
     setFlash('success', 'If your account exists and is unverified, a verification email has been sent.');
     redirect('?page=login');
 }
@@ -667,24 +665,20 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         redirect('?page=profile');
     }
     
-    // Check if email is being changed
     $emailChanged = strtolower($email) !== strtolower($user['email']);
     
     if ($emailChanged) {
-        // Check if new email is already taken
         $stmt = $db->prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?) AND id != ? LIMIT 1');
         $stmt->execute([$email, (int) $user['id']]);
         if ($stmt->fetch()) {
             setFlash('error', 'This email is already in use by another account.');
             redirect('?page=profile');
         }
-        
-        // Generate new activation token for email verification
+
         $activationToken = bin2hex(random_bytes(32));
         $activationTokenHash = hash('sha256', $activationToken);
         $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
-        
-        // Update user with new email and mark as unverified
+
         $updateStmt = $db->prepare('
             UPDATE users 
             SET name = ?, 
@@ -708,28 +702,24 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         if ($removedMemberships !== []) {
             queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
         }
-        
-        // Send verification email to new address
+
         $emailSent = sendActivationEmail($email, $name, $activationToken);
         if (!$emailSent) {
             error_log('Verification email failed after profile email change for user id ' . (int) $user['id'] . ' (' . $email . ').');
         }
-        
-        // Audit log
+
         auditLog((int) $user['id'], 'profile.email_change', 'user', (int) $user['id'], 'Email changed from ' . $user['email'] . ' to ' . $email);
-        
+
         setFlash(
             $emailSent ? 'success' : 'error',
             $emailSent
                 ? 'Profile updated. Please verify your new email address. A verification link has been sent to ' . htmlspecialchars($email) . '.'
                 : 'Profile updated, but the verification email could not be sent. Please use resend verification from the login page or contact the administrator.'
         );
-        
-        // Log out user since email changed and needs verification
+
         session_destroy();
         redirect('?page=login');
     } else {
-        // Update editable profile fields
         $updateStmt = $db->prepare('UPDATE users SET email = ?, institute = ?, program = ?, section = ?, year_level = ?, profile_picture_path = ?, profile_picture_crop_x = ?, profile_picture_crop_y = ?, profile_picture_zoom = ? WHERE id = ?');
         $updateStmt->execute([$email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, (int) $user['id']]);
 
@@ -737,8 +727,7 @@ function handleUpdateProfileAction(PDO $db, array $user): void
         if ($removedMemberships !== []) {
             queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
         }
-        
-        // Audit log
+
         auditLog((int) $user['id'], 'profile.update', 'user', (int) $user['id'], 'Profile updated');
         
         setFlash('success', 'Profile updated successfully.');

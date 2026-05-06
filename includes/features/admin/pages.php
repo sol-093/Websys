@@ -1036,7 +1036,13 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
     $userTxPagination = paginateArray($transactions, 'pg_myorg_user_tx', 12);
     $transactions = $userTxPagination['items'];
 
-    $memberStmt = $db->prepare('SELECT u.name, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom FROM organization_members om JOIN users u ON u.id = om.user_id WHERE om.organization_id = ? ORDER BY u.name ASC');
+    $memberStmt = $db->prepare('SELECT u.id, u.name, u.email, u.role, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom, om.joined_at,
+        CASE WHEN o.owner_id = u.id THEN 1 ELSE 0 END AS is_owner
+        FROM organization_members om
+        JOIN users u ON u.id = om.user_id
+        JOIN organizations o ON o.id = om.organization_id
+        WHERE om.organization_id = ?
+        ORDER BY CASE WHEN o.owner_id = u.id THEN 0 ELSE 1 END, u.name ASC');
     $memberStmt->execute([(int) $selectedOrgId]);
     $orgMembers = $memberStmt->fetchAll();
     $orgMemberCount = count($orgMembers);
@@ -1052,7 +1058,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
             <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span>Organization Overview</span></h1>
             <?php if (($user['role'] ?? '') === 'owner' && in_array((int) $selectedOrgId, $ownedOrgIds, true)): ?>
-                <a href="?page=my_org_manage&org_id=<?= (int) $selectedOrgId ?>" class="bg-emerald-700 text-white px-3 py-2 rounded text-sm"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Manage Organization</span></span></a>
+                <a href="?page=my_org_manage&org_id=<?= (int) $selectedOrgId ?>" class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800 transition-colors hover:bg-emerald-500/15"><span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Manage Organization</span></span></a>
             <?php endif; ?>
         </div>
 
@@ -1082,21 +1088,27 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                     </ul>
                 </div>
             </div>
-            <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+            <button class="w-full sm:w-auto rounded border border-slate-300/30 bg-white/10 px-4 py-2 text-slate-700 transition-colors hover:bg-white/15"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
         </form>
 
         <h2 class="text-lg font-semibold inline-flex items-center gap-2"><?= e((string) $org['name']) ?>
             <?php if (in_array((int) $selectedOrgId, $ownedOrgIds, true)): ?>
-                <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40">Owned</span>
+                <span class="text-[11px] px-2 py-0.5 rounded-md border border-emerald-300/30 bg-emerald-500/10 text-emerald-800">Owned</span>
             <?php endif; ?>
         </h2>
         <p class="text-gray-600 mb-3"><?= e((string) ($org['description'] ?? '')) ?></p>
 
-        <div class="mb-4 rounded-xl border border-emerald-200/55 bg-emerald-50/30 p-3">
-            <div class="flex items-center justify-between gap-3">
-                <p class="text-sm font-semibold text-emerald-900">Total Members: <?= (int) $orgMemberCount ?></p>
+        <div class="mb-4 rounded-lg border border-emerald-300/25 bg-white/10 p-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2 text-sm">
+                    <span class="font-semibold text-emerald-800">Total Members: <?= (int) $orgMemberCount ?></span>
+                    <span class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-800"><?= e(getOrganizationVisibilityLabel($org)) ?></span>
+                    <?php if (($user['role'] ?? '') === 'owner' && in_array((int) $selectedOrgId, $ownedOrgIds, true)): ?>
+                        <span class="rounded-md border border-emerald-300/25 bg-emerald-500/8 px-2 py-0.5 text-[11px] text-emerald-700">Owner controls available</span>
+                    <?php endif; ?>
+                </div>
                 <?php if ($canSeeMemberNames): ?>
-                    <button type="button" id="userOrgMembersOpen" class="inline-flex items-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded text-xs hover:bg-emerald-800 transition-colors">
+                    <button type="button" id="userOrgMembersOpen" class="inline-flex items-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded-md text-xs hover:bg-emerald-800 transition-colors">
                         <?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View Members</span>
                     </button>
                 <?php endif; ?>
@@ -1131,29 +1143,55 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                         <div class="flex items-start justify-between gap-3 mb-4">
                             <div>
                                 <h3 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Organization Members</span></h3>
-                                <p class="text-sm text-slate-600 mt-1">Search members for <?= e((string) $org['name']) ?>.</p>
+                                <p class="text-sm text-slate-600 mt-1">Search members for <?= e((string) $org['name']) ?> and review who owns or joined the roster.</p>
                             </div>
                             <button type="button" id="userOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
                         </div>
+                        <div class="mb-3 flex flex-wrap gap-2 text-xs">
+                            <span class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800">Members: <?= (int) $orgMemberCount ?></span>
+                            <span class="rounded-md border border-emerald-300/25 bg-white/10 px-2.5 py-1 text-slate-700"><?= e(getOrganizationVisibilityLabel($org)) ?></span>
+                        </div>
                         <div class="mb-3">
-                            <input type="search" id="userOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                            <input type="search" id="userOrgMembersSearch" inputmode="search" placeholder="Search member name or email..." class="w-full border rounded px-3 py-2">
                         </div>
                         <div class="max-h-[62vh] overflow-auto rounded border border-slate-200/60">
                             <div id="userOrgMembersList" class="divide-y divide-slate-200/50">
                                 <?php if ($orgMemberCount > 0): ?>
                                     <?php foreach ($orgMembers as $member): ?>
                                         <?php $memberName = (string) ($member['name'] ?? 'Member'); ?>
-                                        <div class="user-org-member-item px-3 py-2 text-sm text-slate-800 transition-colors" data-member-name="<?= e(strtolower($memberName)) ?>">
-                                            <span class="inline-flex items-center gap-2">
-                                                <?= renderProfileMedia($memberName, (string) ($member['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($member['profile_picture_crop_x'] ?? 50), (float) ($member['profile_picture_crop_y'] ?? 50), (float) ($member['profile_picture_zoom'] ?? 1)) ?>
-                                                <span><?= e($memberName) ?></span>
-                                            </span>
+                                        <?php
+                                            $memberEmail = (string) ($member['email'] ?? '');
+                                            $joinedAt = (string) ($member['joined_at'] ?? '');
+                                            $isMemberOwner = (int) ($member['is_owner'] ?? 0) === 1;
+                                            $isCurrentViewer = (int) ($member['id'] ?? 0) === (int) $user['id'];
+                                        ?>
+                                        <div class="user-org-member-item px-3 py-3 text-sm text-slate-800 transition-colors" data-member-search="<?= e(strtolower($memberName . ' ' . $memberEmail)) ?>">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div class="min-w-0 inline-flex items-start gap-3">
+                                                    <?= renderProfileMedia($memberName, (string) ($member['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($member['profile_picture_crop_x'] ?? 50), (float) ($member['profile_picture_crop_y'] ?? 50), (float) ($member['profile_picture_zoom'] ?? 1)) ?>
+                                                    <div class="min-w-0">
+                                                        <div class="font-medium break-words"><?= e($memberName) ?></div>
+                                                        <?php if ($memberEmail !== ''): ?>
+                                                            <div class="text-xs text-slate-500 break-all mt-0.5"><?= e($memberEmail) ?></div>
+                                                        <?php endif; ?>
+                                                        <?php if ($joinedAt !== ''): ?>
+                                                            <div class="text-xs text-slate-500 mt-1">Joined <?= e(date('F d, Y', strtotime($joinedAt))) ?></div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                </div>
+                                                <div class="shrink-0 flex flex-wrap justify-end gap-1">
+                                                    <?php if ($isMemberOwner): ?>
+                                                        <span class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-800">Owner</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <div class="px-3 py-3 text-sm text-slate-600">No members have joined this organization yet.</div>
                                 <?php endif; ?>
                             </div>
+                            <div id="userOrgMembersEmptySearch" class="hidden px-3 py-4 text-sm text-slate-600">No members matched that search.</div>
                         </div>
                     </div>
                 </div>
@@ -1208,6 +1246,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                     const closeButton = document.getElementById('userOrgMembersClose');
                     const searchInput = document.getElementById('userOrgMembersSearch');
                     const memberItems = Array.from(document.querySelectorAll('.user-org-member-item'));
+                    const emptySearchState = document.getElementById('userOrgMembersEmptySearch');
 
                     if (!openButton || !modal || !closeButton || !searchInput) {
                         return;
@@ -1226,10 +1265,18 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
 
                     function filterMembers() {
                         const query = searchInput.value.trim().toLowerCase();
+                        let visibleCount = 0;
                         memberItems.forEach(function (item) {
-                            const name = item.getAttribute('data-member-name') || '';
-                            item.classList.toggle('hidden', !(query === '' || name.includes(query)));
+                            const searchText = item.getAttribute('data-member-search') || '';
+                            const isVisible = query === '' || searchText.includes(query);
+                            item.classList.toggle('hidden', !isVisible);
+                            if (isVisible) {
+                                visibleCount += 1;
+                            }
                         });
+                        if (emptySearchState) {
+                            emptySearchState.classList.toggle('hidden', visibleCount !== 0 || query === '');
+                        }
                     }
 
                     openButton.addEventListener('click', openModal);
@@ -1317,9 +1364,7 @@ function handleAdminOrgsPage(PDO $db): void
                                 <?= renderProfilePlaceholder('Organization', 'organization', 'sm') ?>
                             </div>
                             <label for="adminCreateOrgLogo" class="org-logo-upload-trigger flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors sm:flex-1">
-                                <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
-                                    <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
-                                </span>
+                                <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm"><?= uiIcon('upload', 'ui-icon') ?></span>
                                 <span class="min-w-0 flex-1 font-medium">Choose organization logo</span>
                                 <span class="org-logo-upload-trigger-subtext shrink-0 text-xs">Click to browse</span>
                             </label>
@@ -1554,9 +1599,7 @@ function handleAdminOrgsPage(PDO $db): void
                                         <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                                     </div>
                                     <label for="orgEditModalLogo" class="org-logo-upload-trigger flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-xl border border-dashed px-4 py-3 text-sm transition-colors sm:flex-1">
-                                        <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm">
-                                            <svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V7"></path><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 10.5L12 7l3.5 3.5"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 16.5v1A1.5 1.5 0 0 0 6 19h12a1.5 1.5 0 0 0 1.5-1.5v-1"></path></svg>
-                                        </span>
+                                        <span class="org-logo-upload-trigger-icon inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm"><?= uiIcon('upload', 'ui-icon') ?></span>
                                         <span class="min-w-0 flex-1 font-medium">Choose organization logo</span>
                                         <span class="org-logo-upload-trigger-subtext shrink-0 text-xs">Click to browse</span>
                                     </label>
@@ -1589,12 +1632,44 @@ function handleAdminOrgsPage(PDO $db): void
                         </div>
                         <div class="space-y-2">
                             <label for="orgEditModalOwner" class="block text-sm font-medium text-slate-700">Owner</label>
-                            <select id="orgEditModalOwner" name="owner_id" class="w-full border rounded px-3 py-3">
-                                <option value="">-- none --</option>
-                                <?php foreach ($students as $student): ?>
-                                    <option value="<?= (int) $student['id'] ?>"><?= e($student['name']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="relative w-full" data-dropdown-root data-themed-picker>
+                                <input type="hidden" id="orgEditModalOwner" name="owner_id" data-dropdown-value value="">
+                                <div class="relative w-full" data-dropdown-wrapper>
+                                    <button type="button" data-dropdown-toggle="orgEditModalOwnerMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                        <span data-dropdown-label data-dropdown-placeholder="Search and choose owner" class="truncate text-left">Search and choose owner</span>
+                                    </button>
+                                    <div id="orgEditModalOwnerMenu" data-dropdown-menu class="absolute left-0 bottom-full mb-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                        <div class="border-b border-emerald-300/20 p-2">
+                                            <input type="search" id="orgEditModalOwnerSearch" data-dropdown-search inputmode="search" placeholder="Search owner by name..." class="w-full border rounded px-3 py-2 text-sm">
+                                        </div>
+                                        <ul id="orgEditModalOwnerOptions" class="scrollbar-hidden p-2 text-sm font-medium space-y-1 max-h-64 overflow-y-auto">
+                                            <li>
+                                                <button type="button" data-dropdown-option data-active="true" data-option-value="" data-option-label="-- none --" data-owner-name="none" class="block w-full rounded px-3 py-2 text-left transition-colors">
+                                                    -- none --
+                                                </button>
+                                            </li>
+                                            <?php foreach ($students as $student): ?>
+                                                <li data-owner-option>
+                                                    <button
+                                                        type="button"
+                                                        data-dropdown-option
+                                                        data-active="false"
+                                                        data-option-value="<?= (int) $student['id'] ?>"
+                                                        data-option-label="<?= e($student['name']) ?>"
+                                                        data-owner-name="<?= e(strtolower((string) $student['name'])) ?>"
+                                                        class="block w-full rounded px-3 py-2 text-left transition-colors"
+                                                    >
+                                                        <?= e($student['name']) ?>
+                                                    </button>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                        <div id="orgEditModalOwnerEmpty" class="hidden border-t border-emerald-300/20 px-3 py-2 text-xs text-slate-600">
+                                            No owners matched that search.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="space-y-2">
                             <label for="orgEditModalInstitute" class="block text-sm font-medium text-slate-700">Target Institute</label>
@@ -1667,6 +1742,8 @@ function handleAdminOrgsPage(PDO $db): void
             const descriptionInput = document.getElementById('orgEditModalDescription');
             const categoryInput = document.getElementById('orgEditModalCategory');
             const ownerInput = document.getElementById('orgEditModalOwner');
+            const ownerSearchInput = document.getElementById('orgEditModalOwnerSearch');
+            const ownerSearchEmpty = document.getElementById('orgEditModalOwnerEmpty');
             const instituteInput = document.getElementById('orgEditModalInstitute');
             const programInput = document.getElementById('orgEditModalProgram');
             const createScopeForms = document.querySelectorAll('[data-org-scope-form]');
@@ -1690,6 +1767,60 @@ function handleAdminOrgsPage(PDO $db): void
                 root.querySelectorAll('[data-dropdown-option]').forEach(function (option) {
                     option.dataset.active = option.getAttribute('data-option-value') === '' ? 'true' : 'false';
                 });
+            }
+
+            function syncOwnerPicker(value) {
+                if (!ownerInput) {
+                    return;
+                }
+
+                ownerInput.value = value || '';
+                const root = ownerInput.closest('[data-dropdown-root]');
+                if (!root) {
+                    return;
+                }
+
+                const label = root.querySelector('[data-dropdown-label]');
+                const options = Array.from(root.querySelectorAll('[data-dropdown-option]'));
+                let matchedOption = null;
+
+                options.forEach(function (option) {
+                    const isMatch = (option.getAttribute('data-option-value') || '') === ownerInput.value;
+                    option.dataset.active = isMatch ? 'true' : 'false';
+                    if (isMatch) {
+                        matchedOption = option;
+                    }
+                });
+
+                if (label) {
+                    label.textContent = matchedOption
+                        ? (matchedOption.getAttribute('data-option-label') || matchedOption.textContent || '').trim()
+                        : (label.getAttribute('data-dropdown-placeholder') || 'Search and choose owner');
+                }
+            }
+
+            function filterOwnerOptions() {
+                if (!ownerSearchInput) {
+                    return;
+                }
+
+                const query = ownerSearchInput.value.trim().toLowerCase();
+                const optionItems = Array.from(document.querySelectorAll('#orgEditModalOwnerOptions [data-owner-option]'));
+                let visibleCount = 0;
+
+                optionItems.forEach(function (item) {
+                    const optionButton = item.querySelector('[data-dropdown-option]');
+                    const haystack = (optionButton ? optionButton.getAttribute('data-owner-name') : '') || '';
+                    const isVisible = query === '' || haystack.includes(query);
+                    item.classList.toggle('hidden', !isVisible);
+                    if (isVisible) {
+                        visibleCount += 1;
+                    }
+                });
+
+                if (ownerSearchEmpty) {
+                    ownerSearchEmpty.classList.toggle('hidden', visibleCount !== 0);
+                }
             }
 
             function syncCreateScope(form) {
@@ -1754,9 +1885,13 @@ function handleAdminOrgsPage(PDO $db): void
                 nameInput.value = button.getAttribute('data-org-name') || '';
                 descriptionInput.value = button.getAttribute('data-org-description') || '';
                 categoryInput.value = button.getAttribute('data-org-category') || 'collegewide';
-                ownerInput.value = button.getAttribute('data-org-owner-id') || '';
+                syncOwnerPicker(button.getAttribute('data-org-owner-id') || '');
                 instituteInput.value = button.getAttribute('data-org-target-institute') || '';
                 programInput.value = button.getAttribute('data-org-target-program') || '';
+                if (ownerSearchInput) {
+                    ownerSearchInput.value = '';
+                    filterOwnerOptions();
+                }
                 syncEditScope();
                 modal.classList.remove('hidden');
                 nameInput.focus();
@@ -1775,6 +1910,9 @@ function handleAdminOrgsPage(PDO $db): void
             closeButton.addEventListener('click', closeModal);
             cancelButton.addEventListener('click', closeModal);
             categoryInput.addEventListener('change', syncEditScope);
+            if (ownerSearchInput) {
+                ownerSearchInput.addEventListener('input', filterOwnerOptions);
+            }
             syncEditScope();
 
             modal.addEventListener('click', function (event) {

@@ -317,7 +317,7 @@ function handleLoginPage(array $config): void
                     <input type="hidden" name="action" value="resend_verification">
                     <input type="hidden" name="_csrf" value="<?= csrfToken() ?>">
                     <input name="email" type="email" placeholder="Your email" value="<?= e($pendingEmail) ?>" required class="w-full border rounded px-3 py-2 text-sm">
-                    <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full text-sm"><span class="icon-label justify-center"><?= uiIcon('refresh', 'ui-icon ui-icon-sm') ?><span>Resend Verification Email</span></span></button>
+                    <button class="bg-emerald-600 text-white px-4 py-2 rounded w-full text-sm"><span class="icon-label justify-center"><?= uiIcon('mail', 'ui-icon ui-icon-sm') ?><span>Resend Verification Email</span></span></button>
                 </form>
             </div>
         <?php endif; ?>
@@ -327,7 +327,7 @@ function handleLoginPage(array $config): void
         <?php if ($googleLoginReady): ?>
             <div class="my-3 text-center text-gray-500 text-sm">or</div>
             <a href="?page=google_login" class="block w-full border rounded px-4 py-2 text-center hover:bg-gray-50 font-medium">
-                <span class="icon-label justify-center"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Continue with Google</span></span>
+                <span class="icon-label justify-center"><?= uiIcon('login', 'ui-icon ui-icon-sm') ?><span>Continue with Google</span></span>
             </a>
         <?php else: ?>
             <p class="text-xs text-amber-700 mt-3"></p>
@@ -371,12 +371,22 @@ function handleRegisterPage(): void
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label for="registerProgram" class="block text-sm font-semibold mb-2">Program</label>
-                    <select id="registerProgram" name="program" required class="w-full border rounded px-3 py-2">
-                        <option value="">Please Select</option>
-                        <?php foreach ($programOptions as $programName): ?>
-                            <option value="<?= e($programName) ?>"><?= e($programName) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="relative w-full" data-dropdown-root data-themed-picker>
+                        <input id="registerProgram" name="program" type="hidden" data-dropdown-value value="">
+                        <div class="relative w-full" data-dropdown-wrapper>
+                            <button type="button" data-dropdown-toggle="registerProgramMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                <span data-dropdown-label data-dropdown-placeholder="Please Select" class="truncate text-left">Please Select</span>
+                            </button>
+                            <div id="registerProgramMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                <ul class="p-2 text-sm font-medium space-y-1 max-h-72 overflow-auto scrollbar-hidden">
+                                    <li><button type="button" data-dropdown-option data-active="true" data-option-value="" data-option-label="Please Select" class="block w-full rounded px-3 py-2 text-left transition-colors">Please Select</button></li>
+                                    <?php foreach ($programOptions as $programName): ?>
+                                        <li><button type="button" data-dropdown-option data-active="false" data-option-value="<?= e($programName) ?>" data-option-label="<?= e($programName) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors"><?= e($programName) ?></button></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                     <p id="registerInstitutePreview" class="mt-1 text-xs text-slate-600">Institute will be assigned from the selected program.</p>
                 </div>
 
@@ -388,9 +398,9 @@ function handleRegisterPage(): void
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="registerSection" class="block text-sm font-semibold mb-2">Year and Section</label>
-                    <input id="registerSection" name="section" type="text" placeholder="e.g. 3A, 2nd Year - B" required class="w-full border rounded px-3 py-2">
-                    <p class="mt-1 text-xs text-slate-600">Enter your combined year and section format.</p>
+                    <label for="registerSection" class="block text-sm font-semibold mb-2">Program-Year and Section</label>
+                    <input id="registerSection" name="section" type="text" placeholder="e.g. BSCS - 102" required class="w-full border rounded px-3 py-2">
+                    <p class="mt-1 text-xs text-slate-650">Use the program abbreviation, then the year and section.</p>
                 </div>
             </div>
 
@@ -404,12 +414,12 @@ function handleRegisterPage(): void
                 <input id="registerConfirmPassword" name="confirm_password" type="password" placeholder="Re-enter your password" required minlength="8" data-password-toggle class="w-full border rounded px-3 py-2">
             </div>
 
-            <div class="rounded border border-emerald-200/40 p-3 bg-white/20">
+            <div class="register-consent-panel rounded border p-3">
                 <div class="flex items-center gap-2 flex-wrap">
-                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="h-4 w-4 rounded border-emerald-300 accent-emerald-600 cursor-pointer shrink-0">
-                    <label for="privacyConsent" class="text-sm md:text-base text-slate-800 cursor-pointer">I agree with the</label>
-                    <button type="button" id="openPrivacyModal" class="text-sm md:text-base font-semibold text-sky-600 hover:text-sky-500 underline underline-offset-2">terms and conditions</button>
-                    <span class="text-sm md:text-base text-slate-800">.</span>
+                    <input id="privacyConsent" name="privacy_consent" type="checkbox" value="1" required class="register-consent-checkbox h-4 w-4 rounded cursor-pointer shrink-0">
+                    <label for="privacyConsent" class="register-consent-copy text-sm md:text-base cursor-pointer">I agree with the</label>
+                    <button type="button" id="openPrivacyModal" class="register-consent-link text-sm md:text-base font-semibold underline underline-offset-2">terms and conditions</button>
+                    <span class="register-consent-copy text-sm md:text-base">.</span>
                 </div>
             </div>
 
@@ -517,6 +527,7 @@ function handleRegisterPage(): void
             }
         })();
     </script>
+    <script src="assets/js/owner-org-switcher.js"></script>
     <script src="assets/js/register-form.js"></script>
     <?php
     renderFooter();
@@ -538,7 +549,7 @@ function handleVerifyEmailPage(): void
     } else {
         $error = 'No verification token provided.';
     }
-    
+
     renderHeader('Email Verification');
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
@@ -555,7 +566,7 @@ function handleVerifyEmailPage(): void
             </div>
         <?php else: ?>
             <div class="auth-notice auth-notice-error mb-3 p-4 rounded">
-                <h3 class="text-sm font-semibold mb-2">Verification Failed</h3>
+                <h3 class="text-sm font-semibold mb-2 icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Verification Failed</span></h3>
                 <p class="text-sm mb-3"><?php echo htmlspecialchars($error); ?></p>
                 <a href="?page=login&show_resend=1" class="text-sm font-medium hover:underline">
                     Request New Verification Link →
@@ -577,7 +588,7 @@ function handleForgotPasswordPage(): void
     renderHeader('Forgot Password');
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
-        <h1 class="text-2xl font-semibold mb-1">Reset your password</h1>
+        <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('mail', 'ui-icon') ?><span>Reset your password</span></h1>
         <p class="text-sm text-slate-600 mb-4">Enter your email address and we'll send you a link to reset your password.</p>
         
         <?php $errorFlash = getFlash(); if ($errorFlash && $errorFlash['type'] === 'error'): ?>
@@ -591,7 +602,7 @@ function handleForgotPasswordPage(): void
             <input type="hidden" name="action" value="forgot_password">
             <input id="email" name="email" type="email" placeholder="Email address" required class="w-full border rounded px-3 py-2">
             <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded w-full">
-                <span class="icon-label justify-center"><?= uiIcon('requests', 'ui-icon ui-icon-sm') ?><span>Send Reset Link</span></span>
+                <span class="icon-label justify-center"><?= uiIcon('mail', 'ui-icon ui-icon-sm') ?><span>Send Reset Link</span></span>
             </button>
         </form>
         
@@ -625,12 +636,12 @@ function handleResetPasswordPage(PDO $db): void
     renderHeader('Reset Password');
     ?>
     <div class="max-w-md mx-auto glass p-6 mt-8">
-        <h1 class="text-2xl font-semibold mb-1">Set new password</h1>
+        <h1 class="text-2xl font-semibold mb-1 icon-label"><?= uiIcon('security', 'ui-icon') ?><span>Set new password</span></h1>
         <p class="text-sm text-slate-600 mb-4">Create a strong password for your account.</p>
         
         <?php if (!$tokenValid): ?>
             <div class="mb-3 p-4 bg-red-50 border border-red-200 rounded">
-                <h3 class="text-sm font-semibold text-red-800 mb-2">Invalid or Expired Link</h3>
+                <h3 class="text-sm font-semibold text-red-800 mb-2 icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Invalid or Expired Link</span></h3>
                 <p class="text-sm text-red-700 mb-3">This password reset link is invalid or has expired. Reset links are valid for 1 hour.</p>
                 <a href="?page=forgot_password" class="text-sm font-medium text-red-800 hover:underline">
                     Request New Reset Link →
@@ -659,7 +670,7 @@ function handleResetPasswordPage(PDO $db): void
                 </div>
                 
                 <button type="submit" class="bg-indigo-700 text-white px-4 py-2 rounded w-full">
-                    Reset Password
+                    <span class="icon-label justify-center"><?= uiIcon('security', 'ui-icon ui-icon-sm') ?><span>Reset Password</span></span>
                 </button>
             </form>
         <?php endif; ?>

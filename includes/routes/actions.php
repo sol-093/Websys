@@ -114,6 +114,10 @@ if (isPost()) {
         handleRespondJoinRequestAction($db, $user);
     }
 
+    if ($action === 'remove_org_member') {
+        handleRemoveOrganizationMemberAction($db, $user);
+    }
+
     if ($action === 'update_my_org') {
         handleUpdateMyOrgAction($db, $user);
     }

@@ -589,7 +589,7 @@ function initCurrencyInput(inputEl) {
 
                     var button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'absolute inset-y-0 right-0 px-3 inline-flex items-center text-slate-600 hover:text-slate-900';
+                    button.className = 'password-toggle-btn absolute inset-y-0 right-1 my-1 inline-flex items-center justify-center px-2 text-slate-600 hover:text-slate-900';
                     button.setAttribute('data-password-toggle-btn', '1');
                     button.setAttribute('aria-label', 'Show password');
                     button.setAttribute('aria-pressed', 'false');

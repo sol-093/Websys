@@ -52,11 +52,17 @@ function renderPagination(array $pagination): void
     $isDashboardPage = (string) ($_GET['page'] ?? '') === 'dashboard';
     $preserveScroll = $isDashboardPage && str_starts_with($queryKey, 'pg_dash_');
     $preserveScrollAttr = $preserveScroll ? ' data-preserve-scroll="1"' : '';
+    $anchor = trim((string) ($pagination['anchor'] ?? ''));
 
-    $buildUrl = static function (int $targetPage) use ($queryKey): string {
+    $buildUrl = static function (int $targetPage) use ($queryKey, $anchor): string {
         $params = $_GET;
         $params[$queryKey] = $targetPage;
-        return '?' . http_build_query($params);
+        $url = '?' . http_build_query($params);
+        if ($anchor !== '') {
+            $url .= '#' . rawurlencode(ltrim($anchor, '#'));
+        }
+
+        return $url;
     };
 
     ?>

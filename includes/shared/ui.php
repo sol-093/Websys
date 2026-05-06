@@ -51,13 +51,14 @@ function renderBreadcrumb(array $crumbs): void
 
 function renderEmptyState(string $icon, string $title, string $message, ?string $actionLabel = null, ?string $actionUrl = null): void
 {
-    $iconMarkup = match ($icon) {
-        'search' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M16 16l5 5"></path></svg>',
-        'folder' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.5 7.5a2 2 0 012-2h4l1.8 2H18.5a2 2 0 012 2v8a2 2 0 01-2 2H5.5a2 2 0 01-2-2z"></path></svg>',
-        'users' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="8" cy="9" r="2.5"></circle><circle cx="16" cy="10" r="2.5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M3.5 18c.8-2.2 2.8-3.5 5.1-3.5S12.9 15.8 13.7 18"></path><path stroke-linecap="round" stroke-linejoin="round" d="M13 18c.6-1.8 2.1-2.9 3.9-2.9 1.8 0 3.3 1.1 3.9 2.9"></path></svg>',
-        'chart' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 19.5h16"></path><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V10"></path><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V6"></path><path stroke-linecap="round" stroke-linejoin="round" d="M17 16v-3"></path></svg>',
-        default => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7.5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 8l7.5 5 7.5-5"></path></svg>',
+    $iconName = match ($icon) {
+        'search' => 'search',
+        'folder' => 'folder',
+        'users' => 'students',
+        'chart' => 'chart',
+        default => 'mail',
     };
+    $iconMarkup = uiIcon($iconName, 'ui-icon', true);
 
     echo '<div class="glass empty-state">';
     echo '<div class="empty-state-icon">' . $iconMarkup . '</div>';

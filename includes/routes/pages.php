@@ -106,6 +106,14 @@ if ($page === 'my_org_manage') {
     handleMyOrgOwnerPage($db, $user, $announcementCutoff);
 }
 
+if ($page === 'my_org_members') {
+    handleMyOrgMembersPage($db, $user, $announcementCutoff);
+}
+
+if ($page === 'my_org_finance') {
+    handleMyOrgFinancePage($db, $user, $announcementCutoff);
+}
+
 // Default Dashboard (all logged-in users)
 $dashboardData = buildDashboardViewData($db, $user, $config, $announcementCutoff, $recentReportCutoffDate);
 

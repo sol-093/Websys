@@ -461,12 +461,12 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
     $org = getOwnedOrganizationById((int) $user['id'], $orgId);
     if (!$org) {
         setFlash('error', 'You are not allowed to manage this organization.');
-        redirect('?page=my_org_manage');
+        redirect('?page=my_org_members');
     }
 
     if (!in_array($decision, ['approve', 'decline'], true)) {
         setFlash('error', 'Invalid request action.');
-        redirect('?page=my_org_manage&org_id=' . $orgId);
+        redirect('?page=my_org_members&org_id=' . $orgId);
     }
 
     $stmt = $db->prepare('SELECT * FROM organization_join_requests WHERE id = ? AND organization_id = ? AND status = ? LIMIT 1');
@@ -475,7 +475,7 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
 
     if (!$request) {
         setFlash('error', 'Request is no longer pending.');
-        redirect('?page=my_org_manage&org_id=' . $orgId);
+        redirect('?page=my_org_members&org_id=' . $orgId);
     }
 
     $db->beginTransaction();
@@ -503,5 +503,62 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
         setFlash('error', 'Unable to update join request.');
     }
 
-    redirect('?page=my_org_manage&org_id=' . $orgId);
+    redirect('?page=my_org_members&org_id=' . $orgId);
+}
+
+function handleRemoveOrganizationMemberAction(PDO $db, array $user): void
+{
+    requireRole(['owner']);
+    $orgId = (int) ($_POST['org_id'] ?? 0);
+    $memberUserId = (int) ($_POST['member_user_id'] ?? 0);
+
+    $org = getOwnedOrganizationById((int) $user['id'], $orgId);
+    if (!$org) {
+        setFlash('error', 'You are not allowed to manage this organization.');
+        redirect('?page=my_org_members');
+    }
+
+    if ($memberUserId <= 0) {
+        setFlash('error', 'Invalid member selected.');
+        redirect('?page=my_org_members&org_id=' . $orgId);
+    }
+
+    $ownerId = (int) ($org['owner_id'] ?? 0);
+    if ($memberUserId === $ownerId || $memberUserId === (int) $user['id']) {
+        setFlash('error', 'The organization owner cannot be removed from the member roster.');
+        redirect('?page=my_org_members&org_id=' . $orgId);
+    }
+
+    $memberStmt = $db->prepare(
+        'SELECT u.id, u.name
+         FROM organization_members om
+         JOIN users u ON u.id = om.user_id
+         WHERE om.organization_id = ? AND om.user_id = ?
+         LIMIT 1'
+    );
+    $memberStmt->execute([$orgId, $memberUserId]);
+    $member = $memberStmt->fetch();
+
+    if (!$member) {
+        setFlash('error', 'That member is no longer part of the organization.');
+        redirect('?page=my_org_members&org_id=' . $orgId);
+    }
+
+    try {
+        $deleteStmt = $db->prepare('DELETE FROM organization_members WHERE organization_id = ? AND user_id = ?');
+        $deleteStmt->execute([$orgId, $memberUserId]);
+
+        auditLog(
+            (int) $user['id'],
+            'organization.member_remove',
+            'organization',
+            $orgId,
+            'Removed member: ' . (string) ($member['name'] ?? 'Member')
+        );
+        setFlash('success', 'Member removed from the organization.');
+    } catch (Throwable $e) {
+        setFlash('error', 'Unable to remove that member right now.');
+    }
+
+    redirect('?page=my_org_members&org_id=' . $orgId);
 }
