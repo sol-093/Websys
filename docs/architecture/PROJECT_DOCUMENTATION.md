@@ -80,6 +80,7 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - Student domains: dashboard, organizations, announcements
 - Owner domains: organization management, announcements, transactions, join responses
 - Admin domains: organization administration, ownership assignment, approval workflows, audit logs
+- Shared transparency domains: notification center for request/security updates and searchable audit review for admins
 - Shared layout domain: global navigation, light/dark theme switching, INVOLVE brand assets, search, onboarding, and modal shell behavior
 
 ### Operational Scripts

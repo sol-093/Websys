@@ -36,6 +36,7 @@ function renderHeader(string $title = 'Dashboard'): void
     $isDashboardActive = in_array($currentPage, ['dashboard', 'announcements'], true);
     $isMyOrgActive = in_array($currentPage, ['my_org', 'my_org_manage'], true);
     $isProfileActive = $currentPage === 'profile';
+    $isNotificationsActive = $currentPage === 'notifications';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
     $navAppName = (string) $config['app_name'];
@@ -92,6 +93,7 @@ function renderHeader(string $title = 'Dashboard'): void
                         <?php if ($user): ?>
                             <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
                             <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
+                            <a href="?page=notifications" class="nav-link <?= $isNotificationsActive ? 'nav-link-active' : '' ?>">Notifications</a>
                             <?php if ($user['role'] === 'admin'): ?>
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
@@ -142,6 +144,7 @@ function renderHeader(string $title = 'Dashboard'): void
                         <?php if ($user): ?>
                             <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
                             <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
+                            <a href="?page=notifications" class="nav-link <?= $isNotificationsActive ? 'nav-link-active' : '' ?>">Notifications</a>
                             <?php if ($user['role'] === 'admin'): ?>
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
@@ -229,7 +232,8 @@ function renderHeader(string $title = 'Dashboard'): void
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <div class="mt-4 flex justify-end">
+                        <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
+                            <a href="?page=notifications" class="border border-emerald-300/40 px-3 py-2 rounded text-sm hover:bg-emerald-50">Open Notification Center</a>
                             <button type="button" id="closeLoginUpdatesModalBtn" data-modal-close-button class="bg-indigo-900 text-white px-3 py-2 rounded hover:bg-indigo-950">Close</button>
                         </div>
                     </div>

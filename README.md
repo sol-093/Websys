@@ -5,6 +5,7 @@
 - **Updated:** May 5, 2026
 - **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
+- **Phase 1 transparency features:** user notification center and expanded admin audit filtering
 
 ## Version History
 - **1.2.1** (May 1, 2026): INVOLVE brand asset integration, About page brand refresh, responsive navbar logo updates, and PDF export template background support
@@ -75,6 +76,8 @@ php scripts/tests/test_organization_helpers.php
 - `includes/shared/`: shared UI helpers split out of the layout shell
 - `includes/core/`: auth/session guards, config, DB bootstrap, layout shell, generic helpers
 - `includes/lib/`: reusable domain and utility helpers
+- `?page=notifications`: persistent request/security update feed and personal audit timeline for logged-in users
+- `?page=admin_audit`: admin-only audit review with search, family filters, and source details
 
 ### Project Structure
 ```text

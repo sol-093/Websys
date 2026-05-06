@@ -82,6 +82,10 @@ if ($page === 'admin_audit') {
     handleAdminAuditPage($db, $user);
 }
 
+if ($page === 'notifications') {
+    handleNotificationsPage($db, $user);
+}
+
 if ($page === 'announcements') {
     handleAnnouncementsPage($db, $user, $announcementCutoff);
 }

@@ -334,25 +334,70 @@ function handleAdminAuditPage(PDO $db, array $user): void
     }
 
     $days = max(1, (int) ($_GET['days'] ?? 7));
+    $days = min(90, $days);
+    $query = trim((string) ($_GET['q'] ?? ''));
+    $family = trim((string) ($_GET['family'] ?? 'all'));
     $cutoff = (new DateTimeImmutable('now'))->modify('-' . $days . ' days')->format('Y-m-d H:i:s');
-    $stmt = $db->prepare(
-        "SELECT al.*, u.name AS actor_name
+    $familyMap = [
+        'all' => null,
+        'auth' => ['auth.', 'profile.'],
+        'organization' => ['organization.', 'join_request.', 'assignment.'],
+        'finance' => ['finance.'],
+        'announcement' => ['announcement.'],
+    ];
+
+    $sql = "SELECT al.*, u.name AS actor_name
          FROM audit_logs al
          LEFT JOIN users u ON u.id = al.user_id
-         WHERE al.created_at >= ?
-         ORDER BY al.id DESC
-         LIMIT 300"
-    );
-    $stmt->execute([$cutoff]);
-    $logs = $stmt->fetchAll();
+         WHERE al.created_at >= ?";
+    $params = [$cutoff];
+
+    if (isset($familyMap[$family]) && is_array($familyMap[$family])) {
+        $familyConditions = [];
+        foreach ($familyMap[$family] as $prefix) {
+            $familyConditions[] = 'al.action LIKE ?';
+            $params[] = $prefix . '%';
+        }
+        $sql .= ' AND (' . implode(' OR ', $familyConditions) . ')';
+    }
+
+    if ($query !== '') {
+        $sql .= ' AND (al.action LIKE ? OR al.entity_type LIKE ? OR al.details LIKE ? OR COALESCE(u.name, "") LIKE ?)';
+        $like = '%' . $query . '%';
+        array_push($params, $like, $like, $like, $like);
+    }
+
+    $sql .= ' ORDER BY al.id DESC LIMIT 500';
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $allLogs = $stmt->fetchAll();
+    $logs = $allLogs;
     $logsPagination = paginateArray($logs, 'pg_admin_audit', 20);
     $logs = $logsPagination['items'];
+
+    $uniqueActors = [];
+    $familyCounts = [
+        'auth' => 0,
+        'organization' => 0,
+        'finance' => 0,
+        'announcement' => 0,
+        'system' => 0,
+    ];
+    foreach ($allLogs as $log) {
+        $actorKey = (string) ($log['user_id'] ?? '') . '|' . (string) ($log['actor_name'] ?? '');
+        $uniqueActors[$actorKey] = true;
+        $familyKey = getAuditActionFamily((string) ($log['action'] ?? ''));
+        $familyCounts[$familyKey] = ($familyCounts[$familyKey] ?? 0) + 1;
+    }
 
     renderHeader('Audit Logs', $user);
     ?>
     <section class="bg-white rounded shadow p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <h2 class="text-lg font-semibold">Audit Logs</h2>
+            <div>
+                <h2 class="text-lg font-semibold">Audit Logs</h2>
+                <p class="text-sm text-gray-600">Review who changed what, when it happened, and the context stored with each event.</p>
+            </div>
             <form method="get" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="page" value="admin_audit" />
                 <label class="text-sm text-gray-600" for="days">Last</label>
@@ -361,32 +406,66 @@ function handleAdminAuditPage(PDO $db, array $user): void
                         <option value="<?= $opt ?>" <?= $days === $opt ? 'selected' : '' ?>><?= $opt ?> days</option>
                     <?php endforeach; ?>
                 </select>
+                <select name="family" class="border rounded px-2 py-1 text-sm" onchange="this.form.submit()">
+                    <option value="all" <?= $family === 'all' ? 'selected' : '' ?>>All activity</option>
+                    <option value="auth" <?= $family === 'auth' ? 'selected' : '' ?>>Auth & profile</option>
+                    <option value="organization" <?= $family === 'organization' ? 'selected' : '' ?>>Organization</option>
+                    <option value="finance" <?= $family === 'finance' ? 'selected' : '' ?>>Finance</option>
+                    <option value="announcement" <?= $family === 'announcement' ? 'selected' : '' ?>>Announcements</option>
+                </select>
+                <input type="search" name="q" value="<?= e($query) ?>" placeholder="Search actor, action, or details" class="border rounded px-2 py-1 text-sm min-w-[240px]">
+                <button type="submit" class="border rounded px-3 py-1 text-sm">Filter</button>
             </form>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-4 mb-4">
+            <article class="rounded-xl border border-emerald-200/40 bg-emerald-50/60 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-600">Entries</div>
+                <div class="mt-1 text-2xl font-semibold"><?= count($allLogs) ?></div>
+            </article>
+            <article class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-600">Actors</div>
+                <div class="mt-1 text-2xl font-semibold"><?= count($uniqueActors) ?></div>
+            </article>
+            <article class="rounded-xl border border-sky-200 bg-sky-50/70 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-600">Auth & Profile</div>
+                <div class="mt-1 text-2xl font-semibold"><?= (int) ($familyCounts['auth'] ?? 0) ?></div>
+            </article>
+            <article class="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                <div class="text-xs uppercase tracking-wide text-slate-600">Org & Finance</div>
+                <div class="mt-1 text-2xl font-semibold"><?= (int) (($familyCounts['organization'] ?? 0) + ($familyCounts['finance'] ?? 0)) ?></div>
+            </article>
         </div>
 
         <?php if (!$logs): ?>
             <p class="text-sm text-gray-600">No audit entries in the selected range.</p>
         <?php else: ?>
             <div class="table-wrapper">
-                <table class="hidden md:table w-full min-w-[900px] text-sm">
+                <table class="hidden md:table w-full min-w-[1180px] text-sm">
                     <thead>
                         <tr class="border-b">
                             <th class="text-left py-2 pr-3">Time</th>
                             <th class="text-left py-2 pr-3">Actor</th>
                             <th class="text-left py-2 pr-3">Action</th>
                             <th class="text-left py-2 pr-3">Entity</th>
-                            <th class="text-left py-2 pr-3">Entity ID</th>
+                            <th class="text-left py-2 pr-3">Source</th>
                             <th class="text-left py-2 pr-3">Details</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($logs as $log): ?>
                             <tr class="border-b align-top">
-                                <td class="py-2 pr-3 whitespace-nowrap"><?= e(date('F d, Y', strtotime((string)$log['created_at']))) ?></td>
+                                <td class="py-2 pr-3 whitespace-nowrap"><?= e((string) $log['created_at']) ?></td>
                                 <td class="py-2 pr-3"><?= e($log['actor_name'] ?: ('User#' . (int) $log['user_id'])) ?></td>
-                                <td class="py-2 pr-3"><?= e($log['action']) ?></td>
-                                <td class="py-2 pr-3"><?= e($log['entity_type'] ?? '-') ?></td>
-                                <td class="py-2 pr-3"><?= $log['entity_id'] !== null ? (int) $log['entity_id'] : '-' ?></td>
+                                <td class="py-2 pr-3">
+                                    <div class="font-medium"><?= e(formatAuditActionLabel((string) $log['action'])) ?></div>
+                                    <div class="text-xs text-slate-500 uppercase tracking-wide"><?= e(getAuditActionFamily((string) $log['action'])) ?></div>
+                                </td>
+                                <td class="py-2 pr-3"><?= e((string) ($log['entity_type'] ?? '-')) ?><?= $log['entity_id'] !== null ? ' #' . (int) $log['entity_id'] : '' ?></td>
+                                <td class="py-2 pr-3">
+                                    <div class="text-xs text-slate-600"><?= e((string) ($log['ip_address'] ?? 'unknown')) ?></div>
+                                    <div class="text-xs text-slate-500 break-words max-w-xs"><?= e((string) ($log['user_agent'] ?? '')) ?></div>
+                                </td>
                                 <td class="py-2 pr-3 break-words max-w-xl"><?= e($log['details'] ?? '') ?></td>
                             </tr>
                         <?php endforeach; ?>
@@ -398,8 +477,9 @@ function handleAdminAuditPage(PDO $db, array $user): void
                     <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
                         <div class="admin-mobile-meta break-words\"><?= e((string) $log['created_at']) ?></div>
                         <div class="admin-mobile-title mt-1 break-words\"><?= e((string) ($log['actor_name'] ?: ('User#' . (int) $log['user_id']))) ?></div>
-                        <div class="admin-mobile-meta mt-1"><span class="font-semibold">Action:</span> <?= e((string) $log['action']) ?></div>
+                        <div class="admin-mobile-meta mt-1"><span class="font-semibold">Action:</span> <?= e(formatAuditActionLabel((string) $log['action'])) ?></div>
                         <div class="admin-mobile-meta mt-1"><span class="font-semibold">Entity:</span> <?= e((string) ($log['entity_type'] ?? '-')) ?><?= $log['entity_id'] !== null ? ' #' . (int) $log['entity_id'] : '' ?></div>
+                        <div class="admin-mobile-meta mt-1"><span class="font-semibold">Source:</span> <?= e((string) ($log['ip_address'] ?? 'unknown')) ?></div>
                         <?php if ((string) ($log['details'] ?? '') !== ''): ?>
                             <div class="admin-mobile-meta mt-2 break-words leading-relaxed">
                                 <span class="font-semibold">Details:</span> <?= e((string) $log['details']) ?>

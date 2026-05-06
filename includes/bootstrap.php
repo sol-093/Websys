@@ -222,6 +222,7 @@ require __DIR__ . '/features/organizations/pages.php';
 require __DIR__ . '/features/organizations/owner_pages.php';
 require __DIR__ . '/features/dashboard/data.php';
 require __DIR__ . '/features/dashboard/page.php';
+require __DIR__ . '/features/dashboard/notifications.php';
 
 try {
     $db = db();

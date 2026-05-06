@@ -16,17 +16,20 @@ declare(strict_types=1);
  * ================================================
  */
 
-function collectUserRequestUpdates(int $userId): array
+function collectUserRequestUpdates(int $userId, int $days = 7, int $limit = 8): array
 {
     $updates = [];
     $db = db();
+    $days = max(1, min(90, $days));
+    $limit = max(1, min(50, $limit));
+    $sourceLimit = max(5, $limit);
 
     $joinStmt = $db->prepare("SELECT o.name AS organization_name, r.status, COALESCE(r.updated_at, r.created_at) AS event_at
         FROM organization_join_requests r
         JOIN organizations o ON o.id = r.organization_id
         WHERE r.user_id = ? AND r.status IN ('approved', 'declined')
         ORDER BY event_at DESC
-        LIMIT 5");
+        LIMIT {$sourceLimit}");
     $joinStmt->execute([$userId]);
     foreach ($joinStmt->fetchAll() as $row) {
         $updates[] = [
@@ -42,7 +45,7 @@ function collectUserRequestUpdates(int $userId): array
         JOIN organizations o ON o.id = r.organization_id
         WHERE r.requested_by = ? AND r.status IN ('approved', 'rejected')
         ORDER BY event_at DESC
-        LIMIT 5");
+        LIMIT {$sourceLimit}");
     $financeStmt->execute([$userId]);
     foreach ($financeStmt->fetchAll() as $row) {
         $updates[] = [
@@ -58,7 +61,7 @@ function collectUserRequestUpdates(int $userId): array
         JOIN organizations o ON o.id = a.organization_id
         WHERE a.student_id = ? AND a.status IN ('accepted', 'declined')
         ORDER BY event_at DESC
-        LIMIT 5");
+        LIMIT {$sourceLimit}");
     $assignmentStmt->execute([$userId]);
     foreach ($assignmentStmt->fetchAll() as $row) {
         $updates[] = [
@@ -77,15 +80,15 @@ function collectUserRequestUpdates(int $userId): array
                             AND event_type = 'membership_removed'
                             AND created_at >= datetime('now', '-30 day')
                         ORDER BY created_at DESC
-                        LIMIT 8");
+                        LIMIT {$sourceLimit}");
         } else {
                 $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
                         FROM security_notifications
                         WHERE user_id = ?
                             AND event_type = 'membership_removed'
-                            AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                            AND created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
                         ORDER BY created_at DESC
-                        LIMIT 8");
+                        LIMIT {$sourceLimit}");
         }
         $securityStmt->execute([$userId]);
     foreach ($securityStmt->fetchAll() as $row) {
@@ -123,14 +126,56 @@ function collectUserRequestUpdates(int $userId): array
         return strcmp((string) $b['event_at'], (string) $a['event_at']);
     });
 
-    $cutoffTs = time() - (7 * 24 * 60 * 60);
+    $cutoffTs = time() - ($days * 24 * 60 * 60);
     $updates = array_values(array_filter($updates, static function (array $item) use ($cutoffTs): bool {
         $eventAt = (string) ($item['event_at'] ?? '');
         $eventTs = strtotime($eventAt);
         return $eventTs !== false && $eventTs >= $cutoffTs;
     }));
 
-    return array_slice($updates, 0, 8);
+    return array_slice($updates, 0, $limit);
+}
+
+function collectUserAuditTrail(int $userId, int $days = 14, int $limit = 25): array
+{
+    $db = db();
+    $days = max(1, min(90, $days));
+    $limit = max(1, min(100, $limit));
+    $cutoff = (new DateTimeImmutable('now'))->modify('-' . $days . ' days')->format('Y-m-d H:i:s');
+
+    $stmt = $db->prepare(
+        "SELECT action, entity_type, entity_id, details, ip_address, user_agent, created_at
+         FROM audit_logs
+         WHERE user_id = ? AND created_at >= ?
+         ORDER BY id DESC
+         LIMIT {$limit}"
+    );
+    $stmt->execute([$userId, $cutoff]);
+
+    return $stmt->fetchAll();
+}
+
+function formatAuditActionLabel(string $action): string
+{
+    $normalized = trim(str_replace(['.', '_'], ' ', strtolower($action)));
+    if ($normalized === '') {
+        return 'System Event';
+    }
+
+    return ucwords($normalized);
+}
+
+function getAuditActionFamily(string $action): string
+{
+    $action = strtolower($action);
+
+    return match (true) {
+        str_starts_with($action, 'auth.'), str_starts_with($action, 'profile.') => 'auth',
+        str_starts_with($action, 'organization.'), str_starts_with($action, 'join_request.'), str_starts_with($action, 'assignment.') => 'organization',
+        str_starts_with($action, 'finance.') => 'finance',
+        str_starts_with($action, 'announcement.') => 'announcement',
+        default => 'system',
+    };
 }
 
 function queueMembershipRemovalNotification(int $userId, array $removedMemberships, string $reason = 'profile update'): void
