@@ -93,7 +93,6 @@ function renderHeader(string $title = 'Dashboard'): void
                         <?php if ($user): ?>
                             <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
                             <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
-                            <a href="?page=notifications" class="nav-link <?= $isNotificationsActive ? 'nav-link-active' : '' ?>">Notifications</a>
                             <?php if ($user['role'] === 'admin'): ?>
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
@@ -103,16 +102,25 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
                                 <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
-                            <?php if ($user['role'] !== 'admin'): ?>
-                                <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
-                            <?php endif; ?>
                             <div class="nav-utility-controls">
                                 <button type="button" id="globalSearchOpen" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
                                     <?= icon('search') ?>
                                 </button>
                                 <input type="checkbox" id="themeToggle" aria-label="Toggle dark mode">
                                 <label for="themeToggle" class="theme-switch" title="Toggle dark mode"></label>
-                                <a href="?page=logout" class="bg-indigo-900 text-white px-2.5 py-1 rounded hover:bg-indigo-950">Logout</a>
+                                <div class="nav-profile-menu" data-nav-profile-menu>
+                                    <button type="button" class="nav-profile-trigger <?= ($isProfileActive || $isNotificationsActive) ? 'is-active' : '' ?>" id="navProfileMenuToggle" aria-expanded="false" aria-haspopup="menu" aria-controls="navProfileMenu">
+                                        <?= uiIcon('user', 'ui-icon ui-icon-sm') ?>
+                                        <span class="nav-profile-label"><?= e($user['role'] !== 'admin' ? $displayName : 'Account') ?></span>
+                                    </button>
+                                    <div id="navProfileMenu" class="nav-profile-dropdown hidden" role="menu" aria-labelledby="navProfileMenuToggle">
+                                        <?php if ($user['role'] !== 'admin'): ?>
+                                            <a href="?page=profile" class="nav-profile-item <?= $isProfileActive ? 'is-active' : '' ?>" role="menuitem">Profile</a>
+                                        <?php endif; ?>
+                                        <a href="?page=notifications" class="nav-profile-item <?= $isNotificationsActive ? 'is-active' : '' ?>" role="menuitem">Notifications</a>
+                                        <a href="?page=logout" class="nav-profile-item nav-profile-item-danger" role="menuitem">Logout</a>
+                                    </div>
+                                </div>
                             </div>
                         <?php else: ?>
                             <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
@@ -144,7 +152,6 @@ function renderHeader(string $title = 'Dashboard'): void
                         <?php if ($user): ?>
                             <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
                             <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
-                            <a href="?page=notifications" class="nav-link <?= $isNotificationsActive ? 'nav-link-active' : '' ?>">Notifications</a>
                             <?php if ($user['role'] === 'admin'): ?>
                                 <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                 <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
@@ -154,10 +161,14 @@ function renderHeader(string $title = 'Dashboard'): void
                             <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
                                 <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
                             <?php endif; ?>
-                            <?php if ($user['role'] !== 'admin'): ?>
-                                <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
-                            <?php endif; ?>
-                            <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-2 rounded text-center hover:bg-indigo-950">Logout</a>
+                            <div class="pt-2 border-t border-emerald-200/20">
+                                <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">Account</div>
+                                <?php if ($user['role'] !== 'admin'): ?>
+                                    <a href="?page=profile" class="nav-link <?= $isProfileActive ? 'nav-link-active' : '' ?>">Profile</a>
+                                <?php endif; ?>
+                                <a href="?page=notifications" class="nav-link <?= $isNotificationsActive ? 'nav-link-active' : '' ?>">Notifications</a>
+                                <a href="?page=logout" class="bg-indigo-900 text-white px-3 py-2 rounded text-center hover:bg-indigo-950 mt-2 block">Logout</a>
+                            </div>
                         <?php else: ?>
                             <a href="?page=login" class="nav-link <?= $isLoginActive ? 'nav-link-active' : '' ?>">Login</a>
                             <a href="?page=register" class="bg-emerald-600 text-white px-3 py-2 rounded text-center hover:bg-emerald-700 shadow-sm <?= $isRegisterActive ? 'ring-2 ring-emerald-300/70' : '' ?>">Register</a>

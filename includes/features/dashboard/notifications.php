@@ -46,10 +46,10 @@ function handleNotificationsPage(PDO $db, array $user): void
                 <h1 class="text-2xl font-semibold">Notifications</h1>
                 <p class="text-sm text-slate-600">Review approval outcomes, membership updates, and your recent account activity in one place.</p>
             </div>
-            <form method="get" class="flex flex-wrap items-center gap-2">
+            <form method="get" class="transparency-toolbar flex flex-wrap items-center gap-2">
                 <input type="hidden" name="page" value="notifications">
                 <label class="text-sm text-slate-600" for="days">Window</label>
-                <select name="days" id="days" class="border rounded px-2 py-1 text-sm" onchange="this.form.submit()">
+                <select name="days" id="days" class="themed-field themed-select px-2 py-1 text-sm" onchange="this.form.submit()">
                     <?php foreach ([7, 14, 30, 60, 90] as $opt): ?>
                         <option value="<?= $opt ?>" <?= $days === $opt ? 'selected' : '' ?>>Last <?= $opt ?> days</option>
                     <?php endforeach; ?>
@@ -58,22 +58,22 @@ function handleNotificationsPage(PDO $db, array $user): void
         </div>
 
         <div class="grid gap-3 md:grid-cols-4">
-            <article class="glass rounded-xl p-4">
+            <article class="glass transparency-stat-card rounded-xl p-4">
                 <div class="text-sm text-slate-600">Recent updates</div>
                 <div class="mt-2 text-2xl font-semibold"><?= count($updatesPagination['all_items'] ?? $updates) ?></div>
                 <div class="mt-1 text-xs text-slate-500">Approval and workflow responses</div>
             </article>
-            <article class="glass rounded-xl p-4">
+            <article class="glass transparency-stat-card rounded-xl p-4">
                 <div class="text-sm text-slate-600">Positive outcomes</div>
                 <div class="mt-2 text-2xl font-semibold text-emerald-700"><?= $approvedCount ?></div>
                 <div class="mt-1 text-xs text-slate-500">Approved or accepted in this window</div>
             </article>
-            <article class="glass rounded-xl p-4">
+            <article class="glass transparency-stat-card rounded-xl p-4">
                 <div class="text-sm text-slate-600">Needs attention</div>
                 <div class="mt-2 text-2xl font-semibold text-rose-700"><?= $attentionCount ?></div>
                 <div class="mt-1 text-xs text-slate-500">Declined, rejected, or removed items</div>
             </article>
-            <article class="glass rounded-xl p-4">
+            <article class="glass transparency-stat-card rounded-xl p-4">
                 <div class="text-sm text-slate-600">Your activity</div>
                 <div class="mt-2 text-2xl font-semibold"><?= count($activityPagination['all_items'] ?? $activity) ?></div>
                 <div class="mt-1 text-xs text-slate-500">Audit entries recorded for your account</div>
@@ -81,7 +81,7 @@ function handleNotificationsPage(PDO $db, array $user): void
         </div>
 
         <div class="grid gap-4 xl:grid-cols-[1.1fr,0.9fr]">
-            <section class="glass rounded-xl p-4">
+            <section class="glass transparency-panel rounded-xl p-4">
                 <div class="mb-3">
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('update', 'ui-icon') ?><span>Workflow Updates</span></h2>
                     <p class="text-sm text-slate-600 mt-1">Latest decisions and membership notifications related to your requests.</p>
@@ -102,7 +102,7 @@ function handleNotificationsPage(PDO $db, array $user): void
                                     default => 'default',
                                 };
                             ?>
-                            <article class="rounded-xl border border-emerald-200/30 bg-white/70 p-3">
+                            <article class="transparency-entry transparency-entry-success rounded-xl p-3">
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
                                         <div class="font-medium"><?= e((string) ($item['kind'] ?? 'Update')) ?></div>
@@ -118,7 +118,7 @@ function handleNotificationsPage(PDO $db, array $user): void
                 <?php endif; ?>
             </section>
 
-            <section class="glass rounded-xl p-4">
+            <section class="glass transparency-panel rounded-xl p-4">
                 <div class="mb-3">
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>Your Recorded Activity</span></h2>
                     <p class="text-sm text-slate-600 mt-1">Actions this account performed that were captured in the audit trail.</p>
@@ -130,7 +130,7 @@ function handleNotificationsPage(PDO $db, array $user): void
                     <div class="space-y-3">
                         <?php foreach ($activity as $item): ?>
                             <?php $family = getAuditActionFamily((string) ($item['action'] ?? '')); ?>
-                            <article class="rounded-xl border border-slate-200 bg-white/70 p-3">
+                            <article class="transparency-entry transparency-entry-neutral rounded-xl p-3">
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
                                         <div class="font-medium"><?= e(formatAuditActionLabel((string) ($item['action'] ?? ''))) ?></div>

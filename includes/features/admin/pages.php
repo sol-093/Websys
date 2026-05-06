@@ -36,12 +36,12 @@ function handleAdminStudentsPage(PDO $db): void
 
     renderHeader('Filter Students');
     ?>
-    <div class="bg-white shadow rounded p-4">
+    <div class="glass transparency-panel rounded-xl p-4">
         <h1 class="text-xl font-semibold mb-3 icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Filter All Student Information</span></h1>
-        <form method="get" class="flex flex-wrap gap-2 mb-4 items-stretch sm:items-center">
+        <form method="get" class="transparency-toolbar flex flex-wrap gap-2 mb-4 items-stretch sm:items-center">
             <input type="hidden" name="page" value="admin_students">
-            <input name="q" value="<?= e($q) ?>" placeholder="Search by name or email" class="border rounded px-3 py-2 w-full">
-            <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+            <input type="search" name="q" value="<?= e($q) ?>" placeholder="Search by name or email" class="themed-field w-full px-3 py-2">
+            <button class="themed-button w-full sm:w-auto px-4 py-2"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
         </form>
 
         <div class="overflow-auto">
@@ -392,46 +392,46 @@ function handleAdminAuditPage(PDO $db, array $user): void
 
     renderHeader('Audit Logs', $user);
     ?>
-    <section class="bg-white rounded shadow p-4">
+    <section class="glass transparency-panel rounded-xl p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div>
                 <h2 class="text-lg font-semibold">Audit Logs</h2>
                 <p class="text-sm text-gray-600">Review who changed what, when it happened, and the context stored with each event.</p>
             </div>
-            <form method="get" class="flex flex-wrap items-center gap-2">
+            <form method="get" class="transparency-toolbar flex flex-wrap items-center gap-2">
                 <input type="hidden" name="page" value="admin_audit" />
                 <label class="text-sm text-gray-600" for="days">Last</label>
-                <select name="days" id="days" class="border rounded px-2 py-1 text-sm" onchange="this.form.submit()">
+                <select name="days" id="days" class="themed-field themed-select px-2 py-1 text-sm" onchange="this.form.submit()">
                     <?php foreach ([1, 3, 7, 14, 30, 90] as $opt): ?>
                         <option value="<?= $opt ?>" <?= $days === $opt ? 'selected' : '' ?>><?= $opt ?> days</option>
                     <?php endforeach; ?>
                 </select>
-                <select name="family" class="border rounded px-2 py-1 text-sm" onchange="this.form.submit()">
+                <select name="family" class="themed-field themed-select px-2 py-1 text-sm" onchange="this.form.submit()">
                     <option value="all" <?= $family === 'all' ? 'selected' : '' ?>>All activity</option>
                     <option value="auth" <?= $family === 'auth' ? 'selected' : '' ?>>Auth & profile</option>
                     <option value="organization" <?= $family === 'organization' ? 'selected' : '' ?>>Organization</option>
                     <option value="finance" <?= $family === 'finance' ? 'selected' : '' ?>>Finance</option>
                     <option value="announcement" <?= $family === 'announcement' ? 'selected' : '' ?>>Announcements</option>
                 </select>
-                <input type="search" name="q" value="<?= e($query) ?>" placeholder="Search actor, action, or details" class="border rounded px-2 py-1 text-sm min-w-[240px]">
-                <button type="submit" class="border rounded px-3 py-1 text-sm">Filter</button>
+                <input type="search" name="q" value="<?= e($query) ?>" placeholder="Search actor, action, or details" class="themed-field px-2 py-1 text-sm min-w-[240px]">
+                <button type="submit" class="themed-button px-3 py-1 text-sm">Filter</button>
             </form>
         </div>
 
         <div class="grid gap-3 md:grid-cols-4 mb-4">
-            <article class="rounded-xl border border-emerald-200/40 bg-emerald-50/60 p-3">
+            <article class="transparency-stat-card transparency-stat-card-emerald rounded-xl p-3">
                 <div class="text-xs uppercase tracking-wide text-slate-600">Entries</div>
                 <div class="mt-1 text-2xl font-semibold"><?= count($allLogs) ?></div>
             </article>
-            <article class="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+            <article class="transparency-stat-card transparency-stat-card-slate rounded-xl p-3">
                 <div class="text-xs uppercase tracking-wide text-slate-600">Actors</div>
                 <div class="mt-1 text-2xl font-semibold"><?= count($uniqueActors) ?></div>
             </article>
-            <article class="rounded-xl border border-sky-200 bg-sky-50/70 p-3">
+            <article class="transparency-stat-card transparency-stat-card-sky rounded-xl p-3">
                 <div class="text-xs uppercase tracking-wide text-slate-600">Auth & Profile</div>
                 <div class="mt-1 text-2xl font-semibold"><?= (int) ($familyCounts['auth'] ?? 0) ?></div>
             </article>
-            <article class="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+            <article class="transparency-stat-card transparency-stat-card-amber rounded-xl p-3">
                 <div class="text-xs uppercase tracking-wide text-slate-600">Org & Finance</div>
                 <div class="mt-1 text-2xl font-semibold"><?= (int) (($familyCounts['organization'] ?? 0) + ($familyCounts['finance'] ?? 0)) ?></div>
             </article>
@@ -441,7 +441,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
             <p class="text-sm text-gray-600">No audit entries in the selected range.</p>
         <?php else: ?>
             <div class="table-wrapper">
-                <table class="hidden md:table w-full min-w-[1180px] text-sm">
+                <table class="audit-log-table hidden md:table w-full min-w-[1180px] text-sm">
                     <thead>
                         <tr class="border-b">
                             <th class="text-left py-2 pr-3">Time</th>
@@ -454,7 +454,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
                     </thead>
                     <tbody>
                         <?php foreach ($logs as $log): ?>
-                            <tr class="border-b align-top">
+                            <tr class="audit-log-row border-b align-top">
                                 <td class="py-2 pr-3 whitespace-nowrap"><?= e((string) $log['created_at']) ?></td>
                                 <td class="py-2 pr-3"><?= e($log['actor_name'] ?: ('User#' . (int) $log['user_id'])) ?></td>
                                 <td class="py-2 pr-3">
@@ -474,7 +474,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
             </div>
             <div class="md:hidden space-y-3">
                 <?php foreach ($logs as $log): ?>
-                    <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                    <article class="admin-mobile-card transparency-entry transparency-entry-neutral rounded-xl p-3">
                         <div class="admin-mobile-meta break-words\"><?= e((string) $log['created_at']) ?></div>
                         <div class="admin-mobile-title mt-1 break-words\"><?= e((string) ($log['actor_name'] ?: ('User#' . (int) $log['user_id']))) ?></div>
                         <div class="admin-mobile-meta mt-1"><span class="font-semibold">Action:</span> <?= e(formatAuditActionLabel((string) $log['action'])) ?></div>
@@ -599,7 +599,7 @@ function handleMyOrgAdminPage(PDO $db): void
                                 <button type="button" id="adminOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
                             </div>
                             <div class="mb-3">
-                                <input type="text" id="adminOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                                <input type="search" id="adminOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
                             </div>
                             <div class="max-h-[62vh] overflow-auto rounded border border-slate-200/60">
                                 <div id="adminOrgMembersList" class="divide-y divide-slate-200/50">
@@ -685,7 +685,7 @@ function handleMyOrgAdminPage(PDO $db): void
                 </div>
 
                 <div class="mb-4">
-                    <input type="text" id="adminOrgSearchInput" inputmode="search" placeholder="Search organizations..." class="w-full border rounded px-3 py-3">
+                    <input type="search" id="adminOrgSearchInput" inputmode="search" placeholder="Search organizations..." class="w-full border rounded px-3 py-3">
                 </div>
 
                 <div class="admin-org-search-scroll max-h-[60vh] overflow-auto rounded border border-slate-200/45">
@@ -955,6 +955,7 @@ function handleMyOrgAdminPage(PDO $db): void
             });
         })();
     </script>
+    <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;
@@ -1135,7 +1136,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                             <button type="button" id="userOrgMembersClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
                         </div>
                         <div class="mb-3">
-                            <input type="text" id="userOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
+                            <input type="search" id="userOrgMembersSearch" inputmode="search" placeholder="Search member name..." class="w-full border rounded px-3 py-2">
                         </div>
                         <div class="max-h-[62vh] overflow-auto rounded border border-slate-200/60">
                             <div id="userOrgMembersList" class="divide-y divide-slate-200/50">
@@ -1301,9 +1302,9 @@ function handleAdminOrgsPage(PDO $db): void
     renderHeader('Manage Organizations');
     ?>
     <div class="grid md:grid-cols-3 gap-4">
-        <div class="bg-white shadow rounded p-4">
+        <div class="glass transparency-panel rounded-xl p-4">
             <h2 class="text-lg font-semibold mb-3 icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Create Organization</span></h2>
-            <form method="post" enctype="multipart/form-data" class="space-y-2">
+            <form method="post" enctype="multipart/form-data" class="space-y-3" data-org-scope-form>
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="create_org">
                 <input name="name" placeholder="Organization name" required class="w-full border rounded px-3 py-2">
@@ -1340,23 +1341,67 @@ function handleAdminOrgsPage(PDO $db): void
                         </div>
                     </div>
                 </div>
-                <select name="org_category" class="w-full border rounded px-3 py-2" required>
-                    <?php foreach ($orgCategoryOptions as $categoryKey => $categoryLabel): ?>
-                        <option value="<?= e($categoryKey) ?>"><?= e($categoryLabel) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="target_institute" class="w-full border rounded px-3 py-2">
-                    <option value="">Institute target (for institutewide)</option>
-                    <?php foreach ($instituteOptions as $institute): ?>
-                        <option value="<?= e($institute) ?>"><?= e($institute) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="target_program" class="w-full border rounded px-3 py-2">
-                    <option value="">Program target (for program-based)</option>
-                    <?php foreach ($programOptions as $programOption): ?>
-                        <option value="<?= e($programOption) ?>"><?= e($programOption) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <fieldset class="space-y-2">
+                    <legend class="block text-sm font-medium text-slate-700">Organization scope</legend>
+                    <p class="text-xs text-slate-600">Choose who should be allowed to discover and join this organization.</p>
+                    <div class="org-scope-grid">
+                        <label class="org-scope-card">
+                            <input type="radio" name="org_category" value="collegewide" checked data-org-scope-input>
+                            <span class="org-scope-card-title">Collegewide</span>
+                            <span class="org-scope-card-copy">Open to all students.</span>
+                        </label>
+                        <label class="org-scope-card">
+                            <input type="radio" name="org_category" value="institutewide" data-org-scope-input>
+                            <span class="org-scope-card-title">Institute-based</span>
+                            <span class="org-scope-card-copy">Limited to one institute.</span>
+                        </label>
+                        <label class="org-scope-card">
+                            <input type="radio" name="org_category" value="program_based" data-org-scope-input>
+                            <span class="org-scope-card-title">Program-based</span>
+                            <span class="org-scope-card-copy">Limited to one program.</span>
+                        </label>
+                    </div>
+                </fieldset>
+                <div class="space-y-2 hidden" data-org-scope-section="institutewide">
+                    <label class="block text-sm font-medium text-slate-700" for="adminCreateOrgInstitute">Institute</label>
+                    <div class="relative w-full" data-dropdown-root data-themed-picker>
+                        <input type="hidden" id="adminCreateOrgInstitute" name="target_institute" data-dropdown-value value="">
+                        <div class="relative w-full" data-dropdown-wrapper>
+                            <button type="button" data-dropdown-toggle="adminCreateOrgInstituteMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                <span data-dropdown-label data-dropdown-placeholder="Choose institute" class="truncate text-left">Choose institute</span>
+                            </button>
+                            <div id="adminCreateOrgInstituteMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                <ul class="scrollbar-hidden p-2 text-sm font-medium space-y-1 max-h-64 overflow-y-auto">
+                                    <li><button type="button" data-dropdown-option data-active="true" data-option-value="" data-option-label="Choose institute" class="block w-full rounded px-3 py-2 text-left transition-colors">Choose institute</button></li>
+                                    <?php foreach ($instituteOptions as $institute): ?>
+                                        <li><button type="button" data-dropdown-option data-active="false" data-option-value="<?= e($institute) ?>" data-option-label="<?= e($institute) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors"><?= e($institute) ?></button></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600">Only students from this institute will be eligible to join.</p>
+                </div>
+                <div class="space-y-2 hidden" data-org-scope-section="program_based">
+                    <label class="block text-sm font-medium text-slate-700" for="adminCreateOrgProgram">Program</label>
+                    <div class="relative w-full" data-dropdown-root data-themed-picker>
+                        <input type="hidden" id="adminCreateOrgProgram" name="target_program" data-dropdown-value value="">
+                        <div class="relative w-full" data-dropdown-wrapper>
+                            <button type="button" data-dropdown-toggle="adminCreateOrgProgramMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                <span data-dropdown-label data-dropdown-placeholder="Choose program" class="truncate text-left">Choose program</span>
+                            </button>
+                            <div id="adminCreateOrgProgramMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                <ul class="scrollbar-hidden p-2 text-sm font-medium space-y-1 max-h-64 overflow-y-auto">
+                                    <li><button type="button" data-dropdown-option data-active="true" data-option-value="" data-option-label="Choose program" class="block w-full rounded px-3 py-2 text-left transition-colors">Choose program</button></li>
+                                    <?php foreach ($programOptions as $programOption): ?>
+                                        <li><button type="button" data-dropdown-option data-active="false" data-option-value="<?= e($programOption) ?>" data-option-label="<?= e($programOption) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors"><?= e($programOption) ?></button></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600">Program-based organizations automatically inherit the correct institute.</p>
+                </div>
                 <button class="bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('create', 'ui-icon ui-icon-sm') ?><span>Create</span></span></button>
             </form>
         </div>
@@ -1553,21 +1598,41 @@ function handleAdminOrgsPage(PDO $db): void
                         </div>
                         <div class="space-y-2">
                             <label for="orgEditModalInstitute" class="block text-sm font-medium text-slate-700">Target Institute</label>
-                            <select id="orgEditModalInstitute" name="target_institute" class="w-full border rounded px-3 py-3">
-                                <option value="">Institute target (for institutewide)</option>
-                                <?php foreach ($instituteOptions as $institute): ?>
-                                    <option value="<?= e($institute) ?>"><?= e($institute) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="relative w-full" data-dropdown-root data-themed-picker>
+                                <input type="hidden" id="orgEditModalInstitute" name="target_institute" data-dropdown-value value="">
+                                <div class="relative w-full" data-dropdown-wrapper>
+                                    <button type="button" data-dropdown-toggle="orgEditModalInstituteMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                        <span data-dropdown-label data-dropdown-placeholder="Choose institute" class="truncate text-left">Choose institute</span>
+                                    </button>
+                                    <div id="orgEditModalInstituteMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                        <ul class="scrollbar-hidden p-2 text-sm font-medium space-y-1 max-h-64 overflow-y-auto">
+                                            <li><button type="button" data-dropdown-option data-active="true" data-option-value="" data-option-label="Choose institute" class="block w-full rounded px-3 py-2 text-left transition-colors">Choose institute</button></li>
+                                            <?php foreach ($instituteOptions as $institute): ?>
+                                                <li><button type="button" data-dropdown-option data-active="false" data-option-value="<?= e($institute) ?>" data-option-label="<?= e($institute) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors"><?= e($institute) ?></button></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="space-y-2">
                             <label for="orgEditModalProgram" class="block text-sm font-medium text-slate-700">Target Program</label>
-                            <select id="orgEditModalProgram" name="target_program" class="w-full border rounded px-3 py-3">
-                                <option value="">Program target (for program-based)</option>
-                                <?php foreach ($programOptions as $programOption): ?>
-                                    <option value="<?= e($programOption) ?>"><?= e($programOption) ?></option>
-                                <?php endforeach; ?>
-                            </select>
+                            <div class="relative w-full" data-dropdown-root data-themed-picker>
+                                <input type="hidden" id="orgEditModalProgram" name="target_program" data-dropdown-value value="">
+                                <div class="relative w-full" data-dropdown-wrapper>
+                                    <button type="button" data-dropdown-toggle="orgEditModalProgramMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                        <span data-dropdown-label data-dropdown-placeholder="Choose program" class="truncate text-left">Choose program</span>
+                                    </button>
+                                    <div id="orgEditModalProgramMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md">
+                                        <ul class="scrollbar-hidden p-2 text-sm font-medium space-y-1 max-h-64 overflow-y-auto">
+                                            <li><button type="button" data-dropdown-option data-active="true" data-option-value="" data-option-label="Choose program" class="block w-full rounded px-3 py-2 text-left transition-colors">Choose program</button></li>
+                                            <?php foreach ($programOptions as $programOption): ?>
+                                                <li><button type="button" data-dropdown-option data-active="false" data-option-value="<?= e($programOption) ?>" data-option-label="<?= e($programOption) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors"><?= e($programOption) ?></button></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1604,6 +1669,83 @@ function handleAdminOrgsPage(PDO $db): void
             const ownerInput = document.getElementById('orgEditModalOwner');
             const instituteInput = document.getElementById('orgEditModalInstitute');
             const programInput = document.getElementById('orgEditModalProgram');
+            const createScopeForms = document.querySelectorAll('[data-org-scope-form]');
+
+            function resetThemedPicker(field) {
+                if (!field) {
+                    return;
+                }
+
+                field.value = '';
+                const root = field.closest('[data-dropdown-root]');
+                if (!root) {
+                    return;
+                }
+
+                const label = root.querySelector('[data-dropdown-label]');
+                if (label) {
+                    label.textContent = label.getAttribute('data-dropdown-placeholder') || '';
+                }
+
+                root.querySelectorAll('[data-dropdown-option]').forEach(function (option) {
+                    option.dataset.active = option.getAttribute('data-option-value') === '' ? 'true' : 'false';
+                });
+            }
+
+            function syncCreateScope(form) {
+                const checked = form.querySelector('[data-org-scope-input]:checked');
+                const selectedScope = checked ? checked.value : 'collegewide';
+                form.querySelectorAll('[data-org-scope-section]').forEach(function (section) {
+                    const scope = section.getAttribute('data-org-scope-section');
+                    const isVisible = scope === selectedScope;
+                    section.classList.toggle('hidden', !isVisible);
+                    section.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+                    section.querySelectorAll('[data-dropdown-value], select').forEach(function (field) {
+                        if (!isVisible) {
+                            if (field.matches('[data-dropdown-value]')) {
+                                resetThemedPicker(field);
+                            } else {
+                                field.value = '';
+                            }
+                        }
+                    });
+                });
+            }
+
+            function syncEditScope() {
+                const selectedScope = categoryInput.value || 'collegewide';
+                const instituteWrap = instituteInput.closest('.space-y-2');
+                const programWrap = programInput.closest('.space-y-2');
+                const showInstitute = selectedScope === 'institutewide';
+                const showProgram = selectedScope === 'program_based';
+
+                if (instituteWrap) {
+                    instituteWrap.classList.toggle('hidden', !showInstitute);
+                    instituteWrap.setAttribute('aria-hidden', showInstitute ? 'false' : 'true');
+                }
+
+                if (programWrap) {
+                    programWrap.classList.toggle('hidden', !showProgram);
+                    programWrap.setAttribute('aria-hidden', showProgram ? 'false' : 'true');
+                }
+
+                if (!showInstitute) {
+                    resetThemedPicker(instituteInput);
+                }
+
+                if (!showProgram) {
+                    resetThemedPicker(programInput);
+                }
+            }
+
+            createScopeForms.forEach(function (form) {
+                form.querySelectorAll('[data-org-scope-input]').forEach(function (input) {
+                    input.addEventListener('change', function () {
+                        syncCreateScope(form);
+                    });
+                });
+                syncCreateScope(form);
+            });
 
             function openModal(button) {
                 const orgId = button.getAttribute('data-org-id') || '';
@@ -1615,6 +1757,7 @@ function handleAdminOrgsPage(PDO $db): void
                 ownerInput.value = button.getAttribute('data-org-owner-id') || '';
                 instituteInput.value = button.getAttribute('data-org-target-institute') || '';
                 programInput.value = button.getAttribute('data-org-target-program') || '';
+                syncEditScope();
                 modal.classList.remove('hidden');
                 nameInput.focus();
             }
@@ -1631,6 +1774,8 @@ function handleAdminOrgsPage(PDO $db): void
 
             closeButton.addEventListener('click', closeModal);
             cancelButton.addEventListener('click', closeModal);
+            categoryInput.addEventListener('change', syncEditScope);
+            syncEditScope();
 
             modal.addEventListener('click', function (event) {
                 if (event.target === modal) {
@@ -1645,6 +1790,7 @@ function handleAdminOrgsPage(PDO $db): void
             });
         })();
     </script>
+    <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
     exit;

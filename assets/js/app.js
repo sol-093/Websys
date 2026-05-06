@@ -745,6 +745,37 @@ document.addEventListener('DOMContentLoaded', function () {
                     });
                 }
 
+                const navProfileMenuRoot = document.querySelector('[data-nav-profile-menu]');
+                const navProfileTrigger = document.getElementById('navProfileMenuToggle');
+                const navProfileMenu = document.getElementById('navProfileMenu');
+                if (navProfileMenuRoot && navProfileTrigger && navProfileMenu) {
+                    const setProfileMenuState = function (open) {
+                        navProfileMenu.classList.toggle('hidden', !open);
+                        navProfileTrigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    };
+
+                    navProfileTrigger.addEventListener('click', function () {
+                        const isOpen = navProfileTrigger.getAttribute('aria-expanded') === 'true';
+                        setProfileMenuState(!isOpen);
+                    });
+
+                    document.addEventListener('click', function (event) {
+                        if (!(event.target instanceof Element)) {
+                            return;
+                        }
+
+                        if (!navProfileMenuRoot.contains(event.target)) {
+                            setProfileMenuState(false);
+                        }
+                    });
+
+                    document.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape') {
+                            setProfileMenuState(false);
+                        }
+                    });
+                }
+
                 const updatesModal = document.getElementById('loginUpdatesModal');
                 const closeUpdatesBtn = document.getElementById('closeLoginUpdatesModal');
                 const closeUpdatesBtnFooter = document.getElementById('closeLoginUpdatesModalBtn');
