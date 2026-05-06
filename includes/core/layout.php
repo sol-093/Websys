@@ -39,6 +39,7 @@ function renderHeader(string $title = 'Dashboard'): void
     $isNotificationsActive = $currentPage === 'notifications';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
+    $isAdmin = ($user['role'] ?? '') === 'admin';
     $navAppName = (string) $config['app_name'];
     $faviconPath = 'uploads/assets/involvemoblight.png';
     $logoLight = 'uploads/assets/involvelogo dark.png';
@@ -93,14 +94,19 @@ function renderHeader(string $title = 'Dashboard'): void
                         <?php if ($user): ?>
                             <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
                             <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
-                            <?php if ($user['role'] === 'admin'): ?>
-                                <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
-                                <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
-                                <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
-                                <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
-                            <?php endif; ?>
                             <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
                                 <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
+                            <?php endif; ?>
+                            <?php if ($isAdmin): ?>
+                                <div class="admin-dropdown relative">
+                                    <a href="#" class="nav-link admin-dropdown-trigger" role="button" aria-haspopup="menu" aria-expanded="false">Admin</a>
+                                    <div class="admin-dropdown-menu hidden absolute w-44 rounded p-1 z-50">
+                                        <a href="?page=admin_orgs" class="block nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?> py-1 px-2">Manage Orgs</a>
+                                        <a href="?page=admin_students" class="block nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?> py-1 px-2">Students</a>
+                                        <a href="?page=admin_requests" class="block nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?> py-1 px-2">Requests</a>
+                                        <a href="?page=admin_audit" class="block nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?> py-1 px-2">Audit Logs</a>
+                                    </div>
+                                </div>
                             <?php endif; ?>
                             <div class="nav-utility-controls">
                                 <button type="button" id="globalSearchOpen" class="global-search-trigger" aria-label="Open global search" title="Search (Ctrl+K)">
@@ -150,16 +156,26 @@ function renderHeader(string $title = 'Dashboard'): void
                     <div class="flex flex-col gap-3 text-sm">
                         <a href="?page=home" class="nav-link <?= $isHomeActive ? 'nav-link-active' : '' ?>">Home</a>
                         <?php if ($user): ?>
-                            <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
-                            <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
-                            <?php if ($user['role'] === 'admin'): ?>
-                                <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
-                                <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
-                                <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
-                                <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
-                            <?php endif; ?>
-                            <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
-                                <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
+                            <div class="pt-2 border-t border-emerald-200/20">
+                                <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">Main</div>
+                                <div class="flex flex-col gap-2">
+                                    <a href="?page=dashboard" class="nav-link <?= $isDashboardActive ? 'nav-link-active' : '' ?>">Dashboard</a>
+                                    <a href="?page=organizations" class="nav-link nav-organizations-link <?= $currentPage === 'organizations' ? 'nav-link-active' : '' ?>">Organizations</a>
+                                    <?php if (in_array($user['role'], ['student', 'owner', 'admin'], true)): ?>
+                                        <a href="?page=my_org" class="nav-link <?= $isMyOrgActive ? 'nav-link-active' : '' ?>">My Organization</a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php if ($isAdmin): ?>
+                                <div class="pt-2 border-t border-emerald-200/20">
+                                    <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">Admin</div>
+                                    <div class="flex flex-col gap-2">
+                                        <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
+                                        <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
+                                        <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+                                        <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
+                                    </div>
+                                </div>
                             <?php endif; ?>
                             <div class="pt-2 border-t border-emerald-200/20">
                                 <div class="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">Account</div>
@@ -287,6 +303,20 @@ function renderFooter(): void
 
         <script src="assets/js/image-cropper.js?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/js/image-cropper.js')) ?>"></script>
         <script src="assets/js/app.js?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/js/app.js')) ?>"></script>
+        <script>
+        (function(){
+            const DELAY = 200; // ms
+            document.querySelectorAll('.admin-dropdown').forEach(function(menu){
+                let timer = null;
+                const open = function(){ menu.classList.add('is-open'); };
+                const close = function(){ menu.classList.remove('is-open'); };
+                menu.addEventListener('mouseenter', function(){ if(timer) { clearTimeout(timer); timer = null; } open(); });
+                menu.addEventListener('mouseleave', function(){ timer = setTimeout(close, DELAY); });
+                menu.addEventListener('focusin', function(){ if(timer) { clearTimeout(timer); timer = null; } open(); });
+                menu.addEventListener('focusout', function(){ timer = setTimeout(close, DELAY); });
+            });
+        })();
+        </script>
     </body>
     </html>
     <?php

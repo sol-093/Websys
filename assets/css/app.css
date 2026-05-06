@@ -600,6 +600,23 @@
                 line-height: 1.15;
             }
 
+            .nav-link-compact {
+                padding: 0.35rem 0.7rem;
+                font-size: 0.78rem;
+                line-height: 1;
+                border-radius: 9999px;
+            }
+
+            .nav-section-label {
+                display: inline-flex;
+                align-items: center;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.2em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+
             .ui-icon {
                 width: 1rem;
                 height: 1rem;
@@ -720,6 +737,10 @@
                 color: #d5fbe9;
             }
 
+            body.theme-dark .nav-section-label {
+                color: #94a3b8;
+            }
+
             .nav-link:hover {
                 color: #064e3b;
                 transform: translateY(-2px);
@@ -740,6 +761,21 @@
                 color: var(--green-500);
                 text-shadow: 0 0 16px rgba(184, 243, 74, 0.4);
             }
+
+            /* Admin dropdown: show on hover or focus-within for accessibility */
+            .admin-dropdown { position: relative; display: inline-block; }
+            .admin-dropdown-menu { display: none; position: absolute; left: 0; top: calc(100% + 2px); pointer-events: auto; z-index: 60; transition: opacity 120ms ease, transform 120ms ease; opacity: 0; transform: translateY(-4px); }
+            .admin-dropdown:hover .admin-dropdown-menu,
+            .admin-dropdown:focus-within .admin-dropdown-menu { display: block; opacity: 1; transform: translateY(0); }
+            .admin-dropdown-menu a { display: block; }
+
+            /* Dropdown holder: subtle visible container that keeps the menu easy to target */
+            .admin-dropdown-menu { background: rgba(255, 255, 255, 0.72); border: 1px solid rgba(16, 185, 129, 0.14); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); backdrop-filter: blur(10px); }
+
+            body.theme-dark .admin-dropdown-menu { background: rgba(15, 23, 42, 0.78); border: 1px solid rgba(148, 163, 184, 0.14); box-shadow: 0 10px 24px rgba(2, 6, 23, 0.28); }
+
+            /* JS-controlled open state to allow hide-delay */
+            .admin-dropdown.is-open .admin-dropdown-menu { display: block; opacity: 1; transform: translateY(0); }
 
             .nav-link-active::after {
                 content: '';
