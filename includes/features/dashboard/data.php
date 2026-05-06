@@ -7,13 +7,13 @@ declare(strict_types=1);
  * INVOLVE - DASHBOARD DATA
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. KPI Totals and Trends
  * 2. Ranking and Chart Data
  * 3. Announcements and Reports
  * 4. Organization Panels
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file when changing dashboard queries, metrics, date windows, or chart data.
  * ================================================
  */

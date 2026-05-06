@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - DASHBOARD PAGE COMPOSITION
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Local Formatter Closures
  * 2. Dashboard Markup Include
  * 3. Client Data JSON and Chart Scripts
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for dashboard composition.
  * - Edit data.php for queries and markup.php for sections.
  * ================================================

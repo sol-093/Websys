@@ -2,11 +2,11 @@
    INVOLVE - EARLY THEME BOOTSTRAP
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. Read Saved Theme
    2. Apply Dark Theme Before Main JS Loads
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Edit this file only for early theme bootstrapping.
    ================================================ */
 

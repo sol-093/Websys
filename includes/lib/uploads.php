@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - UPLOAD HELPERS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Secure Generic Uploads
  * 2. Profile/Organization Image Uploads
  * 3. Stored Upload Deletion
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for upload validation, naming, storage paths, or cleanup behavior.
  * ================================================
  */

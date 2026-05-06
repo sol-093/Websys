@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - COMMUNITY AND ORGANIZATION PAGES
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Announcements Page
  * 2. Organizations Directory
  * 3. Profile Page
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for student/community-facing page markup.
  * - Edit workflows.php for organization POST actions.
  * ================================================

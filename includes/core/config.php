@@ -7,13 +7,13 @@ declare(strict_types=1);
  * INVOLVE - RUNTIME CONFIG
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Environment Readers
  * 2. App Settings
  * 3. Database Settings
  * 4. Mail and OAuth Settings
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file when adding config keys or env variable defaults.
  * ================================================
  */

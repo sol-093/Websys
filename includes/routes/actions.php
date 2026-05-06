@@ -7,13 +7,13 @@ declare(strict_types=1);
  * INVOLVE - ACTION ROUTER
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. GET Actions
  * 2. OAuth Pages
  * 3. Public POST Actions
  * 4. Authenticated POST Actions
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Add ?action=... handlers in section 1.
  * - Add form action values in sections 3 or 4.
  * - Keep business logic in includes/features/* files.

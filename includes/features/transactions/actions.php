@@ -8,13 +8,13 @@ declare(strict_types=1);
  * POST handlers for owner content, announcements, and finance records
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Owner Organization Profile Updates
  * 2. Announcement Actions
  * 3. Transaction Create/Update/Delete Actions
  * 4. Transaction PDF Export
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit section 1 for owner organization profile/logo form saves.
  * - Edit section 2 for announcement add/delete/pin/unpin behavior.
  * - Edit section 3 for transaction mutation and admin-approval request behavior.

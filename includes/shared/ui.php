@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - SHARED UI HELPERS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. renderBreadcrumb()
  * 2. renderEmptyState()
  * 3. renderSkeletonDashboard()
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for shared UI fragments used by multiple features.
  * ================================================
  */

@@ -7,14 +7,14 @@ declare(strict_types=1);
  * INVOLVE - ADMIN PAGES
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Student Management
  * 2. Requests Queue
  * 3. Audit Logs
  * 4. Admin My Organization View
  * 5. Organization Management
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for admin-facing page markup and page-local scripts.
  * ================================================
  */

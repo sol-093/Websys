@@ -7,14 +7,14 @@ declare(strict_types=1);
  * INVOLVE - SHARED LAYOUT SHELL
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. renderHeader()
  * 2. Navigation and Global Search Markup
  * 3. Main Content Opening
  * 4. renderFooter()
  * 5. Footer, Toast Container, and Script Includes
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit nav/footer markup here.
  * - Edit global styles in assets/css/app.css.
  * - Edit global behavior in assets/js/theme-init.js and assets/js/app.js.

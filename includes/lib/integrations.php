@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - INTEGRATION HELPERS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Base URL Resolution
  * 2. Google OAuth Readiness
  * 3. JSON Fetch Helper
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for external integration helpers.
  * ================================================
  */

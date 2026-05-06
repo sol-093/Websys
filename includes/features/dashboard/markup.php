@@ -3,13 +3,13 @@
 INVOLVE - DASHBOARD MARKUP
 ===============================================
 
-TABLE OF CONTENTS:
+SECTION MAP:
 1. Hero and KPI Cards
 2. Charts and Budget Transparency
 3. Organization Panels
 4. Announcements and Transaction Sections
 
-EDIT GUIDE:
+WORK GUIDE:
 - Edit this file for dashboard HTML only.
 - Keep data preparation in data.php.
 ===============================================

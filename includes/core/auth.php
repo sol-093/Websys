@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - AUTHENTICATION GUARDS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. currentUser()
  * 2. requireLogin()
  * 3. requireRole()
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for login/session lookup and role guard behavior.
  * ================================================
  */

@@ -3,7 +3,7 @@
    Shared JavaScript loaded by includes/core/layout.php
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. Navigation Scroll State
    2. Global Search Modal
    3. Toast Notifications
@@ -13,7 +13,7 @@
    7. Theme, CSRF, Mobile Nav, Modals, and Touch Drag
    8. Student Onboarding Tour
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Change search behavior in section 2.
    - Change toasts/forms/theme/mobile nav in sections 3 to 7.
    - Change onboarding steps and completion behavior in section 8.

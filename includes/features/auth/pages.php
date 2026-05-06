@@ -7,14 +7,14 @@ declare(strict_types=1);
  * INVOLVE - AUTH AND PUBLIC PAGES
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Logout
  * 2. Home and About
  * 3. Login and Register
  * 4. Verify Email
  * 5. Forgot and Reset Password
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for public/auth page markup.
  * - Edit includes/features/auth/actions.php for POST behavior.
  * ================================================

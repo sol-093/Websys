@@ -3,7 +3,7 @@
    Extracted runtime CSS used by includes/core/layout.php
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. App Shell, Theme, and Base Elements
    2. Toasts and Shared Feedback UI
    3. Shared Cards, Empty States, Icons, and Form Controls
@@ -14,7 +14,7 @@
    8. Responsive Fixes and Print Rules
    9. Onboarding Tour
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Change colors/backgrounds/theme polish in sections 1, 3, and 4.
    - Change navbar/footer styling in sections 4 and 5.
    - Change page-specific styling in section 6.

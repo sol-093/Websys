@@ -2,13 +2,13 @@
    INVOLVE - REGISTRATION FORM VALIDATION
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. Field Lookup and Error Helpers
    2. Name, Email, Section, and Consent Validation
    3. Password Strength Validation
    4. Submit Guard
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Edit this file for registration-page browser validation only.
    ================================================ */
 

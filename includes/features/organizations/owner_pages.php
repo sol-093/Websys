@@ -7,7 +7,7 @@ declare(strict_types=1);
  * INVOLVE - OWNER ORGANIZATION PAGES
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Owner Workspace Data Loader
  * 2. Shared Owner Navigation
  * 3. Shared Membership Panels
@@ -15,7 +15,7 @@ declare(strict_types=1);
  * 5. Membership Management Page
  * 6. Financial Management Page
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for owner-facing page markup.
  * - Keep POST workflows in transactions/actions.php and workflows.php.
  * ================================================

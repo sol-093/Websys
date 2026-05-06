@@ -7,11 +7,11 @@ declare(strict_types=1);
  * INVOLVE - NOTIFICATION HELPERS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Collect User Request Updates
  * 2. Queue Login Popup Messages
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for notification aggregation shown after login.
  * ================================================
  */

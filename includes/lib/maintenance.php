@@ -7,10 +7,10 @@ declare(strict_types=1);
  * INVOLVE - MAINTENANCE HELPERS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Expired Announcement Cleanup
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for scheduled/runtime cleanup helpers.
  * ================================================
  */

@@ -7,7 +7,7 @@ declare(strict_types=1);
  * INVOLVE - APPLICATION BOOTSTRAP
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Composer Autoload
  * 2. Security Headers
  * 3. Global Search API
@@ -16,7 +16,7 @@ declare(strict_types=1);
  * 6. Database Startup Error Page
  * 7. Current User and Page State
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Add globally required modules in section 5.
  * - Change app-wide HTTP headers in section 2.
  * - Change startup variables for route files in section 7.

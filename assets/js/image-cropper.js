@@ -2,13 +2,13 @@
    INVOLVE - REUSABLE IMAGE CROPPER
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. Find Crop Forms
    2. Open Crop Modal and Preview Image
    3. Track Crop Position and Zoom
    4. Write Crop Fields Before Submit
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Edit this file for profile/org image cropping behavior.
    ================================================ */
 

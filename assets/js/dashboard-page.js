@@ -2,7 +2,7 @@
    INVOLVE - DASHBOARD PAGE BEHAVIOR
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. Live Timestamp
    2. Progress Bars
    3. Chart.js Rendering and Empty States
@@ -10,7 +10,7 @@
    5. Dashboard Modals
    6. Transaction History Filters
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Edit this file for dashboard-only browser behavior.
    ================================================ */
 

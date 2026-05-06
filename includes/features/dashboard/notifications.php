@@ -7,10 +7,10 @@ declare(strict_types=1);
  * INVOLVE - NOTIFICATIONS PAGE
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Notifications Page Controller
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for the user-facing notification center and personal activity feed.
  * ================================================
  */

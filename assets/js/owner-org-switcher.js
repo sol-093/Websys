@@ -2,13 +2,13 @@
    INVOLVE - OWNER ORGANIZATION SWITCHER
    ================================================
 
-   TABLE OF CONTENTS:
+    SECTION MAP:
    1. Find Dropdown Wrappers
    2. Apply Light/Dark Menu Styling
    3. Sync Selected Values
    4. Handle Click and Keyboard Behavior
 
-   EDIT GUIDE:
+    WORK GUIDE:
    - Edit this file for owner/admin organization switcher dropdown behavior.
    ================================================ */
 

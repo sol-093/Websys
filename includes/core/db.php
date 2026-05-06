@@ -7,12 +7,12 @@ declare(strict_types=1);
  * INVOLVE - DATABASE BOOTSTRAP
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. PDO Connection
  * 2. Baseline Schema Bootstrap
  * 3. Compatibility Migrations
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for DB connection or schema compatibility changes.
  * ================================================
  */

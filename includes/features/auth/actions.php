@@ -7,7 +7,7 @@ declare(strict_types=1);
  * INVOLVE - AUTH ACTIONS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Google OAuth
  * 2. Register and Login
  * 3. Email Verification
@@ -15,7 +15,7 @@ declare(strict_types=1);
  * 5. Profile Update
  * 6. Onboarding State
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for auth/profile/onboarding POST behavior.
  * ================================================
  */

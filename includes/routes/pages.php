@@ -7,13 +7,13 @@ declare(strict_types=1);
  * INVOLVE - PAGE ROUTER
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. Public Pages
  * 2. Auth Gate
  * 3. Authenticated Pages
  * 4. Dashboard Fallback
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Add new ?page=... routes here.
  * - Keep page markup in includes/features/* page files.
  * - Put access checks near the route they protect.

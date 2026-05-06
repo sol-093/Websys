@@ -7,11 +7,11 @@ declare(strict_types=1);
  * INVOLVE - PAGINATION HELPERS
  * ================================================
  *
- * TABLE OF CONTENTS:
+ * SECTION MAP:
  * 1. paginateArray()
  * 2. renderPagination()
  *
- * EDIT GUIDE:
+ * WORK GUIDE:
  * - Edit this file for pagination behavior or markup used across features.
  * ================================================
  */
