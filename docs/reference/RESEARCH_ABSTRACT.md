@@ -1,0 +1,3 @@
+# Proposal Abstract: INVOLVE Student Organization Management and Budget Transparency System
+
+INVOLVE is a web-based system that centralizes student organization management, announcements, membership requests, financial records, receipts, and approvals into one platform to reduce manual work and improve transparency; it combines role-based access, transaction tracking, receipt uploads, approval workflows, and secure account recovery in a campus-oriented design, making it unique because it unifies communication, financial oversight, and accountability, and schools should support it because it improves efficiency, strengthens trust, and helps ensure better compliance with institutional policies.
