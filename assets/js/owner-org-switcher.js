@@ -124,6 +124,7 @@
 
         const api = {
             root: root,
+            menu: menu,
             setOpen: setOpen,
             applyTheme: function () {
                 applyThemeClasses(button, menu, optionItems);
@@ -152,7 +153,9 @@
 
     document.addEventListener('click', function (event) {
         instances.forEach(function (instance) {
-            if (!instance.root.contains(event.target)) {
+            const insideRoot = instance.root.contains(event.target);
+            const insideMenu = instance.menu.contains(event.target);
+            if (!insideRoot && !insideMenu) {
                 instance.setOpen(false);
             }
         });
@@ -165,4 +168,5 @@
             });
         }
     });
+
 })();

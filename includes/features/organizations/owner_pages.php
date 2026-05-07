@@ -123,7 +123,7 @@ function renderOwnerWorkspaceHeader(array $org, string $currentPage): void
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span><?= e((string) ($org['name'] ?? 'My Organization')) ?></span></h1>
-                <p class="mt-1 text-sm text-slate-600">Choose the workspace you want to focus on and keep the rest out of the way.</p>
+                <p class="section-helper-copy">Focus on one workspace at a time.</p>
             </div>
             <div class="grid w-full grid-cols-1 gap-2 text-xs sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap">
                 <a href="?page=my_org_manage&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_manage' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Organization Management</a>
@@ -139,15 +139,15 @@ function renderOwnerWorkspaceHeader(array $org, string $currentPage): void
 function renderOwnerMembershipPanels(array $org, array $pendingJoinRequests, array $pendingJoinPagination, int $pendingJoinCount, array $orgMembers, array $orgMemberPagination, int $orgMemberCount): void
 {
     ?>
-    <div id="owner-members-current" class="glass rounded-lg p-4">
+    <div id="owner-membership-requests" class="glass rounded-lg p-4">
         <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Pending Membership Requests</span></h2>
-                <p class="mt-1 text-sm text-slate-600">Review incoming join requests and respond without leaving the owner workspace.</p>
+                <p class="section-helper-copy">Review join requests and decide who gets added to the roster.</p>
             </div>
         </div>
         <?php if (count($pendingJoinRequests) === 0): ?>
-            <p class="text-sm text-gray-500">No pending join requests for this organization.</p>
+            <div class="empty-state-panel">No pending join requests right now.</div>
         <?php else: ?>
             <div class="owner-request-toolbar mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div class="min-w-0 flex-1">
@@ -162,42 +162,45 @@ function renderOwnerMembershipPanels(array $org, array $pendingJoinRequests, arr
                 <?php foreach ($pendingJoinRequests as $request): ?>
                     <?php $requestSearch = strtolower((string) (($request['name'] ?? '') . ' ' . ($request['email'] ?? ''))); ?>
                     <article class="owner-join-request-card rounded-lg border border-emerald-300/25 bg-white/10 p-3" data-request-search="<?= e($requestSearch) ?>">
-                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                             <div class="min-w-0 flex-1">
-                                <div class="inline-flex min-w-0 items-center gap-2">
+                                <div class="inline-flex min-w-0 items-center gap-3">
                                     <?= renderProfileMedia((string) ($request['name'] ?? ''), (string) ($request['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($request['profile_picture_crop_x'] ?? 50), (float) ($request['profile_picture_crop_y'] ?? 50), (float) ($request['profile_picture_zoom'] ?? 1)) ?>
-                                    <span class="font-medium break-words"><?= e((string) ($request['name'] ?? 'Student')) ?></span>
+                                    <div class="min-w-0">
+                                        <div class="font-medium break-words"><?= e((string) ($request['name'] ?? 'Student')) ?></div>
+                                        <div class="mt-0.5 text-[11px] text-slate-500">Pending member request</div>
+                                    </div>
                                 </div>
                                 <div class="mt-1 break-all text-sm text-slate-600"><?= e((string) ($request['email'] ?? '')) ?></div>
-                                <div class="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 text-[11px]">
+                                <div class="mt-2 flex flex-wrap gap-2 text-[11px]">
                                     <span class="owner-request-chip rounded-md border border-slate-300/30 bg-white/10 px-2 py-1 text-slate-700">Requested <?= e(date('F d, Y', strtotime((string) ($request['created_at'] ?? 'now')))) ?></span>
                                     <span class="owner-request-chip rounded-md border border-amber-300/30 bg-amber-500/10 px-2 py-1 text-amber-800">Awaiting owner response</span>
                                     <span class="owner-request-chip rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-1 text-emerald-800">Membership review</span>
                                 </div>
                             </div>
-                            <div class="owner-request-actions flex flex-col gap-2 sm:flex-row lg:w-auto lg:min-w-[13rem] lg:flex-col">
-                                <form method="post" class="owner-request-action-form" onsubmit="return confirm('Approve this join request?');">
+                            <div class="owner-request-actions flex flex-col gap-2 sm:flex-row xl:w-auto xl:min-w-[13rem] xl:flex-col xl:items-stretch">
+                                <form method="post" class="owner-request-action-form" data-confirm-message="Approve this join request?">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="respond_join_request">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                     <input type="hidden" name="decision" value="approve">
-                                    <button class="owner-request-btn owner-request-btn-approve inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs text-white"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve Request</span></span></button>
+                                    <button class="owner-request-btn owner-request-btn-approve inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs text-white"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
                                 </form>
-                                <form method="post" class="owner-request-action-form" onsubmit="return confirm('Decline this join request?');">
+                                <form method="post" class="owner-request-action-form" data-confirm-message="Decline this join request?">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="respond_join_request">
                                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                     <input type="hidden" name="decision" value="decline">
-                                    <button class="owner-request-btn owner-request-btn-decline inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs text-white"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Decline Request</span></span></button>
+                                    <button class="owner-request-btn owner-request-btn-decline inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-xs text-white"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Decline</span></span></button>
                                 </form>
                             </div>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </div>
-            <div id="ownerJoinRequestEmptySearch" class="mt-3 hidden rounded-md border border-slate-300/30 bg-white/10 px-3 py-3 text-sm text-slate-600">No pending requests matched that search.</div>
+            <div id="ownerJoinRequestEmptySearch" class="empty-state-search mt-3 hidden">No pending requests matched that search.</div>
             <?php renderPagination($pendingJoinPagination + ['anchor' => 'owner-membership-requests']); ?>
         <?php endif; ?>
     </div>
@@ -206,11 +209,11 @@ function renderOwnerMembershipPanels(array $org, array $pendingJoinRequests, arr
         <div class="mb-3 flex flex-wrap items-start justify-between gap-3">
             <div>
                 <h2 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Current Members</span></h2>
-                <p class="mt-1 text-sm text-slate-600">Search the current roster, review who joined, and remove members when needed.</p>
+                <p class="section-helper-copy">Search the roster, review member details, and remove access when needed.</p>
             </div>
         </div>
         <?php if ($orgMemberCount === 0): ?>
-            <p class="text-sm text-gray-500">No members have joined this organization yet.</p>
+            <div class="empty-state-panel">No members have joined this organization yet.</div>
         <?php else: ?>
             <div class="owner-request-toolbar mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div class="min-w-0 flex-1">
@@ -232,7 +235,7 @@ function renderOwnerMembershipPanels(array $org, array $pendingJoinRequests, arr
                         $memberSearch = strtolower($memberName . ' ' . $memberEmail);
                     ?>
                     <article class="owner-member-card rounded-lg border border-emerald-300/25 bg-white/10 p-3" data-member-search="<?= e($memberSearch) ?>">
-                        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                             <div class="min-w-0 flex-1">
                                 <div class="inline-flex min-w-0 items-center gap-3">
                                     <?= renderProfileMedia($memberName, (string) ($member['profile_picture_path'] ?? ''), 'user', 'xs', (float) ($member['profile_picture_crop_x'] ?? 50), (float) ($member['profile_picture_crop_y'] ?? 50), (float) ($member['profile_picture_zoom'] ?? 1)) ?>
@@ -243,27 +246,27 @@ function renderOwnerMembershipPanels(array $org, array $pendingJoinRequests, arr
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <div class="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 text-[11px]">
+                                <div class="mt-2 flex flex-wrap gap-2 text-[11px]">
                                     <?php if ($joinedAt !== ''): ?>
                                         <span class="owner-request-chip rounded-md border border-slate-300/30 bg-white/10 px-2 py-1 text-slate-700">Joined <?= e(date('F d, Y', strtotime($joinedAt))) ?></span>
                                     <?php endif; ?>
                                     <?php if ($isMemberOwner): ?>
                                         <span class="owner-request-chip rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-1 text-emerald-800">Protected owner account</span>
                                     <?php else: ?>
-                                        <span class="owner-request-chip rounded-md border border-slate-300/30 bg-white/10 px-2 py-1 text-slate-700">Roster member</span>
+                                        <span class="owner-request-chip rounded-md border border-slate-300/30 bg-white/10 px-2 py-1 text-slate-700">Active roster member</span>
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <div class="owner-request-actions flex flex-col gap-2 sm:flex-row lg:w-auto lg:min-w-[12rem] lg:flex-col">
+                            <div class="owner-request-actions flex flex-col gap-2 sm:flex-row xl:w-auto xl:min-w-[12rem] xl:flex-col xl:items-stretch">
                                 <?php if ($isMemberOwner): ?>
                                     <span class="inline-flex items-center justify-center rounded-md border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-800">Owner protected</span>
                                 <?php else: ?>
-                                    <form method="post" class="owner-request-action-form" onsubmit="return confirm('Remove this member from the organization?');">
+                                    <form method="post" class="owner-request-action-form" data-confirm-message="Remove this member from the organization?">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="remove_org_member">
                                         <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                                         <input type="hidden" name="member_user_id" value="<?= $memberId ?>">
-                                        <button class="tx-action-btn tx-action-btn-delete inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-xs">
+                                        <button class="tx-action-btn tx-action-btn-delete owner-member-remove-btn inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-xs">
                                             <span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Remove Member</span></span>
                                         </button>
                                     </form>
@@ -273,7 +276,7 @@ function renderOwnerMembershipPanels(array $org, array $pendingJoinRequests, arr
                     </article>
                 <?php endforeach; ?>
             </div>
-            <div id="ownerMemberEmptySearch" class="mt-3 hidden rounded-md border border-slate-300/30 bg-white/10 px-3 py-3 text-sm text-slate-600">No members matched that search.</div>
+            <div id="ownerMemberEmptySearch" class="empty-state-search mt-3 hidden">No members matched that search.</div>
             <?php renderPagination($orgMemberPagination + ['anchor' => 'owner-members-current']); ?>
         <?php endif; ?>
     </div>
@@ -294,7 +297,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('edit', 'ui-icon') ?><span>Organization Management</span></h2>
-                    <p class="mt-1 text-sm text-slate-600">Manage the organization profile and member-facing updates in one place.</p>
+                    <p class="section-helper-copy">Manage the organization profile and member-facing updates in one place.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
                     <span class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800">Profile workspace</span>
@@ -398,7 +401,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>Communications &amp; Broadcasts</span></h2>
                         <span class="announcement-workspace-chip">Broadcasting</span>
                     </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-300">Create member-facing updates for <?= e((string) $org['name']) ?> in one place.</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Create member-facing updates for <?= e((string) $org['name']) ?>.</p>
                 </div>
                 <button type="button" id="myOrgAnnouncementsOpen" class="announcement-open-btn inline-flex items-center rounded-md border px-3 py-2 text-xs font-medium transition-colors">View all announcements</button>
             </div>
@@ -410,7 +413,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                             <h3 class="text-base font-semibold icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Post New Announcement</span></h3>
                             <span class="announcement-compose-chip">Compose</span>
                         </div>
-                        <p class="text-sm text-slate-600 dark:text-slate-300">Create and schedule a member update.</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-300">Create a member update.</p>
                     </div>
 
                     <form method="post" class="space-y-4">
@@ -497,7 +500,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                                 <h3 class="text-base font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Latest Broadcasts</span></h3>
                                 <span class="announcement-preview-chip">Recent</span>
                             </div>
-                            <p class="text-sm text-slate-600 dark:text-slate-300">Scan the newest live announcements here.</p>
+                            <p class="text-sm text-slate-600 dark:text-slate-300">Review the newest live announcements here.</p>
                         </div>
                         <span class="announcement-preview-count rounded-md border px-2.5 py-1 text-xs"><?= count($allAnnouncements) ?> active</span>
                     </div>
@@ -533,7 +536,7 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
                 <div class="mb-4 flex items-start justify-between gap-3">
                     <div>
                         <h3 class="text-lg font-semibold icon-label"><?= uiIcon('announce', 'ui-icon') ?><span>All Organization Announcements</span></h3>
-                        <p class="mt-1 text-sm text-slate-600">Review live announcements and remove outdated ones.</p>
+                        <p class="section-helper-copy">Review live announcements and remove outdated ones.</p>
                     </div>
                     <button type="button" id="myOrgAnnouncementsClose" class="text-2xl leading-none text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white" aria-label="Close modal">&times;</button>
                 </div>
@@ -798,10 +801,10 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
         <?php renderOwnerWorkspaceHeader($org, 'my_org_finance'); ?>
 
         <div class="glass rounded-lg p-4">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Financial Management</span></h2>
-                    <p class="mt-1 text-sm text-slate-600">Record transactions and monitor the request trail without the roster tools crowding the page.</p>
+                    <p class="section-helper-copy">Record transactions and review finance requests in one place.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
                     <a href="#tx-requests" class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800 transition-colors hover:bg-emerald-500/15">Jump to pending requests</a>
@@ -834,19 +837,19 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                         </ul>
                     </div>
                 </div>
-                <button class="w-full sm:w-auto bg-indigo-700 text-white px-4 py-2 rounded"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+                <button class="owner-manage-secondary-btn w-full sm:w-auto px-4 py-2 rounded-md"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
             </form>
         </div>
 
         <div class="glass rounded-lg p-4">
-                <div class="mb-3 space-y-2">
+                <div class="mb-4 space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Add Income / Expense</span></h2>
                         <span class="inline-flex items-center rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-400/10 dark:text-emerald-200">Finance log</span>
                     </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-300">Record organization cash flow with the amount, date, description, and optional receipt in one place.</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Record cash flow, dates, and receipt details in one place.</p>
                 </div>
-                <form method="post" enctype="multipart/form-data" class="space-y-2">
+                <form method="post" enctype="multipart/form-data" class="space-y-3">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="add_transaction">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -868,21 +871,27 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     </div>
                     <input type="date" name="transaction_date" value="<?= date('Y-m-d') ?>" class="owner-transaction-input owner-transaction-date w-full border rounded px-3 py-2" required>
                     <input name="description" placeholder="Description" class="w-full border rounded px-3 py-2" required>
-                    <div class="flex w-full flex-col items-stretch gap-2 rounded-lg border border-emerald-300/25 bg-white/35 px-3 py-3 sm:flex-row sm:items-center sm:gap-3 dark:border-emerald-300/15 dark:bg-emerald-950/15">
-                        <label for="myOrgReceiptInput" class="inline-flex w-full cursor-pointer items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs text-white transition-colors hover:bg-emerald-700 sm:w-auto">
+                    <div class="rounded-lg border border-emerald-300/25 bg-white/35 px-3 py-3 dark:border-emerald-300/15 dark:bg-emerald-950/15">
+                        <div class="mb-2">
+                            <div class="text-sm font-medium text-slate-700 dark:text-slate-200">Receipt</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-300">Optional image or PDF.</div>
+                        </div>
+                        <div class="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+                        <label for="myOrgReceiptInput" class="owner-manage-primary-btn inline-flex w-full cursor-pointer items-center justify-center rounded-md px-3 py-1.5 text-xs sm:w-auto">
                             Upload Receipt
                         </label>
                         <span id="myOrgReceiptFilename" class="min-w-0 truncate text-sm text-slate-500 dark:text-slate-300 sm:flex-1">No file chosen</span>
                         <input id="myOrgReceiptInput" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="sr-only" onchange="var f=this.files&&this.files[0]?this.files[0].name:'No file chosen'; var n=document.getElementById('myOrgReceiptFilename'); if(n){ n.textContent=f; }">
+                        </div>
                     </div>
-                    <button class="w-full rounded-md bg-emerald-600 px-4 py-2 text-white transition-colors hover:bg-emerald-700 sm:w-auto"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
+                    <button class="owner-manage-primary-btn w-full rounded-md px-4 py-2 sm:w-auto"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
                 </form>
         </div>
 
         <div id="tx-history" class="glass rounded-lg p-4 overflow-auto">
             <div class="mb-2 flex flex-col items-stretch justify-between gap-2 sm:flex-row sm:items-center">
                 <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Transaction History</span></h2>
-                <a href="?page=my_org_finance&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=pdf&tx_type=<?= urlencode($txTypeFilter) ?>&tx_sort=<?= urlencode($txDateSort) ?>" class="report-export-btn inline-flex w-full items-center justify-center gap-2 rounded border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 transition-colors sm:w-auto">
+                <a href="?page=my_org_finance&org_id=<?= (int) $org['id'] ?>&action=export_transactions&format=pdf&tx_type=<?= urlencode($txTypeFilter) ?>&tx_sort=<?= urlencode($txDateSort) ?>" class="owner-manage-secondary-btn report-export-btn inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm sm:w-auto">
                     Export PDF
                 </a>
             </div>
@@ -890,10 +899,10 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                 <input type="hidden" name="page" value="my_org_finance">
                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                 <div class="w-full sm:w-auto">
-                    <label class="block text-xs text-gray-600 mb-1">Type</label>
+                    <label class="block text-xs text-slate-600 mb-1">Type</label>
                     <div class="relative" data-dropdown-wrapper>
                         <input type="hidden" name="tx_type" data-dropdown-value value="<?= e($txTypeFilter) ?>">
-                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-xs transition-colors">
+                        <button type="button" data-dropdown-toggle="myOrgTxTypeMenu" aria-expanded="false" class="finance-filter-control w-full flex items-center justify-between gap-3 border rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-xs transition-colors">
                             <span data-dropdown-label class="truncate text-left"><?= e($txTypeFilter === 'income' ? 'Income' : ($txTypeFilter === 'expense' ? 'Expense' : 'All')) ?></span>
                             <span class="hidden text-xs">▼</span>
                         </button>
@@ -907,10 +916,10 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     </div>
                 </div>
                 <div class="w-full sm:w-auto">
-                    <label class="block text-xs text-gray-600 mb-1">Date</label>
+                    <label class="block text-xs text-slate-600 mb-1">Date</label>
                     <div class="relative" data-dropdown-wrapper>
                         <input type="hidden" name="tx_sort" data-dropdown-value value="<?= e($txDateSort) ?>">
-                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-xs transition-colors">
+                        <button type="button" data-dropdown-toggle="myOrgTxSortMenu" aria-expanded="false" class="finance-filter-control w-full flex items-center justify-between gap-3 border rounded px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 text-xs transition-colors">
                             <span data-dropdown-label class="truncate text-left"><?= e($txDateSort === 'asc' ? 'Oldest first' : 'Newest first') ?></span>
                             <span class="hidden text-xs">▼</span>
                         </button>
@@ -922,7 +931,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                         </div>
                     </div>
                 </div>
-                <button data-filter-submit class="w-full rounded bg-indigo-700 px-2.5 py-2 text-xs text-white sm:w-auto"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
+                <button data-filter-submit class="owner-manage-secondary-btn finance-filter-btn w-full rounded-md px-2.5 py-1.5 text-xs sm:w-auto"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Apply</span></span></button>
             </form>
             <div class="table-wrapper hidden md:block">
                 <table class="w-full text-sm table-fixed">
@@ -977,7 +986,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                                         data-tx-receipt="<?= e((string) ($row['receipt_path'] ?? '')) ?>"
                                         aria-label="Edit transaction details"
                                     ><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?></button>
-                                    <form method="post" onsubmit="return confirm('Delete transaction?')">
+                                    <form method="post" data-confirm-message="Delete transaction?">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="action" value="delete_transaction">
                                         <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -1025,7 +1034,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                             >
                                 <span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Edit Transaction</span></span>
                             </button>
-                            <form method="post" onsubmit="return confirm('Delete transaction?')">
+                            <form method="post" data-confirm-message="Delete transaction?">
                                 <?= csrfField() ?>
                                 <input type="hidden" name="action" value="delete_transaction">
                                 <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -1047,7 +1056,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>My Pending/Recent Transaction Requests</span></h2>
                     <span class="inline-flex items-center rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-400/10 dark:text-emerald-200">Request trail</span>
                 </div>
-                <p class="text-sm text-slate-600 dark:text-slate-300">Track the latest update and delete requests you sent for this organization&apos;s transaction records.</p>
+                <p class="text-sm text-slate-600 dark:text-slate-300">Track your latest finance update and delete requests here.</p>
             </div>
             <div class="table-wrapper hidden md:block">
                 <table class="w-full text-sm">
@@ -1088,7 +1097,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     <?php if (count($myTxRequests) === 0): ?>
                         <tr>
                             <td colspan="4" class="py-6">
-                                <div class="rounded-lg border border-dashed border-emerald-300/30 bg-white/40 px-4 py-4 text-sm text-slate-500 dark:border-emerald-300/20 dark:bg-emerald-950/15 dark:text-slate-300">No recent transaction requests yet.</div>
+                                <div class="empty-state-panel">No recent transaction requests yet.</div>
                             </td>
                         </tr>
                     <?php endif; ?>
@@ -1120,7 +1129,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     </article>
                 <?php endforeach; ?>
                 <?php if (count($myTxRequests) === 0): ?>
-                    <div class="rounded-lg border border-dashed border-emerald-300/30 bg-white/40 px-4 py-4 text-sm text-slate-500 dark:border-emerald-300/20 dark:bg-emerald-950/15 dark:text-slate-300">No recent transaction requests yet.</div>
+                    <div class="empty-state-panel">No recent transaction requests yet.</div>
                 <?php endif; ?>
             </div>
             <?php renderPagination($myTxRequestsPagination + ['anchor' => 'tx-requests']); ?>
@@ -1182,7 +1191,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     </div>
                 </form>
 
-                <form method="post" id="txEditModalDeleteForm" class="hidden" onsubmit="return confirm('Delete transaction?');">
+                <form method="post" id="txEditModalDeleteForm" class="hidden" data-confirm-message="Delete transaction?">
                     <?= csrfField() ?>
                     <input type="hidden" name="action" value="delete_transaction">
                     <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
@@ -1284,7 +1293,7 @@ function handleMyOrgMembersPage(PDO $db, array $user, string $announcementCutoff
             <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('students', 'ui-icon') ?><span>Membership Management</span></h2>
-                    <p class="mt-1 text-sm text-slate-600">Handle join requests and member removals in a dedicated workspace without the profile and finance forms mixed in.</p>
+                    <p class="section-helper-copy">Handle join requests and roster access in one place.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
                     <span class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800">Members: <?= (int) $orgMemberCount ?></span>

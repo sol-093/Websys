@@ -562,7 +562,125 @@ function initCurrencyInput(inputEl) {
             });
 
 // ================================================
-// 6. FORM LOADING BUTTONS
+// 6. SHARED CONFIRMATION MODAL
+// ================================================
+document.addEventListener('DOMContentLoaded', function () {
+                var existingModal = document.getElementById('appConfirmModal');
+                if (existingModal) {
+                    return;
+                }
+
+                var modal = document.createElement('div');
+                modal.id = 'appConfirmModal';
+                modal.className = 'app-confirm-overlay hidden';
+                modal.setAttribute('aria-hidden', 'true');
+                modal.innerHTML =
+                    '<div class="app-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle">' +
+                        '<div class="app-confirm-header">' +
+                            '<h3 id="appConfirmTitle" class="app-confirm-title">Please confirm</h3>' +
+                            '<button type="button" class="app-confirm-close" aria-label="Close confirmation">&times;</button>' +
+                        '</div>' +
+                        '<p class="app-confirm-message"></p>' +
+                        '<div class="app-confirm-actions">' +
+                            '<button type="button" class="app-confirm-cancel">Cancel</button>' +
+                            '<button type="button" class="app-confirm-submit">Continue</button>' +
+                        '</div>' +
+                    '</div>';
+
+                document.body.appendChild(modal);
+
+                var dialog = modal.querySelector('.app-confirm-dialog');
+                var messageNode = modal.querySelector('.app-confirm-message');
+                var cancelButton = modal.querySelector('.app-confirm-cancel');
+                var submitButton = modal.querySelector('.app-confirm-submit');
+                var closeButton = modal.querySelector('.app-confirm-close');
+                var pendingForm = null;
+                var allowSubmit = false;
+                var lastFocusedElement = null;
+
+                var closeModal = function () {
+                    modal.classList.add('hidden');
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                    pendingForm = null;
+                    allowSubmit = false;
+                    if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                        lastFocusedElement.focus();
+                    }
+                };
+
+                var openModal = function (form, message) {
+                    pendingForm = form;
+                    lastFocusedElement = document.activeElement;
+                    messageNode.textContent = String(message || 'Please confirm this action.');
+                    modal.classList.remove('hidden');
+                    modal.setAttribute('aria-hidden', 'false');
+                    document.body.style.overflow = 'hidden';
+                    window.setTimeout(function () {
+                        cancelButton.focus();
+                    }, 0);
+                };
+
+                document.addEventListener('submit', function (event) {
+                    var form = event.target;
+                    if (!(form instanceof HTMLFormElement)) {
+                        return;
+                    }
+
+                    var message = form.getAttribute('data-confirm-message');
+                    if (!message) {
+                        return;
+                    }
+
+                    if (allowSubmit && pendingForm === form) {
+                        allowSubmit = false;
+                        pendingForm = null;
+                        return;
+                    }
+
+                    event.preventDefault();
+                    openModal(form, message);
+                }, true);
+
+                submitButton.addEventListener('click', function () {
+                    if (!pendingForm) {
+                        closeModal();
+                        return;
+                    }
+
+                    var form = pendingForm;
+                    allowSubmit = true;
+                    closeModal();
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                });
+
+                cancelButton.addEventListener('click', closeModal);
+                closeButton.addEventListener('click', closeModal);
+
+                modal.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        closeModal();
+                    }
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                        event.preventDefault();
+                        closeModal();
+                    }
+                });
+
+                window.AppConfirm = {
+                    close: closeModal
+                };
+            });
+
+// ================================================
+// 7. FORM LOADING BUTTONS
 // ================================================
             document.addEventListener('DOMContentLoaded', function () {
                 var toggleInputs = document.querySelectorAll('input[data-password-toggle]');
@@ -673,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
 // ================================================
-// 7. THEME, CSRF, MOBILE NAV, MODALS, AND TOUCH DRAG
+// 8. THEME, CSRF, MOBILE NAV, MODALS, AND TOUCH DRAG
 // ================================================
 (function () {
                 const root = document.body;
@@ -779,11 +897,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 const updatesModal = document.getElementById('loginUpdatesModal');
                 const closeUpdatesBtn = document.getElementById('closeLoginUpdatesModal');
                 const closeUpdatesBtnFooter = document.getElementById('closeLoginUpdatesModalBtn');
+                const syncModalBodyLock = function () {
+                    const openModal = document.querySelector('[data-modal-close]:not(.hidden)');
+                    document.body.style.overflow = openModal ? 'hidden' : '';
+                };
+
+                const syncModalAccessibility = function (modalNode) {
+                    if (!(modalNode instanceof Element) || !modalNode.hasAttribute('data-modal-close')) {
+                        return;
+                    }
+
+                    modalNode.setAttribute('aria-hidden', modalNode.classList.contains('hidden') ? 'true' : 'false');
+                    if (!modalNode.hasAttribute('role')) {
+                        modalNode.setAttribute('role', 'dialog');
+                    }
+                    if (!modalNode.hasAttribute('aria-modal')) {
+                        modalNode.setAttribute('aria-modal', 'true');
+                    }
+                };
+
                 if (updatesModal) {
                     updatesModal.classList.remove('hidden');
+                    syncModalBodyLock();
 
                     const closeUpdates = function () {
                         updatesModal.classList.add('hidden');
+                        syncModalBodyLock();
                     };
 
                     if (closeUpdatesBtn) {
@@ -808,18 +947,41 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
 
                     overlay.classList.add('hidden');
-                    if (overlay.hasAttribute('aria-hidden')) {
-                        overlay.setAttribute('aria-hidden', 'true');
-                    }
+                    syncModalAccessibility(overlay);
+                    syncModalBodyLock();
+                });
 
-                    const openModal = document.querySelector('[data-modal-close]:not(.hidden)');
-                    if (!openModal) {
-                        document.body.style.overflow = '';
+                const modalObserver = new MutationObserver(function (mutations) {
+                    const shouldSync = mutations.some(function (mutation) {
+                        if (!(mutation.target instanceof Element)) {
+                            return false;
+                        }
+
+                        return mutation.type === 'attributes'
+                            && mutation.attributeName === 'class'
+                            && mutation.target.hasAttribute('data-modal-close');
+                    });
+
+                    if (shouldSync) {
+                        mutations.forEach(function (mutation) {
+                            syncModalAccessibility(mutation.target);
+                        });
+                        syncModalBodyLock();
                     }
                 });
 
+                document.querySelectorAll('[data-modal-close]').forEach(function (modalNode) {
+                    syncModalAccessibility(modalNode);
+                    modalObserver.observe(modalNode, {
+                        attributes: true,
+                        attributeFilter: ['class'],
+                    });
+                });
+
+                syncModalBodyLock();
+
                 if ('ontouchstart' in window) {
-                    document.querySelectorAll('.modal-panel').forEach(function (panel) {
+                    document.querySelectorAll('[data-modal-panel]').forEach(function (panel) {
                         let startY = 0;
                         let lastY = 0;
                         let activeTouchId = null;

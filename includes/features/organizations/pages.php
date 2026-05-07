@@ -167,7 +167,28 @@ function handleOrganizationsPage(PDO $db, array $user): void
 
         <div class="space-y-3 max-h-[36rem] overflow-y-auto themed-scroll pr-1">
             <?php foreach ($allOrgs as $org): ?>
-                <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                <?php
+                    $orgId = (int) $org['id'];
+                    $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                    $isJoined = in_array($orgId, $joinedIds, true);
+                    $canJoin = canUserJoinOrganization($org, $user);
+                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                    if (!$canJoin) {
+                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                        $label = getJoinRestrictionLabel($org);
+                    } elseif ($isJoined) {
+                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                        $label = 'Joined';
+                    } elseif ($requestStatus === 'pending') {
+                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                        $label = 'Requested';
+                    } else {
+                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                        $label = 'Request Join';
+                    }
+                    $joinIcon = !$canJoin ? 'rejected' : ($isJoined ? 'approved' : ($requestStatus === 'pending' ? 'pending' : 'requests'));
+                ?>
+                <div class="hidden md:flex border rounded p-3 flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
                     <div class="flex items-start gap-3 text-left">
                         <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                         <div>
@@ -182,33 +203,36 @@ function handleOrganizationsPage(PDO $db, array $user): void
                             <?= csrfField() ?>
                             <input type="hidden" name="action" value="join_org">
                             <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                            <?php
-                                $orgId = (int) $org['id'];
-                                $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
-                                $isJoined = in_array($orgId, $joinedIds, true);
-                                $canJoin = canUserJoinOrganization($org, $user);
-                                $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
-                                if (!$canJoin) {
-                                    $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
-                                    $label = getJoinRestrictionLabel($org);
-                                } elseif ($isJoined) {
-                                    $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
-                                    $label = 'Joined';
-                                } elseif ($requestStatus === 'pending') {
-                                    $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
-                                    $label = 'Requested';
-                                } else {
-                                    $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
-                                    $label = 'Request Join';
-                                }
-                                $joinIcon = !$canJoin ? 'rejected' : ($isJoined ? 'approved' : ($requestStatus === 'pending' ? 'pending' : 'requests'));
-                            ?>
                             <button data-tour="join-button" class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
                                 <span class="icon-label"><?= uiIcon($joinIcon, 'ui-icon ui-icon-sm') ?><span><?= $label ?></span></span>
                             </button>
                         </form>
                     <?php endif; ?>
                 </div>
+
+                <article class="md:hidden rounded-lg border border-emerald-200/35 bg-white/10 p-3">
+                    <div class="flex items-start gap-3">
+                        <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                        <div class="min-w-0 flex-1">
+                            <div class="font-medium break-words leading-5"><?= e($org['name']) ?></div>
+                            <div class="mt-1 inline-flex max-w-full rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-800 break-words">
+                                <?= e(getOrganizationVisibilityLabel($org)) ?>
+                            </div>
+                            <p class="mt-2 text-sm text-slate-600 break-words leading-6"><?= e($org['description']) ?></p>
+                            <div class="mt-2 text-xs text-slate-500 break-words">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                        </div>
+                    </div>
+                    <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                        <form method="post" class="mt-3">
+                            <?= csrfField() ?>
+                            <input type="hidden" name="action" value="join_org">
+                            <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                            <button data-tour="join-button" class="inline-flex w-full items-center justify-center px-3 py-2 rounded-md text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                <span class="icon-label"><?= uiIcon($joinIcon, 'ui-icon ui-icon-sm') ?><span><?= $label ?></span></span>
+                            </button>
+                        </form>
+                    <?php endif; ?>
+                </article>
             <?php endforeach; ?>
         </div>
     </section>

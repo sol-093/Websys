@@ -66,13 +66,13 @@ function renderPagination(array $pagination): void
     };
 
     ?>
-    <div class="mt-3 flex items-center gap-2 text-xs">
-        <a class="pagination-control inline-flex items-center justify-center rounded border px-2.5 py-1.5 <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Prev</span></span></a>
+    <div class="pagination-shell mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <a class="pagination-control pagination-nav inline-flex items-center justify-center rounded-md border px-2.5 py-1.5 <?= $currentPage <= 1 ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(max(1, $currentPage - 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><?= uiIcon('prev', 'ui-icon ui-icon-sm') ?><span>Prev</span></span></a>
         <?php for ($p = $startPage; $p <= $endPage; $p++): ?>
-            <a class="px-2 py-1 rounded border <?= $p === $currentPage ? 'bg-indigo-700 text-white border-indigo-700' : '' ?>" href="<?= e($buildUrl($p)) ?>"<?= $preserveScrollAttr ?>><?= $p ?></a>
+            <a class="pagination-page inline-flex min-w-[2rem] items-center justify-center rounded-md border px-2 py-1.5 <?= $p === $currentPage ? 'is-active' : '' ?>" href="<?= e($buildUrl($p)) ?>"<?= $preserveScrollAttr ?>><?= $p ?></a>
         <?php endfor; ?>
-        <a class="pagination-control inline-flex items-center justify-center rounded border px-2.5 py-1.5 <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><span>Next</span><?= uiIcon('next', 'ui-icon ui-icon-sm') ?></span></a>
-        <span class="text-gray-500 ml-1">Page <?= $currentPage ?> of <?= $totalPages ?></span>
+        <a class="pagination-control pagination-nav inline-flex items-center justify-center rounded-md border px-2.5 py-1.5 <?= $currentPage >= $totalPages ? 'opacity-40 pointer-events-none' : '' ?>" href="<?= e($buildUrl(min($totalPages, $currentPage + 1))) ?>"<?= $preserveScrollAttr ?>><span class="icon-label justify-center"><span>Next</span><?= uiIcon('next', 'ui-icon ui-icon-sm') ?></span></a>
+        <span class="pagination-status ml-1">Page <?= $currentPage ?> of <?= $totalPages ?></span>
     </div>
     <?php
 }

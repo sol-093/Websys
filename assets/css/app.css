@@ -925,17 +925,17 @@
             .admin-mega-icon-emerald { background: rgba(5, 150, 105, 0.72); color: #ecfdf5; }
 
             body:not(.theme-dark) .admin-dropdown-menu {
-                border-color: rgba(110, 231, 183, 0.22);
-                background: rgba(2, 44, 34, 0.94);
-                box-shadow: 0 22px 44px rgba(0, 0, 0, 0.34);
+                border-color: rgba(16, 185, 129, 0.2);
+                background: rgba(236, 253, 245, 0.9);
+                box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
             }
 
             body:not(.theme-dark) .admin-mega-heading {
-                color: #ecfdf5;
+                color: #475569;
             }
 
             body:not(.theme-dark) .admin-mega-link {
-                color: #d1fae5;
+                color: #0f172a;
             }
 
             body:not(.theme-dark) .admin-mega-link:hover,
@@ -1144,6 +1144,79 @@
                 color: #ecfdf5;
             }
 
+            .about-team-card {
+                border: 1px solid rgba(148, 163, 184, 0.34);
+                background: rgba(255, 255, 255, 0.92);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+
+            .about-team-frame {
+                border: 1px solid rgba(16, 185, 129, 0.26);
+                background: linear-gradient(180deg, rgba(236, 253, 245, 0.92), rgba(220, 252, 231, 0.84));
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+            }
+
+            .about-team-card-name {
+                color: #0f172a;
+            }
+
+            .about-team-card-role {
+                color: #0f766e;
+            }
+
+            .about-team-card-divider {
+                background: rgba(203, 213, 225, 0.9);
+            }
+
+            .about-team-social-link {
+                background: rgba(255, 255, 255, 0.96);
+                border: 1px solid rgba(148, 163, 184, 0.42);
+                color: #475569;
+            }
+
+            .about-team-social-link:hover {
+                background: rgba(236, 253, 245, 0.96);
+                border-color: rgba(16, 185, 129, 0.42);
+                color: #065f46;
+            }
+
+            body.theme-dark .about-team-card {
+                border-color: rgba(110, 231, 183, 0.24);
+                background: rgba(2, 31, 24, 0.9);
+                box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.06);
+            }
+
+            body.theme-dark .about-team-frame {
+                border-color: rgba(110, 231, 183, 0.28);
+                background: linear-gradient(180deg, rgba(2, 31, 24, 0.94), rgba(4, 52, 40, 0.86));
+                box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.05);
+            }
+
+            body.theme-dark .about-team-card-name {
+                color: #ecfdf5;
+            }
+
+            body.theme-dark .about-team-card-role {
+                color: #5eead4;
+            }
+
+            body.theme-dark .about-team-card-divider {
+                background: rgba(110, 231, 183, 0.18);
+            }
+
+            body.theme-dark .about-team-social-link {
+                background: rgba(255, 255, 255, 0.06);
+                border-color: rgba(110, 231, 183, 0.24);
+                color: #d1fae5;
+            }
+
+            body.theme-dark .about-team-social-link:hover {
+                background: rgba(4, 69, 53, 0.78);
+                border-color: rgba(110, 231, 183, 0.42);
+                color: #a7f3d0;
+            }
+
             .nav-brand:hover {
                 transform: translateY(-1px);
                 filter: brightness(1.04);
@@ -1311,6 +1384,22 @@
             .nav-profile-item-danger:hover {
                 background: rgba(239, 68, 68, 0.1);
                 color: #991b1b;
+            }
+
+            body:not(.theme-dark) .nav-profile-dropdown {
+                border-color: rgba(16, 185, 129, 0.2);
+                background: rgba(255, 255, 255, 0.94);
+                box-shadow: 0 20px 42px rgba(15, 23, 42, 0.16);
+            }
+
+            body:not(.theme-dark) .nav-profile-item {
+                color: #0f172a;
+            }
+
+            body:not(.theme-dark) .nav-profile-item:hover,
+            body:not(.theme-dark) .nav-profile-item.is-active {
+                background: rgba(16, 185, 129, 0.12);
+                color: #065f46;
             }
 
             body.theme-dark .nav-profile-trigger {
@@ -1776,6 +1865,16 @@
                 border-color: rgba(4, 120, 87, 0.8);
             }
 
+            .finance-filter-control,
+            .finance-filter-btn {
+                min-height: 2.35rem;
+            }
+
+            .finance-filter-btn {
+                padding-top: 0.375rem !important;
+                padding-bottom: 0.375rem !important;
+            }
+
             .owner-manage-secondary-btn {
                 border-color: rgba(16, 185, 129, 0.28);
                 background: rgba(236, 253, 245, 0.78);
@@ -1949,12 +2048,24 @@
 
             .owner-request-toolbar-meta span {
                 color: inherit;
+                border-radius: 0.5rem;
             }
 
             .owner-request-chip {
                 display: inline-flex;
                 align-items: center;
                 min-height: 2rem;
+                border-radius: 0.5rem;
+                line-height: 1.25;
+                justify-self: start;
+                width: fit-content;
+                max-width: 100%;
+            }
+
+            .owner-join-request-card,
+            .owner-member-card {
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.07));
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
             }
 
             .owner-request-actions {
@@ -1970,6 +2081,11 @@
                 font-weight: 600;
                 letter-spacing: 0;
                 box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+            }
+
+            .owner-member-remove-btn {
+                min-height: 2.5rem;
+                font-weight: 600;
             }
 
             .owner-request-btn-approve {
@@ -2068,6 +2184,142 @@
             body.theme-dark .auth-notice-error a,
             body.theme-dark .auth-notice-error h3 {
                 color: #fca5a5;
+            }
+
+            .app-confirm-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 10060;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+                background: rgba(2, 24, 18, 0.56);
+                backdrop-filter: blur(2px);
+            }
+
+            .app-confirm-dialog {
+                width: min(100%, 30rem);
+                border: 1px solid rgba(16, 185, 129, 0.22);
+                border-radius: 0.75rem;
+                background: rgba(255, 255, 255, 0.97);
+                box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+                padding: 1.1rem;
+            }
+
+            .app-confirm-header {
+                display: flex;
+                align-items: start;
+                justify-content: space-between;
+                gap: 0.75rem;
+            }
+
+            .app-confirm-title {
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 700;
+                color: #0f172a;
+            }
+
+            .app-confirm-close {
+                border: 0;
+                background: transparent;
+                color: #64748b;
+                font-size: 1.5rem;
+                line-height: 1;
+                cursor: pointer;
+            }
+
+            .app-confirm-message {
+                margin: 0.9rem 0 0;
+                font-size: 0.92rem;
+                line-height: 1.55;
+                color: #334155;
+            }
+
+            .app-confirm-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.65rem;
+                margin-top: 1rem;
+            }
+
+            .app-confirm-cancel,
+            .app-confirm-submit {
+                min-height: 2.55rem;
+                border-radius: 0.5rem;
+                padding: 0.65rem 1rem;
+                border: 1px solid rgba(16, 185, 129, 0.22);
+                font-size: 0.86rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+            }
+
+            .app-confirm-cancel {
+                background: rgba(255, 255, 255, 0.96);
+                color: #334155;
+                border-color: rgba(148, 163, 184, 0.32);
+            }
+
+            .app-confirm-submit {
+                background: #10b981;
+                color: #ffffff;
+                border-color: rgba(5, 150, 105, 0.76);
+            }
+
+            .app-confirm-cancel:hover,
+            .app-confirm-submit:hover {
+                transform: translateY(-1px);
+            }
+
+            .app-confirm-cancel:hover {
+                background: #f8fafc;
+                border-color: rgba(100, 116, 139, 0.34);
+            }
+
+            .app-confirm-submit:hover {
+                background: #059669;
+                border-color: rgba(4, 120, 87, 0.82);
+            }
+
+            body.theme-dark .app-confirm-dialog {
+                border-color: rgba(110, 231, 183, 0.22);
+                background: rgba(2, 26, 20, 0.97);
+            }
+
+            body.theme-dark .app-confirm-title {
+                color: #f8fafc;
+            }
+
+            body.theme-dark .app-confirm-close {
+                color: #cbd5e1;
+            }
+
+            body.theme-dark .app-confirm-message {
+                color: #d1fae5;
+            }
+
+            body.theme-dark .app-confirm-cancel {
+                background: rgba(2, 44, 34, 0.78);
+                color: #e2e8f0;
+                border-color: rgba(110, 231, 183, 0.18);
+            }
+
+            body.theme-dark .app-confirm-cancel:hover {
+                background: rgba(4, 69, 53, 0.86);
+                border-color: rgba(110, 231, 183, 0.34);
+            }
+
+            body.theme-dark .app-confirm-submit {
+                background: rgba(5, 150, 105, 0.92);
+                border-color: rgba(16, 185, 129, 0.4);
+                color: #ecfdf5;
+            }
+
+            body.theme-dark .app-confirm-submit:hover {
+                background: rgba(4, 120, 87, 0.98);
+                border-color: rgba(110, 231, 183, 0.42);
             }
 
             body.theme-dark .text-slate-900 {
@@ -2432,6 +2684,12 @@
                 box-shadow: 0 12px 22px rgba(0, 0, 0, 0.22);
             }
 
+            body.theme-dark .owner-join-request-card,
+            body.theme-dark .owner-member-card {
+                background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025));
+                box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.03);
+            }
+
             body.theme-dark .owner-request-btn-approve {
                 background: rgba(5, 150, 105, 0.9);
             }
@@ -2480,6 +2738,70 @@
                 font-size: 0.68rem;
                 font-weight: 600;
                 letter-spacing: 0.01em;
+                border-radius: 0.5rem;
+                padding: 0.25rem 0.55rem;
+                line-height: 1.3;
+            }
+
+            .meta-chip {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.25rem;
+                border-radius: 0.5rem;
+                border: 1px solid rgba(148, 163, 184, 0.28);
+                background: rgba(255, 255, 255, 0.1);
+                padding: 0.25rem 0.6rem;
+                font-size: 0.72rem;
+                font-weight: 600;
+                line-height: 1.3;
+                color: #334155;
+            }
+
+            .meta-chip-accent {
+                border-color: rgba(16, 185, 129, 0.3);
+                background: rgba(16, 185, 129, 0.12);
+                color: #047857;
+            }
+
+            .search-panel {
+                border-radius: 0.8rem;
+                border: 1px solid rgba(148, 163, 184, 0.22);
+                background: rgba(255, 255, 255, 0.08);
+                padding: 0.75rem;
+            }
+
+            .search-panel-label {
+                display: block;
+                margin-bottom: 0.45rem;
+                font-size: 0.72rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+
+            .section-helper-copy {
+                margin-top: 0.25rem;
+                font-size: 0.875rem;
+                color: #475569;
+            }
+
+            .empty-state-panel {
+                border-radius: 0.75rem;
+                border: 1px dashed rgba(16, 185, 129, 0.28);
+                background: rgba(255, 255, 255, 0.4);
+                padding: 1rem;
+                font-size: 0.875rem;
+                color: #64748b;
+            }
+
+            .empty-state-search {
+                border-radius: 0.5rem;
+                border: 1px solid rgba(148, 163, 184, 0.28);
+                background: rgba(255, 255, 255, 0.1);
+                padding: 0.75rem;
+                font-size: 0.875rem;
+                color: #475569;
             }
 
             body.theme-dark .admin-mobile-card {
@@ -2498,6 +2820,43 @@
 
             body.theme-dark .admin-mobile-meta {
                 color: #a7f3d0 !important;
+            }
+
+            body.theme-dark .meta-chip {
+                border-color: rgba(110, 231, 183, 0.24);
+                background: rgba(255, 255, 255, 0.06);
+                color: #d1fae5;
+            }
+
+            body.theme-dark .meta-chip-accent {
+                border-color: rgba(110, 231, 183, 0.28);
+                background: rgba(6, 95, 70, 0.38);
+                color: #a7f3d0;
+            }
+
+            body.theme-dark .search-panel {
+                border-color: rgba(110, 231, 183, 0.18);
+                background: rgba(255, 255, 255, 0.04);
+            }
+
+            body.theme-dark .search-panel-label {
+                color: rgba(209, 250, 229, 0.76);
+            }
+
+            body.theme-dark .section-helper-copy {
+                color: #cbd5e1;
+            }
+
+            body.theme-dark .empty-state-panel {
+                border-color: rgba(110, 231, 183, 0.2);
+                background: rgba(6, 78, 59, 0.14);
+                color: #cbd5e1;
+            }
+
+            body.theme-dark .empty-state-search {
+                border-color: rgba(110, 231, 183, 0.18);
+                background: rgba(255, 255, 255, 0.06);
+                color: #cbd5e1;
             }
 
             body:not(.theme-dark) input::placeholder,
@@ -2963,6 +3322,36 @@
                 border-color: rgba(16, 185, 129, 0.32);
             }
 
+            .pagination-shell {
+                row-gap: 0.5rem;
+            }
+
+            .pagination-nav,
+            .pagination-page {
+                border-color: rgba(16, 185, 129, 0.22);
+                background: rgba(255, 255, 255, 0.08);
+                color: #d1fae5;
+                transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .pagination-nav:hover,
+            .pagination-page:hover {
+                background: rgba(16, 185, 129, 0.14);
+                border-color: rgba(52, 211, 153, 0.38);
+                color: #ecfdf5;
+            }
+
+            .pagination-page.is-active {
+                background: rgba(16, 185, 129, 0.92);
+                border-color: rgba(110, 231, 183, 0.52);
+                color: #ecfdf5;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            }
+
+            .pagination-status {
+                color: rgba(209, 250, 229, 0.82);
+            }
+
             .transparency-panel {
                 border-color: rgba(16, 185, 129, 0.22);
             }
@@ -3124,6 +3513,30 @@
             body.theme-dark .themed-button:hover {
                 background: rgba(5, 150, 105, 0.26);
                 border-color: rgba(110, 231, 183, 0.42);
+            }
+
+            body.theme-dark .pagination-nav,
+            body.theme-dark .pagination-page {
+                border-color: rgba(110, 231, 183, 0.24);
+                background: rgba(255, 255, 255, 0.06);
+                color: #d1fae5;
+            }
+
+            body.theme-dark .pagination-nav:hover,
+            body.theme-dark .pagination-page:hover {
+                background: rgba(6, 78, 59, 0.42);
+                border-color: rgba(110, 231, 183, 0.4);
+                color: #ecfdf5;
+            }
+
+            body.theme-dark .pagination-page.is-active {
+                background: rgba(16, 185, 129, 0.86);
+                border-color: rgba(167, 243, 208, 0.42);
+                color: #021d17;
+            }
+
+            body.theme-dark .pagination-status {
+                color: rgba(209, 250, 229, 0.76);
             }
 
             body.theme-dark .transparency-panel {
@@ -3813,6 +4226,20 @@
 
                 .announcement-modal-actions .tx-action-btn {
                     width: 100%;
+                }
+
+                .owner-request-actions {
+                    align-items: stretch;
+                }
+
+                .owner-request-toolbar-meta {
+                    width: 100%;
+                }
+
+                .owner-request-toolbar-meta span {
+                    flex: 1 1 0;
+                    justify-content: center;
+                    text-align: center;
                 }
             }
 
