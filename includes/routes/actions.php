@@ -28,6 +28,18 @@ if (($_GET['action'] ?? '') === 'export_transactions') {
     handleExportTransactionsAction($db, $user);
 }
 
+if (($_GET['action'] ?? '') === 'export_budget_overview') {
+    handleExportBudgetOverviewAction($db);
+}
+
+if (($_GET['action'] ?? '') === 'export_expense_requests') {
+    handleExportExpenseRequestsAction($db);
+}
+
+if (($_GET['action'] ?? '') === 'export_owner_budget') {
+    handleExportOwnerBudgetAction($db, $user);
+}
+
 if ($page === 'google_login') {
     handleGoogleLoginPage($config);
 }

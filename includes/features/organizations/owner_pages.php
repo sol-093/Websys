@@ -785,7 +785,6 @@ function handleMyOrgOwnerPage(PDO $db, array $user, string $announcementCutoff):
             searchInput.addEventListener('input', filterMembers);
         })();
     </script>
-
     <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();
@@ -819,7 +818,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
         <?php renderOwnerWorkspaceHeader($org, 'my_org_finance'); ?>
 
         <div class="glass rounded-lg p-4">
-                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Financial Management</span></h2>
                     <p class="section-helper-copy">Submit budget-backed expense requests, record manual transactions, and review finance requests in one place.</p>
@@ -889,8 +888,8 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                             <select id="expenseRequestLine" name="budget_line_item_id" class="w-full border rounded px-3 py-2" required>
                                 <?php foreach ($activeBudgetLines as $line): ?>
                                     <?php $remaining = (float) ($line['remaining_amount'] ?? 0); ?>
-                                    <option value="<?= (int) $line['id'] ?>" <?= $remaining <= 0 ? 'disabled' : '' ?>>
-                                        <?= e((string) $line['category_name']) ?> · Remaining <?= e('PHP' . number_format($remaining, 2)) ?>
+                                    <option value="<?= (int) $line['id'] ?>" data-remaining="<?= e(number_format($remaining, 2, '.', '')) ?>" data-remaining-label="<?= e('PHP' . number_format($remaining, 2)) ?>" <?= $remaining <= 0 ? 'disabled' : '' ?>>
+                                        <?= e((string) $line['category_name']) ?> - Remaining <?= e('PHP' . number_format($remaining, 2)) ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -898,6 +897,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                         <div class="space-y-2">
                             <label for="expenseRequestAmount" class="text-sm font-medium text-slate-700">Amount</label>
                             <input id="expenseRequestAmount" type="number" min="0.01" step="0.01" name="amount" placeholder="0.00" class="w-full border rounded px-3 py-2" required>
+                            <p id="expenseRequestAmountHelp" class="text-xs text-slate-500">Choose a budget line to see the available amount.</p>
                         </div>
                     </div>
                     <div class="space-y-2">
@@ -922,7 +922,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             <?php endif; ?>
         </div>
 
-            <div class="hidden">
+            <div class="glass rounded-lg p-4">
                 <div class="mb-4 space-y-1">
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('chart', 'ui-icon') ?><span>Budget Expenses</span></h2>
                     <p class="section-helper-copy">Active budget line items and allocations.</p>
@@ -940,8 +940,25 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                                 $spent = (float) ($line['spent_amount'] ?? 0);
                                 $pending = (float) ($line['pending_amount'] ?? 0);
                                 $remaining = (float) ($line['remaining_amount'] ?? 0);
-                                $formatMoney = static fn(float $amount): string => '₱' . number_format($amount, 2);
-                                $spentPercent = $allocated > 0 ? min(100, ($spent / $allocated) * 100) : 0;
+                                $formatMoney = static fn(float $amount): string => 'PHP' . number_format($amount, 2);
+                                $usagePercent = $allocated > 0 ? min(100, (($spent + $pending) / $allocated) * 100) : 0;
+                                $usageState = $remaining <= 0 ? 'exhausted' : ($usagePercent >= 90 ? 'critical' : ($usagePercent >= 75 ? 'watch' : 'healthy'));
+                                $usageStateLabel = match ($usageState) {
+                                    'exhausted' => 'Exhausted',
+                                    'critical' => 'Critical',
+                                    'watch' => 'Watch',
+                                    default => 'Healthy',
+                                };
+                                $usageStateClass = match ($usageState) {
+                                    'exhausted', 'critical' => 'border-rose-300/35 bg-rose-400/10 text-rose-700 dark:text-rose-300',
+                                    'watch' => 'border-amber-300/35 bg-amber-400/10 text-amber-700 dark:text-amber-300',
+                                    default => 'border-emerald-300/35 bg-emerald-400/10 text-emerald-700 dark:text-emerald-300',
+                                };
+                                $usageBarClass = match ($usageState) {
+                                    'exhausted', 'critical' => 'bg-rose-500',
+                                    'watch' => 'bg-amber-400',
+                                    default => 'bg-emerald-500',
+                                };
                             ?>
                             <div class="rounded-lg border border-slate-200/50 bg-white/40 p-3">
                                 <div class="flex justify-between items-start gap-2 mb-2">
@@ -949,6 +966,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                                         <div class="text-sm font-semibold text-slate-800 truncate"><?= e((string) $line['category_name']) ?></div>
                                         <div class="text-xs text-slate-500 mt-0.5 line-clamp-2"><?= e(trim((string) ($line['description'] ?? '')) !== '' ? (string) $line['description'] : 'No description.') ?></div>
                                     </div>
+                                    <span class="shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-semibold <?= e($usageStateClass) ?>"><?= e($usageStateLabel) ?></span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-2 text-xs mb-2">
                                     <div>
@@ -969,7 +987,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                                     </div>
                                 </div>
                                 <div class="rounded-full h-2 bg-slate-200 overflow-hidden">
-                                    <div class="h-full bg-red-500 transition-all" style="width: <?= (float) $spentPercent ?>%"></div>
+                                    <div class="h-full <?= e($usageBarClass) ?> transition-all" style="width: <?= (float) $usagePercent ?>%"></div>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -1284,7 +1302,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             <?php if ($myExpenseRequests === []): ?>
                 <div class="empty-state-panel">No budget expense requests submitted yet.</div>
             <?php else: ?>
-                <div class="table-wrapper">
+                <div class="table-wrapper hidden md:block">
                     <table class="w-full min-w-[880px] text-sm">
                         <thead>
                         <tr class="text-left border-b border-emerald-400/40">
@@ -1324,11 +1342,47 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                                         <span class="text-gray-400">-</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="py-3 text-slate-600"><?= e(trim((string) ($request['admin_note'] ?? '')) !== '' ? (string) $request['admin_note'] : 'No admin note yet.') ?></td>
+                                <td class="py-3 text-slate-600"><?php renderExpenseRequestTimeline($request); ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+                <div class="md:hidden space-y-3">
+                    <?php foreach ($myExpenseRequests as $request): ?>
+                        <?php
+                            $requestStatus = strtolower((string) ($request['status'] ?? 'pending'));
+                            $requestStatusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
+                        ?>
+                        <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="admin-mobile-title"><?= e((string) ($request['line_item_name'] ?? 'Budget line')) ?></div>
+                                    <div class="admin-mobile-meta mt-1"><?= e((string) ($request['budget_title'] ?? 'Budget')) ?></div>
+                                </div>
+                                <span class="<?= e($requestStatusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
+                                    'approved' => 'approved',
+                                    'rejected' => 'rejected',
+                                    'pending' => 'pending',
+                                    default => 'default',
+                                }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span>
+                            </div>
+                            <div class="mt-3 grid gap-2 text-sm">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="admin-mobile-meta font-semibold">Amount</span>
+                                    <span class="font-semibold">PHP<?= number_format((float) $request['amount'], 2) ?></span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="admin-mobile-meta font-semibold">Submitted</span>
+                                    <span><?= e(date('M d, Y', strtotime((string) $request['created_at']))) ?></span>
+                                </div>
+                                <?php if (!empty($request['receipt_path'])): ?>
+                                    <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view inline-flex items-center justify-center rounded-md px-3 py-2 text-sm"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View Receipt</span></span></a>
+                                <?php endif; ?>
+                                <?php renderExpenseRequestTimeline($request); ?>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
                 </div>
                 <?php renderPagination($myExpenseRequestsPagination + ['anchor' => 'expense-requests']); ?>
             <?php endif; ?>
@@ -1471,6 +1525,43 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             }
         })();
     </script>
+    <script>
+        (function () {
+            const lineSelect = document.getElementById('expenseRequestLine');
+            const amountInput = document.getElementById('expenseRequestAmount');
+            const amountHelp = document.getElementById('expenseRequestAmountHelp');
+
+            if (!lineSelect || !amountInput || !amountHelp) {
+                return;
+            }
+
+            const updateAmountLimit = function () {
+                const option = lineSelect.options[lineSelect.selectedIndex];
+                if (!option) {
+                    amountInput.removeAttribute('max');
+                    amountHelp.textContent = 'Choose a budget line to see the available amount.';
+                    return;
+                }
+
+                const remaining = option.getAttribute('data-remaining') || '';
+                const remainingLabel = option.getAttribute('data-remaining-label') || 'PHP0.00';
+                if (remaining !== '') {
+                    amountInput.max = remaining;
+                    amountInput.placeholder = remaining;
+                    amountHelp.textContent = 'Maximum request for this line: ' + remainingLabel + '.';
+
+                    const currentValue = parseFloat(amountInput.value || '0');
+                    const maxValue = parseFloat(remaining || '0');
+                    if (currentValue > maxValue) {
+                        amountInput.value = remaining;
+                    }
+                }
+            };
+
+            lineSelect.addEventListener('change', updateAmountLimit);
+            updateAmountLimit();
+        })();
+    </script>
 
     <script src="assets/js/owner-org-switcher.js"></script>
     <?php
@@ -1510,6 +1601,13 @@ function handleMyOrgBudgetPage(PDO $db, array $user): void
     $status = (string) ($selectedBudget['status'] ?? '');
     $canEditLines = $status === 'draft';
     $selectedOrgName = (string) ($org['name'] ?? 'Select organization');
+    $budgetExportUrl = $selectedBudget ? '?' . http_build_query([
+        'page' => 'my_org_budget',
+        'action' => 'export_owner_budget',
+        'format' => 'xls',
+        'org_id' => (int) $org['id'],
+        'budget_id' => (int) $selectedBudget['id'],
+    ]) : '';
 
     renderHeader('Budget Workspace');
     ?>
@@ -1676,7 +1774,10 @@ function handleMyOrgBudgetPage(PDO $db, array $user): void
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('chart', 'ui-icon') ?><span>Budget Line Items</span></h2>
                         <p class="section-helper-copy">Track allocated, spent, pending, and remaining amounts per line.</p>
                     </div>
-                    <span class="rounded-md border border-slate-300/30 bg-white/10 px-2.5 py-1 text-xs text-slate-700"><?= e((string) $selectedBudget['title']) ?></span>
+                    <div class="flex flex-wrap gap-2">
+                        <a href="<?= e($budgetExportUrl) ?>" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Export Report</a>
+                        <span class="rounded-md border border-slate-300/30 bg-white/10 px-2.5 py-1 text-xs text-slate-700"><?= e((string) $selectedBudget['title']) ?></span>
+                    </div>
                 </div>
 
                 <?php if ($canEditLines): ?>
@@ -1715,17 +1816,38 @@ function handleMyOrgBudgetPage(PDO $db, array $user): void
                                 <th class="py-2 pr-3">Spent</th>
                                 <th class="py-2 pr-3">Pending</th>
                                 <th class="py-2 pr-3">Remaining</th>
+                                <th class="py-2 pr-3">Status</th>
                                 <th class="py-2">Description</th>
                             </tr>
                             </thead>
                             <tbody>
                             <?php foreach ($budgetLines as $line): ?>
+                                <?php
+                                    $allocated = (float) ($line['allocated_amount'] ?? 0);
+                                    $spent = (float) ($line['spent_amount'] ?? 0);
+                                    $pending = (float) ($line['pending_amount'] ?? 0);
+                                    $remaining = (float) ($line['remaining_amount'] ?? 0);
+                                    $usagePercent = $allocated > 0 ? min(100, (($spent + $pending) / $allocated) * 100) : 0;
+                                    $usageState = $remaining <= 0 ? 'exhausted' : ($usagePercent >= 90 ? 'critical' : ($usagePercent >= 75 ? 'watch' : 'healthy'));
+                                    $usageStateLabel = match ($usageState) {
+                                        'exhausted' => 'Exhausted',
+                                        'critical' => 'Critical',
+                                        'watch' => 'Watch',
+                                        default => 'Healthy',
+                                    };
+                                    $usageStateClass = match ($usageState) {
+                                        'exhausted', 'critical' => 'border-rose-300/35 bg-rose-400/10 text-rose-700 dark:text-rose-300',
+                                        'watch' => 'border-amber-300/35 bg-amber-400/10 text-amber-700 dark:text-amber-300',
+                                        default => 'border-emerald-300/35 bg-emerald-400/10 text-emerald-700 dark:text-emerald-300',
+                                    };
+                                ?>
                                 <tr class="border-b align-top">
                                     <td class="py-3 pr-3 font-medium"><?= e((string) $line['category_name']) ?></td>
                                     <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['allocated_amount'])) ?></td>
                                     <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['spent_amount'])) ?></td>
                                     <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['pending_amount'])) ?></td>
                                     <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['remaining_amount'])) ?></td>
+                                    <td class="py-3 pr-3 whitespace-nowrap"><span class="rounded-md border px-2 py-0.5 text-[11px] font-semibold <?= e($usageStateClass) ?>"><?= e($usageStateLabel) ?></span></td>
                                     <td class="py-3 text-slate-600"><?= e(trim((string) ($line['description'] ?? '')) !== '' ? (string) $line['description'] : 'No description.') ?></td>
                                 </tr>
                             <?php endforeach; ?>

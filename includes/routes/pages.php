@@ -82,6 +82,10 @@ if ($page === 'admin_expense_requests') {
     handleAdminExpenseRequestsPage($db);
 }
 
+if ($page === 'admin_budget_overview') {
+    handleAdminBudgetOverviewPage($db);
+}
+
 if ($page === 'admin_audit') {
     handleAdminAuditPage($db, $user);
 }

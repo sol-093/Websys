@@ -85,7 +85,7 @@ function getExpenseRequestById(PDO $db, int $requestId): ?array
     return $request ?: null;
 }
 
-function validateExpenseRequestAgainstAllocation(PDO $db, int $organizationId, int $budgetLineItemId, float $amount, ?int $excludeRequestId = null): array
+function validateExpenseRequestAgainstAllocation(PDO $db, int $organizationId, int $budgetLineItemId, float $amount, ?int $excludeRequestId = null, bool $enforceBudgetWindow = true): array
 {
     $amount = round($amount, 2);
     if ($organizationId <= 0 || $budgetLineItemId <= 0 || $amount <= 0) {
@@ -102,12 +102,17 @@ function validateExpenseRequestAgainstAllocation(PDO $db, int $organizationId, i
         return ['valid' => false, 'error' => 'Budget line item does not belong to this organization.'];
     }
 
-    if ((string) ($budget['status'] ?? '') !== 'active') {
+    $budgetStatus = (string) ($budget['status'] ?? '');
+    if ($enforceBudgetWindow && $budgetStatus !== 'active') {
         return ['valid' => false, 'error' => 'Expense requests can only be submitted against an active budget.'];
     }
 
+    if (!$enforceBudgetWindow && !in_array($budgetStatus, ['active', 'closed'], true)) {
+        return ['valid' => false, 'error' => 'Expense request cannot be approved against a draft budget.'];
+    }
+
     $today = date('Y-m-d');
-    if ((string) $budget['period_start'] > $today || (string) $budget['period_end'] < $today) {
+    if ($enforceBudgetWindow && ((string) $budget['period_start'] > $today || (string) $budget['period_end'] < $today)) {
         return ['valid' => false, 'error' => 'The selected budget is outside its active date range.'];
     }
 
@@ -160,14 +165,20 @@ function createExpenseRequest(PDO $db, int $organizationId, int $budgetLineItemI
 
     $requestId = (int) $db->lastInsertId();
     auditLog($requestedBy, 'budget.expense_request_submit', 'expense_request', $requestId, 'Submitted expense request for approval');
+    queueBudgetExpenseRequestSubmittedNotifications($db, $requestId);
 
     return $requestId;
 }
 
-function approveExpenseRequest(PDO $db, int $requestId, int $reviewedBy): int
+function approveExpenseRequest(PDO $db, int $requestId, int $reviewedBy, string $adminNote): int
 {
+    $adminNote = trim($adminNote);
     if ($requestId <= 0 || $reviewedBy <= 0) {
         throw new InvalidArgumentException('Invalid approval request.');
+    }
+
+    if ($adminNote === '') {
+        throw new InvalidArgumentException('An approval note is required.');
     }
 
     $db->beginTransaction();
@@ -181,7 +192,7 @@ function approveExpenseRequest(PDO $db, int $requestId, int $reviewedBy): int
             throw new RuntimeException('Only pending expense requests can be approved.');
         }
 
-        $validation = validateExpenseRequestAgainstAllocation($db, (int) $request['organization_id'], (int) $request['budget_line_item_id'], (float) $request['amount'], $requestId);
+        $validation = validateExpenseRequestAgainstAllocation($db, (int) $request['organization_id'], (int) $request['budget_line_item_id'], (float) $request['amount'], $requestId, false);
         if (!$validation['valid']) {
             throw new RuntimeException((string) ($validation['error'] ?? 'Expense request is no longer valid.'));
         }
@@ -201,14 +212,15 @@ function approveExpenseRequest(PDO $db, int $requestId, int $reviewedBy): int
         ]);
         $transactionId = (int) $db->lastInsertId();
 
-        $requestStmt = $db->prepare("UPDATE expense_requests SET status = 'approved', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, transaction_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $requestStmt->execute([$reviewedBy, $transactionId, $requestId]);
+        $requestStmt = $db->prepare("UPDATE expense_requests SET status = 'approved', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, transaction_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $requestStmt->execute([$adminNote, $reviewedBy, $transactionId, $requestId]);
 
         $lineStmt = $db->prepare('UPDATE budget_line_items SET spent_amount = spent_amount + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         $lineStmt->execute([round((float) $request['amount'], 2), (int) $request['budget_line_item_id']]);
 
         $db->commit();
-        auditLog($reviewedBy, 'budget.expense_request_approve', 'expense_request', $requestId, 'Approved expense request and created transaction #' . $transactionId);
+        auditLog($reviewedBy, 'budget.expense_request_approve', 'expense_request', $requestId, 'Approved expense request and created transaction #' . $transactionId . ': ' . $adminNote);
+        queueBudgetExpenseRequestDecisionNotification($db, $requestId, 'budget_expense_request_approved', $adminNote);
 
         return $transactionId;
     } catch (Throwable $e) {
@@ -242,6 +254,7 @@ function rejectExpenseRequest(PDO $db, int $requestId, int $reviewedBy, string $
 
         $db->commit();
         auditLog($reviewedBy, 'budget.expense_request_reject', 'expense_request', $requestId, 'Rejected expense request: ' . $adminNote);
+        queueBudgetExpenseRequestDecisionNotification($db, $requestId, 'budget_expense_request_rejected', $adminNote);
     } catch (Throwable $e) {
         if ($db->inTransaction()) {
             $db->rollBack();
@@ -263,4 +276,56 @@ function lockExpenseRequestForDecision(PDO $db, int $requestId): ?array
     $request = $stmt->fetch();
 
     return $request ?: null;
+}
+
+function renderExpenseRequestTimeline(array $request): void
+{
+    $status = strtolower((string) ($request['status'] ?? 'pending'));
+    $createdAt = trim((string) ($request['created_at'] ?? ''));
+    $reviewedAt = trim((string) ($request['reviewed_at'] ?? ''));
+    $requesterName = trim((string) ($request['requested_by_name'] ?? 'Owner'));
+    $reviewerName = trim((string) ($request['reviewed_by_name'] ?? 'Admin'));
+    $adminNote = trim((string) ($request['admin_note'] ?? ''));
+    $decisionLabel = match ($status) {
+        'approved' => 'Approved',
+        'rejected' => 'Rejected',
+        default => 'Awaiting decision',
+    };
+    $decisionIcon = match ($status) {
+        'approved' => 'approved',
+        'rejected' => 'rejected',
+        default => 'pending',
+    };
+    $decisionClass = 'expense-timeline-step-' . preg_replace('/[^a-z]/', '', $status);
+    ?>
+    <ol class="expense-request-timeline" aria-label="Expense request timeline">
+        <li class="expense-timeline-step expense-timeline-step-submitted">
+            <span class="expense-timeline-dot"><?= uiIcon('requests', 'ui-icon ui-icon-sm') ?></span>
+            <span class="expense-timeline-content">
+                <span class="expense-timeline-title">Submitted</span>
+                <span class="expense-timeline-meta">
+                    <?= e($requesterName) ?>
+                    <?= $createdAt !== '' ? ' · ' . e(date('M d, Y g:i A', strtotime($createdAt))) : '' ?>
+                </span>
+            </span>
+        </li>
+        <li class="expense-timeline-step <?= e($decisionClass) ?>">
+            <span class="expense-timeline-dot"><?= uiIcon($decisionIcon, 'ui-icon ui-icon-sm') ?></span>
+            <span class="expense-timeline-content">
+                <span class="expense-timeline-title"><?= e($decisionLabel) ?></span>
+                <span class="expense-timeline-meta">
+                    <?php if ($status === 'pending'): ?>
+                        Admin review pending
+                    <?php else: ?>
+                        <?= e($reviewerName !== '' ? $reviewerName : 'Admin') ?>
+                        <?= $reviewedAt !== '' ? ' · ' . e(date('M d, Y g:i A', strtotime($reviewedAt))) : '' ?>
+                    <?php endif; ?>
+                </span>
+                <?php if ($adminNote !== ''): ?>
+                    <span class="expense-timeline-note"><?= e($adminNote) ?></span>
+                <?php endif; ?>
+            </span>
+        </li>
+    </ol>
+    <?php
 }

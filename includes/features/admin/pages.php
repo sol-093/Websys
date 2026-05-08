@@ -342,40 +342,25 @@ function handleAdminRequestsPage(PDO $db): void
         })();
     </script>
     <script src="assets/js/owner-org-switcher.js"></script>
-    ?>
-    <script>
-        document.querySelectorAll('[data-expense-reject-toggle]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const form = document.getElementById('expenseRejectForm' + button.getAttribute('data-expense-reject-toggle'));
-                if (form) {
-                    form.classList.toggle('hidden');
-                }
-            });
-        });
-        document.querySelectorAll('[data-expense-reject-toggle-mobile]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const form = document.getElementById('expenseRejectMobileForm' + button.getAttribute('data-expense-reject-toggle-mobile'));
-                if (form) {
-                    form.classList.toggle('hidden');
-                }
-            });
-        });
-    </script>
     <?php
     renderFooter();
     exit;
 }
 
-function handleAdminExpenseRequestsPage(PDO $db): void
+function normalizeAdminExpenseRequestFilters(): array
 {
-    requireRole(['admin']);
-
     $statusFilter = (string) ($_GET['status'] ?? 'pending');
     if (!in_array($statusFilter, ['all', 'pending', 'approved', 'rejected'], true)) {
         $statusFilter = 'pending';
     }
 
     $organizationFilter = (int) ($_GET['organization_id'] ?? 0);
+
+    return [$statusFilter, $organizationFilter];
+}
+
+function buildAdminExpenseRequestQueryFilters(string $statusFilter, int $organizationFilter): array
+{
     $filters = ['limit' => 200];
     if ($statusFilter !== 'all') {
         $filters['status'] = $statusFilter;
@@ -384,10 +369,274 @@ function handleAdminExpenseRequestsPage(PDO $db): void
         $filters['organization_id'] = $organizationFilter;
     }
 
+    return $filters;
+}
+
+function getAdminCsvOrganizationFilterLabel(PDO $db, int $organizationFilter): string
+{
+    if ($organizationFilter <= 0) {
+        return 'All organizations';
+    }
+
+    $stmt = $db->prepare('SELECT name FROM organizations WHERE id = ? LIMIT 1');
+    $stmt->execute([$organizationFilter]);
+    $name = $stmt->fetchColumn();
+
+    return is_string($name) && trim($name) !== '' ? $name : 'Organization #' . $organizationFilter;
+}
+
+function writeAdminCsvReportHeader($out, string $title, array $filters, array $summary): void
+{
+    fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, [$title]);
+    fputcsv($out, ['Generated At', date('Y-m-d H:i:s')]);
+    fputcsv($out, []);
+    fputcsv($out, ['Applied Filters']);
+    foreach ($filters as $label => $value) {
+        fputcsv($out, [$label, $value]);
+    }
+    fputcsv($out, []);
+    fputcsv($out, ['Summary']);
+    foreach ($summary as $label => $value) {
+        fputcsv($out, [$label, $value]);
+    }
+    fputcsv($out, []);
+    fputcsv($out, ['Detailed Records']);
+}
+
+function sendAdminExcelReport(string $filename, string $title, array $filters, array $summary, array $headers, array $rows): void
+{
+    header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $cell = static fn($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    $columnCount = max(1, count($headers));
+    $columnWidth = static function (string $header): int {
+        $key = strtolower($header);
+        return match (true) {
+            $key === 'organization' => 150,
+            $key === 'owner', $key === 'requester', $key === 'status' => 95,
+            $key === 'budget' => 130,
+            str_contains($key, 'description') => 210,
+            str_contains($key, 'receipt') => 170,
+            str_contains($key, 'transaction') => 120,
+            str_contains($key, 'period') || str_contains($key, 'created') || str_contains($key, 'reviewed') => 120,
+            str_contains($key, 'budget total') || str_contains($key, 'allocated') || str_contains($key, 'pending amount') => 140,
+            str_contains($key, 'remaining') || str_contains($key, 'spent') || str_contains($key, 'amount') => 125,
+            str_contains($key, 'line item') || $key === 'requests' || str_contains($key, 'approved') || str_contains($key, 'pending request') || str_contains($key, 'rejected') => 95,
+            default => max(82, min(150, strlen($header) * 7 + 34)),
+        };
+    };
+    $emptyTailCells = static function (int $columnCount): void {
+        for ($i = 2; $i < $columnCount; $i++) {
+            echo '<td class="empty">&nbsp;</td>';
+        }
+    };
+
+    echo "\xEF\xBB\xBF";
+    ?>
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+        <meta charset="UTF-8">
+        <!--[if gte mso 9]>
+        <xml>
+            <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                    <x:ExcelWorksheet>
+                        <x:Name>BudgetFlow Report</x:Name>
+                        <x:WorksheetOptions>
+                            <x:ProtectContents/>
+                            <x:ProtectObjects/>
+                            <x:ProtectScenarios/>
+                        </x:WorksheetOptions>
+                    </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; background: #ffffff; }
+            table { border-collapse: collapse; width: 100%; }
+            .title { background: #064e3b; color: #ecfdf5; font-size: 18px; font-weight: 700; height: 34px; }
+            .label { background: #f8fafc; color: #334155; font-weight: 700; }
+            .value { background: #ffffff; color: #0f172a; }
+            .empty { background: #ffffff; color: #ffffff; }
+            .spacer { height: 12px; background: #ffffff; border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1; }
+            .section { background: #0f766e; color: #ecfdf5; font-weight: 700; }
+            .header { background: #064e3b; color: #ecfdf5; font-weight: 700; text-align: center; }
+            td, th { border: 1px solid #cbd5e1; padding: 4px 6px; vertical-align: top; mso-number-format: "\@"; mso-protection: locked visible; }
+            .num { text-align: right; mso-number-format: "#,##0.00"; }
+            .count { text-align: center; mso-number-format: "0"; }
+            .date { text-align: center; mso-number-format: "mmm d, yyyy"; }
+        </style>
+    </head>
+    <body>
+    <table>
+        <colgroup>
+            <?php foreach ($headers as $header): ?>
+                <col style="width: <?= $columnWidth((string) $header) ?>px;">
+            <?php endforeach; ?>
+        </colgroup>
+        <tr><td class="title" colspan="<?= $columnCount ?>"><?= $cell($title) ?></td></tr>
+        <tr>
+            <td class="label">Generated At</td>
+            <td class="value"><?= $cell(date('F d, Y h:i A')) ?></td>
+            <?php $emptyTailCells($columnCount); ?>
+        </tr>
+        <tr><td class="spacer" colspan="<?= $columnCount ?>"></td></tr>
+        <tr><td class="section" colspan="<?= $columnCount ?>">Applied Filters</td></tr>
+        <?php foreach ($filters as $label => $value): ?>
+            <tr>
+                <td class="label"><?= $cell($label) ?></td>
+                <td class="value"><?= $cell($value) ?></td>
+                <?php $emptyTailCells($columnCount); ?>
+            </tr>
+        <?php endforeach; ?>
+        <tr><td class="spacer" colspan="<?= $columnCount ?>"></td></tr>
+        <tr><td class="section" colspan="<?= $columnCount ?>">Summary</td></tr>
+        <?php foreach ($summary as $label => $value): ?>
+            <tr>
+                <td class="label"><?= $cell($label) ?></td>
+                <td class="value"><?= $cell($value) ?></td>
+                <?php $emptyTailCells($columnCount); ?>
+            </tr>
+        <?php endforeach; ?>
+        <tr><td class="spacer" colspan="<?= $columnCount ?>"></td></tr>
+        <tr><td class="section" colspan="<?= $columnCount ?>">Detailed Records</td></tr>
+        <tr>
+            <?php foreach ($headers as $header): ?>
+                <th class="header"><?= $cell($header) ?></th>
+            <?php endforeach; ?>
+        </tr>
+        <?php foreach ($rows as $row): ?>
+            <tr>
+                <?php foreach ($row as $index => $value): ?>
+                    <?php $header = strtolower((string) ($headers[$index] ?? '')); ?>
+                    <?php $class = str_contains($header, 'request') || str_contains($header, 'line item') ? 'count' : (str_contains($header, 'php') || str_contains($header, 'amount') || str_contains($header, 'total') || str_contains($header, 'spent') || str_contains($header, 'allocated') || str_contains($header, 'remaining') ? 'num' : (str_contains($header, 'period') || str_contains($header, 'created') || str_contains($header, 'reviewed') ? 'date' : 'value')); ?>
+                    <td class="<?= $class ?>"><?= $cell($value) ?></td>
+                <?php endforeach; ?>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+function handleExportExpenseRequestsAction(PDO $db): void
+{
+    requireRole(['admin']);
+
+    $format = (string) ($_GET['format'] ?? 'xls');
+    if (!in_array($format, ['csv', 'xls'], true)) {
+        setFlash('error', 'Unsupported expense request export format.');
+        redirect('?page=admin_expense_requests');
+    }
+
+    [$statusFilter, $organizationFilter] = normalizeAdminExpenseRequestFilters();
+    $requestsAll = getExpenseRequests($db, buildAdminExpenseRequestQueryFilters($statusFilter, $organizationFilter));
+
+    $statusCounts = ['pending' => 0, 'approved' => 0, 'rejected' => 0];
+    $totalAmount = 0.0;
+    foreach ($requestsAll as $request) {
+        $status = strtolower((string) ($request['status'] ?? ''));
+        if (isset($statusCounts[$status])) {
+            $statusCounts[$status]++;
+        }
+        $totalAmount += (float) ($request['amount'] ?? 0);
+    }
+
+    $filters = [
+        'Organization' => getAdminCsvOrganizationFilterLabel($db, $organizationFilter),
+        'Status' => ucfirst($statusFilter),
+    ];
+    $summary = [
+        'Total Requests' => count($requestsAll),
+        'Pending Requests' => $statusCounts['pending'],
+        'Approved Requests' => $statusCounts['approved'],
+        'Rejected Requests' => $statusCounts['rejected'],
+        'Total Requested Amount (PHP)' => number_format($totalAmount, 2, '.', ''),
+    ];
+    $headers = [
+        'Created At',
+        'Organization',
+        'Requester',
+        'Budget',
+        'Budget Line',
+        'Description',
+        'Amount (PHP)',
+        'Status',
+        'Admin Note',
+        'Reviewed By',
+        'Reviewed At',
+        'Receipt Path',
+        'Linked Transaction ID',
+    ];
+    $rows = [];
+    foreach ($requestsAll as $request) {
+        $rows[] = [
+            (string) ($request['created_at'] ?? ''),
+            (string) ($request['organization_name'] ?? ''),
+            (string) ($request['requested_by_name'] ?? ''),
+            (string) ($request['budget_title'] ?? ''),
+            (string) ($request['line_item_name'] ?? ''),
+            (string) ($request['description'] ?? ''),
+            number_format((float) ($request['amount'] ?? 0), 2, '.', ''),
+            (string) ($request['status'] ?? ''),
+            (string) ($request['admin_note'] ?? ''),
+            (string) ($request['reviewed_by_name'] ?? ''),
+            (string) ($request['reviewed_at'] ?? ''),
+            (string) ($request['receipt_path'] ?? ''),
+            (string) ($request['transaction_id'] ?? ''),
+        ];
+    }
+
+    if ($format === 'xls') {
+        sendAdminExcelReport('expense-requests-' . date('Y-m-d') . '.xls', 'INVOLVE BudgetFlow - Expense Request History', $filters, $summary, $headers, $rows);
+    }
+
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="expense-requests-' . date('Y-m-d') . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    if ($out === false) {
+        exit;
+    }
+
+    writeAdminCsvReportHeader($out, 'INVOLVE BudgetFlow - Expense Request History', $filters, $summary);
+    fputcsv($out, $headers);
+    foreach ($rows as $row) {
+        fputcsv($out, $row);
+    }
+
+    fclose($out);
+    exit;
+}
+
+function handleAdminExpenseRequestsPage(PDO $db): void
+{
+    requireRole(['admin']);
+
+    [$statusFilter, $organizationFilter] = normalizeAdminExpenseRequestFilters();
+    $filters = buildAdminExpenseRequestQueryFilters($statusFilter, $organizationFilter);
     $requestsAll = getExpenseRequests($db, $filters);
     $requestsPagination = paginateArray($requestsAll, 'pg_admin_expense_requests', 10);
     $requests = $requestsPagination['items'];
     $organizations = $db->query('SELECT id, name FROM organizations ORDER BY name ASC')->fetchAll() ?: [];
+    $exportUrl = '?' . http_build_query([
+        'page' => 'admin_expense_requests',
+        'action' => 'export_expense_requests',
+        'format' => 'xls',
+        'organization_id' => $organizationFilter,
+        'status' => $statusFilter,
+    ]);
 
     renderHeader('Expense Requests');
     ?>
@@ -397,7 +646,11 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                 <h1 class="text-xl font-semibold mb-1 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Budget Expense Requests</span></h1>
                 <p class="section-helper-copy">Approve budget-backed expenses or reject them with an admin note.</p>
             </div>
-            <a href="?page=admin_requests" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Owner Edit Requests</a>
+            <div class="flex flex-wrap gap-2">
+                <a href="<?= e($exportUrl) ?>" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Export Report</a>
+                <a href="?page=admin_budget_overview" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Budget Overview</a>
+                <a href="?page=admin_requests" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Owner Edit Requests</a>
+            </div>
         </div>
 
         <form method="get" class="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.35fr)_auto] lg:items-end">
@@ -481,27 +734,13 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                 default => 'default',
                             }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span></td>
                             <td class="py-4 px-3 break-words">
-                                <?= trim((string) ($request['admin_note'] ?? '')) !== '' ? e((string) $request['admin_note']) : '&mdash;' ?>
+                                <?php renderExpenseRequestTimeline($request); ?>
                             </td>
                             <td class="py-4 px-3">
                                 <?php if ($requestStatus === 'pending'): ?>
                                     <div class="space-y-2">
-                                        <form method="post">
-                                            <?= csrfField() ?>
-                                            <input type="hidden" name="action" value="process_expense_request">
-                                            <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
-                                            <input type="hidden" name="decision" value="approve">
-                                            <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm"><span class="icon-label justify-center"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
-                                        </form>
-                                        <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-toggle="<?= (int) $request['id'] ?>"><span class="icon-label justify-center"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
-                                        <form method="post" id="expenseRejectForm<?= (int) $request['id'] ?>" class="hidden space-y-2">
-                                            <?= csrfField() ?>
-                                            <input type="hidden" name="action" value="process_expense_request">
-                                            <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
-                                            <input type="hidden" name="decision" value="reject">
-                                            <textarea name="admin_note" rows="2" class="w-full border rounded px-2 py-1 text-xs" placeholder="Rejection note" required></textarea>
-                                            <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Confirm Reject</button>
-                                        </form>
+                                        <button type="button" class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label justify-center"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
+                                        <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label justify-center"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
                                     </div>
                                 <?php else: ?>
                                     <span class="text-xs text-slate-500">Processed</span>
@@ -541,28 +780,12 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                             <?php if (!empty($request['receipt_path'])): ?>
                                 <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm">Open Receipt</a>
                             <?php endif; ?>
-                            <?php if (trim((string) ($request['admin_note'] ?? '')) !== ''): ?>
-                                <div class="rounded-lg border border-emerald-300/20 bg-white/20 px-3 py-2 text-slate-600"><span class="font-semibold">Admin note:</span> <?= e((string) $request['admin_note']) ?></div>
-                            <?php endif; ?>
+                            <?php renderExpenseRequestTimeline($request); ?>
                         </div>
                         <?php if ($requestStatus === 'pending'): ?>
                             <div class="mt-3 grid gap-2">
-                                <form method="post">
-                                    <?= csrfField() ?>
-                                    <input type="hidden" name="action" value="process_expense_request">
-                                    <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
-                                    <input type="hidden" name="decision" value="approve">
-                                    <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm">Approve</button>
-                                </form>
-                                <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-toggle-mobile="<?= (int) $request['id'] ?>">Reject</button>
-                                <form method="post" id="expenseRejectMobileForm<?= (int) $request['id'] ?>" class="hidden space-y-2">
-                                    <?= csrfField() ?>
-                                    <input type="hidden" name="action" value="process_expense_request">
-                                    <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
-                                    <input type="hidden" name="decision" value="reject">
-                                    <textarea name="admin_note" rows="2" class="w-full border rounded px-3 py-2 text-sm" placeholder="Rejection note" required></textarea>
-                                    <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Confirm Reject</button>
-                                </form>
+                                <button type="button" class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>">Approve</button>
+                                <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>">Reject</button>
                             </div>
                         <?php endif; ?>
                     </article>
@@ -571,24 +794,603 @@ function handleAdminExpenseRequestsPage(PDO $db): void
             <?php renderPagination($requestsPagination); ?>
         <?php endif; ?>
     </div>
+    <div id="expenseApproveModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
+        <div class="mx-auto mt-16 w-full max-w-lg">
+            <div class="glass p-5 max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('approved', 'ui-icon') ?><span>Approve Expense Request</span></h2>
+                        <p id="expenseApproveModalTitle" class="section-helper-copy">Add an approval note for the owner.</p>
+                    </div>
+                    <button type="button" id="expenseApproveModalClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                </div>
+                <form method="post" class="space-y-4">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="process_expense_request">
+                    <input type="hidden" name="request_id" id="expenseApproveModalRequestId" value="">
+                    <input type="hidden" name="decision" value="approve">
+                    <div>
+                        <label for="expenseApproveModalNote" class="block text-sm font-medium text-slate-700 mb-2">Approval Note</label>
+                        <textarea id="expenseApproveModalNote" name="admin_note" rows="4" class="w-full border rounded px-3 py-2" placeholder="Confirm what was approved or add payment/release instructions." required></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-2">
+                        <button type="button" id="expenseApproveModalCancel" class="owner-manage-secondary-btn px-3 py-2 rounded-md text-sm">Cancel</button>
+                        <button class="owner-manage-primary-btn px-4 py-2.5 rounded-md text-sm">Confirm Approve</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="expenseRejectModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
+        <div class="mx-auto mt-16 w-full max-w-lg">
+            <div class="glass p-5 max-h-[90dvh] overflow-y-auto" data-modal-panel>
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('rejected', 'ui-icon') ?><span>Reject Expense Request</span></h2>
+                        <p id="expenseRejectModalTitle" class="section-helper-copy">Add a clear note for the owner.</p>
+                    </div>
+                    <button type="button" id="expenseRejectModalClose" class="text-slate-500 hover:text-slate-900 text-2xl leading-none" aria-label="Close modal">&times;</button>
+                </div>
+                <form method="post" class="space-y-4">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="process_expense_request">
+                    <input type="hidden" name="request_id" id="expenseRejectModalRequestId" value="">
+                    <input type="hidden" name="decision" value="reject">
+                    <div>
+                        <label for="expenseRejectModalNote" class="block text-sm font-medium text-slate-700 mb-2">Rejection Note</label>
+                        <textarea id="expenseRejectModalNote" name="admin_note" rows="4" class="w-full border rounded px-3 py-2" placeholder="Explain what the owner should revise or attach." required></textarea>
+                    </div>
+                    <div class="flex items-center justify-end gap-2">
+                        <button type="button" id="expenseRejectModalCancel" class="owner-manage-secondary-btn px-3 py-2 rounded-md text-sm">Cancel</button>
+                        <button class="tx-action-btn tx-action-btn-delete px-4 py-2.5 rounded-md text-sm">Confirm Reject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <script>
-        document.querySelectorAll('[data-expense-reject-toggle]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const form = document.getElementById('expenseRejectForm' + button.getAttribute('data-expense-reject-toggle'));
-                if (form) {
-                    form.classList.toggle('hidden');
+        (function () {
+            const modal = document.getElementById('expenseApproveModal');
+            const requestIdInput = document.getElementById('expenseApproveModalRequestId');
+            const noteInput = document.getElementById('expenseApproveModalNote');
+            const title = document.getElementById('expenseApproveModalTitle');
+            const closeButton = document.getElementById('expenseApproveModalClose');
+            const cancelButton = document.getElementById('expenseApproveModalCancel');
+            let lastTrigger = null;
+
+            if (!modal || !requestIdInput || !noteInput || !closeButton || !cancelButton) {
+                return;
+            }
+
+            function openModal(button) {
+                lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                requestIdInput.value = button.getAttribute('data-request-id') || '';
+                if (title) {
+                    title.textContent = button.getAttribute('data-request-title') || 'Add an approval note for the owner.';
+                }
+                noteInput.value = '';
+                modal.classList.remove('hidden');
+                noteInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                requestIdInput.value = '';
+                noteInput.value = '';
+                if (lastTrigger && typeof lastTrigger.focus === 'function') {
+                    lastTrigger.focus();
+                }
+                lastTrigger = null;
+            }
+
+            document.querySelectorAll('[data-expense-approve-open]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    openModal(button);
+                });
+            });
+
+            closeButton.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
                 }
             });
-        });
-        document.querySelectorAll('[data-expense-reject-toggle-mobile]').forEach(function (button) {
-            button.addEventListener('click', function () {
-                const form = document.getElementById('expenseRejectMobileForm' + button.getAttribute('data-expense-reject-toggle-mobile'));
-                if (form) {
-                    form.classList.toggle('hidden');
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
                 }
             });
-        });
+        })();
     </script>
+    <script>
+        (function () {
+            const modal = document.getElementById('expenseRejectModal');
+            const requestIdInput = document.getElementById('expenseRejectModalRequestId');
+            const noteInput = document.getElementById('expenseRejectModalNote');
+            const title = document.getElementById('expenseRejectModalTitle');
+            const closeButton = document.getElementById('expenseRejectModalClose');
+            const cancelButton = document.getElementById('expenseRejectModalCancel');
+            let lastTrigger = null;
+
+            if (!modal || !requestIdInput || !noteInput || !closeButton || !cancelButton) {
+                return;
+            }
+
+            function openModal(button) {
+                lastTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                requestIdInput.value = button.getAttribute('data-request-id') || '';
+                if (title) {
+                    title.textContent = button.getAttribute('data-request-title') || 'Add a clear note for the owner.';
+                }
+                noteInput.value = '';
+                modal.classList.remove('hidden');
+                noteInput.focus();
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+                requestIdInput.value = '';
+                noteInput.value = '';
+                if (lastTrigger && typeof lastTrigger.focus === 'function') {
+                    lastTrigger.focus();
+                }
+                lastTrigger = null;
+            }
+
+            document.querySelectorAll('[data-expense-reject-open]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    openModal(button);
+                });
+            });
+
+            closeButton.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        })();
+    </script>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function normalizeAdminBudgetOverviewFilters(): array
+{
+    $statusFilter = (string) ($_GET['status'] ?? 'active');
+    if (!in_array($statusFilter, ['all', 'draft', 'active', 'closed'], true)) {
+        $statusFilter = 'active';
+    }
+
+    $organizationFilter = (int) ($_GET['organization_id'] ?? 0);
+
+    return [$statusFilter, $organizationFilter];
+}
+
+function fetchAdminBudgetOverviewRows(PDO $db, string $statusFilter, int $organizationFilter): array
+{
+    $sql = "SELECT b.*, o.name AS organization_name, u.name AS owner_name,
+                   COALESCE((SELECT SUM(allocated_amount) FROM budget_line_items bli WHERE bli.budget_id = b.id), 0) AS allocated_total,
+                   COALESCE((SELECT SUM(spent_amount) FROM budget_line_items bli WHERE bli.budget_id = b.id), 0) AS spent_total,
+                   COALESCE((SELECT SUM(er.amount) FROM expense_requests er WHERE er.budget_id = b.id AND er.status = 'pending'), 0) AS pending_total,
+                   COALESCE((SELECT COUNT(*) FROM budget_line_items bli WHERE bli.budget_id = b.id), 0) AS line_count,
+                   COALESCE((SELECT COUNT(*) FROM expense_requests er WHERE er.budget_id = b.id), 0) AS request_count,
+                   COALESCE((SELECT COUNT(*) FROM expense_requests er WHERE er.budget_id = b.id AND er.status = 'pending'), 0) AS pending_request_count,
+                   COALESCE((SELECT COUNT(*) FROM expense_requests er WHERE er.budget_id = b.id AND er.status = 'approved'), 0) AS approved_request_count,
+                   COALESCE((SELECT COUNT(*) FROM expense_requests er WHERE er.budget_id = b.id AND er.status = 'rejected'), 0) AS rejected_request_count,
+                   COALESCE((SELECT COUNT(*) FROM budget_line_items bli
+                             WHERE bli.budget_id = b.id
+                               AND bli.allocated_amount > 0
+                               AND ((bli.spent_amount + COALESCE((SELECT SUM(er.amount) FROM expense_requests er WHERE er.budget_line_item_id = bli.id AND er.status = 'pending'), 0)) / bli.allocated_amount) >= 0.90), 0) AS critical_line_count,
+                   COALESCE((SELECT COUNT(*) FROM budget_line_items bli
+                             WHERE bli.budget_id = b.id
+                               AND bli.allocated_amount > 0
+                               AND ((bli.spent_amount + COALESCE((SELECT SUM(er.amount) FROM expense_requests er WHERE er.budget_line_item_id = bli.id AND er.status = 'pending'), 0)) / bli.allocated_amount) >= 0.75
+                               AND ((bli.spent_amount + COALESCE((SELECT SUM(er.amount) FROM expense_requests er WHERE er.budget_line_item_id = bli.id AND er.status = 'pending'), 0)) / bli.allocated_amount) < 0.90), 0) AS watch_line_count
+            FROM budgets b
+            JOIN organizations o ON o.id = b.organization_id
+            LEFT JOIN users u ON u.id = o.owner_id
+            WHERE 1 = 1";
+    $params = [];
+
+    if ($statusFilter !== 'all') {
+        $sql .= ' AND b.status = ?';
+        $params[] = $statusFilter;
+    }
+    if ($organizationFilter > 0) {
+        $sql .= ' AND b.organization_id = ?';
+        $params[] = $organizationFilter;
+    }
+
+    $sql .= ' ORDER BY b.period_start DESC, b.id DESC';
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll() ?: [];
+}
+
+function handleExportBudgetOverviewAction(PDO $db): void
+{
+    requireRole(['admin']);
+
+    $format = (string) ($_GET['format'] ?? 'xls');
+    if (!in_array($format, ['csv', 'xls'], true)) {
+        setFlash('error', 'Unsupported budget overview export format.');
+        redirect('?page=admin_budget_overview');
+    }
+
+    [$statusFilter, $organizationFilter] = normalizeAdminBudgetOverviewFilters();
+    $budgetsAll = fetchAdminBudgetOverviewRows($db, $statusFilter, $organizationFilter);
+
+    $totalBudget = 0.0;
+    $totalAllocated = 0.0;
+    $totalSpent = 0.0;
+    $totalPending = 0.0;
+    $totalRemaining = 0.0;
+    $totalRequests = 0;
+    $totalApprovedRequests = 0;
+    $totalPendingRequests = 0;
+    $totalRejectedRequests = 0;
+    foreach ($budgetsAll as $budget) {
+        $allocated = (float) ($budget['allocated_total'] ?? 0);
+        $spent = (float) ($budget['spent_total'] ?? 0);
+        $pending = (float) ($budget['pending_total'] ?? 0);
+        $remaining = $allocated - $spent - $pending;
+        $totalBudget += (float) ($budget['total_amount'] ?? 0);
+        $totalAllocated += $allocated;
+        $totalSpent += $spent;
+        $totalPending += $pending;
+        $totalRemaining += $remaining;
+        $totalRequests += (int) ($budget['request_count'] ?? 0);
+        $totalApprovedRequests += (int) ($budget['approved_request_count'] ?? 0);
+        $totalPendingRequests += (int) ($budget['pending_request_count'] ?? 0);
+        $totalRejectedRequests += (int) ($budget['rejected_request_count'] ?? 0);
+    }
+
+    $filters = [
+        'Organization' => getAdminCsvOrganizationFilterLabel($db, $organizationFilter),
+        'Budget Status' => ucfirst($statusFilter),
+    ];
+    $summary = [
+        'Budgets' => count($budgetsAll),
+        'Budget Total (PHP)' => number_format($totalBudget, 2, '.', ''),
+        'Allocated (PHP)' => number_format($totalAllocated, 2, '.', ''),
+        'Spent (PHP)' => number_format($totalSpent, 2, '.', ''),
+        'Pending Amount (PHP)' => number_format($totalPending, 2, '.', ''),
+        'Remaining (PHP)' => number_format($totalRemaining, 2, '.', ''),
+        'Requests Total' => $totalRequests,
+        'Approved Requests' => $totalApprovedRequests,
+        'Pending Requests' => $totalPendingRequests,
+        'Rejected Requests' => $totalRejectedRequests,
+    ];
+    $headers = [
+        'Organization',
+        'Owner',
+        'Budget',
+        'Status',
+        'Period Start',
+        'Period End',
+        'Budget Total (PHP)',
+        'Allocated (PHP)',
+        'Spent (PHP)',
+        'Pending Amount (PHP)',
+        'Remaining (PHP)',
+        'Line Items',
+        'Critical Lines',
+        'Watch Lines',
+        'Requests Total',
+        'Approved Requests',
+        'Pending Requests',
+        'Rejected Requests',
+    ];
+
+    $rows = [];
+    foreach ($budgetsAll as $budget) {
+        $allocated = (float) ($budget['allocated_total'] ?? 0);
+        $spent = (float) ($budget['spent_total'] ?? 0);
+        $pending = (float) ($budget['pending_total'] ?? 0);
+        $remaining = $allocated - $spent - $pending;
+        $rows[] = [
+            (string) ($budget['organization_name'] ?? ''),
+            (string) ($budget['owner_name'] ?? 'Unassigned'),
+            (string) ($budget['title'] ?? ''),
+            (string) ($budget['status'] ?? ''),
+            (string) ($budget['period_start'] ?? ''),
+            (string) ($budget['period_end'] ?? ''),
+            number_format((float) ($budget['total_amount'] ?? 0), 2, '.', ''),
+            number_format($allocated, 2, '.', ''),
+            number_format($spent, 2, '.', ''),
+            number_format($pending, 2, '.', ''),
+            number_format($remaining, 2, '.', ''),
+            (int) ($budget['line_count'] ?? 0),
+            (int) ($budget['critical_line_count'] ?? 0),
+            (int) ($budget['watch_line_count'] ?? 0),
+            (int) ($budget['request_count'] ?? 0),
+            (int) ($budget['approved_request_count'] ?? 0),
+            (int) ($budget['pending_request_count'] ?? 0),
+            (int) ($budget['rejected_request_count'] ?? 0),
+        ];
+    }
+
+    if ($format === 'xls') {
+        sendAdminExcelReport('budget-overview-' . date('Y-m-d') . '.xls', 'INVOLVE BudgetFlow - Budget Overview Report', $filters, $summary, $headers, $rows);
+    }
+
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="budget-overview-' . date('Y-m-d') . '.csv"');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+
+    $out = fopen('php://output', 'w');
+    if ($out === false) {
+        exit;
+    }
+
+    writeAdminCsvReportHeader($out, 'INVOLVE BudgetFlow - Budget Overview Report', $filters, $summary);
+    fputcsv($out, $headers);
+    foreach ($rows as $row) {
+        fputcsv($out, $row);
+    }
+
+    fclose($out);
+    exit;
+}
+
+function handleAdminBudgetOverviewPage(PDO $db): void
+{
+    requireRole(['admin']);
+
+    [$statusFilter, $organizationFilter] = normalizeAdminBudgetOverviewFilters();
+    $organizations = $db->query('SELECT id, name FROM organizations ORDER BY name ASC')->fetchAll() ?: [];
+    $budgetsAll = fetchAdminBudgetOverviewRows($db, $statusFilter, $organizationFilter);
+    $budgetsPagination = paginateArray($budgetsAll, 'pg_admin_budget_overview', 10);
+    $budgets = $budgetsPagination['items'];
+
+    $totalBudget = 0.0;
+    $totalAllocated = 0.0;
+    $totalSpent = 0.0;
+    $totalPending = 0.0;
+    $totalRequests = 0;
+    foreach ($budgetsAll as $budget) {
+        $totalBudget += (float) ($budget['total_amount'] ?? 0);
+        $totalAllocated += (float) ($budget['allocated_total'] ?? 0);
+        $totalSpent += (float) ($budget['spent_total'] ?? 0);
+        $totalPending += (float) ($budget['pending_total'] ?? 0);
+        $totalRequests += (int) ($budget['request_count'] ?? 0);
+    }
+
+    $formatMoney = static fn(float $amount): string => 'PHP' . number_format($amount, 2);
+    $exportUrl = '?' . http_build_query([
+        'page' => 'admin_budget_overview',
+        'action' => 'export_budget_overview',
+        'format' => 'xls',
+        'organization_id' => $organizationFilter,
+        'status' => $statusFilter,
+    ]);
+
+    renderHeader('Budget Overview');
+    ?>
+    <div class="space-y-4">
+        <div class="glass transparency-panel rounded-xl p-4">
+            <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <h1 class="text-xl font-semibold mb-1 icon-label"><?= uiIcon('chart', 'ui-icon') ?><span>Budget Overview</span></h1>
+                    <p class="section-helper-copy">Review budget allocation, actual spending, pending expense requests, and request outcomes across organizations.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="<?= e($exportUrl) ?>" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Export Report</a>
+                    <a href="?page=admin_expense_requests" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Expense Requests</a>
+                </div>
+            </div>
+
+            <form method="get" class="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.35fr)_auto] lg:items-end">
+                <input type="hidden" name="page" value="admin_budget_overview">
+                <div class="space-y-2">
+                    <label for="adminBudgetOrgFilter" class="text-sm font-medium text-slate-700">Organization</label>
+                    <select id="adminBudgetOrgFilter" name="organization_id" class="w-full border rounded px-3 py-2">
+                        <option value="0">All organizations</option>
+                        <?php foreach ($organizations as $organization): ?>
+                            <option value="<?= (int) $organization['id'] ?>" <?= $organizationFilter === (int) $organization['id'] ? 'selected' : '' ?>>
+                                <?= e((string) $organization['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label for="adminBudgetStatusFilter" class="text-sm font-medium text-slate-700">Status</label>
+                    <select id="adminBudgetStatusFilter" name="status" class="w-full border rounded px-3 py-2">
+                        <?php foreach (['active' => 'Active', 'draft' => 'Draft', 'closed' => 'Closed', 'all' => 'All'] as $value => $label): ?>
+                            <option value="<?= e($value) ?>" <?= $statusFilter === $value ? 'selected' : '' ?>><?= e($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <button class="owner-manage-primary-btn rounded-md px-4 py-2">Filter</button>
+            </form>
+
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                <article class="glass transparency-stat-card rounded-xl p-3 min-w-0">
+                    <div class="text-xs text-slate-600">Budgets</div>
+                    <div class="mt-1 text-xl font-semibold"><?= count($budgetsAll) ?></div>
+                </article>
+                <article class="glass transparency-stat-card rounded-xl p-3 min-w-0">
+                    <div class="text-xs text-slate-600">Budget total</div>
+                    <div class="mt-1 break-words text-lg font-semibold 2xl:text-xl"><?= e($formatMoney($totalBudget)) ?></div>
+                </article>
+                <article class="glass transparency-stat-card rounded-xl p-3 min-w-0">
+                    <div class="text-xs text-slate-600">Allocated</div>
+                    <div class="mt-1 break-words text-lg font-semibold 2xl:text-xl"><?= e($formatMoney($totalAllocated)) ?></div>
+                </article>
+                <article class="glass transparency-stat-card rounded-xl p-3 min-w-0">
+                    <div class="text-xs text-slate-600">Spent</div>
+                    <div class="mt-1 break-words text-lg font-semibold text-rose-500 2xl:text-xl"><?= e($formatMoney($totalSpent)) ?></div>
+                </article>
+                <article class="glass transparency-stat-card rounded-xl p-3 min-w-0">
+                    <div class="text-xs text-slate-600">Pending</div>
+                    <div class="mt-1 break-words text-lg font-semibold text-amber-300 2xl:text-xl"><?= e($formatMoney($totalPending)) ?></div>
+                </article>
+                <article class="glass transparency-stat-card rounded-xl p-3 min-w-0">
+                    <div class="text-xs text-slate-600">Requests</div>
+                    <div class="mt-1 text-xl font-semibold"><?= (int) $totalRequests ?></div>
+                </article>
+            </div>
+        </div>
+
+        <div class="glass transparency-panel rounded-xl p-4 overflow-auto">
+            <?php if ($budgets === []): ?>
+                <div class="empty-state-panel">No budgets match the selected filters.</div>
+            <?php else: ?>
+                <div class="table-wrapper hidden xl:block">
+                    <table class="w-full min-w-[1180px] text-sm table-fixed">
+                        <colgroup>
+                            <col class="w-[20%]">
+                            <col class="w-[18%]">
+                            <col class="w-[16%]">
+                            <col class="w-[25%]">
+                            <col class="w-[21%]">
+                        </colgroup>
+                        <thead>
+                        <tr class="border-b text-left">
+                            <th class="py-3 px-3">Organization</th>
+                            <th class="py-3 px-3">Budget</th>
+                            <th class="py-3 px-3 text-center">Budget Details</th>
+                            <th class="py-3 px-3">Usage</th>
+                            <th class="py-3 px-3 text-center">Requests</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($budgets as $budget): ?>
+                            <?php
+                                $allocated = (float) ($budget['allocated_total'] ?? 0);
+                                $spent = (float) ($budget['spent_total'] ?? 0);
+                                $pending = (float) ($budget['pending_total'] ?? 0);
+                                $remaining = $allocated - $spent - $pending;
+                                $usageBase = max($allocated, $spent + $pending + max(0.0, $remaining), 1.0);
+                                $spentPercent = min(100, max(0, ($spent / $usageBase) * 100));
+                                $pendingPercent = min(100 - $spentPercent, max(0, ($pending / $usageBase) * 100));
+                                $remainingPercent = max(0, 100 - $spentPercent - $pendingPercent);
+                                $status = strtolower((string) ($budget['status'] ?? ''));
+                                $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
+                            ?>
+                            <tr class="border-b align-middle">
+                                <td class="py-4 px-3 break-words">
+                                    <div class="flex items-start gap-2">
+                                        <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"></span>
+                                        <div class="min-w-0">
+                                            <div class="font-medium"><?= e((string) ($budget['organization_name'] ?? 'Organization')) ?></div>
+                                            <div class="mt-1 text-xs text-slate-500">Owner: <?= e(trim((string) ($budget['owner_name'] ?? '')) !== '' ? (string) $budget['owner_name'] : 'Unassigned') ?></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-3 break-words">
+                                    <div class="font-semibold"><?= e($formatMoney((float) ($budget['total_amount'] ?? 0))) ?></div>
+                                    <div class="mt-1 font-medium"><?= e((string) ($budget['title'] ?? 'Budget')) ?></div>
+                                </td>
+                                <td class="py-4 px-3 text-xs">
+                                    <div class="flex w-full flex-col items-center justify-center gap-1.5 text-center">
+                                        <span class="inline-flex min-w-[7.5rem] justify-center rounded-md border border-slate-300/30 bg-white/10 px-3 py-1 text-sm font-medium text-slate-200"><?= (int) ($budget['line_count'] ?? 0) ?> totals</span>
+                                        <?php if ((int) ($budget['critical_line_count'] ?? 0) > 0): ?>
+                                            <span class="inline-flex min-w-[7.5rem] justify-center rounded-md border border-rose-300/35 bg-rose-400/10 px-2 py-0.5 text-[11px] font-semibold text-rose-300"><?= (int) ($budget['critical_line_count'] ?? 0) ?> critical</span>
+                                        <?php elseif ((int) ($budget['watch_line_count'] ?? 0) > 0): ?>
+                                            <span class="inline-flex min-w-[7.5rem] justify-center rounded-md border border-amber-300/35 bg-amber-400/10 px-2 py-0.5 text-[11px] font-semibold text-amber-300"><?= (int) ($budget['watch_line_count'] ?? 0) ?> watch</span>
+                                        <?php endif; ?>
+                                        <div class="whitespace-nowrap text-[11px] leading-relaxed text-slate-400">
+                                            <?= e(date('M d, Y', strtotime((string) $budget['period_start']))) ?> - <?= e(date('M d, Y', strtotime((string) $budget['period_end']))) ?>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-3">
+                                    <div class="mb-2 flex items-center justify-between gap-3 text-xs">
+                                        <span class="text-slate-400">Allocated</span>
+                                        <span class="font-semibold text-slate-100"><?= e($formatMoney($allocated)) ?></span>
+                                    </div>
+                                    <div class="h-2.5 w-full rounded-full bg-emerald-900/35 shadow-inner">
+                                        <div class="flex h-full w-full">
+                                            <?php if ($spent > 0): ?>
+                                                <span class="budget-usage-segment budget-usage-segment-spent h-full bg-rose-500" style="width: <?= e(number_format($spentPercent, 2, '.', '')) ?>%" data-tooltip="Spent: <?= e($formatMoney($spent)) ?>" aria-label="Spent: <?= e($formatMoney($spent)) ?>" tabindex="0"></span>
+                                            <?php endif; ?>
+                                            <?php if ($pending > 0): ?>
+                                                <span class="budget-usage-segment budget-usage-segment-pending h-full bg-amber-300" style="width: <?= e(number_format($pendingPercent, 2, '.', '')) ?>%" data-tooltip="Pending: <?= e($formatMoney($pending)) ?>" aria-label="Pending: <?= e($formatMoney($pending)) ?>" tabindex="0"></span>
+                                            <?php endif; ?>
+                                            <?php if ($remaining > 0): ?>
+                                                <span class="budget-usage-segment budget-usage-segment-remaining h-full bg-emerald-500/70" style="width: <?= e(number_format($remainingPercent, 2, '.', '')) ?>%" data-tooltip="Remaining: <?= e($formatMoney($remaining)) ?>" aria-label="Remaining: <?= e($formatMoney($remaining)) ?>" tabindex="0"></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-3">
+                                    <div class="grid w-full grid-cols-2 gap-1.5 text-[11px] font-semibold leading-tight">
+                                        <span class="col-span-2 whitespace-nowrap rounded border border-emerald-300/35 bg-emerald-400/10 px-2 py-1 text-center text-emerald-300 <?= (int) ($budget['approved_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['approved_request_count'] ?? 0) ?> Approved</span>
+                                        <span class="whitespace-nowrap rounded border border-amber-300/35 bg-amber-400/10 px-2 py-1 text-center text-amber-300 <?= (int) ($budget['pending_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['pending_request_count'] ?? 0) ?> Pending</span>
+                                        <span class="whitespace-nowrap rounded border border-rose-300/35 bg-rose-400/10 px-2 py-1 text-center text-rose-300 <?= (int) ($budget['rejected_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['rejected_request_count'] ?? 0) ?> Rejected</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="xl:hidden space-y-3">
+                    <?php foreach ($budgets as $budget): ?>
+                        <?php
+                            $allocated = (float) ($budget['allocated_total'] ?? 0);
+                            $spent = (float) ($budget['spent_total'] ?? 0);
+                            $pending = (float) ($budget['pending_total'] ?? 0);
+                            $remaining = $allocated - $spent - $pending;
+                            $usageBase = max($allocated, $spent + $pending + max(0.0, $remaining), 1.0);
+                            $spentPercent = min(100, max(0, ($spent / $usageBase) * 100));
+                            $pendingPercent = min(100 - $spentPercent, max(0, ($pending / $usageBase) * 100));
+                            $remainingPercent = max(0, 100 - $spentPercent - $pendingPercent);
+                            $status = strtolower((string) ($budget['status'] ?? ''));
+                            $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
+                        ?>
+                        <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="admin-mobile-title"><?= e((string) ($budget['organization_name'] ?? 'Organization')) ?></div>
+                                    <div class="admin-mobile-meta mt-1"><?= e((string) ($budget['title'] ?? 'Budget')) ?></div>
+                                </div>
+                                <span class="rounded-md border border-slate-300/30 bg-white/10 px-2 py-0.5 text-xs text-slate-400"><?= (int) ($budget['line_count'] ?? 0) ?> lines</span>
+                            </div>
+                            <div class="mt-3 text-sm font-semibold"><?= e($formatMoney((float) ($budget['total_amount'] ?? 0))) ?></div>
+                            <div class="mt-1 text-[11px] leading-relaxed text-slate-400"><?= e(date('M d, Y', strtotime((string) $budget['period_start']))) ?> to <?= e(date('M d, Y', strtotime((string) $budget['period_end']))) ?></div>
+                            <div class="mt-3 flex items-center justify-between gap-3 text-xs">
+                                <span class="text-slate-400">Allocated</span>
+                                <span class="font-semibold text-slate-100"><?= e($formatMoney($allocated)) ?></span>
+                            </div>
+                            <div class="mt-3 h-2.5 w-full rounded-full bg-emerald-900/35 shadow-inner">
+                                <div class="flex h-full w-full">
+                                    <?php if ($spent > 0): ?>
+                                        <span class="budget-usage-segment budget-usage-segment-spent h-full bg-rose-500" style="width: <?= e(number_format($spentPercent, 2, '.', '')) ?>%" data-tooltip="Spent: <?= e($formatMoney($spent)) ?>" aria-label="Spent: <?= e($formatMoney($spent)) ?>" tabindex="0"></span>
+                                    <?php endif; ?>
+                                    <?php if ($pending > 0): ?>
+                                        <span class="budget-usage-segment budget-usage-segment-pending h-full bg-amber-300" style="width: <?= e(number_format($pendingPercent, 2, '.', '')) ?>%" data-tooltip="Pending: <?= e($formatMoney($pending)) ?>" aria-label="Pending: <?= e($formatMoney($pending)) ?>" tabindex="0"></span>
+                                    <?php endif; ?>
+                                    <?php if ($remaining > 0): ?>
+                                        <span class="budget-usage-segment budget-usage-segment-remaining h-full bg-emerald-500/70" style="width: <?= e(number_format($remainingPercent, 2, '.', '')) ?>%" data-tooltip="Remaining: <?= e($formatMoney($remaining)) ?>" aria-label="Remaining: <?= e($formatMoney($remaining)) ?>" tabindex="0"></span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="mt-3 grid grid-cols-2 gap-1.5 text-[11px] font-semibold leading-tight">
+                                <span class="col-span-2 rounded border border-emerald-300/35 bg-emerald-400/10 px-2 py-1 text-center text-emerald-300 <?= (int) ($budget['approved_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['approved_request_count'] ?? 0) ?> Approved</span>
+                                <span class="rounded border border-amber-300/35 bg-amber-400/10 px-2 py-1 text-center text-amber-300 <?= (int) ($budget['pending_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['pending_request_count'] ?? 0) ?> Pending</span>
+                                <span class="rounded border border-rose-300/35 bg-rose-400/10 px-2 py-1 text-center text-rose-300 <?= (int) ($budget['rejected_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['rejected_request_count'] ?? 0) ?> Rejected</span>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+                <?php renderPagination($budgetsPagination); ?>
+            <?php endif; ?>
+        </div>
+    </div>
     <?php
     renderFooter();
     exit;

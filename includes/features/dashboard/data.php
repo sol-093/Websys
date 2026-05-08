@@ -54,6 +54,8 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
 
     $visibleOrganizationIds = array_values(array_unique(array_map(static fn(array $org): int => (int) $org['id'], $orgs)));
     $summary = [];
+    $budgetFlowPendingExpenseRequestCount = 0;
+    $budgetFlowAttentionCount = 0;
     if (count($visibleOrganizationIds) > 0) {
         $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
         $summaryStmt = $db->prepare("SELECT o.id, o.name, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom,
@@ -66,6 +68,30 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
             ORDER BY o.name");
         $summaryStmt->execute($visibleOrganizationIds);
         $summary = $summaryStmt->fetchAll();
+
+        $pendingExpenseStmt = $db->prepare("SELECT COUNT(*) FROM expense_requests WHERE organization_id IN ($summaryPlaceholders) AND status = 'pending'");
+        $pendingExpenseStmt->execute($visibleOrganizationIds);
+        $budgetFlowPendingExpenseRequestCount = (int) $pendingExpenseStmt->fetchColumn();
+
+        $budgetLineUsageStmt = $db->prepare("SELECT bli.allocated_amount, bli.spent_amount,
+                COALESCE(SUM(CASE WHEN er.status = 'pending' THEN er.amount ELSE 0 END), 0) AS pending_amount
+            FROM budget_line_items bli
+            JOIN budgets b ON b.id = bli.budget_id
+            LEFT JOIN expense_requests er ON er.budget_line_item_id = bli.id
+            WHERE b.organization_id IN ($summaryPlaceholders)
+              AND b.status = 'active'
+            GROUP BY bli.id, bli.allocated_amount, bli.spent_amount");
+        $budgetLineUsageStmt->execute($visibleOrganizationIds);
+        foreach ($budgetLineUsageStmt->fetchAll() ?: [] as $lineUsage) {
+            $allocated = (float) ($lineUsage['allocated_amount'] ?? 0);
+            if ($allocated <= 0) {
+                continue;
+            }
+            $usedRatio = ((float) ($lineUsage['spent_amount'] ?? 0) + (float) ($lineUsage['pending_amount'] ?? 0)) / $allocated;
+            if ($usedRatio >= 0.75) {
+                $budgetFlowAttentionCount++;
+            }
+        }
     }
 
     $kpi = $db->query("SELECT
@@ -292,6 +318,8 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'announcements',
         'averageNet',
         'balanceRatio',
+        'budgetFlowAttentionCount',
+        'budgetFlowPendingExpenseRequestCount',
         'dashboardOrganizationsPreview',
         'dashboardTimestamp',
         'expenseRatio',

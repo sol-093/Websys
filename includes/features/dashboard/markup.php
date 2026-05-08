@@ -19,7 +19,7 @@ WORK GUIDE:
         <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
-                    <div class="dashboard-kicker">Overview</div>
+                    <div class="dashboard-kicker"><span class="dashboard-label-tag">Overview</span></div>
                     <h1 class="dashboard-headline modern-title">Operations are on track, budgets are transparent, and every organization is in sync.</h1>
                     <p id="dashboardWelcomeMessage" class="dashboard-copy mt-3">Welcome, <?= e($user['name']) ?>. Track collections, spending, announcements, and ownership activity from one focused workspace.</p>
                 </div>
@@ -44,7 +44,7 @@ WORK GUIDE:
         </div>
 
         <div id="dashboardBudgetTransparencySection" class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
-            <h2 class="dashboard-section-title">Finance status</h2>
+            <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Finance status</span></h2>
             <p class="dashboard-section-copy mt-1">A compact reading of spend, balance, and workload based on live records.</p>
             <div class="mt-4 space-y-3">
                 <div>
@@ -67,12 +67,12 @@ WORK GUIDE:
                         <span class="dashboard-stat-value"><?= $recentReportCount ?></span>
                     </div>
                     <div class="dashboard-stat-row">
-                        <span class="dashboard-stat-label">Latest announcements</span>
-                        <span class="dashboard-stat-value"><?= $latestAnnouncementCount ?></span>
+                        <span class="dashboard-stat-label">Pending expense requests</span>
+                        <span class="dashboard-stat-value text-amber-300"><?= (int) $budgetFlowPendingExpenseRequestCount ?></span>
                     </div>
                     <div class="dashboard-stat-row">
-                        <span class="dashboard-stat-label">Pending assignments</span>
-                        <span class="dashboard-stat-value"><?= $pendingAssignmentCount ?></span>
+                        <span class="dashboard-stat-label">Budget lines needing attention</span>
+                        <span class="dashboard-stat-value <?= (int) $budgetFlowAttentionCount > 0 ? 'text-amber-300' : 'text-green-300' ?>"><?= (int) $budgetFlowAttentionCount ?></span>
                     </div>
                 </div>
             </div>
@@ -83,7 +83,7 @@ WORK GUIDE:
         <section id="pending-assignments" class="glass dashboard-panel p-4 md:p-4">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h2 class="dashboard-section-title">Pending assignments</h2>
+                    <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Pending assignments</span></h2>
                     <p class="dashboard-section-copy mt-1">Assignments waiting for a student response.</p>
                 </div>
                 <div class="dashboard-stamp"><?= count($pendingAssignments) ?> awaiting action</div>
@@ -122,7 +122,7 @@ WORK GUIDE:
         <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
                 <div>
-                    <h2 class="dashboard-section-title">Monthly trend</h2>
+                    <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Monthly trend</span></h2>
                     <p class="dashboard-section-copy mt-1">Income and expense totals by month.</p>
                 </div>
                 <div class="dashboard-stamp"><?= $recentReportCount ?> recent reports tracked</div>
@@ -179,7 +179,7 @@ WORK GUIDE:
         <div id="dashboardAnnouncementsSection" class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
             <div class="flex items-center justify-between gap-3 mb-3">
                 <div>
-                    <h2 class="dashboard-section-title">Live activity</h2>
+                    <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Live activity</span></h2>
                     <p class="dashboard-section-copy mt-1">Recent announcements and audit items.</p>
                 </div>
                 <button type="button" id="openAnnouncementsModalQuick" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
@@ -218,7 +218,7 @@ WORK GUIDE:
         <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
             <div class="flex items-center justify-between mb-3">
                 <div>
-                    <h2 class="dashboard-section-title">Organizations</h2>
+                    <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Organizations</span></h2>
                     <p class="dashboard-section-copy mt-1">Current organizations and join eligibility.</p>
                 </div>
                 <button type="button" id="openOrganizationsModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
@@ -273,83 +273,74 @@ WORK GUIDE:
         <div class="glass dashboard-panel xl:col-span-7 p-4 md:p-4 overflow-hidden">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
                 <div>
-                    <h2 class="dashboard-section-title">Recent reports</h2>
+                    <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Recent reports</span></h2>
                     <p class="dashboard-section-copy mt-1">Latest income and expense entries with receipt visibility.</p>
                 </div>
-                <div class="dashboard-stamp">Showing <?= $recentReportCount ?> latest items</div>
+                <div class="dashboard-stamp">
+                    <span class="dashboard-desktop-only">Showing <?= $recentReportCount ?> latest items</span>
+                    <span class="dashboard-mobile-only">Showing <?= min(5, $recentReportCount) ?> latest items</span>
+                </div>
             </div>
-            <div class="table-wrapper">
-                <table class="dashboard-table w-full text-sm table-fixed">
-                    <thead>
-                    <tr class="border-b text-left">
-                        <th class="py-2 w-[20%]">Date</th>
-                        <th class="w-[30%]">Organization</th>
-                        <th class="w-[16%]">Type</th>
-                        <th class="w-[20%]">Amount</th>
-                        <th class="w-[14%]">Receipt</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($transactions as $tx): ?>
-                        <tr class="border-b">
-                            <td class="py-2"><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></td>
-                            <td>
-                                <span class="inline-flex items-center gap-2">
-                                    <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
-                                    <span><?= e($tx['organization_name']) ?></span>
-                                </span>
-                            </td>
-                            <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
-                            <td>&#8369;<?= number_format((float) $tx['amount'], 2) ?></td>
-                            <td>
-                                <?php if (!empty($tx['receipt_path'])): ?>
-                                    <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
-                                <?php else: ?>
-                                    <span class="text-slate-400">-</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="dashboard-report-list text-sm">
+                <div class="dashboard-report-row dashboard-report-head">
+                    <div>Date</div>
+                    <div>Organization</div>
+                    <div>Type</div>
+                    <div>Amount</div>
+                    <div>Receipt</div>
+                </div>
+                <?php foreach ($transactions as $index => $tx): ?>
+                    <div class="dashboard-report-row <?= $index >= 5 ? 'dashboard-mobile-trim' : '' ?>">
+                        <div><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></div>
+                        <div>
+                            <span class="inline-flex items-center gap-2">
+                                <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
+                                <span><?= e($tx['organization_name']) ?></span>
+                            </span>
+                        </div>
+                        <div><span class="tx-type-badge <?= $tx['type'] === 'income' ? 'tx-type-badge-income' : 'tx-type-badge-expense' ?>"><?= e($tx['type']) ?></span></div>
+                        <div>&#8369;<?= number_format((float) $tx['amount'], 2) ?></div>
+                        <div>
+                            <?php if (!empty($tx['receipt_path'])): ?>
+                                <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
+                            <?php else: ?>
+                                <span class="text-slate-400">-</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
         <div class="glass dashboard-panel xl:col-span-12 p-4 md:p-4 overflow-hidden">
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
                 <div>
-                    <h2 class="dashboard-section-title">Financial summary by organization</h2>
+                    <h2 class="dashboard-section-title"><span class="dashboard-label-tag">Financial summary by organization</span></h2>
                     <p class="dashboard-section-copy mt-1">Income, expense, and balance grouped by organization.</p>
                 </div>
                 <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View charts</span></span></button>
             </div>
-            <div class="table-wrapper">
-                <table class="dashboard-table w-full text-sm table-fixed">
-                    <thead>
-                    <tr class="border-b text-left">
-                        <th class="py-2 pr-4 w-[46%]">Organization</th>
-                        <th class="py-2 pr-3 w-[18%]">Income</th>
-                        <th class="py-2 pr-3 w-[18%]">Expense</th>
-                        <th class="py-2 w-[18%]">Balance</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($summary as $row): ?>
-                        <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
-                        <tr class="border-b">
-                            <td class="py-2 pr-4">
-                                <span class="inline-flex items-center gap-2">
-                                    <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
-                                    <span><?= e($row['name']) ?></span>
-                                </span>
-                            </td>
-                            <td class="py-2 pr-3 text-green-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_income'], 2) ?></td>
-                            <td class="py-2 pr-3 text-red-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></td>
-                            <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">&#8369;<?= number_format($balance, 2) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="dashboard-report-list dashboard-summary-list text-sm">
+                <div class="dashboard-report-row dashboard-summary-row dashboard-report-head">
+                    <div>Organization</div>
+                    <div>Income</div>
+                    <div>Expense</div>
+                    <div>Balance</div>
+                </div>
+                <?php foreach ($summary as $row): ?>
+                    <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
+                    <div class="dashboard-report-row dashboard-summary-row">
+                        <div>
+                            <span class="inline-flex items-center gap-2">
+                                <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
+                                <span><?= e($row['name']) ?></span>
+                            </span>
+                        </div>
+                        <div class="text-green-300">&#8369;<?= number_format((float) $row['total_income'], 2) ?></div>
+                        <div class="text-red-300">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></div>
+                        <div class="<?= $balance >= 0 ? 'text-green-300' : 'text-red-300' ?>">&#8369;<?= number_format($balance, 2) ?></div>
+                    </div>
+                <?php endforeach; ?>
             </div>
             <div class="pt-3">
                 <?php renderPagination($summaryPagination); ?>
@@ -474,15 +465,86 @@ WORK GUIDE:
                         <div class="dashboard-metric-label">Net balance (all organizations)</div>
                     </div>
                 </div>
-                <div class="grid md:grid-cols-2 gap-2">
+                <div class="grid xl:grid-cols-2 gap-2">
                     <div class="glass p-2 w-full h-full flex flex-col">
                         <h4 class="dashboard-section-title">Top Organizations by Net Balance</h4>
                         <p class="dashboard-section-copy mt-1">Higher bars indicate stronger surplus after expenses.</p>
-                        <canvas id="financialSummaryRankingChart" height="165"></canvas>
-                        <p id="financialSummaryRankingFallback" class="hidden mt-2 rounded border border-amber-300/40 bg-amber-500/15 px-3 py-2 text-xs text-amber-100" role="status">
-                            Chart preview is temporarily unavailable. Use the summary table for current values.
-                        </p>
-                        <div class="mt-2 grid sm:grid-cols-3 gap-1">
+                        <div class="dashboard-ranking-chart-wrap">
+                            <?php
+                            $chartRankingRows = array_slice($summaryRankingTop, 0, 6);
+                            $rankingMaxBalance = max(1.0, ...array_map(static fn(array $row): float => abs((float) ($row['balance'] ?? 0)), $chartRankingRows));
+                            $chartExpenseRows = $summaryRankingRows;
+                            usort($chartExpenseRows, static fn(array $a, array $b): int => (float) ($b['expense'] ?? 0) <=> (float) ($a['expense'] ?? 0));
+                            $chartExpenseRows = array_slice($chartExpenseRows, 0, 6);
+                            $rankingMaxExpense = max(1.0, ...array_map(static fn(array $row): float => (float) ($row['expense'] ?? 0), $chartExpenseRows));
+                            $formatChartAmount = static function (float $value): string {
+                                $absValue = abs($value);
+                                if ($absValue >= 1000000) {
+                                    return number_format($value / 1000000, 1) . 'm';
+                                }
+                                if ($absValue >= 1000) {
+                                    return number_format($value / 1000, $absValue >= 10000 ? 0 : 1) . 'k';
+                                }
+                                return number_format($value, 0);
+                            };
+                            $buildChartAxis = static function (float $maxValue) use ($formatChartAmount): array {
+                                $step = max(10000, ceil(max($maxValue, 1) / 6 / 10000) * 10000);
+                                $axisMax = $step * 6;
+                                $labels = [];
+                                for ($i = 0; $i <= 6; $i++) {
+                                    $labels[] = $formatChartAmount($step * $i);
+                                }
+                                return [$axisMax, $labels];
+                            };
+                            [$rankingAxisMaxBalance, $rankingBalanceAxisLabels] = $buildChartAxis($rankingMaxBalance);
+                            [$rankingAxisMaxExpense, $rankingExpenseAxisLabels] = $buildChartAxis($rankingMaxExpense);
+                            ?>
+                            <button type="button" id="dashboardRankingToggle" class="dashboard-chart-toggle" aria-pressed="false" data-chart-toggle>Top Net Balance</button>
+                            <table id="dashboardRankingChart" class="charts-css bar hide-data data-start show-labels show-primary-axis show-data-axes show-6-secondary-axes dashboard-net-balance-chart">
+                                <caption class="sr-only">Top organizations financial ranking</caption>
+                                <tbody data-chart-mode="balance">
+                                <?php foreach ($chartRankingRows as $index => $row): ?>
+                                    <?php
+                                    $rowBalance = (float) ($row['balance'] ?? 0);
+                                    $rowSize = min(1, abs($rowBalance) / $rankingAxisMaxBalance);
+                                    ?>
+                                    <tr class="<?= $rowBalance >= 0 ? 'is-positive' : 'is-negative' ?> chart-tone-<?= ($index % 5) + 1 ?>">
+                                        <th scope="row"><?= e((string) $row['name']) ?></th>
+                                        <td style="--size: <?= e(number_format($rowSize, 4, '.', '')) ?>" title="Net balance: PHP <?= e(number_format($rowBalance, 2)) ?>">
+                                            <span class="data">&#8369;<?= number_format($rowBalance, 2) ?></span>
+                                            <span class="chart-bar-value">&#8369;<?= e($formatChartAmount($rowBalance)) ?></span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                                <tbody data-chart-mode="expense" hidden>
+                                <?php foreach ($chartExpenseRows as $index => $row): ?>
+                                    <?php
+                                    $rowExpense = (float) ($row['expense'] ?? 0);
+                                    $rowSize = min(1, $rowExpense / $rankingAxisMaxExpense);
+                                    ?>
+                                    <tr class="is-expense chart-tone-<?= ($index % 2) + 1 ?>">
+                                        <th scope="row"><?= e((string) $row['name']) ?></th>
+                                        <td style="--size: <?= e(number_format($rowSize, 4, '.', '')) ?>" title="Expense: PHP <?= e(number_format($rowExpense, 2)) ?>">
+                                            <span class="data">&#8369;<?= number_format($rowExpense, 2) ?></span>
+                                            <span class="chart-bar-value">&#8369;<?= e($formatChartAmount($rowExpense)) ?></span>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <div class="dashboard-chart-axis" data-chart-axis="balance" aria-hidden="true">
+                                <?php foreach ($rankingBalanceAxisLabels as $label): ?>
+                                    <span><?= e($label) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="dashboard-chart-axis" data-chart-axis="expense" aria-hidden="true" hidden>
+                                <?php foreach ($rankingExpenseAxisLabels as $label): ?>
+                                    <span><?= e($label) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <div class="mt-auto grid md:grid-cols-3 xl:grid-cols-3 gap-1 pt-3">
                             <div class="dashboard-feed-item trend-insight-card">
                                 <div>
                                     <div class="dashboard-feed-title">Top performer</div>
@@ -528,7 +590,7 @@ WORK GUIDE:
                                 <?php if (count($summaryAttentionRows) === 0): ?>
                                     <p class="dashboard-section-copy">No organizations are currently flagged for risk or heavy spend pressure.</p>
                                 <?php else: ?>
-                                    <?php foreach ($summaryAttentionRows as $row): ?>
+                                    <?php foreach (array_slice($summaryAttentionRows, 0, 3) as $row): ?>
                                         <div class="dashboard-feed-meta"><?= e($row['name']) ?> &middot; Expense ratio <?= (int) round($row['expense_ratio'] * 100) ?>%</div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>

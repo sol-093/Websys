@@ -72,30 +72,67 @@ function collectUserRequestUpdates(int $userId, int $days = 7, int $limit = 8): 
         ];
     }
 
-        $driver = (string) $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if ($driver === 'sqlite') {
-                $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
-                        FROM security_notifications
-                        WHERE user_id = ?
-                            AND event_type = 'membership_removed'
-                            AND created_at >= datetime('now', '-30 day')
-                        ORDER BY created_at DESC
-                        LIMIT {$sourceLimit}");
-        } else {
-                $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
-                        FROM security_notifications
-                        WHERE user_id = ?
-                            AND event_type = 'membership_removed'
-                            AND created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
-                        ORDER BY created_at DESC
-                        LIMIT {$sourceLimit}");
-        }
-        $securityStmt->execute([$userId]);
+    $driver = (string) $db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $workflowEventTypes = [
+        'membership_removed',
+        'budget_expense_request_submitted',
+        'budget_expense_request_approved',
+        'budget_expense_request_rejected',
+    ];
+    $workflowEventPlaceholders = implode(',', array_fill(0, count($workflowEventTypes), '?'));
+    if ($driver === 'sqlite') {
+        $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
+                FROM security_notifications
+                WHERE user_id = ?
+                    AND event_type IN ({$workflowEventPlaceholders})
+                    AND created_at >= datetime('now', '-{$days} day')
+                ORDER BY created_at DESC
+                LIMIT {$sourceLimit}");
+    } else {
+        $securityStmt = $db->prepare("SELECT id, event_type, event_data, created_at
+                FROM security_notifications
+                WHERE user_id = ?
+                    AND event_type IN ({$workflowEventPlaceholders})
+                    AND created_at >= DATE_SUB(NOW(), INTERVAL {$days} DAY)
+                ORDER BY created_at DESC
+                LIMIT {$sourceLimit}");
+    }
+    $securityStmt->execute(array_merge([$userId], $workflowEventTypes));
     foreach ($securityStmt->fetchAll() as $row) {
+        $eventType = (string) ($row['event_type'] ?? '');
         $eventDataRaw = (string) ($row['event_data'] ?? '');
         $eventData = json_decode($eventDataRaw, true);
         if (!is_array($eventData)) {
             $eventData = [];
+        }
+
+        if (str_starts_with($eventType, 'budget_expense_request_')) {
+            $status = match ($eventType) {
+                'budget_expense_request_approved' => 'approved',
+                'budget_expense_request_rejected' => 'rejected',
+                default => 'pending',
+            };
+            $organizationName = trim((string) ($eventData['organization_name'] ?? 'Organization'));
+            $lineItemName = trim((string) ($eventData['line_item_name'] ?? 'Budget line'));
+            $amount = isset($eventData['amount']) ? (float) $eventData['amount'] : 0.0;
+            $message = $organizationName . ' · ' . $lineItemName;
+            if ($amount > 0) {
+                $message .= ' · PHP' . number_format($amount, 2);
+            }
+            if ($status === 'rejected') {
+                $note = trim((string) ($eventData['admin_note'] ?? ''));
+                if ($note !== '') {
+                    $message .= ' · Note: ' . $note;
+                }
+            }
+
+            $updates[] = [
+                'kind' => 'Budget Expense Request',
+                'status' => $status,
+                'message' => $message,
+                'event_at' => (string) ($row['created_at'] ?? ''),
+            ];
+            continue;
         }
 
         $removedOrganizations = [];
@@ -172,7 +209,7 @@ function getAuditActionFamily(string $action): string
     return match (true) {
         str_starts_with($action, 'auth.'), str_starts_with($action, 'profile.') => 'auth',
         str_starts_with($action, 'organization.'), str_starts_with($action, 'join_request.'), str_starts_with($action, 'assignment.') => 'organization',
-        str_starts_with($action, 'finance.') => 'finance',
+        str_starts_with($action, 'finance.'), str_starts_with($action, 'budget.') => 'finance',
         str_starts_with($action, 'announcement.') => 'announcement',
         default => 'system',
     };
@@ -207,6 +244,73 @@ function queueMembershipRemovalNotification(int $userId, array $removedMembershi
 
     $insertStmt = db()->prepare('INSERT INTO security_notifications (user_id, event_type, event_data, sent_at) VALUES (?, ?, ?, NULL)');
     $insertStmt->execute([$userId, 'membership_removed', $payload]);
+}
+
+function queueBudgetExpenseRequestNotification(int $userId, string $eventType, array $payload): void
+{
+    if ($userId <= 0 || !in_array($eventType, ['budget_expense_request_submitted', 'budget_expense_request_approved', 'budget_expense_request_rejected'], true)) {
+        return;
+    }
+
+    $encodedPayload = json_encode($payload);
+    if (!is_string($encodedPayload) || $encodedPayload === '') {
+        return;
+    }
+
+    try {
+        $insertStmt = db()->prepare('INSERT INTO security_notifications (user_id, event_type, event_data, sent_at) VALUES (?, ?, ?, NULL)');
+        $insertStmt->execute([$userId, $eventType, $encodedPayload]);
+    } catch (Throwable $e) {
+        error_log('Unable to queue BudgetFlow notification: ' . $e->getMessage());
+    }
+}
+
+function queueBudgetExpenseRequestSubmittedNotifications(PDO $db, int $requestId): void
+{
+    try {
+        $request = getExpenseRequestById($db, $requestId);
+        if (!$request) {
+            return;
+        }
+
+        $payload = buildBudgetExpenseRequestNotificationPayload($request);
+        $adminStmt = $db->query("SELECT id FROM users WHERE role = 'admin'");
+        foreach ($adminStmt->fetchAll() ?: [] as $admin) {
+            queueBudgetExpenseRequestNotification((int) ($admin['id'] ?? 0), 'budget_expense_request_submitted', $payload);
+        }
+    } catch (Throwable $e) {
+        error_log('Unable to queue BudgetFlow submission notifications: ' . $e->getMessage());
+    }
+}
+
+function queueBudgetExpenseRequestDecisionNotification(PDO $db, int $requestId, string $eventType, ?string $adminNote = null): void
+{
+    try {
+        $request = getExpenseRequestById($db, $requestId);
+        if (!$request) {
+            return;
+        }
+
+        $payload = buildBudgetExpenseRequestNotificationPayload($request);
+        if ($adminNote !== null && trim($adminNote) !== '') {
+            $payload['admin_note'] = trim($adminNote);
+        }
+
+        queueBudgetExpenseRequestNotification((int) ($request['requested_by'] ?? 0), $eventType, $payload);
+    } catch (Throwable $e) {
+        error_log('Unable to queue BudgetFlow decision notification: ' . $e->getMessage());
+    }
+}
+
+function buildBudgetExpenseRequestNotificationPayload(array $request): array
+{
+    return [
+        'request_id' => (int) ($request['id'] ?? 0),
+        'organization_name' => (string) ($request['organization_name'] ?? 'Organization'),
+        'budget_title' => (string) ($request['budget_title'] ?? 'Budget'),
+        'line_item_name' => (string) ($request['line_item_name'] ?? 'Budget line'),
+        'amount' => round((float) ($request['amount'] ?? 0), 2),
+    ];
 }
 
 function buildUpdatesMarker(array $updates): string

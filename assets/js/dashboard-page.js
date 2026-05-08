@@ -51,6 +51,64 @@
 
     initDashboardLiveTimestamp();
 
+    const initDashboardRankingToggle = function () {
+        const chart = document.getElementById('dashboardRankingChart');
+        const toggle = document.getElementById('dashboardRankingToggle');
+        if (!chart || !toggle) {
+            return;
+        }
+
+        const balanceRows = chart.querySelector('[data-chart-mode="balance"]');
+        const expenseRows = chart.querySelector('[data-chart-mode="expense"]');
+        if (!balanceRows || !expenseRows) {
+            return;
+        }
+        const balanceAxis = document.querySelector('[data-chart-axis="balance"]');
+        const expenseAxis = document.querySelector('[data-chart-axis="expense"]');
+
+        const switchMode = function () {
+            const showingExpenses = !chart.classList.contains('is-expense-mode');
+
+            chart.classList.remove('is-chart-animating');
+            chart.classList.toggle('is-expense-mode', showingExpenses);
+            toggle.classList.toggle('is-expense-mode', showingExpenses);
+            balanceRows.hidden = showingExpenses;
+            expenseRows.hidden = !showingExpenses;
+            balanceRows.style.display = showingExpenses ? 'none' : '';
+            expenseRows.style.display = showingExpenses ? '' : 'none';
+            if (balanceAxis && expenseAxis) {
+                balanceAxis.hidden = showingExpenses;
+                expenseAxis.hidden = !showingExpenses;
+                balanceAxis.style.display = showingExpenses ? 'none' : '';
+                expenseAxis.style.display = showingExpenses ? '' : '';
+            }
+            toggle.textContent = showingExpenses ? 'Top Expenses' : 'Top Net Balance';
+            toggle.setAttribute('aria-pressed', showingExpenses ? 'true' : 'false');
+            window.requestAnimationFrame(function () {
+                chart.classList.add('is-chart-animating');
+                window.setTimeout(function () {
+                    chart.classList.remove('is-chart-animating');
+                }, 560);
+            });
+        };
+
+        toggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            switchMode();
+        });
+
+        toggle.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            event.preventDefault();
+            switchMode();
+        });
+    };
+
+    initDashboardRankingToggle();
+
     const canvas = document.getElementById('trendChart');
     if (!canvas) return;
 
@@ -243,6 +301,23 @@
 
     let financialRankingChart = null;
 
+    const isDashboardMobile = function () {
+        return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+    };
+
+    const isDashboardCompact = function () {
+        return window.matchMedia && window.matchMedia('(max-width: 1279px)').matches;
+    };
+
+    const shortenChartLabel = function (label, maxLength) {
+        const value = String(label || '');
+        if (value.length <= maxLength) {
+            return value;
+        }
+
+        return value.slice(0, Math.max(0, maxLength - 3)).trimEnd() + '...';
+    };
+
     const createFinancialCharts = function () {
         if (financialRankingChart || !canRenderCharts) {
             return;
@@ -263,6 +338,10 @@
         setFallbackVisibility(rankingFallback, rankingCanvas, false);
         setChartEmptyState(rankingCanvas, false);
 
+        const mobileChart = isDashboardMobile();
+        const compactChart = isDashboardCompact();
+        const rankingFontSize = mobileChart ? 10 : (compactChart ? 11 : 12);
+        const rankingLabelLength = mobileChart ? 16 : (compactChart ? 24 : 28);
         financialRankingChart = new Chart(rankingCanvas, {
             type: 'bar',
             data: {
@@ -284,19 +363,47 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 indexAxis: 'y',
+                layout: {
+                    padding: mobileChart
+                        ? { left: 0, right: 8, top: 4, bottom: 0 }
+                        : { left: 0, right: 12, top: 4, bottom: 0 }
+                },
                 plugins: {
                     legend: {
-                        labels: { color: legendColor }
+                        labels: {
+                            color: legendColor,
+                            boxWidth: 28,
+                            font: {
+                                size: rankingFontSize
+                            }
+                        }
                     }
                 },
                 scales: {
                     x: {
-                        ticks: { color: axisColor },
+                        ticks: {
+                            color: axisColor,
+                            maxTicksLimit: mobileChart ? 4 : (compactChart ? 5 : 6),
+                            font: {
+                                size: rankingFontSize
+                            }
+                        },
                         grid: { color: gridColor }
                     },
                     y: {
-                        ticks: { color: axisColor },
+                        ticks: {
+                            color: axisColor,
+                            autoSkip: false,
+                            font: {
+                                size: rankingFontSize
+                            },
+                            callback: function (value) {
+                                const label = this.getLabelForValue(value);
+                                return shortenChartLabel(label, rankingLabelLength);
+                            }
+                        },
                         grid: { color: 'rgba(0,0,0,0)' }
                     }
                 }

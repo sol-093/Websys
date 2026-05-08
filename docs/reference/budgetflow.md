@@ -269,6 +269,9 @@ Budget usage visibility across owner/admin workflows.
 ## Phase 7: Notifications and Audit Trail
 Keep the process accountable.
 
+### Status
+Started on 2026-05-08.
+
 ### Notifications
 - request submitted
 - request approved
@@ -285,10 +288,18 @@ Keep the process accountable.
 ### Deliverable
 Full traceability using the existing system patterns.
 
+### Implementation notes
+- BudgetFlow submissions now queue notification-center/login update entries for admins.
+- BudgetFlow approvals and rejections now queue notification-center/login update entries for the requesting owner.
+- Budget audit events are grouped with finance activity in the notification activity feed.
+
 ---
 
 ## Phase 8: Reporting
 Make the feature useful operationally.
+
+### Status
+Started on 2026-05-08.
 
 ### Reports
 - budget vs actual spending
@@ -302,6 +313,18 @@ Make the feature useful operationally.
 
 ### Deliverable
 Basic budget reporting and financial oversight.
+
+### Implementation notes
+- Added an admin budget overview page at `?page=admin_budget_overview`.
+- Admins can filter budgets by organization and status.
+- The overview shows budget total, allocated amount, spent amount, pending request amount, remaining allocation, line count, and approved/rejected/pending request counts.
+- Admins can export the filtered budget overview as a styled Excel report from `?action=export_budget_overview&format=xls`; `format=csv` remains available for raw integrations.
+- Admins can export the filtered expense request history as a styled Excel report from `?action=export_expense_requests&format=xls`; `format=csv` remains available for raw integrations.
+- Organization owners can export the selected Budget Workspace line-item report from `?action=export_owner_budget&format=xls`; the report includes totals, warning counts, and per-line usage state.
+- Added `scripts/seed/seed_budgetflow.php` with realistic budgets, line items, pending/approved/rejected expense requests, and linked approved transactions.
+- Owner finance now shows active budget line usage beside the request form so owners can see allocation, spent, pending, and remaining amounts before submitting.
+- Owner expense request amount input now updates its maximum value and helper text from the selected budget line's remaining allocation.
+- Owner finance, owner Budget Workspace, and admin Budget Overview now show warning states for budget lines that are watch-level or critical based on spent plus pending usage.
 
 ---
 

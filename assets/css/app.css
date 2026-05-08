@@ -2767,6 +2767,99 @@
                 line-height: 1.3;
             }
 
+            .expense-request-timeline {
+                margin: 0.45rem 0 0;
+                padding: 0;
+                list-style: none;
+            }
+
+            .expense-timeline-step {
+                --timeline-accent: #10b981;
+                --timeline-soft: rgba(16, 185, 129, 0.12);
+                --timeline-border: rgba(16, 185, 129, 0.38);
+                position: relative;
+                display: grid;
+                grid-template-columns: 1.35rem minmax(0, 1fr);
+                gap: 0.55rem;
+                padding-bottom: 0.72rem;
+                color: #334155;
+            }
+
+            .expense-timeline-step:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                top: 1.3rem;
+                bottom: 0.1rem;
+                left: 0.65rem;
+                width: 1px;
+                background: rgba(16, 185, 129, 0.24);
+            }
+
+            .expense-timeline-step:last-child {
+                padding-bottom: 0;
+            }
+
+            .expense-timeline-dot {
+                position: relative;
+                z-index: 1;
+                display: inline-flex;
+                width: 1.3rem;
+                height: 1.3rem;
+                align-items: center;
+                justify-content: center;
+                border-radius: 999px;
+                border: 1px solid var(--timeline-border);
+                background: var(--timeline-soft);
+                color: var(--timeline-accent);
+            }
+
+            .expense-timeline-content {
+                min-width: 0;
+                display: grid;
+                gap: 0.16rem;
+            }
+
+            .expense-timeline-title {
+                color: #0f172a;
+                font-size: 0.76rem;
+                font-weight: 800;
+                line-height: 1.2;
+            }
+
+            .expense-timeline-meta,
+            .expense-timeline-note {
+                color: #475569;
+                font-size: 0.7rem;
+                line-height: 1.35;
+            }
+
+            .expense-timeline-note {
+                margin-top: 0.2rem;
+                border-radius: 0.48rem;
+                border: 1px solid rgba(16, 185, 129, 0.18);
+                background: rgba(255, 255, 255, 0.36);
+                padding: 0.45rem 0.55rem;
+                overflow-wrap: anywhere;
+            }
+
+            .expense-timeline-step-approved {
+                --timeline-accent: #10b981;
+                --timeline-soft: rgba(16, 185, 129, 0.12);
+                --timeline-border: rgba(16, 185, 129, 0.38);
+            }
+
+            .expense-timeline-step-rejected {
+                --timeline-accent: #dc2626;
+                --timeline-soft: rgba(220, 38, 38, 0.12);
+                --timeline-border: rgba(220, 38, 38, 0.38);
+            }
+
+            .expense-timeline-step-pending {
+                --timeline-accent: #ca8a04;
+                --timeline-soft: rgba(202, 138, 4, 0.12);
+                --timeline-border: rgba(202, 138, 4, 0.38);
+            }
+
             .meta-chip {
                 display: inline-flex;
                 align-items: center;
@@ -2844,6 +2937,28 @@
 
             body.theme-dark .admin-mobile-meta {
                 color: #a7f3d0 !important;
+            }
+
+            body.theme-dark .expense-timeline-step {
+                color: #d1fae5;
+            }
+
+            body.theme-dark .expense-timeline-step:not(:last-child)::after {
+                background: rgba(110, 231, 183, 0.28);
+            }
+
+            body.theme-dark .expense-timeline-title {
+                color: #ecfdf5;
+            }
+
+            body.theme-dark .expense-timeline-meta,
+            body.theme-dark .expense-timeline-note {
+                color: #a7f3d0;
+            }
+
+            body.theme-dark .expense-timeline-note {
+                border-color: rgba(110, 231, 183, 0.2);
+                background: rgba(255, 255, 255, 0.06);
             }
 
             body.theme-dark .meta-chip {
@@ -3687,6 +3802,22 @@
                 font-size: 0.76rem;
             }
 
+            .dashboard-label-tag {
+                display: inline-flex;
+                align-items: center;
+                width: fit-content;
+                border: 0;
+                border-radius: 0;
+                border-top-right-radius: 2px;
+                border-bottom-right-radius: 2px;
+                background: transparent;
+                padding: 0;
+                color: #ffffff;
+                font-size: 0.96rem;
+                font-weight: 700;
+                line-height: 1;
+            }
+
             .dashboard-headline {
                 color: #f0fdf4;
                 font-size: clamp(1.4rem, 2.4vw, 2.35rem);
@@ -3849,6 +3980,80 @@
                 overflow-wrap: anywhere;
             }
 
+            .dashboard-report-list {
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .dashboard-report-row {
+                display: grid;
+                grid-template-columns: minmax(6.5rem, 0.9fr) minmax(13rem, 1.8fr) minmax(6rem, 0.75fr) minmax(7rem, 0.85fr) minmax(5.5rem, 0.7fr);
+                align-items: center;
+                gap: 1rem;
+                border-bottom: 1px solid rgba(110, 231, 183, 0.48);
+                padding: 0.58rem 0;
+                color: #f0fdf4;
+            }
+
+            .dashboard-summary-row {
+                grid-template-columns: minmax(15rem, 2.2fr) minmax(7rem, 0.85fr) minmax(7rem, 0.85fr) minmax(7rem, 0.85fr);
+            }
+
+            .dashboard-report-head {
+                color: rgba(236, 253, 245, 0.8);
+                font-size: 0.7rem;
+                font-weight: 600;
+            }
+
+            .dashboard-report-row > div {
+                min-width: 0;
+            }
+
+            .dashboard-report-row > div:nth-child(3) {
+                padding-left: 0.5rem;
+            }
+
+            .dashboard-report-row > div:nth-child(4),
+            .dashboard-report-row > div:nth-child(5) {
+                padding-left: 0.25rem;
+            }
+
+            .dashboard-mobile-only {
+                display: none;
+            }
+
+            .dashboard-recent-reports-table {
+                border-collapse: collapse;
+            }
+
+            .dashboard-table tr {
+                border-bottom-color: rgba(110, 231, 183, 0.42) !important;
+            }
+
+            .dashboard-recent-reports-table thead tr,
+            .dashboard-recent-reports-table tbody tr {
+                border-bottom: 0;
+            }
+
+            .dashboard-recent-reports-table th,
+            .dashboard-recent-reports-table td {
+                border-bottom: 0;
+                box-shadow: inset 0 -1px 0 rgba(110, 231, 183, 0.58);
+                position: relative;
+                z-index: 1;
+            }
+
+            .dashboard-recent-reports-table tbody tr:nth-last-child(2) td {
+                box-shadow: none;
+            }
+
+            .dashboard-recent-reports-table .dashboard-recent-reports-end-line td {
+                height: 1px;
+                padding: 0 !important;
+                box-shadow: inset 0 1px 0 rgba(110, 231, 183, 0.58);
+                line-height: 0;
+            }
+
             .trend-insight-grid {
                 align-items: stretch;
             }
@@ -3868,9 +4073,354 @@
                 line-height: 1.3;
             }
 
+            .dashboard-ranking-chart-wrap {
+                position: relative;
+                width: 100%;
+                min-height: 205px;
+                height: 225px;
+            }
+
+            .dashboard-ranking-chart-wrap canvas {
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            .dashboard-net-balance-chart.charts-css {
+                width: 100%;
+                height: calc(100% - 2.85rem);
+                border-collapse: separate;
+                border-spacing: 0;
+                color: #d1fae5;
+                font-family: inherit;
+                table-layout: fixed;
+            }
+
+            .dashboard-net-balance-chart caption {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+            }
+
+            .dashboard-chart-toggle {
+                display: block;
+                width: fit-content;
+                margin: 0.36rem auto 0.28rem;
+                border: 0;
+                background: transparent;
+                color: #34d399;
+                cursor: pointer;
+                font: inherit;
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0;
+                line-height: 1.1;
+                padding: 0.12rem 0.5rem;
+                text-align: center;
+                text-decoration: none;
+                border: 1px solid currentColor;
+                border-radius: 0.36rem;
+            }
+
+            .dashboard-chart-toggle:hover,
+            .dashboard-chart-toggle:focus-visible {
+                color: #6ee7b7;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(110, 231, 183, 0.12);
+            }
+
+            .dashboard-chart-toggle.is-expense-mode {
+                color: #f87171;
+            }
+
+            .dashboard-chart-toggle.is-expense-mode:hover,
+            .dashboard-chart-toggle.is-expense-mode:focus-visible {
+                color: #fca5a5;
+                box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12);
+            }
+
+            .dashboard-net-balance-chart .data {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+            }
+
+            .dashboard-net-balance-chart tbody {
+                position: relative;
+                display: grid;
+                height: 100%;
+                gap: 0;
+                grid-template-rows: repeat(6, 1fr);
+                grid-auto-rows: 1fr;
+                background:
+                    repeating-linear-gradient(to bottom, rgba(110, 231, 183, 0.18) 0 1px, transparent 1px 20%),
+                    linear-gradient(to right, transparent 0, transparent 16.48%, rgba(110, 231, 183, 0.13) 16.66%, transparent 16.84%),
+                    linear-gradient(to right, transparent 0, transparent 33.15%, rgba(110, 231, 183, 0.13) 33.33%, transparent 33.51%),
+                    linear-gradient(to right, transparent 0, transparent 49.82%, rgba(110, 231, 183, 0.13) 50%, transparent 50.18%),
+                    linear-gradient(to right, transparent 0, transparent 66.48%, rgba(110, 231, 183, 0.13) 66.66%, transparent 66.84%),
+                    linear-gradient(to right, transparent 0, transparent 83.15%, rgba(110, 231, 183, 0.13) 83.33%, transparent 83.51%),
+                    linear-gradient(to right, transparent 0, transparent 99.82%, rgba(110, 231, 183, 0.16) 100%, transparent 100%);
+                background-position: 10.25rem 0;
+                background-size: calc(100% - 10.25rem) 100%;
+                background-repeat: no-repeat;
+            }
+
+            .dashboard-net-balance-chart tbody::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 10.25rem;
+                width: 1px;
+                background: rgba(110, 231, 183, 0.32);
+                pointer-events: none;
+            }
+
+            .dashboard-net-balance-chart tbody[hidden] {
+                display: none !important;
+            }
+
+            .dashboard-net-balance-chart tr {
+                display: grid;
+                grid-template-columns: 9.25rem minmax(0, 1fr);
+                align-items: center;
+                gap: 1rem;
+                min-height: 0;
+            }
+
+            .dashboard-net-balance-chart th {
+                overflow: hidden;
+                color: #ffffff;
+                font-family: inherit;
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0;
+                line-height: 1.15;
+                text-align: left;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .dashboard-net-balance-chart td {
+                position: relative;
+                height: 100%;
+                min-width: 0;
+                overflow: visible;
+                border-radius: 0 !important;
+                background: transparent !important;
+            }
+
+            .dashboard-net-balance-chart .chart-bar-value {
+                position: absolute;
+                left: calc(var(--size) * 100%);
+                top: 50%;
+                z-index: 2;
+                transform: translate(calc(-100% - 0.35rem), -50%);
+                color: rgba(255, 255, 255, 0.92);
+                font-size: 0.62rem;
+                font-family: inherit;
+                font-weight: 600;
+                letter-spacing: 0;
+                line-height: 1;
+                white-space: nowrap;
+                -webkit-font-smoothing: antialiased;
+                text-rendering: geometricPrecision;
+            }
+
+            .dashboard-net-balance-chart.charts-css td::before {
+                content: '';
+                position: absolute;
+                inset: 0.18rem auto 0.18rem 0;
+                width: calc(var(--size) * 100%);
+                min-width: 0.45rem;
+                border-radius: 0 !important;
+                border-top-right-radius: 1px !important;
+                border-bottom-right-radius: 1px !important;
+                background: var(--chart-bar-fill, rgba(16, 185, 129, 0.82));
+                box-shadow: 0 0 12px var(--chart-bar-glow, rgba(16, 185, 129, 0.18));
+                transform-origin: left center;
+            }
+
+            .dashboard-net-balance-chart.is-chart-animating tbody:not([hidden]) td::before {
+                animation: dashboard-chart-bar-enter 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+            }
+
+            @keyframes dashboard-chart-bar-enter {
+                from {
+                    opacity: 0.45;
+                    transform: scaleX(0.08);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: scaleX(1);
+                }
+            }
+
+            .dashboard-net-balance-chart .chart-tone-1 {
+                --chart-bar-fill: rgba(16, 185, 129, 0.82);
+                --chart-bar-glow: rgba(16, 185, 129, 0.18);
+            }
+
+            .dashboard-net-balance-chart .chart-tone-2,
+            .dashboard-net-balance-chart .chart-tone-4 {
+                --chart-bar-fill: rgba(20, 184, 166, 0.78);
+                --chart-bar-glow: rgba(20, 184, 166, 0.16);
+            }
+
+            .dashboard-net-balance-chart .chart-tone-3,
+            .dashboard-net-balance-chart .chart-tone-5 {
+                --chart-bar-fill: rgba(16, 185, 129, 0.82);
+                --chart-bar-glow: rgba(16, 185, 129, 0.18);
+            }
+
+            .dashboard-net-balance-chart tr.is-negative td::before {
+                background: rgba(248, 113, 113, 0.82);
+                box-shadow: 0 0 14px rgba(248, 113, 113, 0.18);
+            }
+
+            .dashboard-net-balance-chart.is-expense-mode td::before {
+                background: var(--expense-chart-bar-fill, rgba(248, 113, 113, 0.82));
+                box-shadow: 0 0 12px var(--expense-chart-bar-glow, rgba(248, 113, 113, 0.18));
+            }
+
+            .dashboard-net-balance-chart.is-expense-mode .chart-tone-1 {
+                --expense-chart-bar-fill: rgba(248, 113, 113, 0.82);
+                --expense-chart-bar-glow: rgba(248, 113, 113, 0.18);
+            }
+
+            .dashboard-net-balance-chart.is-expense-mode .chart-tone-2 {
+                --expense-chart-bar-fill: rgba(220, 38, 38, 0.78);
+                --expense-chart-bar-glow: rgba(220, 38, 38, 0.16);
+            }
+
+            .dashboard-chart-axis {
+                display: flex;
+                justify-content: space-between;
+                margin: 0.35rem 0 0 10.25rem;
+                color: rgba(209, 250, 229, 0.68);
+                font-size: 0.68rem;
+                font-weight: 600;
+                line-height: 1;
+            }
+
+            .dashboard-chart-axis[hidden] {
+                display: none !important;
+            }
+
+            .dashboard-chart-axis span {
+                white-space: nowrap;
+            }
+
+            @media (max-width: 1279px) {
+                .dashboard-ranking-chart-wrap {
+                    height: 230px;
+                    min-height: 230px;
+                }
+            }
+
             @media (max-width: 767px) {
+                .dashboard-desktop-only {
+                    display: none;
+                }
+
+                .dashboard-mobile-only {
+                    display: inline;
+                }
+
                 .dashboard-metric-grid {
                     grid-template-columns: 1fr;
+                }
+
+                .dashboard-mobile-trim {
+                    display: none;
+                }
+
+                .dashboard-report-head {
+                    display: none;
+                }
+
+                .dashboard-report-row,
+                .dashboard-summary-row {
+                    grid-template-columns: 1fr;
+                    gap: 0.45rem;
+                    padding: 0.75rem 0;
+                }
+
+                .dashboard-report-row > div,
+                .dashboard-summary-row > div {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1rem;
+                    padding-left: 0 !important;
+                }
+
+                .dashboard-report-row > div::before,
+                .dashboard-summary-row > div::before {
+                    flex: 0 0 auto;
+                    color: rgba(236, 253, 245, 0.68);
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                }
+
+                .dashboard-report-list:not(.dashboard-summary-list) .dashboard-report-row > div:nth-child(1)::before { content: 'Date'; }
+                .dashboard-report-list:not(.dashboard-summary-list) .dashboard-report-row > div:nth-child(2)::before { content: 'Organization'; }
+                .dashboard-report-list:not(.dashboard-summary-list) .dashboard-report-row > div:nth-child(3)::before { content: 'Type'; }
+                .dashboard-report-list:not(.dashboard-summary-list) .dashboard-report-row > div:nth-child(4)::before { content: 'Amount'; }
+                .dashboard-report-list:not(.dashboard-summary-list) .dashboard-report-row > div:nth-child(5)::before { content: 'Receipt'; }
+
+                .dashboard-summary-list .dashboard-report-row > div:nth-child(1)::before { content: 'Organization'; }
+                .dashboard-summary-list .dashboard-report-row > div:nth-child(2)::before { content: 'Income'; }
+                .dashboard-summary-list .dashboard-report-row > div:nth-child(3)::before { content: 'Expense'; }
+                .dashboard-summary-list .dashboard-report-row > div:nth-child(4)::before { content: 'Balance'; }
+
+                .dashboard-ranking-chart-wrap {
+                    height: 235px;
+                    min-height: 235px;
+                }
+
+                .dashboard-net-balance-chart tbody {
+                    background-position: 7.65rem 0;
+                    background-size: calc(100% - 7.65rem) 100%;
+                }
+
+                .dashboard-net-balance-chart tbody::before {
+                    left: 7.65rem;
+                }
+
+                .dashboard-net-balance-chart caption {
+                    font-size: 0.78rem;
+                }
+
+                .dashboard-chart-toggle {
+                    margin-left: auto;
+                    margin-right: auto;
+                    font-size: 0.72rem;
+                }
+
+                .dashboard-chart-axis {
+                    margin-left: 7.65rem;
+                    font-size: 0.58rem;
+                }
+
+                .dashboard-net-balance-chart tr {
+                    grid-template-columns: 7rem minmax(0, 1fr);
+                    gap: 0.65rem;
+                    min-height: 0;
+                }
+
+                .dashboard-net-balance-chart th {
+                    font-size: 0.68rem;
+                }
+
+                .dashboard-net-balance-chart .chart-bar-value {
+                    font-size: 0.55rem;
                 }
             }
 
@@ -3905,8 +4455,79 @@
                 color: #1f2937;
             }
 
+            body:not(.theme-dark) .dashboard-report-row {
+                border-bottom-color: rgba(16, 185, 129, 0.3);
+                color: #1f2937;
+            }
+
+            body:not(.theme-dark) .dashboard-report-head {
+                color: #1f2937;
+            }
+
+            body:not(.theme-dark) .dashboard-summary-row .text-green-300 {
+                color: #047857;
+            }
+
+            body:not(.theme-dark) .dashboard-summary-row .text-red-300 {
+                color: #dc2626;
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart {
+                color: #064e3b;
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart tbody {
+                background:
+                    repeating-linear-gradient(to bottom, rgba(16, 185, 129, 0.22) 0 1px, transparent 1px 20%),
+                    linear-gradient(to right, transparent 0, transparent 16.48%, rgba(16, 185, 129, 0.2) 16.66%, transparent 16.84%),
+                    linear-gradient(to right, transparent 0, transparent 33.15%, rgba(16, 185, 129, 0.2) 33.33%, transparent 33.51%),
+                    linear-gradient(to right, transparent 0, transparent 49.82%, rgba(16, 185, 129, 0.2) 50%, transparent 50.18%),
+                    linear-gradient(to right, transparent 0, transparent 66.48%, rgba(16, 185, 129, 0.2) 66.66%, transparent 66.84%),
+                    linear-gradient(to right, transparent 0, transparent 83.15%, rgba(16, 185, 129, 0.2) 83.33%, transparent 83.51%),
+                    linear-gradient(to right, transparent 0, transparent 99.82%, rgba(16, 185, 129, 0.24) 100%, transparent 100%);
+                background-position: 10.25rem 0;
+                background-size: calc(100% - 10.25rem) 100%;
+                background-repeat: no-repeat;
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart tbody::before {
+                background: rgba(16, 185, 129, 0.38);
+            }
+
+            body:not(.theme-dark) .dashboard-chart-toggle {
+                color: #047857;
+            }
+
+            body:not(.theme-dark) .dashboard-chart-toggle.is-expense-mode {
+                color: #dc2626;
+            }
+
+            body:not(.theme-dark) .dashboard-chart-axis {
+                color: rgba(6, 95, 70, 0.68);
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart .chart-bar-value {
+                color: rgba(15, 23, 42, 0.78);
+                text-shadow: none;
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart th {
+                color: #065f46;
+            }
+
+            @media (max-width: 767px) {
+                body:not(.theme-dark) .dashboard-net-balance-chart tbody {
+                    background-position: 7.65rem 0;
+                    background-size: calc(100% - 7.65rem) 100%;
+                }
+            }
+
             body:not(.theme-dark) .dashboard-copy {
                 color: #374151;
+            }
+
+            body:not(.theme-dark) .dashboard-label-tag {
+                color: #1f2937;
             }
 
             body:not(.theme-dark) .dashboard-metric-card,
@@ -3936,7 +4557,21 @@
             }
 
             body:not(.theme-dark) .dashboard-table tr {
-                border-color: rgba(15, 23, 42, 0.12) !important;
+                border-color: rgba(16, 185, 129, 0.28) !important;
+            }
+
+            body:not(.theme-dark) .dashboard-recent-reports-table thead tr,
+            body:not(.theme-dark) .dashboard-recent-reports-table tbody tr {
+                border-bottom-color: transparent;
+            }
+
+            body:not(.theme-dark) .dashboard-recent-reports-table th,
+            body:not(.theme-dark) .dashboard-recent-reports-table td {
+                box-shadow: inset 0 -1px 0 rgba(16, 185, 129, 0.34);
+            }
+
+            body:not(.theme-dark) .dashboard-recent-reports-table .dashboard-recent-reports-end-line td {
+                box-shadow: inset 0 1px 0 rgba(16, 185, 129, 0.34);
             }
 
             body:not(.theme-dark) .dashboard-shell .text-green-300,
@@ -4445,4 +5080,91 @@
                     background: rgba(16, 185, 129, 0.14);
                     color: #bbf7d0;
                     font-size: 0.72rem;
+                }
+
+                .budget-usage-segment {
+                    --budget-tooltip-accent: #6ee7b7;
+                    --budget-tooltip-border: rgba(110, 231, 183, 0.48);
+                    position: relative;
+                    min-width: 0.45rem;
+                    cursor: help;
+                    outline: none;
+                }
+
+                .budget-usage-segment:first-child {
+                    border-top-left-radius: 999px;
+                    border-bottom-left-radius: 999px;
+                }
+
+                .budget-usage-segment:last-child {
+                    border-top-right-radius: 999px;
+                    border-bottom-right-radius: 999px;
+                }
+
+                .budget-usage-segment::after {
+                    content: attr(data-tooltip);
+                    position: absolute;
+                    left: 50%;
+                    bottom: calc(100% + 0.65rem);
+                    z-index: 50;
+                    transform: translateX(-50%) translateY(0.25rem);
+                    opacity: 0;
+                    pointer-events: none;
+                    white-space: nowrap;
+                    border-radius: 0.55rem;
+                    border: 1px solid var(--budget-tooltip-border);
+                    background: rgba(4, 24, 18, 0.96);
+                    padding: 0.55rem 0.75rem;
+                    color: var(--budget-tooltip-accent);
+                    font-size: 0.86rem;
+                    font-weight: 800;
+                    line-height: 1.1;
+                    letter-spacing: 0;
+                    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42), 0 0 22px rgba(16, 185, 129, 0.12);
+                    transition: opacity 150ms ease, transform 150ms ease;
+                }
+
+                .budget-usage-segment::before {
+                    content: '';
+                    position: absolute;
+                    left: 50%;
+                    bottom: calc(100% + 0.35rem);
+                    z-index: 51;
+                    width: 0.58rem;
+                    height: 0.58rem;
+                    border-right: 1px solid var(--budget-tooltip-border);
+                    border-bottom: 1px solid var(--budget-tooltip-border);
+                    background: rgba(4, 24, 18, 0.96);
+                    transform: translateX(-50%) rotate(45deg);
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 150ms ease, transform 150ms ease;
+                }
+
+                .budget-usage-segment:hover::after,
+                .budget-usage-segment:hover::before,
+                .budget-usage-segment:focus-visible::after,
+                .budget-usage-segment:focus-visible::before {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+
+                .budget-usage-segment:hover::before,
+                .budget-usage-segment:focus-visible::before {
+                    transform: translateX(-50%) rotate(45deg);
+                }
+
+                .budget-usage-segment-spent {
+                    --budget-tooltip-accent: #fb7185;
+                    --budget-tooltip-border: rgba(251, 113, 133, 0.58);
+                }
+
+                .budget-usage-segment-pending {
+                    --budget-tooltip-accent: #fde047;
+                    --budget-tooltip-border: rgba(253, 224, 71, 0.58);
+                }
+
+                .budget-usage-segment-remaining {
+                    --budget-tooltip-accent: #6ee7b7;
+                    --budget-tooltip-border: rgba(110, 231, 183, 0.58);
                 }

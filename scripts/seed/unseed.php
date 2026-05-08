@@ -9,7 +9,10 @@ $pdo = db();
 // List of tables to clear in order of dependency
 $tables = [
     'transaction_change_requests',
+    'expense_requests',
     'financial_transactions',
+    'budget_line_items',
+    'budgets',
     'organization_join_requests',
     'owner_assignments',
     'announcements',

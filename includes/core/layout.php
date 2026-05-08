@@ -34,12 +34,12 @@ function renderHeader(string $title = 'Dashboard'): void
     $currentPage = (string) ($_GET['page'] ?? ($user ? 'dashboard' : 'home'));
     $isHomeActive = $currentPage === 'home';
     $isDashboardActive = in_array($currentPage, ['dashboard', 'announcements'], true);
-    $isMyOrgActive = in_array($currentPage, ['my_org', 'my_org_manage'], true);
+    $isMyOrgActive = in_array($currentPage, ['my_org', 'my_org_manage', 'my_org_members', 'my_org_finance', 'my_org_budget'], true);
     $isProfileActive = $currentPage === 'profile';
     $isNotificationsActive = $currentPage === 'notifications';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
-    $isAdminActive = in_array($currentPage, ['admin_orgs', 'admin_students', 'admin_requests', 'admin_expense_requests', 'admin_audit'], true);
+    $isAdminActive = in_array($currentPage, ['admin_orgs', 'admin_students', 'admin_requests', 'admin_expense_requests', 'admin_budget_overview', 'admin_audit'], true);
     $isAdmin = ($user['role'] ?? '') === 'admin';
     $navAppName = (string) $config['app_name'];
     $faviconPath = 'uploads/assets/involvemoblight.png';
@@ -122,6 +122,10 @@ function renderHeader(string $title = 'Dashboard'): void
                                                     <span class="admin-mega-icon admin-mega-icon-mint"><?= uiIcon('pending', 'ui-icon ui-icon-sm') ?></span>
                                                     <span>Requests</span>
                                                 </a>
+                                                <a href="?page=admin_budget_overview" class="admin-mega-link <?= $currentPage === 'admin_budget_overview' ? 'is-active' : '' ?>" role="menuitem">
+                                                    <span class="admin-mega-icon admin-mega-icon-green"><?= uiIcon('chart', 'ui-icon ui-icon-sm') ?></span>
+                                                    <span>Budget Overview</span>
+                                                </a>
                                                 <a href="?page=admin_audit" class="admin-mega-link <?= $currentPage === 'admin_audit' ? 'is-active' : '' ?>" role="menuitem">
                                                     <span class="admin-mega-icon admin-mega-icon-emerald"><?= uiIcon('audit', 'ui-icon ui-icon-sm') ?></span>
                                                     <span>Audit Logs</span>
@@ -198,6 +202,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                         <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                         <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
                                         <a href="?page=admin_expense_requests" class="nav-link <?= in_array($currentPage, ['admin_requests', 'admin_expense_requests'], true) ? 'nav-link-active' : '' ?>">Requests</a>
+                                        <a href="?page=admin_budget_overview" class="nav-link <?= $currentPage === 'admin_budget_overview' ? 'nav-link-active' : '' ?>">Budget Overview</a>
                                         <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                                     </div>
                                 </div>
