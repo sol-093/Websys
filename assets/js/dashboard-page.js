@@ -715,13 +715,19 @@
             return '';
         };
 
+        const getMobileLimit = function () {
+            return window.matchMedia && window.matchMedia('(max-width: 767px)').matches ? 5 : null;
+        };
+
         const applyFilters = function () {
             const typeFilter = getActiveFilterValue(['tx_type', 'type', 'filter_type']);
             const dateFilter = getActiveFilterValue(['tx_date', 'date', 'filter_date']);
             const orgFilter = getActiveFilterValue(['org', 'organization', 'filter_org']);
             const searchValue = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            const mobileLimit = getMobileLimit();
 
             let visibleCount = 0;
+            let displayedCount = 0;
 
             rows.forEach(function (row) {
                 const rowType = (row.dataset.type || '').toLowerCase();
@@ -735,16 +741,21 @@
                 const matchesSearch = searchValue === '' || rowText.indexOf(searchValue) !== -1;
 
                 const shouldShow = matchesType && matchesDate && matchesOrg && matchesSearch;
-                row.style.display = shouldShow ? '' : 'none';
                 if (shouldShow) {
                     visibleCount++;
+                }
+
+                const withinMobileLimit = mobileLimit === null || displayedCount < mobileLimit;
+                row.style.display = shouldShow && withinMobileLimit ? '' : 'none';
+                if (shouldShow && withinMobileLimit) {
+                    displayedCount++;
                 }
             });
 
             noResultsRow.classList.toggle('hidden', visibleCount > 0);
 
             if (countLabel) {
-                countLabel.textContent = 'Showing ' + visibleCount + ' of ' + totalCount;
+                countLabel.textContent = 'Showing ' + displayedCount + ' of ' + visibleCount;
             }
         };
 
@@ -787,6 +798,15 @@
                 event.preventDefault();
                 applyFilters();
             });
+        }
+
+        if (window.matchMedia) {
+            const mobileQuery = window.matchMedia('(max-width: 767px)');
+            if (typeof mobileQuery.addEventListener === 'function') {
+                mobileQuery.addEventListener('change', applyFilters);
+            } else if (typeof mobileQuery.addListener === 'function') {
+                mobileQuery.addListener(applyFilters);
+            }
         }
 
         applyFilters();

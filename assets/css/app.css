@@ -4582,6 +4582,105 @@
                     display: none;
                 }
 
+                .dashboard-recent-reports-table {
+                    min-width: 0 !important;
+                    table-layout: auto;
+                }
+
+                .dashboard-recent-reports-table tr.hidden {
+                    display: none !important;
+                }
+
+                .dashboard-recent-reports-table thead {
+                    display: none;
+                }
+
+                .dashboard-recent-reports-table,
+                .dashboard-recent-reports-table tbody,
+                .dashboard-recent-reports-table tr,
+                .dashboard-recent-reports-table td {
+                    display: block;
+                    width: 100%;
+                }
+
+                .dashboard-recent-reports-table tr {
+                    padding: 0.7rem 0;
+                    box-shadow: inset 0 -1px 0 rgba(110, 231, 183, 0.5);
+                }
+
+                .dashboard-recent-reports-table td {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1rem;
+                    padding: 0.28rem 0 !important;
+                    box-shadow: none !important;
+                }
+
+                .dashboard-recent-reports-table td::before {
+                    flex: 0 0 auto;
+                    color: rgba(236, 253, 245, 0.68);
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                }
+
+                .dashboard-recent-reports-table td:nth-child(1)::before { content: 'Date'; }
+                .dashboard-recent-reports-table td:nth-child(2)::before { content: 'Organization'; }
+                .dashboard-recent-reports-table td:nth-child(3)::before { content: 'Type'; }
+                .dashboard-recent-reports-table td:nth-child(4)::before { content: 'Amount'; }
+                .dashboard-recent-reports-table td:nth-child(5)::before { content: 'Receipt'; }
+
+                .dashboard-recent-reports-table td > * {
+                    min-width: 0;
+                }
+
+                .dashboard-summary-table {
+                    min-width: 0 !important;
+                    table-layout: auto;
+                }
+
+                .dashboard-summary-table thead {
+                    display: none;
+                }
+
+                .dashboard-summary-table,
+                .dashboard-summary-table tbody,
+                .dashboard-summary-table tr,
+                .dashboard-summary-table td {
+                    display: block;
+                    width: 100%;
+                }
+
+                .dashboard-summary-table tr {
+                    padding: 0.72rem 0;
+                    box-shadow: inset 0 -1px 0 rgba(110, 231, 183, 0.5);
+                }
+
+                .dashboard-summary-table td {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 1rem;
+                    padding: 0.3rem 0 !important;
+                    box-shadow: none !important;
+                }
+
+                .dashboard-summary-table td::before {
+                    flex: 0 0 auto;
+                    color: rgba(236, 253, 245, 0.68);
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                }
+
+                .dashboard-summary-table td:nth-child(1)::before { content: 'Organization'; }
+                .dashboard-summary-table td:nth-child(2)::before { content: 'Income'; }
+                .dashboard-summary-table td:nth-child(3)::before { content: 'Expense'; }
+                .dashboard-summary-table td:nth-child(4)::before { content: 'Balance'; }
+
+                .dashboard-summary-table td > * {
+                    min-width: 0;
+                }
+
                 .dashboard-report-head {
                     display: none;
                 }

@@ -276,10 +276,13 @@ WORK GUIDE:
                     <h2 class="dashboard-section-title">Recent reports</h2>
                     <p class="dashboard-section-copy mt-1">Latest income and expense entries with receipt visibility.</p>
                 </div>
-                <div class="dashboard-stamp">Showing <?= $recentReportCount ?> latest items</div>
+                <div class="dashboard-stamp">
+                    <span class="dashboard-desktop-only">Showing <?= $recentReportCount ?> latest items</span>
+                    <span class="dashboard-mobile-only">Showing <?= min(5, $recentReportCount) ?> latest items</span>
+                </div>
             </div>
             <div class="table-wrapper">
-                <table class="dashboard-table w-full text-sm table-fixed">
+                <table class="dashboard-table dashboard-recent-reports-table w-full text-sm table-fixed">
                     <thead>
                     <tr class="border-b text-left">
                         <th class="py-2 w-[20%]">Date</th>
@@ -290,8 +293,8 @@ WORK GUIDE:
                     </tr>
                     </thead>
                     <tbody>
-                    <?php foreach ($transactions as $tx): ?>
-                        <tr class="border-b">
+                    <?php foreach ($transactions as $index => $tx): ?>
+                        <tr class="border-b <?= $index >= 5 ? 'dashboard-mobile-trim' : '' ?>">
                             <td class="py-2"><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></td>
                             <td>
                                 <span class="inline-flex items-center gap-2">
@@ -319,12 +322,12 @@ WORK GUIDE:
             <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-3">
                 <div>
                     <h2 class="dashboard-section-title">Financial summary by organization</h2>
-                    <p class="dashboard-section-copy mt-1">Income, expense, and b       alance grouped by organization.</p>
+                    <p class="dashboard-section-copy mt-1">Income, expense, and balance grouped by organization.</p>
                 </div>
                 <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View charts</span></span></button>
             </div>
             <div class="table-wrapper">
-                <table class="dashboard-table w-full text-sm table-fixed">
+                <table class="dashboard-table dashboard-summary-table w-full text-sm table-fixed">
                     <thead>
                     <tr class="border-b text-left">
                         <th class="py-2 pr-4 w-[46%]">Organization</th>
