@@ -119,9 +119,12 @@ function handleAdminRequestsPage(PDO $db): void
     renderHeader('Transaction Requests');
     ?>
     <div class="glass transparency-panel rounded-xl p-4 overflow-auto">
-        <div class="mb-4">
-            <h1 class="text-xl font-semibold mb-1 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
-            <p class="section-helper-copy">Review finance change requests and leave a decision trail for owners.</p>
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+                <h1 class="text-xl font-semibold mb-1 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
+                <p class="section-helper-copy">Review finance change requests and leave a decision trail for owners.</p>
+            </div>
+            <a href="?page=admin_expense_requests" class="owner-manage-secondary-btn inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm sm:w-auto">Back to Expense Requests</a>
         </div>
         <div class="table-wrapper hidden lg:block">
             <table class="hidden lg:table w-full min-w-[1040px] text-sm table-fixed">
@@ -339,6 +342,25 @@ function handleAdminRequestsPage(PDO $db): void
         })();
     </script>
     <script src="assets/js/owner-org-switcher.js"></script>
+    ?>
+    <script>
+        document.querySelectorAll('[data-expense-reject-toggle]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const form = document.getElementById('expenseRejectForm' + button.getAttribute('data-expense-reject-toggle'));
+                if (form) {
+                    form.classList.toggle('hidden');
+                }
+            });
+        });
+        document.querySelectorAll('[data-expense-reject-toggle-mobile]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const form = document.getElementById('expenseRejectMobileForm' + button.getAttribute('data-expense-reject-toggle-mobile'));
+                if (form) {
+                    form.classList.toggle('hidden');
+                }
+            });
+        });
+    </script>
     <?php
     renderFooter();
     exit;
@@ -410,11 +432,12 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                     <colgroup>
                         <col class="w-[14%]">
                         <col class="w-[13%]">
-                        <col class="w-[17%]">
-                        <col class="w-[18%]">
+                        <col class="w-[16%]">
+                        <col class="w-[16%]">
                         <col class="w-[10%]">
-                        <col class="w-[8%]">
-                        <col class="w-[20%]">
+                        <col class="w-[9%]">
+                        <col class="w-[13%]">
+                        <col class="w-[9%]">
                     </colgroup>
                     <thead>
                     <tr class="border-b text-left">
@@ -424,6 +447,7 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                         <th class="py-3 px-3">Description</th>
                         <th class="py-3 px-3">Amount</th>
                         <th class="py-3 px-3">Status</th>
+                        <th class="py-3 px-3">Admin Note</th>
                         <th class="py-3 px-3">Decision</th>
                     </tr>
                     </thead>
@@ -448,9 +472,6 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                 <?php if (!empty($request['receipt_path'])): ?>
                                     <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="mt-2 inline-flex text-xs underline">Open receipt</a>
                                 <?php endif; ?>
-                                <?php if (trim((string) ($request['admin_note'] ?? '')) !== ''): ?>
-                                    <div class="mt-2 text-xs text-slate-500">Note: <?= e((string) $request['admin_note']) ?></div>
-                                <?php endif; ?>
                             </td>
                             <td class="py-4 px-3 whitespace-nowrap font-medium">PHP<?= number_format((float) $request['amount'], 2) ?></td>
                             <td class="py-4 px-3"><span class="<?= e($statusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
@@ -459,6 +480,9 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                 'pending' => 'pending',
                                 default => 'default',
                             }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span></td>
+                            <td class="py-4 px-3 break-words">
+                                <?= trim((string) ($request['admin_note'] ?? '')) !== '' ? e((string) $request['admin_note']) : '&mdash;' ?>
+                            </td>
                             <td class="py-4 px-3">
                                 <?php if ($requestStatus === 'pending'): ?>
                                     <div class="space-y-2">
@@ -467,15 +491,16 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                             <input type="hidden" name="action" value="process_expense_request">
                                             <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                             <input type="hidden" name="decision" value="approve">
-                                            <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm">Approve</button>
+                                            <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm"><span class="icon-label justify-center"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
                                         </form>
-                                        <form method="post" class="space-y-2">
+                                        <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-toggle="<?= (int) $request['id'] ?>"><span class="icon-label justify-center"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
+                                        <form method="post" id="expenseRejectForm<?= (int) $request['id'] ?>" class="hidden space-y-2">
                                             <?= csrfField() ?>
                                             <input type="hidden" name="action" value="process_expense_request">
                                             <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                             <input type="hidden" name="decision" value="reject">
                                             <textarea name="admin_note" rows="2" class="w-full border rounded px-2 py-1 text-xs" placeholder="Rejection note" required></textarea>
-                                            <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Reject</button>
+                                            <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Confirm Reject</button>
                                         </form>
                                     </div>
                                 <?php else: ?>
@@ -517,7 +542,7 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                 <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm">Open Receipt</a>
                             <?php endif; ?>
                             <?php if (trim((string) ($request['admin_note'] ?? '')) !== ''): ?>
-                                <div class="rounded-lg border border-emerald-300/20 bg-white/20 px-3 py-2 text-slate-600">Note: <?= e((string) $request['admin_note']) ?></div>
+                                <div class="rounded-lg border border-emerald-300/20 bg-white/20 px-3 py-2 text-slate-600"><span class="font-semibold">Admin note:</span> <?= e((string) $request['admin_note']) ?></div>
                             <?php endif; ?>
                         </div>
                         <?php if ($requestStatus === 'pending'): ?>
@@ -529,13 +554,14 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                     <input type="hidden" name="decision" value="approve">
                                     <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm">Approve</button>
                                 </form>
-                                <form method="post" class="space-y-2">
+                                <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-toggle-mobile="<?= (int) $request['id'] ?>">Reject</button>
+                                <form method="post" id="expenseRejectMobileForm<?= (int) $request['id'] ?>" class="hidden space-y-2">
                                     <?= csrfField() ?>
                                     <input type="hidden" name="action" value="process_expense_request">
                                     <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
                                     <input type="hidden" name="decision" value="reject">
                                     <textarea name="admin_note" rows="2" class="w-full border rounded px-3 py-2 text-sm" placeholder="Rejection note" required></textarea>
-                                    <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Reject</button>
+                                    <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Confirm Reject</button>
                                 </form>
                             </div>
                         <?php endif; ?>
@@ -545,6 +571,24 @@ function handleAdminExpenseRequestsPage(PDO $db): void
             <?php renderPagination($requestsPagination); ?>
         <?php endif; ?>
     </div>
+    <script>
+        document.querySelectorAll('[data-expense-reject-toggle]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const form = document.getElementById('expenseRejectForm' + button.getAttribute('data-expense-reject-toggle'));
+                if (form) {
+                    form.classList.toggle('hidden');
+                }
+            });
+        });
+        document.querySelectorAll('[data-expense-reject-toggle-mobile]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const form = document.getElementById('expenseRejectMobileForm' + button.getAttribute('data-expense-reject-toggle-mobile'));
+                if (form) {
+                    form.classList.toggle('hidden');
+                }
+            });
+        });
+    </script>
     <?php
     renderFooter();
     exit;

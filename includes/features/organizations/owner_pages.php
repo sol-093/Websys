@@ -860,6 +860,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             </form>
         </div>
 
+        <div class="grid gap-4 lg:grid-cols-2">
         <div id="expense-requests" class="glass rounded-lg p-4">
             <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -921,9 +922,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             <?php endif; ?>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-            <!-- Left Panel: Budget Expenses -->
-            <div class="glass rounded-lg p-4">
+            <div class="hidden">
                 <div class="mb-4 space-y-1">
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('chart', 'ui-icon') ?><span>Budget Expenses</span></h2>
                     <p class="section-helper-copy">Active budget line items and allocations.</p>
