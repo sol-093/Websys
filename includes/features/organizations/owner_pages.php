@@ -14,6 +14,7 @@ declare(strict_types=1);
  * 4. Organization Management Page
  * 5. Membership Management Page
  * 6. Financial Management Page
+ * 7. Budget Workspace Page
  *
  * WORK GUIDE:
  * - Edit this file for owner-facing page markup.
@@ -125,9 +126,10 @@ function renderOwnerWorkspaceHeader(array $org, string $currentPage): void
                 <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span><?= e((string) ($org['name'] ?? 'My Organization')) ?></span></h1>
                 <p class="section-helper-copy">Focus on one workspace at a time.</p>
             </div>
-            <div class="grid w-full grid-cols-1 gap-2 text-xs sm:w-auto sm:grid-cols-3 lg:flex lg:flex-wrap">
+            <div class="grid w-full grid-cols-1 gap-2 text-xs sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap">
                 <a href="?page=my_org_manage&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_manage' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Organization Management</a>
                 <a href="?page=my_org_members&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_members' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Membership Management</a>
+                <a href="?page=my_org_budget&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_budget' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Budget Workspace</a>
                 <a href="?page=my_org_finance&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_finance' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Financial Management</a>
                 <a href="?page=my_org&org_id=<?= $orgId ?>" class="hidden md:inline-flex w-auto self-start whitespace-nowrap rounded-md border border-slate-300/30 bg-white/10 px-2 py-2 text-xs text-slate-700 transition-colors hover:bg-white/15">Back</a>
             </div>
@@ -794,6 +796,22 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
 {
     $workspace = buildOwnerWorkspaceData($db, $user);
     extract($workspace, EXTR_SKIP);
+    $activeBudget = getActiveOrganizationBudget($db, (int) $org['id']);
+    $activeBudgetLines = $activeBudget ? getBudgetLineItems($db, (int) $activeBudget['id']) : [];
+    $hasRequestableBudgetLine = false;
+    foreach ($activeBudgetLines as $activeBudgetLine) {
+        if ((float) ($activeBudgetLine['remaining_amount'] ?? 0) > 0) {
+            $hasRequestableBudgetLine = true;
+            break;
+        }
+    }
+    $myExpenseRequestsAll = getExpenseRequests($db, [
+        'organization_id' => (int) $org['id'],
+        'requested_by' => (int) $user['id'],
+        'limit' => 20,
+    ]);
+    $myExpenseRequestsPagination = paginateArray($myExpenseRequestsAll, 'pg_myorg_exp_req', 8);
+    $myExpenseRequests = $myExpenseRequestsPagination['items'];
 
     renderHeader('Financial Management');
     ?>
@@ -804,9 +822,10 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Financial Management</span></h2>
-                    <p class="section-helper-copy">Record transactions and review finance requests in one place.</p>
+                    <p class="section-helper-copy">Submit budget-backed expense requests, record manual transactions, and review finance requests in one place.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-xs">
+                    <a href="#expense-requests" class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800 transition-colors hover:bg-emerald-500/15">Request expense</a>
                     <a href="#tx-requests" class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800 transition-colors hover:bg-emerald-500/15">Jump to pending requests</a>
                     <a href="#tx-history" class="rounded-md border border-slate-300/30 bg-white/10 px-2.5 py-1 text-slate-700 transition-colors hover:bg-white/15">Jump to transaction history</a>
                 </div>
@@ -841,13 +860,132 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             </form>
         </div>
 
-        <div class="glass rounded-lg p-4">
+        <div id="expense-requests" class="glass rounded-lg p-4">
+            <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Budget Expense Request</span></h2>
+                    <p class="section-helper-copy">Submit expenses against an active budget line for admin approval.</p>
+                </div>
+                <?php if ($activeBudget): ?>
+                    <a href="?page=my_org_budget&org_id=<?= (int) $org['id'] ?>&budget_id=<?= (int) $activeBudget['id'] ?>" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Open Budget</a>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!$activeBudget): ?>
+                <div class="empty-state-panel">No active budget is available for this organization. Create and activate a budget before submitting expense requests.</div>
+            <?php elseif ($activeBudgetLines === []): ?>
+                <div class="empty-state-panel">The active budget has no line items available for requests.</div>
+            <?php elseif (!$hasRequestableBudgetLine): ?>
+                <div class="empty-state-panel">All active budget line items are fully allocated or reserved by pending requests.</div>
+            <?php else: ?>
+                <form method="post" enctype="multipart/form-data" class="space-y-3">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="submit_expense_request">
+                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                    <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(9rem,0.35fr)]">
+                        <div class="space-y-2">
+                            <label for="expenseRequestLine" class="text-sm font-medium text-slate-700">Budget line</label>
+                            <select id="expenseRequestLine" name="budget_line_item_id" class="w-full border rounded px-3 py-2" required>
+                                <?php foreach ($activeBudgetLines as $line): ?>
+                                    <?php $remaining = (float) ($line['remaining_amount'] ?? 0); ?>
+                                    <option value="<?= (int) $line['id'] ?>" <?= $remaining <= 0 ? 'disabled' : '' ?>>
+                                        <?= e((string) $line['category_name']) ?> · Remaining <?= e('PHP' . number_format($remaining, 2)) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="expenseRequestAmount" class="text-sm font-medium text-slate-700">Amount</label>
+                            <input id="expenseRequestAmount" type="number" min="0.01" step="0.01" name="amount" placeholder="0.00" class="w-full border rounded px-3 py-2" required>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="expenseRequestDescription" class="text-sm font-medium text-slate-700">Description</label>
+                        <input id="expenseRequestDescription" name="description" placeholder="Describe the expense request" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="rounded-lg border border-emerald-300/25 bg-white/35 px-3 py-3 dark:border-emerald-300/15 dark:bg-emerald-950/15">
+                        <div class="mb-2">
+                            <div class="text-sm font-medium text-slate-700 dark:text-slate-200">Receipt</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-300">Optional image or PDF.</div>
+                        </div>
+                        <div class="flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:gap-3">
+                            <label for="expenseRequestReceiptInput" class="owner-manage-primary-btn inline-flex w-full cursor-pointer items-center justify-center rounded-md px-3 py-1.5 text-xs sm:w-auto">
+                                Upload Receipt
+                            </label>
+                            <span id="expenseRequestReceiptFilename" class="min-w-0 truncate text-sm text-slate-500 dark:text-slate-300 sm:flex-1">No file chosen</span>
+                            <input id="expenseRequestReceiptInput" type="file" name="receipt" accept=".jpg,.jpeg,.png,.pdf" class="sr-only" onchange="var f=this.files&&this.files[0]?this.files[0].name:'No file chosen'; var n=document.getElementById('expenseRequestReceiptFilename'); if(n){ n.textContent=f; }">
+                        </div>
+                    </div>
+                    <button class="owner-manage-primary-btn w-full rounded-md px-4 py-2 sm:w-auto"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Submit Request</span></span></button>
+                </form>
+            <?php endif; ?>
+        </div>
+
+        <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+            <!-- Left Panel: Budget Expenses -->
+            <div class="glass rounded-lg p-4">
+                <div class="mb-4 space-y-1">
+                    <h2 class="text-lg font-semibold icon-label"><?= uiIcon('chart', 'ui-icon') ?><span>Budget Expenses</span></h2>
+                    <p class="section-helper-copy">Active budget line items and allocations.</p>
+                </div>
+
+                <?php if (!$activeBudget): ?>
+                    <div class="empty-state-panel">No active budget. Create and activate a budget to track expenses.</div>
+                <?php elseif ($activeBudgetLines === []): ?>
+                    <div class="empty-state-panel">No line items in active budget.</div>
+                <?php else: ?>
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        <?php foreach ($activeBudgetLines as $line): ?>
+                            <?php
+                                $allocated = (float) ($line['allocated_amount'] ?? 0);
+                                $spent = (float) ($line['spent_amount'] ?? 0);
+                                $pending = (float) ($line['pending_amount'] ?? 0);
+                                $remaining = (float) ($line['remaining_amount'] ?? 0);
+                                $formatMoney = static fn(float $amount): string => '₱' . number_format($amount, 2);
+                                $spentPercent = $allocated > 0 ? min(100, ($spent / $allocated) * 100) : 0;
+                            ?>
+                            <div class="rounded-lg border border-slate-200/50 bg-white/40 p-3">
+                                <div class="flex justify-between items-start gap-2 mb-2">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-semibold text-slate-800 truncate"><?= e((string) $line['category_name']) ?></div>
+                                        <div class="text-xs text-slate-500 mt-0.5 line-clamp-2"><?= e(trim((string) ($line['description'] ?? '')) !== '' ? (string) $line['description'] : 'No description.') ?></div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-xs mb-2">
+                                    <div>
+                                        <div class="text-slate-500">Allocated</div>
+                                        <div class="font-semibold text-slate-700"><?= e($formatMoney($allocated)) ?></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-500">Spent</div>
+                                        <div class="font-semibold text-red-600"><?= e($formatMoney($spent)) ?></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-500">Pending</div>
+                                        <div class="font-semibold text-amber-600"><?= e($formatMoney($pending)) ?></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-500">Remaining</div>
+                                        <div class="font-semibold text-emerald-600"><?= e($formatMoney($remaining)) ?></div>
+                                    </div>
+                                </div>
+                                <div class="rounded-full h-2 bg-slate-200 overflow-hidden">
+                                    <div class="h-full bg-red-500 transition-all" style="width: <?= (float) $spentPercent ?>%"></div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Right Panel: Add Income / Expense -->
+            <div class="glass rounded-lg p-4">
                 <div class="mb-4 space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
                         <h2 class="text-lg font-semibold icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Add Income / Expense</span></h2>
                         <span class="inline-flex items-center rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-400/10 dark:text-emerald-200">Finance log</span>
                     </div>
-                    <p class="text-sm text-slate-600 dark:text-slate-300">Record cash flow, dates, and receipt details in one place.</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Record cash flow, dates, and receipt details.</p>
                 </div>
                 <form method="post" enctype="multipart/form-data" class="space-y-3">
                     <?= csrfField() ?>
@@ -886,6 +1024,7 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     </div>
                     <button class="owner-manage-primary-btn w-full rounded-md px-4 py-2 sm:w-auto"><span class="icon-label"><?= uiIcon('save', 'ui-icon ui-icon-sm') ?><span>Save Transaction</span></span></button>
                 </form>
+            </div>
         </div>
 
         <div id="tx-history" class="glass rounded-lg p-4 overflow-auto">
@@ -1134,6 +1273,67 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             </div>
             <?php renderPagination($myTxRequestsPagination + ['anchor' => 'tx-requests']); ?>
         </div>
+
+        <div class="glass rounded-lg p-4 overflow-auto">
+            <div class="mb-3 space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-lg font-semibold icon-label"><?= uiIcon('pending', 'ui-icon') ?><span>My Budget Expense Requests</span></h2>
+                    <span class="inline-flex items-center rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-300/25 dark:bg-emerald-400/10 dark:text-emerald-200">BudgetFlow</span>
+                </div>
+                <p class="text-sm text-slate-600 dark:text-slate-300">Track submitted budget expenses and admin decisions.</p>
+            </div>
+            <?php if ($myExpenseRequests === []): ?>
+                <div class="empty-state-panel">No budget expense requests submitted yet.</div>
+            <?php else: ?>
+                <div class="table-wrapper">
+                    <table class="w-full min-w-[880px] text-sm">
+                        <thead>
+                        <tr class="text-left border-b border-emerald-400/40">
+                            <th class="py-2 pr-3">Date</th>
+                            <th class="py-2 pr-3">Budget line</th>
+                            <th class="py-2 pr-3">Amount</th>
+                            <th class="py-2 pr-3">Status</th>
+                            <th class="py-2 pr-3">Receipt</th>
+                            <th class="py-2">Admin Note</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($myExpenseRequests as $request): ?>
+                            <?php
+                                $requestStatus = strtolower((string) ($request['status'] ?? 'pending'));
+                                $requestStatusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
+                            ?>
+                            <tr class="border-b border-emerald-300/30 align-top">
+                                <td class="py-3 pr-3 whitespace-nowrap"><?= e(date('F d, Y', strtotime((string) $request['created_at']))) ?></td>
+                                <td class="py-3 pr-3">
+                                    <div class="font-medium"><?= e((string) ($request['line_item_name'] ?? 'Budget line')) ?></div>
+                                    <div class="text-xs text-slate-500"><?= e((string) ($request['budget_title'] ?? 'Budget')) ?></div>
+                                </td>
+                                <td class="py-3 pr-3 whitespace-nowrap font-medium">PHP<?= number_format((float) $request['amount'], 2) ?></td>
+                                <td class="py-3 pr-3 whitespace-nowrap">
+                                    <span class="<?= e($requestStatusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
+                                        'approved' => 'approved',
+                                        'rejected' => 'rejected',
+                                        'pending' => 'pending',
+                                        default => 'default',
+                                    }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span>
+                                </td>
+                                <td class="py-3 pr-3">
+                                    <?php if (!empty($request['receipt_path'])): ?>
+                                        <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view inline-flex items-center justify-center rounded-md px-3 py-2 text-sm"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
+                                    <?php else: ?>
+                                        <span class="text-gray-400">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-3 text-slate-600"><?= e(trim((string) ($request['admin_note'] ?? '')) !== '' ? (string) $request['admin_note'] : 'No admin note yet.') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php renderPagination($myExpenseRequestsPagination + ['anchor' => 'expense-requests']); ?>
+            <?php endif; ?>
+        </div>
     </div>
 
     <div id="txEditModal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-[2px] px-4 py-6 overflow-y-auto" data-modal-close>
@@ -1273,6 +1473,270 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
         })();
     </script>
 
+    <script src="assets/js/owner-org-switcher.js"></script>
+    <?php
+    renderFooter();
+    exit;
+}
+
+function handleMyOrgBudgetPage(PDO $db, array $user): void
+{
+    $workspace = buildOwnerWorkspaceData($db, $user);
+    extract($workspace, EXTR_SKIP);
+
+    $budgets = getOrganizationBudgets($db, (int) $org['id']);
+    $activeBudget = getActiveOrganizationBudget($db, (int) $org['id']);
+    $selectedBudgetId = (int) ($_GET['budget_id'] ?? 0);
+    if ($selectedBudgetId <= 0 && $activeBudget) {
+        $selectedBudgetId = (int) $activeBudget['id'];
+    }
+    if ($selectedBudgetId <= 0 && $budgets !== []) {
+        $selectedBudgetId = (int) $budgets[0]['id'];
+    }
+
+    $selectedBudget = $selectedBudgetId > 0 ? getBudgetById($db, $selectedBudgetId, (int) $org['id']) : null;
+    $budgetLines = $selectedBudget ? getBudgetLineItems($db, (int) $selectedBudget['id']) : [];
+    $allocatedTotal = 0.0;
+    $spentTotal = 0.0;
+    $pendingTotal = 0.0;
+    $remainingTotal = 0.0;
+    foreach ($budgetLines as $line) {
+        $allocatedTotal += (float) ($line['allocated_amount'] ?? 0);
+        $spentTotal += (float) ($line['spent_amount'] ?? 0);
+        $pendingTotal += (float) ($line['pending_amount'] ?? 0);
+        $remainingTotal += (float) ($line['remaining_amount'] ?? 0);
+    }
+
+    $formatMoney = static fn(float $amount): string => '₱' . number_format($amount, 2);
+    $status = (string) ($selectedBudget['status'] ?? '');
+    $canEditLines = $status === 'draft';
+    $selectedOrgName = (string) ($org['name'] ?? 'Select organization');
+
+    renderHeader('Budget Workspace');
+    ?>
+    <div class="space-y-4">
+        <?php renderOwnerWorkspaceHeader($org, 'my_org_budget'); ?>
+
+        <div class="glass rounded-lg p-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold icon-label"><?= uiIcon('dashboard', 'ui-icon') ?><span>Budget Workspace</span></h2>
+                    <p class="section-helper-copy">Create organization budgets, allocate line items, and track remaining funds.</p>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <a href="#create-budget" class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-800 transition-colors hover:bg-emerald-500/15">Create budget</a>
+                    <a href="#budget-lines" class="rounded-md border border-slate-300/30 bg-white/10 px-2.5 py-1 text-slate-700 transition-colors hover:bg-white/15">Line items</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass rounded-lg p-4">
+            <form method="get" class="flex flex-wrap gap-2 items-stretch sm:items-start relative" id="myOrgBudgetSwitcherForm" data-dropdown-root>
+                <input type="hidden" name="page" value="my_org_budget">
+                <input type="hidden" name="org_id" id="myOrgBudgetOrgId" data-dropdown-value value="<?= (int) $org['id'] ?>">
+                <div class="relative w-full min-w-0 sm:min-w-[16rem] sm:flex-1" data-dropdown-wrapper>
+                    <button type="button" id="myOrgBudgetSwitcherButton" data-dropdown-toggle="myOrgBudgetSwitcherMenu" aria-expanded="false" class="w-full flex items-center border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                        <span id="myOrgBudgetSwitcherLabel" data-dropdown-label class="truncate text-left"><?= e($selectedOrgName) ?></span>
+                    </button>
+                    <div id="myOrgBudgetSwitcherMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md" aria-labelledby="myOrgBudgetSwitcherButton">
+                        <ul class="p-2 text-sm font-medium space-y-1">
+                            <?php foreach ($ownedOrganizations as $ownedOption): ?>
+                                <?php $isCurrentOrg = (int) $org['id'] === (int) $ownedOption['id']; ?>
+                                <li>
+                                    <button type="button" data-dropdown-option data-active="<?= $isCurrentOrg ? 'true' : 'false' ?>" data-org-id="<?= (int) $ownedOption['id'] ?>" data-org-name="<?= e($ownedOption['name']) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors">
+                                        <?= e($ownedOption['name']) ?>
+                                    </button>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+                <button class="owner-manage-secondary-btn w-full sm:w-auto px-4 py-2 rounded-md"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></button>
+            </form>
+        </div>
+
+        <div class="grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+            <section id="create-budget" class="glass rounded-lg p-4">
+                <div class="mb-4 space-y-1">
+                    <h2 class="text-lg font-semibold icon-label"><?= uiIcon('create', 'ui-icon') ?><span>Create Budget</span></h2>
+                    <p class="section-helper-copy">Start as a draft, then add line items before activation.</p>
+                </div>
+                <form method="post" class="space-y-3">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="action" value="create_budget">
+                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                    <div class="space-y-2">
+                        <label for="budgetTitle" class="text-sm font-medium text-slate-700">Budget title</label>
+                        <input id="budgetTitle" name="title" placeholder="Academic year operating budget" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="space-y-2">
+                            <label for="budgetPeriodStart" class="text-sm font-medium text-slate-700">Period start</label>
+                            <input id="budgetPeriodStart" type="date" name="period_start" value="<?= date('Y-m-d') ?>" class="w-full border rounded px-3 py-2" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="budgetPeriodEnd" class="text-sm font-medium text-slate-700">Period end</label>
+                            <input id="budgetPeriodEnd" type="date" name="period_end" value="<?= date('Y-m-d', strtotime('+6 months')) ?>" class="w-full border rounded px-3 py-2" required>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="budgetTotalAmount" class="text-sm font-medium text-slate-700">Total amount</label>
+                        <input id="budgetTotalAmount" type="number" min="0" step="0.01" name="total_amount" placeholder="0.00" class="w-full border rounded px-3 py-2" required>
+                    </div>
+                    <button class="owner-manage-primary-btn px-4 py-2 rounded-md"><span class="icon-label"><?= uiIcon('create', 'ui-icon ui-icon-sm') ?><span>Create Draft</span></span></button>
+                </form>
+            </section>
+
+            <section class="glass rounded-lg p-4">
+                <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('audit', 'ui-icon') ?><span>Budget Overview</span></h2>
+                        <p class="section-helper-copy">Review period, status, and allocation totals.</p>
+                    </div>
+                    <?php if ($selectedBudget): ?>
+                        <span class="rounded-md border border-emerald-300/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-800"><?= e(ucfirst($status)) ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <?php if ($budgets === []): ?>
+                    <div class="empty-state-panel">No budgets yet. Create a draft to begin BudgetFlow setup.</div>
+                <?php else: ?>
+                    <form method="get" class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <input type="hidden" name="page" value="my_org_budget">
+                        <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                        <div class="min-w-0 flex-1 space-y-2">
+                            <label for="budgetSelect" class="text-sm font-medium text-slate-700">Selected budget</label>
+                            <select id="budgetSelect" name="budget_id" class="w-full border rounded px-3 py-2">
+                                <?php foreach ($budgets as $budget): ?>
+                                    <option value="<?= (int) $budget['id'] ?>" <?= $selectedBudget && (int) $selectedBudget['id'] === (int) $budget['id'] ? 'selected' : '' ?>>
+                                        <?= e((string) $budget['title']) ?> · <?= e(ucfirst((string) $budget['status'])) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <button class="owner-manage-secondary-btn px-4 py-2 rounded-md">View</button>
+                    </form>
+
+                    <?php if ($selectedBudget): ?>
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <div class="rounded-lg border border-emerald-300/25 bg-white/20 p-3">
+                                <div class="text-xs text-slate-500">Budget total</div>
+                                <div class="mt-1 text-lg font-semibold"><?= e($formatMoney((float) $selectedBudget['total_amount'])) ?></div>
+                            </div>
+                            <div class="rounded-lg border border-emerald-300/25 bg-white/20 p-3">
+                                <div class="text-xs text-slate-500">Allocated</div>
+                                <div class="mt-1 text-lg font-semibold"><?= e($formatMoney($allocatedTotal)) ?></div>
+                            </div>
+                            <div class="rounded-lg border border-emerald-300/25 bg-white/20 p-3">
+                                <div class="text-xs text-slate-500">Spent</div>
+                                <div class="mt-1 text-lg font-semibold"><?= e($formatMoney($spentTotal)) ?></div>
+                            </div>
+                            <div class="rounded-lg border border-emerald-300/25 bg-white/20 p-3">
+                                <div class="text-xs text-slate-500">Remaining</div>
+                                <div class="mt-1 text-lg font-semibold"><?= e($formatMoney($remainingTotal)) ?></div>
+                            </div>
+                        </div>
+                        <div class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                            <div class="text-sm text-slate-600">
+                                <?= e(date('F d, Y', strtotime((string) $selectedBudget['period_start']))) ?> to <?= e(date('F d, Y', strtotime((string) $selectedBudget['period_end']))) ?>
+                                <?php if ($pendingTotal > 0): ?>
+                                    <span class="ml-2 inline-flex rounded-md border border-amber-300/40 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-700"><?= e($formatMoney($pendingTotal)) ?> pending</span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <?php if ($status === 'draft'): ?>
+                                    <form method="post">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="action" value="update_budget_status">
+                                        <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                        <input type="hidden" name="budget_id" value="<?= (int) $selectedBudget['id'] ?>">
+                                        <input type="hidden" name="status" value="active">
+                                        <button class="owner-manage-primary-btn px-3 py-2 rounded-md text-sm">Activate</button>
+                                    </form>
+                                <?php elseif ($status === 'active'): ?>
+                                    <form method="post">
+                                        <?= csrfField() ?>
+                                        <input type="hidden" name="action" value="update_budget_status">
+                                        <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                        <input type="hidden" name="budget_id" value="<?= (int) $selectedBudget['id'] ?>">
+                                        <input type="hidden" name="status" value="closed">
+                                        <button class="owner-manage-secondary-btn px-3 py-2 rounded-md text-sm">Close</button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </section>
+        </div>
+
+        <?php if ($selectedBudget): ?>
+            <section id="budget-lines" class="glass rounded-lg p-4">
+                <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold icon-label"><?= uiIcon('chart', 'ui-icon') ?><span>Budget Line Items</span></h2>
+                        <p class="section-helper-copy">Track allocated, spent, pending, and remaining amounts per line.</p>
+                    </div>
+                    <span class="rounded-md border border-slate-300/30 bg-white/10 px-2.5 py-1 text-xs text-slate-700"><?= e((string) $selectedBudget['title']) ?></span>
+                </div>
+
+                <?php if ($canEditLines): ?>
+                    <form method="post" class="mb-4 grid gap-3 lg:grid-cols-[minmax(10rem,0.8fr)_minmax(0,1fr)_minmax(9rem,0.5fr)_auto] lg:items-end">
+                        <?= csrfField() ?>
+                        <input type="hidden" name="action" value="add_budget_line_item">
+                        <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                        <input type="hidden" name="budget_id" value="<?= (int) $selectedBudget['id'] ?>">
+                        <div class="space-y-2">
+                            <label for="budgetLineCategory" class="text-sm font-medium text-slate-700">Category</label>
+                            <input id="budgetLineCategory" name="category_name" placeholder="Event supplies" class="w-full border rounded px-3 py-2" required>
+                        </div>
+                        <div class="space-y-2">
+                            <label for="budgetLineDescription" class="text-sm font-medium text-slate-700">Description</label>
+                            <input id="budgetLineDescription" name="description" placeholder="Optional note" class="w-full border rounded px-3 py-2">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="budgetLineAmount" class="text-sm font-medium text-slate-700">Allocated</label>
+                            <input id="budgetLineAmount" type="number" min="0" step="0.01" name="allocated_amount" placeholder="0.00" class="w-full border rounded px-3 py-2" required>
+                        </div>
+                        <button class="owner-manage-primary-btn px-4 py-2 rounded-md">Add Line</button>
+                    </form>
+                <?php else: ?>
+                    <div class="mb-4 rounded-lg border border-emerald-300/25 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800">Line item editing is locked once a budget is active or closed.</div>
+                <?php endif; ?>
+
+                <?php if ($budgetLines === []): ?>
+                    <div class="empty-state-panel">No line items yet. Add at least one line before activating this budget.</div>
+                <?php else: ?>
+                    <div class="table-wrapper">
+                        <table class="w-full min-w-[820px] text-sm">
+                            <thead>
+                            <tr class="border-b text-left text-xs uppercase text-slate-500">
+                                <th class="py-2 pr-3">Category</th>
+                                <th class="py-2 pr-3">Allocated</th>
+                                <th class="py-2 pr-3">Spent</th>
+                                <th class="py-2 pr-3">Pending</th>
+                                <th class="py-2 pr-3">Remaining</th>
+                                <th class="py-2">Description</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ($budgetLines as $line): ?>
+                                <tr class="border-b align-top">
+                                    <td class="py-3 pr-3 font-medium"><?= e((string) $line['category_name']) ?></td>
+                                    <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['allocated_amount'])) ?></td>
+                                    <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['spent_amount'])) ?></td>
+                                    <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['pending_amount'])) ?></td>
+                                    <td class="py-3 pr-3 whitespace-nowrap"><?= e($formatMoney((float) $line['remaining_amount'])) ?></td>
+                                    <td class="py-3 text-slate-600"><?= e(trim((string) ($line['description'] ?? '')) !== '' ? (string) $line['description'] : 'No description.') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </section>
+        <?php endif; ?>
+    </div>
     <script src="assets/js/owner-org-switcher.js"></script>
     <?php
     renderFooter();

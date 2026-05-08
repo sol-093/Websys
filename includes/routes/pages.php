@@ -78,6 +78,10 @@ if ($page === 'admin_requests') {
     handleAdminRequestsPage($db);
 }
 
+if ($page === 'admin_expense_requests') {
+    handleAdminExpenseRequestsPage($db);
+}
+
 if ($page === 'admin_audit') {
     handleAdminAuditPage($db, $user);
 }
@@ -112,6 +116,10 @@ if ($page === 'my_org_members') {
 
 if ($page === 'my_org_finance') {
     handleMyOrgFinancePage($db, $user, $announcementCutoff);
+}
+
+if ($page === 'my_org_budget') {
+    handleMyOrgBudgetPage($db, $user);
 }
 
 // Default Dashboard (all logged-in users)

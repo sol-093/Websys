@@ -70,7 +70,7 @@ function sendSystemEmail(string $recipientEmail, string $recipientName, string $
 function sendActivationEmail(string $email, string $name, string $token): bool
 {
     $config = require __DIR__ . '/config.php';
-    $baseUrl = rtrim($config['base_url'] ?: 'http://localhost/websys', '/');
+    $baseUrl = rtrim($config['base_url'] ?: 'http://localhost/Websys', '/');
     $verifyUrl = "{$baseUrl}/index.php?page=verify_email&token=" . urlencode($token);
 
     $subject = "Verify your account - " . $config['app_name'];
@@ -100,7 +100,7 @@ function passwordResetEmailConfigured(): bool
 function sendPasswordResetEmail(string $email, string $name, string $token): bool
 {
     $config = require __DIR__ . '/config.php';
-    $baseUrl = rtrim($config['base_url'] ?: 'http://localhost/websys', '/');
+    $baseUrl = rtrim($config['base_url'] ?: 'http://localhost/Websys', '/');
     $resetUrl = "{$baseUrl}/index.php?page=reset_password&token=" . urlencode($token);
 
     $subject = "Password Reset Request - " . $config['app_name'];

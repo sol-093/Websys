@@ -122,6 +122,26 @@ if (isPost()) {
         handleUpdateMyOrgAction($db, $user);
     }
 
+    if ($action === 'create_budget') {
+        handleCreateBudgetAction($db, $user);
+    }
+
+    if ($action === 'add_budget_line_item') {
+        handleAddBudgetLineItemAction($db, $user);
+    }
+
+    if ($action === 'update_budget_status') {
+        handleUpdateBudgetStatusAction($db, $user);
+    }
+
+    if ($action === 'submit_expense_request') {
+        handleSubmitExpenseRequestAction($db, $user, $config);
+    }
+
+    if ($action === 'process_expense_request') {
+        handleProcessExpenseRequestAction($db, $user);
+    }
+
     if ($action === 'add_announcement') {
         handleAddAnnouncementAction($db, $user);
     }

@@ -1,4 +1,4 @@
-
+d
 ## Update Name
 **INVOLVE BudgetFlow**
 
@@ -51,6 +51,9 @@ A clear ruleset for how the workflow behaves.
 ## Phase 1: Database Foundation
 Add the minimum schema needed for budgeting and approvals.
 
+### Status
+Started on 2026-05-08.
+
 ### New tables
 - `budgets`
 - `budget_line_items`
@@ -86,10 +89,18 @@ Add the minimum schema needed for budgeting and approvals.
 ### Deliverable
 Schema update and migration-safe SQL.
 
+### Implementation files
+- `database/schema.sql`
+- `database/migrations/2026_05_08_budgetflow_phase1.sql`
+- `includes/core/db.php`
+
 ---
 
 ## Phase 2: Backend Domain Helpers
 Create reusable helpers before UI.
+
+### Status
+Started on 2026-05-08.
 
 ### New helper areas
 ```text
@@ -112,10 +123,19 @@ includes/lib/expense_requests.php
 ### Deliverable
 Stable backend logic separated from page rendering.
 
+### Implementation files
+- `includes/lib/budgeting.php`
+- `includes/lib/expense_requests.php`
+- `includes/features/budgeting/`
+- `includes/features/expense_approvals/`
+
 ---
 
 ## Phase 3: Owner Budget Workspace
 Give owners a place to create and manage budgets.
+
+### Status
+Started on 2026-05-08.
 
 ### New owner capabilities
 - create budget for organization
@@ -142,10 +162,19 @@ This is better than stuffing it into current finance pages.
 ### Deliverable
 Budget management page for organization owners.
 
+### Implementation files
+- `includes/features/organizations/owner_pages.php`
+- `includes/features/budgeting/actions.php`
+- `includes/routes/pages.php`
+- `includes/routes/actions.php`
+
 ---
 
 ## Phase 4: Expense Request Submission
 Allow owners to request expenses through the budget.
+
+### Status
+Started on 2026-05-08.
 
 ### New owner flow
 - choose budget line item
@@ -170,6 +199,11 @@ or a dedicated request section linked from finance.
 
 ### Deliverable
 Owners can submit budget-linked expense requests.
+
+### Implementation files
+- `includes/features/organizations/owner_pages.php`
+- `includes/features/budgeting/actions.php`
+- `includes/routes/actions.php`
 
 ---
 

@@ -216,8 +216,60 @@ function initializeDatabaseSqlite(PDO $pdo): void
         description TEXT NOT NULL,
         transaction_date TEXT NOT NULL,
         receipt_path TEXT NULL,
+        expense_request_id INTEGER NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS budgets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        organization_id INTEGER NOT NULL,
+        created_by INTEGER NULL,
+        title TEXT NOT NULL,
+        period_start TEXT NOT NULL,
+        period_end TEXT NOT NULL,
+        total_amount REAL NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','closed')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS budget_line_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        budget_id INTEGER NOT NULL,
+        category_name TEXT NOT NULL,
+        description TEXT NULL,
+        allocated_amount REAL NOT NULL DEFAULT 0,
+        spent_amount REAL NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS expense_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        organization_id INTEGER NOT NULL,
+        budget_id INTEGER NOT NULL,
+        budget_line_item_id INTEGER NOT NULL,
+        requested_by INTEGER NULL,
+        amount REAL NOT NULL,
+        description TEXT NOT NULL,
+        receipt_path TEXT NULL,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+        admin_note TEXT NULL,
+        reviewed_by INTEGER NULL,
+        reviewed_at TEXT NULL,
+        transaction_id INTEGER NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+        FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
+        FOREIGN KEY (budget_line_item_id) REFERENCES budget_line_items(id) ON DELETE CASCADE,
+        FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (transaction_id) REFERENCES financial_transactions(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS owner_assignments (
@@ -283,6 +335,7 @@ function initializeDatabaseSqlite(PDO $pdo): void
     ensureAuthEnhancementColumns($pdo);
     ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
+    ensureBudgetFlowSchema($pdo);
     ensureDefaultAdmin($pdo);
     normalizeLegacyUploadPaths($pdo);
 }
@@ -358,9 +411,77 @@ function initializeDatabaseMySql(PDO $pdo): void
         description VARCHAR(255) NOT NULL,
         transaction_date DATE NOT NULL,
         receipt_path VARCHAR(255) NULL,
+        expense_request_id INT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_tx_org FOREIGN KEY (organization_id)
-            REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
+            REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        INDEX idx_tx_expense_request (expense_request_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS budgets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        organization_id INT NOT NULL,
+        created_by INT NULL,
+        title VARCHAR(191) NOT NULL,
+        period_start DATE NOT NULL,
+        period_end DATE NOT NULL,
+        total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        status ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_budgets_org FOREIGN KEY (organization_id)
+            REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT fk_budgets_creator FOREIGN KEY (created_by)
+            REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        INDEX idx_budgets_org_status (organization_id, status),
+        INDEX idx_budgets_period (period_start, period_end)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS budget_line_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        budget_id INT NOT NULL,
+        category_name VARCHAR(191) NOT NULL,
+        description TEXT NULL,
+        allocated_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        spent_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_budget_lines_budget FOREIGN KEY (budget_id)
+            REFERENCES budgets(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        INDEX idx_budget_lines_budget (budget_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+    CREATE TABLE IF NOT EXISTS expense_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        organization_id INT NOT NULL,
+        budget_id INT NOT NULL,
+        budget_line_item_id INT NOT NULL,
+        requested_by INT NULL,
+        amount DECIMAL(12,2) NOT NULL,
+        description VARCHAR(255) NOT NULL,
+        receipt_path VARCHAR(255) NULL,
+        status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+        admin_note TEXT NULL,
+        reviewed_by INT NULL,
+        reviewed_at DATETIME NULL,
+        transaction_id INT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_expense_requests_org FOREIGN KEY (organization_id)
+            REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT fk_expense_requests_budget FOREIGN KEY (budget_id)
+            REFERENCES budgets(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT fk_expense_requests_line FOREIGN KEY (budget_line_item_id)
+            REFERENCES budget_line_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT fk_expense_requests_requester FOREIGN KEY (requested_by)
+            REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT fk_expense_requests_reviewer FOREIGN KEY (reviewed_by)
+            REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        CONSTRAINT fk_expense_requests_transaction FOREIGN KEY (transaction_id)
+            REFERENCES financial_transactions(id) ON DELETE SET NULL ON UPDATE CASCADE,
+        INDEX idx_expense_requests_org_status (organization_id, status),
+        INDEX idx_expense_requests_line_status (budget_line_item_id, status),
+        INDEX idx_expense_requests_transaction (transaction_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
     CREATE TABLE IF NOT EXISTS owner_assignments (
@@ -441,6 +562,7 @@ function initializeDatabaseMySql(PDO $pdo): void
     ensureAuthEnhancementColumns($pdo);
     ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
+    ensureBudgetFlowSchema($pdo);
     ensureDefaultAdmin($pdo);
     normalizeLegacyUploadPaths($pdo);
 }
@@ -480,6 +602,158 @@ function normalizeLegacyUploadPaths(PDO $pdo): void
     if (tableColumnExists($pdo, 'financial_transactions', 'receipt_path')) {
         $pdo->exec("UPDATE financial_transactions SET receipt_path = REPLACE(receipt_path, 'uploads/receipt_', 'uploads/receipts/receipt_') WHERE receipt_path LIKE 'uploads/receipt_%'");
     }
+}
+
+function ensureBudgetFlowSchema(PDO $pdo): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    addColumnIfNotExists(
+        $pdo,
+        'financial_transactions',
+        'expense_request_id',
+        'expense_request_id INT NULL',
+        'expense_request_id INTEGER NULL'
+    );
+
+    if ($driver === 'mysql') {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS budgets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                organization_id INT NOT NULL,
+                created_by INT NULL,
+                title VARCHAR(191) NOT NULL,
+                period_start DATE NOT NULL,
+                period_end DATE NOT NULL,
+                total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                status ENUM('draft','active','closed') NOT NULL DEFAULT 'draft',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                CONSTRAINT fk_budgets_org FOREIGN KEY (organization_id)
+                    REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_budgets_creator FOREIGN KEY (created_by)
+                    REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+                INDEX idx_budgets_org_status (organization_id, status),
+                INDEX idx_budgets_period (period_start, period_end)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS budget_line_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                budget_id INT NOT NULL,
+                category_name VARCHAR(191) NOT NULL,
+                description TEXT NULL,
+                allocated_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                spent_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                CONSTRAINT fk_budget_lines_budget FOREIGN KEY (budget_id)
+                    REFERENCES budgets(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                INDEX idx_budget_lines_budget (budget_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS expense_requests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                organization_id INT NOT NULL,
+                budget_id INT NOT NULL,
+                budget_line_item_id INT NOT NULL,
+                requested_by INT NULL,
+                amount DECIMAL(12,2) NOT NULL,
+                description VARCHAR(255) NOT NULL,
+                receipt_path VARCHAR(255) NULL,
+                status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+                admin_note TEXT NULL,
+                reviewed_by INT NULL,
+                reviewed_at DATETIME NULL,
+                transaction_id INT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                CONSTRAINT fk_expense_requests_org FOREIGN KEY (organization_id)
+                    REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_expense_requests_budget FOREIGN KEY (budget_id)
+                    REFERENCES budgets(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_expense_requests_line FOREIGN KEY (budget_line_item_id)
+                    REFERENCES budget_line_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+                CONSTRAINT fk_expense_requests_requester FOREIGN KEY (requested_by)
+                    REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+                CONSTRAINT fk_expense_requests_reviewer FOREIGN KEY (reviewed_by)
+                    REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE,
+                CONSTRAINT fk_expense_requests_transaction FOREIGN KEY (transaction_id)
+                    REFERENCES financial_transactions(id) ON DELETE SET NULL ON UPDATE CASCADE,
+                INDEX idx_expense_requests_org_status (organization_id, status),
+                INDEX idx_expense_requests_line_status (budget_line_item_id, status),
+                INDEX idx_expense_requests_transaction (transaction_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
+    } else {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS budgets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                organization_id INTEGER NOT NULL,
+                created_by INTEGER NULL,
+                title TEXT NOT NULL,
+                period_start TEXT NOT NULL,
+                period_end TEXT NOT NULL,
+                total_amount REAL NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','closed')),
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+            )
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS budget_line_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                budget_id INTEGER NOT NULL,
+                category_name TEXT NOT NULL,
+                description TEXT NULL,
+                allocated_amount REAL NOT NULL DEFAULT 0,
+                spent_amount REAL NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE
+            )
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS expense_requests (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                organization_id INTEGER NOT NULL,
+                budget_id INTEGER NOT NULL,
+                budget_line_item_id INTEGER NOT NULL,
+                requested_by INTEGER NULL,
+                amount REAL NOT NULL,
+                description TEXT NOT NULL,
+                receipt_path TEXT NULL,
+                status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+                admin_note TEXT NULL,
+                reviewed_by INTEGER NULL,
+                reviewed_at TEXT NULL,
+                transaction_id INTEGER NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+                FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE,
+                FOREIGN KEY (budget_line_item_id) REFERENCES budget_line_items(id) ON DELETE CASCADE,
+                FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
+                FOREIGN KEY (transaction_id) REFERENCES financial_transactions(id) ON DELETE SET NULL
+            )
+        ");
+    }
+
+    createIndexIfNotExists($pdo, 'financial_transactions', 'idx_tx_expense_request', 'expense_request_id');
+    createIndexIfNotExists($pdo, 'budgets', 'idx_budgets_org_status', 'organization_id, status');
+    createIndexIfNotExists($pdo, 'budgets', 'idx_budgets_period', 'period_start, period_end');
+    createIndexIfNotExists($pdo, 'budget_line_items', 'idx_budget_lines_budget', 'budget_id');
+    createIndexIfNotExists($pdo, 'expense_requests', 'idx_expense_requests_org_status', 'organization_id, status');
+    createIndexIfNotExists($pdo, 'expense_requests', 'idx_expense_requests_line_status', 'budget_line_item_id, status');
+    createIndexIfNotExists($pdo, 'expense_requests', 'idx_expense_requests_transaction', 'transaction_id');
 }
 
 function ensureProfileMediaColumns(PDO $pdo): void
@@ -678,6 +952,29 @@ function addColumnIfNotExists(PDO $pdo, string $table, string $column, string $m
     $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
     $definition = $driver === 'mysql' ? $mysqlDefinition : $sqliteDefinition;
     $pdo->exec('ALTER TABLE ' . $table . ' ADD COLUMN ' . $definition);
+}
+
+function createIndexIfNotExists(PDO $pdo, string $table, string $indexName, string $columns): void
+{
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+    if ($driver === 'mysql') {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?');
+        $stmt->execute([$table, $indexName]);
+        if (((int) $stmt->fetchColumn()) > 0) {
+            return;
+        }
+    } else {
+        $stmt = $pdo->prepare('PRAGMA index_list(' . $table . ')');
+        $stmt->execute();
+        foreach ($stmt->fetchAll() as $index) {
+            if ((string) ($index['name'] ?? '') === $indexName) {
+                return;
+            }
+        }
+    }
+
+    $pdo->exec('CREATE INDEX ' . $indexName . ' ON ' . $table . ' (' . $columns . ')');
 }
 
 function ensureAuthEnhancementColumns(PDO $pdo): void

@@ -344,6 +344,212 @@ function handleAdminRequestsPage(PDO $db): void
     exit;
 }
 
+function handleAdminExpenseRequestsPage(PDO $db): void
+{
+    requireRole(['admin']);
+
+    $statusFilter = (string) ($_GET['status'] ?? 'pending');
+    if (!in_array($statusFilter, ['all', 'pending', 'approved', 'rejected'], true)) {
+        $statusFilter = 'pending';
+    }
+
+    $organizationFilter = (int) ($_GET['organization_id'] ?? 0);
+    $filters = ['limit' => 200];
+    if ($statusFilter !== 'all') {
+        $filters['status'] = $statusFilter;
+    }
+    if ($organizationFilter > 0) {
+        $filters['organization_id'] = $organizationFilter;
+    }
+
+    $requestsAll = getExpenseRequests($db, $filters);
+    $requestsPagination = paginateArray($requestsAll, 'pg_admin_expense_requests', 10);
+    $requests = $requestsPagination['items'];
+    $organizations = $db->query('SELECT id, name FROM organizations ORDER BY name ASC')->fetchAll() ?: [];
+
+    renderHeader('Expense Requests');
+    ?>
+    <div class="glass transparency-panel rounded-xl p-4 overflow-auto">
+        <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+                <h1 class="text-xl font-semibold mb-1 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Budget Expense Requests</span></h1>
+                <p class="section-helper-copy">Approve budget-backed expenses or reject them with an admin note.</p>
+            </div>
+            <a href="?page=admin_requests" class="owner-manage-secondary-btn inline-flex rounded-md px-3 py-2 text-sm">Owner Edit Requests</a>
+        </div>
+
+        <form method="get" class="mb-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(10rem,0.35fr)_auto] lg:items-end">
+            <input type="hidden" name="page" value="admin_expense_requests">
+            <div class="space-y-2">
+                <label for="adminExpenseOrgFilter" class="text-sm font-medium text-slate-700">Organization</label>
+                <select id="adminExpenseOrgFilter" name="organization_id" class="w-full border rounded px-3 py-2">
+                    <option value="0">All organizations</option>
+                    <?php foreach ($organizations as $organization): ?>
+                        <option value="<?= (int) $organization['id'] ?>" <?= $organizationFilter === (int) $organization['id'] ? 'selected' : '' ?>>
+                            <?= e((string) $organization['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label for="adminExpenseStatusFilter" class="text-sm font-medium text-slate-700">Status</label>
+                <select id="adminExpenseStatusFilter" name="status" class="w-full border rounded px-3 py-2">
+                    <?php foreach (['pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected', 'all' => 'All'] as $value => $label): ?>
+                        <option value="<?= e($value) ?>" <?= $statusFilter === $value ? 'selected' : '' ?>><?= e($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <button class="owner-manage-primary-btn rounded-md px-4 py-2">Filter</button>
+        </form>
+
+        <?php if ($requests === []): ?>
+            <div class="empty-state-panel">No expense requests match the selected filters.</div>
+        <?php else: ?>
+            <div class="table-wrapper hidden xl:block">
+                <table class="w-full min-w-[1180px] text-sm table-fixed">
+                    <colgroup>
+                        <col class="w-[14%]">
+                        <col class="w-[13%]">
+                        <col class="w-[17%]">
+                        <col class="w-[18%]">
+                        <col class="w-[10%]">
+                        <col class="w-[8%]">
+                        <col class="w-[20%]">
+                    </colgroup>
+                    <thead>
+                    <tr class="border-b text-left">
+                        <th class="py-3 px-3">Organization</th>
+                        <th class="py-3 px-3">Requester</th>
+                        <th class="py-3 px-3">Budget Line</th>
+                        <th class="py-3 px-3">Description</th>
+                        <th class="py-3 px-3">Amount</th>
+                        <th class="py-3 px-3">Status</th>
+                        <th class="py-3 px-3">Decision</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($requests as $request): ?>
+                        <?php
+                            $requestStatus = strtolower((string) ($request['status'] ?? 'pending'));
+                            $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
+                        ?>
+                        <tr class="border-b align-top">
+                            <td class="py-4 px-3 break-words">
+                                <div class="font-medium"><?= e((string) ($request['organization_name'] ?? 'Organization')) ?></div>
+                                <div class="mt-1 text-xs text-slate-500"><?= e(date('F d, Y', strtotime((string) $request['created_at']))) ?></div>
+                            </td>
+                            <td class="py-4 px-3 break-words"><?= e((string) ($request['requested_by_name'] ?? 'Owner')) ?></td>
+                            <td class="py-4 px-3 break-words">
+                                <div class="font-medium"><?= e((string) ($request['line_item_name'] ?? 'Budget line')) ?></div>
+                                <div class="mt-1 text-xs text-slate-500"><?= e((string) ($request['budget_title'] ?? 'Budget')) ?></div>
+                            </td>
+                            <td class="py-4 px-3 break-words">
+                                <div><?= e((string) $request['description']) ?></div>
+                                <?php if (!empty($request['receipt_path'])): ?>
+                                    <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="mt-2 inline-flex text-xs underline">Open receipt</a>
+                                <?php endif; ?>
+                                <?php if (trim((string) ($request['admin_note'] ?? '')) !== ''): ?>
+                                    <div class="mt-2 text-xs text-slate-500">Note: <?= e((string) $request['admin_note']) ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td class="py-4 px-3 whitespace-nowrap font-medium">PHP<?= number_format((float) $request['amount'], 2) ?></td>
+                            <td class="py-4 px-3"><span class="<?= e($statusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
+                                'approved' => 'approved',
+                                'rejected' => 'rejected',
+                                'pending' => 'pending',
+                                default => 'default',
+                            }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span></td>
+                            <td class="py-4 px-3">
+                                <?php if ($requestStatus === 'pending'): ?>
+                                    <div class="space-y-2">
+                                        <form method="post">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="process_expense_request">
+                                            <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
+                                            <input type="hidden" name="decision" value="approve">
+                                            <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm">Approve</button>
+                                        </form>
+                                        <form method="post" class="space-y-2">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="process_expense_request">
+                                            <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
+                                            <input type="hidden" name="decision" value="reject">
+                                            <textarea name="admin_note" rows="2" class="w-full border rounded px-2 py-1 text-xs" placeholder="Rejection note" required></textarea>
+                                            <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Reject</button>
+                                        </form>
+                                    </div>
+                                <?php else: ?>
+                                    <span class="text-xs text-slate-500">Processed</span>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="xl:hidden space-y-3">
+                <?php foreach ($requests as $request): ?>
+                    <?php
+                        $requestStatus = strtolower((string) ($request['status'] ?? 'pending'));
+                        $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
+                    ?>
+                    <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="admin-mobile-title"><?= e((string) ($request['organization_name'] ?? 'Organization')) ?></div>
+                                <div class="admin-mobile-meta mt-1"><?= e(date('F d, Y', strtotime((string) $request['created_at']))) ?></div>
+                            </div>
+                            <span class="<?= e($statusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
+                                'approved' => 'approved',
+                                'rejected' => 'rejected',
+                                'pending' => 'pending',
+                                default => 'default',
+                            }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span>
+                        </div>
+                        <div class="mt-3 space-y-2 text-sm">
+                            <div><span class="font-semibold">Requester:</span> <?= e((string) ($request['requested_by_name'] ?? 'Owner')) ?></div>
+                            <div><span class="font-semibold">Budget:</span> <?= e((string) ($request['budget_title'] ?? 'Budget')) ?></div>
+                            <div><span class="font-semibold">Line:</span> <?= e((string) ($request['line_item_name'] ?? 'Budget line')) ?></div>
+                            <div><span class="font-semibold">Amount:</span> PHP<?= number_format((float) $request['amount'], 2) ?></div>
+                            <div class="break-words"><span class="font-semibold">Description:</span> <?= e((string) $request['description']) ?></div>
+                            <?php if (!empty($request['receipt_path'])): ?>
+                                <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm">Open Receipt</a>
+                            <?php endif; ?>
+                            <?php if (trim((string) ($request['admin_note'] ?? '')) !== ''): ?>
+                                <div class="rounded-lg border border-emerald-300/20 bg-white/20 px-3 py-2 text-slate-600">Note: <?= e((string) $request['admin_note']) ?></div>
+                            <?php endif; ?>
+                        </div>
+                        <?php if ($requestStatus === 'pending'): ?>
+                            <div class="mt-3 grid gap-2">
+                                <form method="post">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="process_expense_request">
+                                    <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
+                                    <input type="hidden" name="decision" value="approve">
+                                    <button class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm">Approve</button>
+                                </form>
+                                <form method="post" class="space-y-2">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="process_expense_request">
+                                    <input type="hidden" name="request_id" value="<?= (int) $request['id'] ?>">
+                                    <input type="hidden" name="decision" value="reject">
+                                    <textarea name="admin_note" rows="2" class="w-full border rounded px-3 py-2 text-sm" placeholder="Rejection note" required></textarea>
+                                    <button class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm">Reject</button>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+            <?php renderPagination($requestsPagination); ?>
+        <?php endif; ?>
+    </div>
+    <?php
+    renderFooter();
+    exit;
+}
+
 function handleAdminAuditPage(PDO $db, array $user): void
 {
     requireLogin();

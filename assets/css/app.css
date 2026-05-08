@@ -1336,10 +1336,23 @@
 
             [data-dropdown-menu] {
                 color: #ecfdf5;
+                z-index: 90 !important;
             }
 
             [data-dropdown-menu] ul {
                 padding: 0.45rem;
+            }
+
+            [data-dropdown-wrapper].is-dropdown-open,
+            [data-dropdown-root].is-dropdown-open {
+                z-index: 90;
+            }
+
+            .glass.is-dropdown-open,
+            .glass:has([data-dropdown-menu]:not(.hidden)) {
+                position: relative;
+                z-index: 80;
+                overflow: visible;
             }
 
             .nav-profile-item,
@@ -1350,6 +1363,17 @@
 
             [data-dropdown-option] {
                 border-radius: 0.8rem;
+            }
+
+            input[type="number"] {
+                -moz-appearance: textfield;
+                appearance: textfield;
+            }
+
+            input[type="number"]::-webkit-outer-spin-button,
+            input[type="number"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
             }
 
             .nav-profile-item:hover,

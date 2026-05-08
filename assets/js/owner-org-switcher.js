@@ -77,6 +77,7 @@
         const hiddenInput = wrapper.querySelector('[data-dropdown-value]') || root.querySelector('[data-dropdown-value]');
         const label = wrapper.querySelector('[data-dropdown-label]') || root.querySelector('[data-dropdown-label]');
         const optionItems = Array.from(menu ? menu.querySelectorAll('[data-dropdown-option]') : []);
+        const panel = wrapper.closest('.glass');
 
         if (!button || !menu || !hiddenInput || !label) {
             return null;
@@ -84,6 +85,11 @@
 
         const setOpen = function (isOpen) {
             menu.classList.toggle('hidden', !isOpen);
+            wrapper.classList.toggle('is-dropdown-open', isOpen);
+            root.classList.toggle('is-dropdown-open', isOpen);
+            if (panel) {
+                panel.classList.toggle('is-dropdown-open', isOpen);
+            }
             button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         };
 

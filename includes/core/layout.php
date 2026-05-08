@@ -39,7 +39,7 @@ function renderHeader(string $title = 'Dashboard'): void
     $isNotificationsActive = $currentPage === 'notifications';
     $isLoginActive = in_array($currentPage, ['login', 'forgot_password', 'reset_password', 'verify_email', 'google_login', 'google_callback'], true);
     $isRegisterActive = $currentPage === 'register';
-    $isAdminActive = in_array($currentPage, ['admin_orgs', 'admin_students', 'admin_requests', 'admin_audit'], true);
+    $isAdminActive = in_array($currentPage, ['admin_orgs', 'admin_students', 'admin_requests', 'admin_expense_requests', 'admin_audit'], true);
     $isAdmin = ($user['role'] ?? '') === 'admin';
     $navAppName = (string) $config['app_name'];
     $faviconPath = 'uploads/assets/involvemoblight.png';
@@ -122,6 +122,10 @@ function renderHeader(string $title = 'Dashboard'): void
                                                     <span class="admin-mega-icon admin-mega-icon-sage"><?= uiIcon('requests', 'ui-icon ui-icon-sm') ?></span>
                                                     <span>Owner Requests</span>
                                                 </a>
+                                                <a href="?page=admin_expense_requests" class="admin-mega-link <?= $currentPage === 'admin_expense_requests' ? 'is-active' : '' ?>" role="menuitem">
+                                                    <span class="admin-mega-icon admin-mega-icon-mint"><?= uiIcon('pending', 'ui-icon ui-icon-sm') ?></span>
+                                                    <span>Expense Requests</span>
+                                                </a>
                                                 <a href="?page=admin_audit" class="admin-mega-link <?= $currentPage === 'admin_audit' ? 'is-active' : '' ?>" role="menuitem">
                                                     <span class="admin-mega-icon admin-mega-icon-emerald"><?= uiIcon('audit', 'ui-icon ui-icon-sm') ?></span>
                                                     <span>Audit Logs</span>
@@ -198,6 +202,7 @@ function renderHeader(string $title = 'Dashboard'): void
                                         <a href="?page=admin_orgs" class="nav-link <?= $currentPage === 'admin_orgs' ? 'nav-link-active' : '' ?>">Manage Orgs</a>
                                         <a href="?page=admin_students" class="nav-link <?= $currentPage === 'admin_students' ? 'nav-link-active' : '' ?>">Students</a>
                                         <a href="?page=admin_requests" class="nav-link <?= $currentPage === 'admin_requests' ? 'nav-link-active' : '' ?>">Requests</a>
+                                        <a href="?page=admin_expense_requests" class="nav-link <?= $currentPage === 'admin_expense_requests' ? 'nav-link-active' : '' ?>">Expense Requests</a>
                                         <a href="?page=admin_audit" class="nav-link <?= $currentPage === 'admin_audit' ? 'nav-link-active' : '' ?>">Audit Logs</a>
                                     </div>
                                 </div>
