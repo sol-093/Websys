@@ -141,6 +141,19 @@ function handleAdminRequestsPage(PDO $db): void
             </thead>
             <tbody>
             <?php foreach ($requests as $req): ?>
+                <?php
+                    $requestStatus = strtolower((string) $req['status']);
+                    $requestStatusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
+                    $requestStatusIcon = match ($requestStatus) {
+                        'approved', 'accepted' => 'approved',
+                        'rejected', 'declined' => 'rejected',
+                        'pending' => 'pending',
+                        default => 'default',
+                    };
+                    $requestAction = strtolower((string) ($req['action_type'] ?? ''));
+                    $requestActionClass = 'tx-request-action-badge tx-request-action-' . preg_replace('/[^a-z]/', '', $requestAction);
+                    $requestActionIcon = $requestAction === 'delete' ? 'delete' : 'edit';
+                ?>
                 <tr class="border-b align-top">
                     <td class="py-4 px-4 align-top break-words">
                         <span class="inline-flex items-center gap-2">
@@ -154,7 +167,9 @@ function handleAdminRequestsPage(PDO $db): void
                             <span><?= e($req['requester_name']) ?></span>
                         </span>
                     </td>
-                    <td class="py-4 px-4 align-top capitalize break-words"><?= e($req['action_type']) ?></td>
+                    <td class="py-4 px-4 align-top break-words">
+                        <span class="<?= e($requestActionClass) ?> icon-badge"><?= uiIcon($requestActionIcon, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestAction)) ?></span>
+                    </td>
                     <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words">
                         <?php if ($req['action_type'] === 'update'): ?>
                             <div class="text-xs">Type: <?= e((string) $req['proposed_type']) ?></div>
@@ -165,24 +180,18 @@ function handleAdminRequestsPage(PDO $db): void
                             <div class="text-xs">Delete transaction #<?= (int) $req['transaction_id'] ?></div>
                         <?php endif; ?>
                     </td>
-                    <td class="py-4 px-4 align-top break-words"><span class="icon-label"><?php
-                        $requestStatus = strtolower((string) $req['status']);
-                        $requestStatusIcon = match ($requestStatus) {
-                            'approved', 'accepted' => 'approved',
-                            'rejected', 'declined' => 'rejected',
-                            'pending' => 'pending',
-                            default => 'default',
-                        };
-                        ?><?= uiIcon($requestStatusIcon, 'ui-icon ui-icon-sm') ?><?= e((string) $req['status']) ?></span></td>
+                    <td class="py-4 px-4 align-top break-words">
+                        <span class="<?= e($requestStatusClass) ?> icon-badge"><?= uiIcon($requestStatusIcon, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span>
+                    </td>
                     <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words"><?= e((string) ($req['admin_note'] ?? '')) ?></td>
                     <td class="py-4 px-4 align-top">
-                        <?php if ((string) $req['status'] === 'pending'): ?>
-                            <div class="flex flex-wrap gap-2 text-xs">
-                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="owner-manage-primary-btn inline-flex items-center justify-center px-3 py-2 rounded-md min-w-[6.25rem]">
-                                    <span class="icon-label w-[4.75rem] justify-start leading-none"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span class="inline-block w-[3.8rem] text-left leading-none">Approve</span></span>
+                        <?php if ($requestStatus === 'pending'): ?>
+                            <div class="flex flex-wrap gap-1.5 text-xs">
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="request-decision-btn request-decision-btn-approve">
+                                    <span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span>
                                 </button>
-                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="tx-action-btn tx-action-btn-delete inline-flex items-center justify-center px-3 py-2 rounded-md min-w-[6.25rem]">
-                                    <span class="icon-label w-[4.75rem] justify-start leading-none"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span class="inline-block w-[2.5rem] text-center leading-none">Reject</span></span>
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="request-decision-btn request-decision-btn-reject">
+                                    <span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span>
                                 </button>
                             </div>
                         <?php else: ?>
@@ -196,7 +205,19 @@ function handleAdminRequestsPage(PDO $db): void
         </div>
         <div class="lg:hidden space-y-3">
             <?php foreach ($requests as $req): ?>
-                <?php $requestStatus = strtolower((string) $req['status']); ?>
+                <?php
+                    $requestStatus = strtolower((string) $req['status']);
+                    $requestStatusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
+                    $requestStatusIcon = match ($requestStatus) {
+                        'approved', 'accepted' => 'approved',
+                        'rejected', 'declined' => 'rejected',
+                        'pending' => 'pending',
+                        default => 'default',
+                    };
+                    $requestAction = strtolower((string) ($req['action_type'] ?? ''));
+                    $requestActionClass = 'tx-request-action-badge tx-request-action-' . preg_replace('/[^a-z]/', '', $requestAction);
+                    $requestActionIcon = $requestAction === 'delete' ? 'delete' : 'edit';
+                ?>
                 <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
                     <div class="space-y-2">
                         <div class="admin-mobile-title inline-flex items-center gap-2 min-w-0">
@@ -209,7 +230,7 @@ function handleAdminRequestsPage(PDO $db): void
                         </div>
                         <div class="admin-mobile-meta">
                             <span class="font-semibold">Action:</span>
-                            <span class="capitalize"><?= e((string) $req['action_type']) ?></span>
+                            <span class="<?= e($requestActionClass) ?> icon-badge"><?= uiIcon($requestActionIcon, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestAction)) ?></span>
                         </div>
                         <div class="admin-mobile-meta leading-relaxed break-words">
                             <?php if ($req['action_type'] === 'update'): ?>
@@ -223,7 +244,7 @@ function handleAdminRequestsPage(PDO $db): void
                         </div>
                         <div class="admin-mobile-meta break-words">
                             <span class="font-semibold">Status:</span>
-                            <span><?= e((string) $req['status']) ?></span>
+                            <span class="<?= e($requestStatusClass) ?> icon-badge"><?= uiIcon($requestStatusIcon, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span>
                         </div>
                         <?php if ((string) ($req['admin_note'] ?? '') !== ''): ?>
                             <div class="admin-mobile-meta break-words">
@@ -232,12 +253,12 @@ function handleAdminRequestsPage(PDO $db): void
                             </div>
                         <?php endif; ?>
 
-                        <?php if ((string) $req['status'] === 'pending'): ?>
-                            <div class="grid grid-cols-1 gap-2 pt-1">
-                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="owner-manage-primary-btn w-full inline-flex items-center justify-center px-3 py-2 rounded-md text-sm">
+                        <?php if ($requestStatus === 'pending'): ?>
+                            <div class="flex flex-wrap gap-2 pt-1">
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="request-decision-btn request-decision-btn-approve">
                                     <span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span>
                                 </button>
-                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="tx-action-btn tx-action-btn-delete w-full inline-flex items-center justify-center px-3 py-2 rounded-md text-sm">
+                                <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="reject" class="request-decision-btn request-decision-btn-reject">
                                     <span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span>
                                 </button>
                             </div>
@@ -738,9 +759,9 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                             </td>
                             <td class="py-4 px-3">
                                 <?php if ($requestStatus === 'pending'): ?>
-                                    <div class="space-y-2">
-                                        <button type="button" class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label justify-center"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
-                                        <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label justify-center"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <button type="button" class="request-decision-btn request-decision-btn-approve" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
+                                        <button type="button" class="request-decision-btn request-decision-btn-reject" data-expense-reject-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
                                     </div>
                                 <?php else: ?>
                                     <span class="text-xs text-slate-500">Processed</span>
@@ -783,9 +804,9 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                             <?php renderExpenseRequestTimeline($request); ?>
                         </div>
                         <?php if ($requestStatus === 'pending'): ?>
-                            <div class="mt-3 grid gap-2">
-                                <button type="button" class="owner-manage-primary-btn w-full rounded-md px-3 py-2 text-sm" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>">Approve</button>
-                                <button type="button" class="tx-action-btn tx-action-btn-delete w-full rounded-md px-3 py-2 text-sm" data-expense-reject-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>">Reject</button>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <button type="button" class="request-decision-btn request-decision-btn-approve" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
+                                <button type="button" class="request-decision-btn request-decision-btn-reject" data-expense-reject-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?><span>Reject</span></span></button>
                             </div>
                         <?php endif; ?>
                     </article>

@@ -74,6 +74,8 @@ function handleDashboardPage(array $dashboardData, array $user): void
         'trendExpense' => $trendExpense,
         'summaryRankingLabels' => $summaryRankingLabels,
         'summaryRankingBalances' => $summaryRankingBalances,
+        'summaryExpenseLabels' => $summaryExpenseLabels,
+        'summaryExpenseValues' => $summaryExpenseValues,
     ];
     ?>
     <script id="dashboard-client-data" type="application/json"><?= json_encode($dashboardClientData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>

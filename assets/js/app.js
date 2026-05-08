@@ -791,7 +791,60 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
 // ================================================
-// 8. THEME, CSRF, MOBILE NAV, MODALS, AND TOUCH DRAG
+// 8. POINTER-AWARE DATA TOOLTIPS
+// ================================================
+(function () {
+                var tooltipTargets = Array.prototype.slice.call(document.querySelectorAll('[data-tooltip]'));
+                if (tooltipTargets.length === 0) {
+                    return;
+                }
+
+                var setTooltipPosition = function (target, clientX) {
+                    var bounds = target.getBoundingClientRect();
+                    if (bounds.width <= 0) {
+                        target.style.setProperty('--budget-tooltip-x', '50%');
+                        target.classList.remove('budget-tooltip-align-left', 'budget-tooltip-align-right', 'is-tooltip-active');
+                        return;
+                    }
+
+                    var safeX = Math.max(8, Math.min(bounds.width - 8, clientX - bounds.left));
+                    var ratio = safeX / bounds.width;
+                    if (target.matches('.dashboard-net-balance-chart td[data-tooltip]')) {
+                        var barSize = Number.parseFloat(window.getComputedStyle(target).getPropertyValue('--size') || '0');
+                        var barWidth = Math.max(0, Math.min(1, Number.isFinite(barSize) ? barSize : 0)) * bounds.width;
+                        target.classList.toggle('is-tooltip-active', safeX <= barWidth);
+                    } else {
+                        target.classList.add('is-tooltip-active');
+                    }
+                    target.style.setProperty('--budget-tooltip-x', safeX + 'px');
+                    target.classList.toggle('budget-tooltip-align-left', ratio < 0.28);
+                    target.classList.toggle('budget-tooltip-align-right', ratio > 0.72);
+                };
+
+                tooltipTargets.forEach(function (target) {
+                    target.addEventListener('pointermove', function (event) {
+                        setTooltipPosition(target, event.clientX);
+                    });
+
+                    target.addEventListener('pointerenter', function (event) {
+                        setTooltipPosition(target, event.clientX);
+                    });
+
+                    target.addEventListener('pointerleave', function () {
+                        target.style.removeProperty('--budget-tooltip-x');
+                        target.classList.remove('budget-tooltip-align-left', 'budget-tooltip-align-right', 'is-tooltip-active');
+                    });
+
+                    target.addEventListener('focus', function () {
+                        target.style.setProperty('--budget-tooltip-x', '50%');
+                        target.classList.add('is-tooltip-active');
+                        target.classList.remove('budget-tooltip-align-left', 'budget-tooltip-align-right');
+                    });
+                });
+            })();
+
+// ================================================
+// 9. THEME, CSRF, MOBILE NAV, MODALS, AND TOUCH DRAG
 // ================================================
 (function () {
                 const root = document.body;

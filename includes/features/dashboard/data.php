@@ -54,8 +54,11 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
 
     $visibleOrganizationIds = array_values(array_unique(array_map(static fn(array $org): int => (int) $org['id'], $orgs)));
     $summary = [];
+    $budgetFlowActiveBudgetCount = 0;
     $budgetFlowPendingExpenseRequestCount = 0;
     $budgetFlowAttentionCount = 0;
+    $budgetFlowCriticalLineCount = 0;
+    $budgetFlowWatchLineCount = 0;
     if (count($visibleOrganizationIds) > 0) {
         $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
         $summaryStmt = $db->prepare("SELECT o.id, o.name, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom,
@@ -73,6 +76,10 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         $pendingExpenseStmt->execute($visibleOrganizationIds);
         $budgetFlowPendingExpenseRequestCount = (int) $pendingExpenseStmt->fetchColumn();
 
+        $activeBudgetStmt = $db->prepare("SELECT COUNT(*) FROM budgets WHERE organization_id IN ($summaryPlaceholders) AND status = 'active'");
+        $activeBudgetStmt->execute($visibleOrganizationIds);
+        $budgetFlowActiveBudgetCount = (int) $activeBudgetStmt->fetchColumn();
+
         $budgetLineUsageStmt = $db->prepare("SELECT bli.allocated_amount, bli.spent_amount,
                 COALESCE(SUM(CASE WHEN er.status = 'pending' THEN er.amount ELSE 0 END), 0) AS pending_amount
             FROM budget_line_items bli
@@ -88,7 +95,11 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
                 continue;
             }
             $usedRatio = ((float) ($lineUsage['spent_amount'] ?? 0) + (float) ($lineUsage['pending_amount'] ?? 0)) / $allocated;
-            if ($usedRatio >= 0.75) {
+            if ($usedRatio >= 0.9) {
+                $budgetFlowCriticalLineCount++;
+                $budgetFlowAttentionCount++;
+            } elseif ($usedRatio >= 0.75) {
+                $budgetFlowWatchLineCount++;
                 $budgetFlowAttentionCount++;
             }
         }
@@ -293,6 +304,14 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $summaryRankingTop = array_slice($summaryRankingRows, 0, 8);
     $summaryRankingLabels = array_map(static fn(array $row): string => (string) $row['name'], $summaryRankingTop);
     $summaryRankingBalances = array_map(static fn(array $row): float => (float) $row['balance'], $summaryRankingTop);
+    $summaryExpenseRows = $summaryRankingRows;
+    usort(
+        $summaryExpenseRows,
+        static fn(array $a, array $b): int => $b['expense'] <=> $a['expense']
+    );
+    $summaryExpenseTop = array_slice($summaryExpenseRows, 0, 8);
+    $summaryExpenseLabels = array_map(static fn(array $row): string => (string) $row['name'], $summaryExpenseTop);
+    $summaryExpenseValues = array_map(static fn(array $row): float => (float) $row['expense'], $summaryExpenseTop);
 
     $summaryAttentionRows = array_values(array_filter(
         $summaryRankingRows,
@@ -318,8 +337,11 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'announcements',
         'averageNet',
         'balanceRatio',
+        'budgetFlowActiveBudgetCount',
         'budgetFlowAttentionCount',
+        'budgetFlowCriticalLineCount',
         'budgetFlowPendingExpenseRequestCount',
+        'budgetFlowWatchLineCount',
         'dashboardOrganizationsPreview',
         'dashboardTimestamp',
         'expenseRatio',
@@ -356,6 +378,9 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'summaryAttentionRows',
         'summaryChartRows',
         'summaryExpenseTotal',
+        'summaryExpenseLabels',
+        'summaryExpenseTop',
+        'summaryExpenseValues',
         'summaryIncomeTotal',
         'summaryNetTotal',
         'summaryPagination',

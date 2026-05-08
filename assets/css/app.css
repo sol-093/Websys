@@ -3225,6 +3225,16 @@
                 -webkit-overflow-scrolling: touch;
             }
 
+            .financial-summary-overlay {
+                padding: 1.25rem;
+            }
+
+            .financial-summary-panel {
+                width: min(calc(100vw - 2.5rem), 72rem) !important;
+                margin-inline: auto;
+                box-sizing: border-box;
+            }
+
             .modal-panel {
                 position: relative;
                 transform: translateY(0);
@@ -3366,6 +3376,14 @@
                     width: 100%;
                     max-height: calc(100dvh - 0.75rem);
                     border-radius: 0.85rem;
+                }
+
+                .financial-summary-overlay {
+                    padding-inline: 0.75rem;
+                }
+
+                .financial-summary-panel {
+                    width: min(calc(100vw - 1.5rem), 72rem) !important;
                 }
 
                 .global-search-overlay > .glass {
@@ -3748,6 +3766,73 @@
                 color: #92400e;
             }
 
+            .tx-request-action-badge {
+                border-radius: 999px;
+                padding: 2px 8px;
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            .tx-request-action-update {
+                background: rgba(16, 185, 129, 0.18);
+                color: #065f46;
+            }
+
+            .tx-request-action-delete {
+                background: rgba(239, 68, 68, 0.18);
+                color: #991b1b;
+            }
+
+            .request-decision-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 1.75rem;
+                width: 4.85rem;
+                border: 1px solid currentColor;
+                border-radius: 0.45rem;
+                padding: 0.28rem 0.58rem;
+                box-sizing: border-box;
+                font-size: 0.72rem;
+                font-weight: 600;
+                line-height: 1;
+                transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+            }
+
+            .request-decision-btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .request-decision-btn .icon-label {
+                gap: 0.25rem;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .request-decision-btn-approve {
+                border-color: rgba(16, 185, 129, 0.38);
+                background: rgba(16, 185, 129, 0.14);
+                color: #047857;
+            }
+
+            .request-decision-btn-approve:hover {
+                border-color: rgba(16, 185, 129, 0.56);
+                background: rgba(16, 185, 129, 0.22);
+                color: #065f46;
+            }
+
+            .request-decision-btn-reject {
+                border-color: rgba(239, 68, 68, 0.38);
+                background: rgba(239, 68, 68, 0.13);
+                color: #b91c1c;
+            }
+
+            .request-decision-btn-reject:hover {
+                border-color: rgba(239, 68, 68, 0.56);
+                background: rgba(239, 68, 68, 0.2);
+                color: #991b1b;
+            }
+
             body.theme-dark .updates-status-approved,
             body.theme-dark .updates-status-accepted {
                 color: #bbf7d0;
@@ -3761,6 +3846,38 @@
 
             body.theme-dark .updates-status-pending {
                 color: #fde68a;
+            }
+
+            body.theme-dark .tx-request-action-update {
+                color: #bbf7d0;
+            }
+
+            body.theme-dark .tx-request-action-delete {
+                color: #fecaca;
+            }
+
+            body.theme-dark .request-decision-btn-approve {
+                color: #86efac;
+                border-color: rgba(110, 231, 183, 0.34);
+                background: rgba(16, 185, 129, 0.12);
+            }
+
+            body.theme-dark .request-decision-btn-approve:hover {
+                color: #bbf7d0;
+                border-color: rgba(110, 231, 183, 0.52);
+                background: rgba(16, 185, 129, 0.2);
+            }
+
+            body.theme-dark .request-decision-btn-reject {
+                color: #fca5a5;
+                border-color: rgba(248, 113, 113, 0.34);
+                background: rgba(239, 68, 68, 0.12);
+            }
+
+            body.theme-dark .request-decision-btn-reject:hover {
+                color: #fecaca;
+                border-color: rgba(248, 113, 113, 0.52);
+                background: rgba(239, 68, 68, 0.2);
             }
 
             .dashboard-shell {
@@ -4073,11 +4190,31 @@
                 line-height: 1.3;
             }
 
+            .dashboard-chart-title-toggle {
+                border: 0;
+                background: transparent;
+                color: inherit;
+                cursor: pointer;
+                display: inline-flex;
+                font: inherit;
+                padding: 0;
+                text-align: left;
+                pointer-events: auto;
+            }
+
+            .dashboard-chart-title-toggle:hover,
+            .dashboard-chart-title-toggle:focus-visible {
+                color: #6ee7b7;
+                outline: none;
+            }
+
             .dashboard-ranking-chart-wrap {
                 position: relative;
                 width: 100%;
                 min-height: 205px;
-                height: 225px;
+                height: 235px;
+                flex: 0 0 auto;
+                overflow: visible;
             }
 
             .dashboard-ranking-chart-wrap canvas {
@@ -4085,50 +4222,28 @@
                 height: 100% !important;
             }
 
-            .dashboard-net-balance-chart.charts-css {
-                width: 100%;
-                height: calc(100% - 2.85rem);
-                border-collapse: separate;
-                border-spacing: 0;
-                color: #d1fae5;
-                font-family: inherit;
-                table-layout: fixed;
-            }
-
-            .dashboard-net-balance-chart caption {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                white-space: nowrap;
-            }
-
             .dashboard-chart-toggle {
                 display: block;
                 width: fit-content;
-                margin: 0.36rem auto 0.28rem;
-                border: 0;
+                margin: 0.5rem auto 0.42rem;
+                padding: 0.12rem 0.55rem;
+                border: 1px solid currentColor;
+                border-radius: 0.38rem;
                 background: transparent;
                 color: #34d399;
-                cursor: pointer;
                 font: inherit;
                 font-size: 0.78rem;
                 font-weight: 700;
-                letter-spacing: 0;
                 line-height: 1.1;
-                padding: 0.12rem 0.5rem;
                 text-align: center;
-                text-decoration: none;
-                border: 1px solid currentColor;
-                border-radius: 0.36rem;
+                cursor: pointer;
+                transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease;
             }
 
             .dashboard-chart-toggle:hover,
             .dashboard-chart-toggle:focus-visible {
-                color: #6ee7b7;
+                background: rgba(52, 211, 153, 0.08);
                 outline: none;
-                box-shadow: 0 0 0 3px rgba(110, 231, 183, 0.12);
             }
 
             .dashboard-chart-toggle.is-expense-mode {
@@ -4137,8 +4252,105 @@
 
             .dashboard-chart-toggle.is-expense-mode:hover,
             .dashboard-chart-toggle.is-expense-mode:focus-visible {
-                color: #fca5a5;
-                box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12);
+                background: rgba(248, 113, 113, 0.08);
+            }
+
+            .dashboard-net-balance-chart.charts-css {
+                width: 100%;
+                height: calc(100% - 3.35rem);
+                min-height: 0;
+                border-collapse: separate;
+                border-spacing: 0;
+                table-layout: fixed;
+                color: #d1fae5;
+                font-family: inherit;
+                overflow: visible;
+            }
+
+            .dashboard-net-balance-chart tbody {
+                position: relative;
+                display: grid;
+                height: 100%;
+                min-height: 0;
+                grid-template-rows: repeat(6, minmax(0, 1fr));
+                gap: 0;
+                overflow: visible;
+                background-image:
+                    repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), rgba(110, 231, 183, 0.16) calc(16.666% - 1px), rgba(110, 231, 183, 0.16) 16.666%),
+                    repeating-linear-gradient(to right, rgba(110, 231, 183, 0.18) 0 1px, transparent 1px 20%);
+                background-position: 10.25rem 0;
+                background-size: calc(100% - 10.25rem) 100%;
+                background-repeat: no-repeat;
+            }
+
+            .dashboard-net-balance-chart tbody::after {
+                content: '';
+                position: absolute;
+                inset: 0 0 0 10.25rem;
+                z-index: 2;
+                pointer-events: none;
+                background-image:
+                    repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), rgba(110, 231, 183, 0.18) calc(16.666% - 1px), rgba(110, 231, 183, 0.18) 16.666%),
+                    repeating-linear-gradient(to right, rgba(110, 231, 183, 0.18) 0 1px, transparent 1px 20%);
+            }
+
+            .dashboard-net-balance-chart tbody[hidden] {
+                display: none !important;
+            }
+
+            .dashboard-net-balance-chart tbody::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 10.25rem;
+                z-index: 0;
+                width: 1px;
+                background: rgba(110, 231, 183, 0.34);
+            }
+
+            .dashboard-net-balance-chart tr {
+                position: relative;
+                z-index: 1;
+                display: grid;
+                min-height: 0;
+                grid-template-columns: 9.25rem minmax(0, 1fr);
+                gap: 1rem;
+                align-items: center;
+                overflow: visible;
+            }
+
+            .dashboard-net-balance-chart tr::after {
+                content: '';
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                left: 10.25rem;
+                z-index: 3;
+                height: 1px;
+                background: rgba(110, 231, 183, 0.26);
+                pointer-events: none;
+            }
+
+            .dashboard-net-balance-chart th {
+                overflow: hidden;
+                color: #ffffff;
+                font: inherit;
+                font-size: 0.78rem;
+                font-weight: 700;
+                line-height: 1.05;
+                text-align: left;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .dashboard-net-balance-chart td {
+                position: relative;
+                height: 100%;
+                min-width: 0;
+                overflow: visible;
+                background: transparent !important;
+                border-radius: 0 !important;
             }
 
             .dashboard-net-balance-chart .data {
@@ -4150,159 +4362,170 @@
                 white-space: nowrap;
             }
 
-            .dashboard-net-balance-chart tbody {
-                position: relative;
-                display: grid;
-                height: 100%;
-                gap: 0;
-                grid-template-rows: repeat(6, 1fr);
-                grid-auto-rows: 1fr;
-                background:
-                    repeating-linear-gradient(to bottom, rgba(110, 231, 183, 0.18) 0 1px, transparent 1px 20%),
-                    linear-gradient(to right, transparent 0, transparent 16.48%, rgba(110, 231, 183, 0.13) 16.66%, transparent 16.84%),
-                    linear-gradient(to right, transparent 0, transparent 33.15%, rgba(110, 231, 183, 0.13) 33.33%, transparent 33.51%),
-                    linear-gradient(to right, transparent 0, transparent 49.82%, rgba(110, 231, 183, 0.13) 50%, transparent 50.18%),
-                    linear-gradient(to right, transparent 0, transparent 66.48%, rgba(110, 231, 183, 0.13) 66.66%, transparent 66.84%),
-                    linear-gradient(to right, transparent 0, transparent 83.15%, rgba(110, 231, 183, 0.13) 83.33%, transparent 83.51%),
-                    linear-gradient(to right, transparent 0, transparent 99.82%, rgba(110, 231, 183, 0.16) 100%, transparent 100%);
-                background-position: 10.25rem 0;
-                background-size: calc(100% - 10.25rem) 100%;
-                background-repeat: no-repeat;
-            }
-
-            .dashboard-net-balance-chart tbody::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 10.25rem;
-                width: 1px;
-                background: rgba(110, 231, 183, 0.32);
-                pointer-events: none;
-            }
-
-            .dashboard-net-balance-chart tbody[hidden] {
-                display: none !important;
-            }
-
-            .dashboard-net-balance-chart tr {
-                display: grid;
-                grid-template-columns: 9.25rem minmax(0, 1fr);
-                align-items: center;
-                gap: 1rem;
-                min-height: 0;
-            }
-
-            .dashboard-net-balance-chart th {
-                overflow: hidden;
-                color: #ffffff;
-                font-family: inherit;
-                font-size: 0.78rem;
-                font-weight: 700;
-                letter-spacing: 0;
-                line-height: 1.15;
-                text-align: left;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            .dashboard-net-balance-chart td {
-                position: relative;
-                height: 100%;
-                min-width: 0;
-                overflow: visible;
-                border-radius: 0 !important;
-                background: transparent !important;
-            }
-
             .dashboard-net-balance-chart .chart-bar-value {
                 position: absolute;
-                left: calc(var(--size) * 100%);
                 top: 50%;
-                z-index: 2;
-                transform: translate(calc(-100% - 0.35rem), -50%);
-                color: rgba(255, 255, 255, 0.92);
+                left: calc(var(--size) * 100%);
+                z-index: 4;
+                color: rgba(255, 255, 255, 0.94);
+                font: inherit;
                 font-size: 0.62rem;
-                font-family: inherit;
                 font-weight: 600;
-                letter-spacing: 0;
                 line-height: 1;
+                text-shadow: none;
+                transform: translate(calc(-100% - 0.35rem), -50%);
                 white-space: nowrap;
-                -webkit-font-smoothing: antialiased;
-                text-rendering: geometricPrecision;
             }
 
             .dashboard-net-balance-chart.charts-css td::before {
                 content: '';
                 position: absolute;
-                inset: 0.18rem auto 0.18rem 0;
+                inset: 0.22rem auto 0.22rem 0;
+                z-index: 1;
                 width: calc(var(--size) * 100%);
                 min-width: 0.45rem;
                 border-radius: 0 !important;
                 border-top-right-radius: 1px !important;
                 border-bottom-right-radius: 1px !important;
-                background: var(--chart-bar-fill, rgba(16, 185, 129, 0.82));
-                box-shadow: 0 0 12px var(--chart-bar-glow, rgba(16, 185, 129, 0.18));
+                background: var(--chart-bar-fill, rgba(16, 185, 129, 0.86));
+                box-shadow: 0 0 10px var(--chart-bar-glow, rgba(16, 185, 129, 0.16));
                 transform-origin: left center;
             }
 
-            .dashboard-net-balance-chart.is-chart-animating tbody:not([hidden]) td::before {
-                animation: dashboard-chart-bar-enter 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+            .dashboard-net-balance-chart td[data-tooltip]::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                left: var(--budget-tooltip-x, 50%);
+                bottom: calc(100% + 0.65rem);
+                z-index: 5;
+                width: max-content;
+                max-width: min(16rem, 80vw);
+                padding: 0.48rem 0.68rem;
+                border: 1px solid rgba(110, 231, 183, 0.58);
+                border-radius: 0.55rem;
+                background: rgba(4, 24, 18, 0.96);
+                box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42), 0 0 22px rgba(16, 185, 129, 0.12);
+                color: #6ee7b7;
+                font: inherit;
+                font-size: 0.78rem;
+                font-weight: 600;
+                line-height: 1.2;
+                display: none;
+                opacity: 0;
+                pointer-events: none;
+                transform: translateX(-50%) translateY(0.25rem);
+                transition: opacity 150ms ease, transform 150ms ease;
+                white-space: nowrap;
             }
 
-            @keyframes dashboard-chart-bar-enter {
-                from {
-                    opacity: 0.45;
-                    transform: scaleX(0.08);
-                }
-
-                to {
-                    opacity: 1;
-                    transform: scaleX(1);
-                }
+            .dashboard-net-balance-chart .chart-tooltip-arrow {
+                position: absolute;
+                left: var(--budget-tooltip-x, 50%);
+                bottom: calc(100% + 0.35rem);
+                z-index: 6;
+                width: 0.58rem;
+                height: 0.58rem;
+                display: none;
+                border-right: 1px solid rgba(110, 231, 183, 0.58);
+                border-bottom: 1px solid rgba(110, 231, 183, 0.58);
+                background: rgba(4, 24, 18, 0.96);
+                opacity: 0;
+                pointer-events: none;
+                transform: translateX(-50%) rotate(45deg);
+                transition: opacity 150ms ease, transform 150ms ease;
             }
 
-            .dashboard-net-balance-chart .chart-tone-1 {
-                --chart-bar-fill: rgba(16, 185, 129, 0.82);
-                --chart-bar-glow: rgba(16, 185, 129, 0.18);
+            .dashboard-net-balance-chart td[data-tooltip].is-tooltip-active::after,
+            .dashboard-net-balance-chart td[data-tooltip]:focus-visible::after {
+                display: block;
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
             }
 
-            .dashboard-net-balance-chart .chart-tone-2,
-            .dashboard-net-balance-chart .chart-tone-4 {
+            .dashboard-net-balance-chart td[data-tooltip].is-tooltip-active .chart-tooltip-arrow,
+            .dashboard-net-balance-chart td[data-tooltip]:focus-visible .chart-tooltip-arrow {
+                display: block;
+                opacity: 1;
+                transform: translateX(-50%) rotate(45deg);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-left::after {
+                transform: translateX(0) translateY(0.25rem);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-right::after {
+                transform: translateX(-100%) translateY(0.25rem);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-left .chart-tooltip-arrow {
+                transform: translateX(0.78rem) rotate(45deg);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-right .chart-tooltip-arrow {
+                transform: translateX(calc(-100% - 0.78rem)) rotate(45deg);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-left.is-tooltip-active::after,
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-left:focus-visible::after {
+                transform: translateX(0) translateY(0);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-right.is-tooltip-active::after,
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-right:focus-visible::after {
+                transform: translateX(-100%) translateY(0);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-left.is-tooltip-active .chart-tooltip-arrow,
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-left:focus-visible .chart-tooltip-arrow {
+                transform: translateX(0.78rem) rotate(45deg);
+            }
+
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-right.is-tooltip-active .chart-tooltip-arrow,
+            .dashboard-net-balance-chart td[data-tooltip].budget-tooltip-align-right:focus-visible .chart-tooltip-arrow {
+                transform: translateX(calc(-100% - 0.78rem)) rotate(45deg);
+            }
+
+            .dashboard-net-balance-chart.is-expense-mode td[data-tooltip]::after {
+                border-color: rgba(251, 113, 133, 0.58);
+                color: #fb7185;
+            }
+
+            .dashboard-net-balance-chart.is-expense-mode .chart-tooltip-arrow {
+                border-color: rgba(251, 113, 133, 0.58);
+            }
+
+            .dashboard-net-balance-chart .chart-tone-primary {
+                --chart-bar-fill: rgba(16, 185, 129, 0.86);
+                --chart-bar-glow: rgba(16, 185, 129, 0.2);
+            }
+
+            .dashboard-net-balance-chart .chart-tone-secondary {
                 --chart-bar-fill: rgba(20, 184, 166, 0.78);
                 --chart-bar-glow: rgba(20, 184, 166, 0.16);
             }
 
-            .dashboard-net-balance-chart .chart-tone-3,
-            .dashboard-net-balance-chart .chart-tone-5 {
-                --chart-bar-fill: rgba(16, 185, 129, 0.82);
-                --chart-bar-glow: rgba(16, 185, 129, 0.18);
+            .dashboard-net-balance-chart.is-expense-mode .chart-tone-primary {
+                --chart-bar-fill: rgba(220, 38, 38, 0.84);
+                --chart-bar-glow: rgba(248, 113, 113, 0.2);
             }
 
-            .dashboard-net-balance-chart tr.is-negative td::before {
-                background: rgba(248, 113, 113, 0.82);
-                box-shadow: 0 0 14px rgba(248, 113, 113, 0.18);
+            .dashboard-net-balance-chart.is-expense-mode .chart-tone-secondary {
+                --chart-bar-fill: rgba(248, 113, 113, 0.72);
+                --chart-bar-glow: rgba(248, 113, 113, 0.18);
             }
 
-            .dashboard-net-balance-chart.is-expense-mode td::before {
-                background: var(--expense-chart-bar-fill, rgba(248, 113, 113, 0.82));
-                box-shadow: 0 0 12px var(--expense-chart-bar-glow, rgba(248, 113, 113, 0.18));
+            .dashboard-net-balance-chart.is-chart-animating tbody:not([hidden]) td::before {
+                animation: dashboard-chart-bar-enter 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
             }
 
-            .dashboard-net-balance-chart.is-expense-mode .chart-tone-1 {
-                --expense-chart-bar-fill: rgba(248, 113, 113, 0.82);
-                --expense-chart-bar-glow: rgba(248, 113, 113, 0.18);
-            }
-
-            .dashboard-net-balance-chart.is-expense-mode .chart-tone-2 {
-                --expense-chart-bar-fill: rgba(220, 38, 38, 0.78);
-                --expense-chart-bar-glow: rgba(220, 38, 38, 0.16);
+            .dashboard-net-balance-chart.is-chart-animating tbody:not([hidden]) .chart-bar-value {
+                animation: dashboard-chart-value-enter 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
             }
 
             .dashboard-chart-axis {
                 display: flex;
                 justify-content: space-between;
-                margin: 0.35rem 0 0 10.25rem;
+                margin: 0.5rem 0 0 10.25rem;
                 color: rgba(209, 250, 229, 0.68);
                 font-size: 0.68rem;
                 font-weight: 600;
@@ -4313,14 +4536,32 @@
                 display: none !important;
             }
 
-            .dashboard-chart-axis span {
-                white-space: nowrap;
+            @keyframes dashboard-chart-bar-enter {
+                from {
+                    opacity: 0.55;
+                    transform: scaleX(0.12);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: scaleX(1);
+                }
+            }
+
+            @keyframes dashboard-chart-value-enter {
+                from {
+                    opacity: 0;
+                }
+
+                to {
+                    opacity: 1;
+                }
             }
 
             @media (max-width: 1279px) {
                 .dashboard-ranking-chart-wrap {
-                    height: 230px;
-                    min-height: 230px;
+                    height: 240px;
+                    min-height: 240px;
                 }
             }
 
@@ -4381,8 +4622,13 @@
                 .dashboard-summary-list .dashboard-report-row > div:nth-child(4)::before { content: 'Balance'; }
 
                 .dashboard-ranking-chart-wrap {
-                    height: 235px;
-                    min-height: 235px;
+                    height: 240px;
+                    min-height: 240px;
+                }
+
+                .dashboard-chart-toggle {
+                    margin: 0.5rem auto 0.38rem;
+                    font-size: 0.72rem;
                 }
 
                 .dashboard-net-balance-chart tbody {
@@ -4390,29 +4636,21 @@
                     background-size: calc(100% - 7.65rem) 100%;
                 }
 
+                .dashboard-net-balance-chart tbody::after {
+                    inset: 0 0 0 7.65rem;
+                }
+
                 .dashboard-net-balance-chart tbody::before {
                     left: 7.65rem;
-                }
-
-                .dashboard-net-balance-chart caption {
-                    font-size: 0.78rem;
-                }
-
-                .dashboard-chart-toggle {
-                    margin-left: auto;
-                    margin-right: auto;
-                    font-size: 0.72rem;
-                }
-
-                .dashboard-chart-axis {
-                    margin-left: 7.65rem;
-                    font-size: 0.58rem;
                 }
 
                 .dashboard-net-balance-chart tr {
                     grid-template-columns: 7rem minmax(0, 1fr);
                     gap: 0.65rem;
-                    min-height: 0;
+                }
+
+                .dashboard-net-balance-chart tr::after {
+                    left: 7.65rem;
                 }
 
                 .dashboard-net-balance-chart th {
@@ -4421,7 +4659,14 @@
 
                 .dashboard-net-balance-chart .chart-bar-value {
                     font-size: 0.55rem;
+                    transform: translate(calc(-100% - 0.25rem), -50%);
                 }
+
+                .dashboard-chart-axis {
+                    margin-left: 7.65rem;
+                    font-size: 0.58rem;
+                }
+
             }
 
             body:not(.theme-dark) .dashboard-panel {
@@ -4472,28 +4717,6 @@
                 color: #dc2626;
             }
 
-            body:not(.theme-dark) .dashboard-net-balance-chart {
-                color: #064e3b;
-            }
-
-            body:not(.theme-dark) .dashboard-net-balance-chart tbody {
-                background:
-                    repeating-linear-gradient(to bottom, rgba(16, 185, 129, 0.22) 0 1px, transparent 1px 20%),
-                    linear-gradient(to right, transparent 0, transparent 16.48%, rgba(16, 185, 129, 0.2) 16.66%, transparent 16.84%),
-                    linear-gradient(to right, transparent 0, transparent 33.15%, rgba(16, 185, 129, 0.2) 33.33%, transparent 33.51%),
-                    linear-gradient(to right, transparent 0, transparent 49.82%, rgba(16, 185, 129, 0.2) 50%, transparent 50.18%),
-                    linear-gradient(to right, transparent 0, transparent 66.48%, rgba(16, 185, 129, 0.2) 66.66%, transparent 66.84%),
-                    linear-gradient(to right, transparent 0, transparent 83.15%, rgba(16, 185, 129, 0.2) 83.33%, transparent 83.51%),
-                    linear-gradient(to right, transparent 0, transparent 99.82%, rgba(16, 185, 129, 0.24) 100%, transparent 100%);
-                background-position: 10.25rem 0;
-                background-size: calc(100% - 10.25rem) 100%;
-                background-repeat: no-repeat;
-            }
-
-            body:not(.theme-dark) .dashboard-net-balance-chart tbody::before {
-                background: rgba(16, 185, 129, 0.38);
-            }
-
             body:not(.theme-dark) .dashboard-chart-toggle {
                 color: #047857;
             }
@@ -4502,24 +4725,54 @@
                 color: #dc2626;
             }
 
-            body:not(.theme-dark) .dashboard-chart-axis {
-                color: rgba(6, 95, 70, 0.68);
+            body:not(.theme-dark) .dashboard-net-balance-chart {
+                color: #064e3b;
             }
 
-            body:not(.theme-dark) .dashboard-net-balance-chart .chart-bar-value {
-                color: rgba(15, 23, 42, 0.78);
-                text-shadow: none;
+            body:not(.theme-dark) .dashboard-net-balance-chart tbody {
+                background-image:
+                    repeating-linear-gradient(to bottom, transparent 0, transparent calc(16.666% - 1px), rgba(16, 185, 129, 0.22) calc(16.666% - 1px), rgba(16, 185, 129, 0.22) 16.666%),
+                    repeating-linear-gradient(to right, rgba(16, 185, 129, 0.2) 0 1px, transparent 1px 20%);
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart tbody::before {
+                background: rgba(16, 185, 129, 0.38);
             }
 
             body:not(.theme-dark) .dashboard-net-balance-chart th {
                 color: #065f46;
             }
 
-            @media (max-width: 767px) {
-                body:not(.theme-dark) .dashboard-net-balance-chart tbody {
-                    background-position: 7.65rem 0;
-                    background-size: calc(100% - 7.65rem) 100%;
-                }
+            body:not(.theme-dark) .dashboard-net-balance-chart .chart-bar-value {
+                color: rgba(15, 23, 42, 0.78);
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart td[data-tooltip]::after {
+                background: rgba(236, 253, 245, 0.96);
+                border-color: rgba(16, 185, 129, 0.42);
+                color: #065f46;
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12), 0 0 0 3px rgba(16, 185, 129, 0.1);
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart .chart-tooltip-arrow {
+                background: rgba(236, 253, 245, 0.96);
+                border-color: rgba(16, 185, 129, 0.42);
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart.is-expense-mode td[data-tooltip]::after {
+                background: rgba(254, 242, 242, 0.96);
+                border-color: rgba(248, 113, 113, 0.42);
+                color: #991b1b;
+                box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12), 0 0 0 3px rgba(248, 113, 113, 0.1);
+            }
+
+            body:not(.theme-dark) .dashboard-net-balance-chart.is-expense-mode .chart-tooltip-arrow {
+                background: rgba(254, 242, 242, 0.96);
+                border-color: rgba(248, 113, 113, 0.42);
+            }
+
+            body:not(.theme-dark) .dashboard-chart-axis {
+                color: rgba(6, 95, 70, 0.68);
             }
 
             body:not(.theme-dark) .dashboard-copy {
@@ -5085,6 +5338,7 @@
                 .budget-usage-segment {
                     --budget-tooltip-accent: #6ee7b7;
                     --budget-tooltip-border: rgba(110, 231, 183, 0.48);
+                    --budget-tooltip-x: 50%;
                     position: relative;
                     min-width: 0.45rem;
                     cursor: help;
@@ -5104,7 +5358,7 @@
                 .budget-usage-segment::after {
                     content: attr(data-tooltip);
                     position: absolute;
-                    left: 50%;
+                    left: var(--budget-tooltip-x);
                     bottom: calc(100% + 0.65rem);
                     z-index: 50;
                     transform: translateX(-50%) translateY(0.25rem);
@@ -5114,20 +5368,37 @@
                     border-radius: 0.55rem;
                     border: 1px solid var(--budget-tooltip-border);
                     background: rgba(4, 24, 18, 0.96);
-                    padding: 0.55rem 0.75rem;
+                    padding: 0.48rem 0.68rem;
                     color: var(--budget-tooltip-accent);
-                    font-size: 0.86rem;
-                    font-weight: 800;
-                    line-height: 1.1;
+                    font: inherit;
+                    font-size: 0.78rem;
+                    font-weight: 600;
+                    line-height: 1.2;
                     letter-spacing: 0;
                     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42), 0 0 22px rgba(16, 185, 129, 0.12);
                     transition: opacity 150ms ease, transform 150ms ease;
                 }
 
+                .budget-usage-segment.budget-tooltip-align-left::after {
+                    transform: translateX(0) translateY(0.25rem);
+                }
+
+                .budget-usage-segment.budget-tooltip-align-right::after {
+                    transform: translateX(-100%) translateY(0.25rem);
+                }
+
+                .budget-usage-segment.budget-tooltip-align-left::before {
+                    transform: translateX(0.78rem) rotate(45deg);
+                }
+
+                .budget-usage-segment.budget-tooltip-align-right::before {
+                    transform: translateX(calc(-100% - 0.78rem)) rotate(45deg);
+                }
+
                 .budget-usage-segment::before {
                     content: '';
                     position: absolute;
-                    left: 50%;
+                    left: var(--budget-tooltip-x);
                     bottom: calc(100% + 0.35rem);
                     z-index: 51;
                     width: 0.58rem;
@@ -5149,9 +5420,29 @@
                     transform: translateX(-50%) translateY(0);
                 }
 
+                .budget-usage-segment.budget-tooltip-align-left:hover::after,
+                .budget-usage-segment.budget-tooltip-align-left:focus-visible::after {
+                    transform: translateX(0) translateY(0);
+                }
+
+                .budget-usage-segment.budget-tooltip-align-right:hover::after,
+                .budget-usage-segment.budget-tooltip-align-right:focus-visible::after {
+                    transform: translateX(-100%) translateY(0);
+                }
+
                 .budget-usage-segment:hover::before,
                 .budget-usage-segment:focus-visible::before {
                     transform: translateX(-50%) rotate(45deg);
+                }
+
+                .budget-usage-segment.budget-tooltip-align-left:hover::before,
+                .budget-usage-segment.budget-tooltip-align-left:focus-visible::before {
+                    transform: translateX(0.78rem) rotate(45deg);
+                }
+
+                .budget-usage-segment.budget-tooltip-align-right:hover::before,
+                .budget-usage-segment.budget-tooltip-align-right:focus-visible::before {
+                    transform: translateX(calc(-100% - 0.78rem)) rotate(45deg);
                 }
 
                 .budget-usage-segment-spent {
@@ -5167,4 +5458,287 @@
                 .budget-usage-segment-remaining {
                     --budget-tooltip-accent: #6ee7b7;
                     --budget-tooltip-border: rgba(110, 231, 183, 0.58);
+                }
+
+                .owner-budget-line-card {
+                    border: 1px solid rgba(110, 231, 183, 0.24);
+                    border-radius: 0.7rem;
+                    background: rgba(2, 44, 34, 0.42);
+                    width: 100%;
+                    box-sizing: border-box;
+                    padding: 0.8rem 0.9rem;
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+                }
+
+                .owner-budget-line-metrics {
+                    width: 100%;
+                    max-width: none;
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                    column-gap: clamp(1rem, 5vw, 4.5rem);
+                }
+
+                @media (max-width: 639px) {
+                    .owner-budget-line-metrics {
+                        grid-template-columns: repeat(2, minmax(0, 1fr));
+                        column-gap: 1rem;
+                    }
+                }
+
+                .owner-budget-lines-scroll {
+                    overflow-x: hidden;
+                    padding-right: 0;
+                }
+
+                .owner-budget-line-title {
+                    color: #ecfdf5;
+                    font-size: 0.86rem;
+                    font-weight: 700;
+                    line-height: 1.2;
+                }
+
+                .owner-budget-line-copy,
+                .owner-budget-line-label {
+                    color: rgba(209, 250, 229, 0.72);
+                }
+
+                .owner-budget-line-copy {
+                    font-size: 0.72rem;
+                    line-height: 1.3;
+                }
+
+                .owner-budget-line-label {
+                    font-size: 0.68rem;
+                    font-weight: 600;
+                }
+
+                .owner-budget-line-value {
+                    color: #d1fae5;
+                    font-weight: 700;
+                }
+
+                .owner-budget-usage-track {
+                    display: flex;
+                    height: 0.45rem;
+                    overflow: visible;
+                    border-radius: 999px;
+                    background: rgba(6, 78, 59, 0.56);
+                }
+
+                .owner-budget-usage-track .budget-usage-segment-spent {
+                    background: #fb7185;
+                }
+
+                .owner-budget-usage-track .budget-usage-segment-pending {
+                    background: #fde047;
+                }
+
+                .owner-budget-usage-track .budget-usage-segment-remaining {
+                    background: #34d399;
+                }
+
+                body:not(.theme-dark) .owner-budget-line-card {
+                    border-color: rgba(16, 185, 129, 0.22);
+                    background: rgba(236, 253, 245, 0.68);
+                }
+
+                body:not(.theme-dark) .owner-budget-line-title {
+                    color: #064e3b;
+                }
+
+                body:not(.theme-dark) .owner-budget-line-copy,
+                body:not(.theme-dark) .owner-budget-line-label {
+                    color: #475569;
+                }
+
+                body:not(.theme-dark) .owner-budget-line-value {
+                    color: #0f172a;
+                }
+
+                body:not(.theme-dark) .owner-budget-usage-track {
+                    background: rgba(15, 23, 42, 0.1);
+                }
+
+                .owner-budget-stat-card {
+                    border: 1px solid rgba(110, 231, 183, 0.22);
+                    border-radius: 0.55rem;
+                    background: rgba(2, 44, 34, 0.42);
+                    padding: 0.78rem;
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+                }
+
+                .owner-budget-stat-total {
+                    border-color: rgba(110, 231, 183, 0.34);
+                    background: rgba(6, 78, 59, 0.5);
+                }
+
+                .owner-budget-stat-label {
+                    color: rgba(209, 250, 229, 0.72);
+                    font-size: 0.68rem;
+                    font-weight: 600;
+                }
+
+                .owner-budget-stat-value {
+                    margin-top: 0.28rem;
+                    color: #ecfdf5;
+                    font-size: 1rem;
+                    font-weight: 800;
+                    line-height: 1.15;
+                    max-width: 100%;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .owner-budget-period {
+                    color: rgba(209, 250, 229, 0.86);
+                    font-size: 0.84rem;
+                    font-weight: 500;
+                }
+
+                .budget-status-chip,
+                .owner-budget-selected-chip,
+                .budget-line-status-chip {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: fit-content;
+                    border: 1px solid currentColor;
+                    border-radius: 0.42rem;
+                    padding: 0.22rem 0.5rem;
+                    font-size: 0.68rem;
+                    font-weight: 700;
+                    line-height: 1.1;
+                }
+
+                .budget-status-active,
+                .budget-status-draft,
+                .budget-line-status-healthy {
+                    background: rgba(16, 185, 129, 0.12);
+                    color: #6ee7b7;
+                }
+
+                .budget-status-closed {
+                    background: rgba(148, 163, 184, 0.12);
+                    color: #cbd5e1;
+                }
+
+                .budget-status-pending,
+                .budget-line-status-watch {
+                    background: rgba(253, 224, 71, 0.1);
+                    color: #fde047;
+                }
+
+                .budget-line-status-critical,
+                .budget-line-status-exhausted {
+                    background: rgba(251, 113, 133, 0.12);
+                    color: #fb7185;
+                }
+
+                .owner-budget-selected-chip {
+                    border-color: rgba(110, 231, 183, 0.24);
+                    background: rgba(2, 44, 34, 0.42);
+                    color: #d1fae5;
+                }
+
+                .owner-budget-lock-notice {
+                    border: 1px solid rgba(110, 231, 183, 0.22);
+                    border-radius: 0.55rem;
+                    background: rgba(16, 185, 129, 0.1);
+                    color: #6ee7b7;
+                    padding: 0.62rem 0.75rem;
+                    font-size: 0.82rem;
+                    font-weight: 500;
+                }
+
+                .owner-budget-table-wrap {
+                    border-radius: 0.6rem;
+                }
+
+                .owner-budget-table {
+                    border-collapse: collapse;
+                    color: #ecfdf5;
+                }
+
+                .owner-budget-table thead tr,
+                .owner-budget-table tbody tr {
+                    border-bottom: 1px solid rgba(110, 231, 183, 0.22);
+                }
+
+                .owner-budget-table thead th {
+                    padding-top: 0.5rem;
+                    padding-bottom: 0.65rem;
+                    color: rgba(209, 250, 229, 0.78);
+                    font-size: 0.68rem;
+                    font-weight: 800;
+                    letter-spacing: 0;
+                    text-align: left;
+                    text-transform: uppercase;
+                }
+
+                .owner-budget-table tbody td {
+                    color: rgba(236, 253, 245, 0.92);
+                }
+
+                .owner-budget-table-description {
+                    color: rgba(209, 250, 229, 0.72) !important;
+                }
+
+                body:not(.theme-dark) .owner-budget-stat-card {
+                    border-color: rgba(16, 185, 129, 0.22);
+                    background: rgba(236, 253, 245, 0.72);
+                }
+
+                body:not(.theme-dark) .owner-budget-stat-total {
+                    border-color: rgba(16, 185, 129, 0.34);
+                    background: rgba(209, 250, 229, 0.76);
+                }
+
+                body:not(.theme-dark) .owner-budget-stat-label,
+                body:not(.theme-dark) .owner-budget-table thead th,
+                body:not(.theme-dark) .owner-budget-table-description {
+                    color: #475569 !important;
+                }
+
+                body:not(.theme-dark) .owner-budget-stat-value,
+                body:not(.theme-dark) .owner-budget-period,
+                body:not(.theme-dark) .owner-budget-table,
+                body:not(.theme-dark) .owner-budget-table tbody td {
+                    color: #0f172a;
+                }
+
+                body:not(.theme-dark) .budget-status-active,
+                body:not(.theme-dark) .budget-status-draft,
+                body:not(.theme-dark) .budget-line-status-healthy {
+                    color: #047857;
+                }
+
+                body:not(.theme-dark) .budget-status-closed {
+                    color: #475569;
+                }
+
+                body:not(.theme-dark) .budget-status-pending,
+                body:not(.theme-dark) .budget-line-status-watch {
+                    color: #a16207;
+                }
+
+                body:not(.theme-dark) .budget-line-status-critical,
+                body:not(.theme-dark) .budget-line-status-exhausted {
+                    color: #be123c;
+                }
+
+                body:not(.theme-dark) .owner-budget-selected-chip {
+                    border-color: rgba(16, 185, 129, 0.22);
+                    background: rgba(236, 253, 245, 0.72);
+                    color: #064e3b;
+                }
+
+                body:not(.theme-dark) .owner-budget-lock-notice {
+                    border-color: rgba(16, 185, 129, 0.22);
+                    background: rgba(236, 253, 245, 0.72);
+                    color: #047857;
+                }
+
+                body:not(.theme-dark) .owner-budget-table thead tr,
+                body:not(.theme-dark) .owner-budget-table tbody tr {
+                    border-bottom-color: rgba(16, 185, 129, 0.24);
                 }

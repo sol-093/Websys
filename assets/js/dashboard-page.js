@@ -51,64 +51,6 @@
 
     initDashboardLiveTimestamp();
 
-    const initDashboardRankingToggle = function () {
-        const chart = document.getElementById('dashboardRankingChart');
-        const toggle = document.getElementById('dashboardRankingToggle');
-        if (!chart || !toggle) {
-            return;
-        }
-
-        const balanceRows = chart.querySelector('[data-chart-mode="balance"]');
-        const expenseRows = chart.querySelector('[data-chart-mode="expense"]');
-        if (!balanceRows || !expenseRows) {
-            return;
-        }
-        const balanceAxis = document.querySelector('[data-chart-axis="balance"]');
-        const expenseAxis = document.querySelector('[data-chart-axis="expense"]');
-
-        const switchMode = function () {
-            const showingExpenses = !chart.classList.contains('is-expense-mode');
-
-            chart.classList.remove('is-chart-animating');
-            chart.classList.toggle('is-expense-mode', showingExpenses);
-            toggle.classList.toggle('is-expense-mode', showingExpenses);
-            balanceRows.hidden = showingExpenses;
-            expenseRows.hidden = !showingExpenses;
-            balanceRows.style.display = showingExpenses ? 'none' : '';
-            expenseRows.style.display = showingExpenses ? '' : 'none';
-            if (balanceAxis && expenseAxis) {
-                balanceAxis.hidden = showingExpenses;
-                expenseAxis.hidden = !showingExpenses;
-                balanceAxis.style.display = showingExpenses ? 'none' : '';
-                expenseAxis.style.display = showingExpenses ? '' : '';
-            }
-            toggle.textContent = showingExpenses ? 'Top Expenses' : 'Top Net Balance';
-            toggle.setAttribute('aria-pressed', showingExpenses ? 'true' : 'false');
-            window.requestAnimationFrame(function () {
-                chart.classList.add('is-chart-animating');
-                window.setTimeout(function () {
-                    chart.classList.remove('is-chart-animating');
-                }, 560);
-            });
-        };
-
-        toggle.addEventListener('click', function (event) {
-            event.preventDefault();
-            switchMode();
-        });
-
-        toggle.addEventListener('keydown', function (event) {
-            if (event.key !== 'Enter' && event.key !== ' ') {
-                return;
-            }
-
-            event.preventDefault();
-            switchMode();
-        });
-    };
-
-    initDashboardRankingToggle();
-
     const canvas = document.getElementById('trendChart');
     if (!canvas) return;
 
@@ -127,11 +69,63 @@
     const expense = Array.isArray(payload.trendExpense) ? payload.trendExpense : [];
     const summaryRankingLabels = Array.isArray(payload.summaryRankingLabels) ? payload.summaryRankingLabels : [];
     const summaryRankingBalances = Array.isArray(payload.summaryRankingBalances) ? payload.summaryRankingBalances : [];
+    const summaryExpenseLabels = Array.isArray(payload.summaryExpenseLabels) ? payload.summaryExpenseLabels : [];
+    const summaryExpenseValues = Array.isArray(payload.summaryExpenseValues) ? payload.summaryExpenseValues : [];
 
     const isDark = document.body.classList.contains('theme-dark');
     const axisColor = isDark ? '#a7f3d0' : '#065f46';
     const legendColor = isDark ? '#a7f3d0' : '#065f46';
     const gridColor = isDark ? 'rgba(167,243,208,0.12)' : 'rgba(16,185,129,0.16)';
+    const formatTooltipMoney = function (value) {
+        const amount = Number.parseFloat(value);
+        const safeAmount = Number.isFinite(amount) ? amount : 0;
+        return 'PHP' + new Intl.NumberFormat(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(safeAmount);
+    };
+
+    const buildSystemChartTooltip = function () {
+        return {
+            enabled: true,
+            displayColors: true,
+            backgroundColor: 'rgba(4, 24, 18, 0.96)',
+            borderColor: function (context) {
+                const item = context.tooltip && context.tooltip.dataPoints ? context.tooltip.dataPoints[0] : null;
+                return item && item.dataset && item.dataset.label === 'Expense'
+                    ? 'rgba(251, 113, 133, 0.58)'
+                    : 'rgba(110, 231, 183, 0.58)';
+            },
+            borderWidth: 1,
+            titleColor: '#d1fae5',
+            bodyColor: '#d1fae5',
+            titleFont: { size: 12, weight: '600' },
+            bodyFont: { size: 12, weight: '600' },
+            padding: { top: 8, right: 10, bottom: 8, left: 10 },
+            cornerRadius: 8,
+            caretSize: 7,
+            caretPadding: 8,
+            boxPadding: 4,
+            boxWidth: 10,
+            boxHeight: 10,
+            callbacks: {
+                label: function (context) {
+                    const label = context.dataset && context.dataset.label ? context.dataset.label : 'Value';
+                    return label + ': ' + formatTooltipMoney(context.parsed.y);
+                },
+                labelColor: function (context) {
+                    const isExpense = context.dataset && context.dataset.label === 'Expense';
+                    const color = isExpense ? '#fb7185' : '#6ee7b7';
+                    return {
+                        borderColor: color,
+                        backgroundColor: color,
+                        borderWidth: 1,
+                        borderRadius: 2,
+                    };
+                },
+            },
+        };
+    };
 
     const canRenderCharts = typeof Chart !== 'undefined';
     let chart = null;
@@ -173,6 +167,67 @@
                     bar.style.width = safeWidth + '%';
                 });
             }, 50);
+        });
+    };
+
+    const initDashboardRankingToggle = function () {
+        const chart = document.getElementById('dashboardRankingChart');
+        const toggle = document.getElementById('dashboardRankingToggle');
+        if (!chart || !toggle) {
+            return;
+        }
+
+        const balanceRows = chart.querySelector('[data-chart-mode="balance"]');
+        const expenseRows = chart.querySelector('[data-chart-mode="expense"]');
+        const balanceAxis = document.querySelector('[data-chart-axis="balance"]');
+        const expenseAxis = document.querySelector('[data-chart-axis="expense"]');
+        if (!balanceRows || !expenseRows) {
+            return;
+        }
+
+        let animationTimer = 0;
+        const setMode = function (nextMode) {
+            const showExpense = nextMode === 'expense';
+            chart.classList.remove('is-chart-animating');
+            chart.classList.toggle('is-expense-mode', showExpense);
+            toggle.classList.toggle('is-expense-mode', showExpense);
+            toggle.textContent = showExpense ? 'Top Expenses' : 'Top Net Balance';
+            toggle.setAttribute('aria-pressed', showExpense ? 'true' : 'false');
+
+            balanceRows.hidden = showExpense;
+            expenseRows.hidden = !showExpense;
+            if (balanceAxis) {
+                balanceAxis.hidden = showExpense;
+            }
+            if (expenseAxis) {
+                expenseAxis.hidden = !showExpense;
+            }
+
+            window.clearTimeout(animationTimer);
+            window.requestAnimationFrame(function () {
+                chart.classList.add('is-chart-animating');
+                animationTimer = window.setTimeout(function () {
+                    chart.classList.remove('is-chart-animating');
+                }, 620);
+            });
+        };
+
+        const toggleMode = function () {
+            setMode(chart.classList.contains('is-expense-mode') ? 'balance' : 'expense');
+        };
+
+        toggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            toggleMode();
+        });
+
+        toggle.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter' && event.key !== ' ') {
+                return;
+            }
+
+            event.preventDefault();
+            toggleMode();
         });
     };
 
@@ -274,7 +329,9 @@
                         borderColor: '#34d399',
                         backgroundColor: 'rgba(52, 211, 153, 0.2)',
                         fill: true,
-                        tension: 0.35
+                        tension: 0.35,
+                        pointHitRadius: 18,
+                        pointHoverRadius: 7
                     },
                     {
                         label: 'Expense',
@@ -282,14 +339,27 @@
                         borderColor: '#f87171',
                         backgroundColor: 'rgba(248, 113, 113, 0.16)',
                         fill: true,
-                        tension: 0.35
+                        tension: 0.35,
+                        pointHitRadius: 18,
+                        pointHoverRadius: 7
                     }
                 ]
             },
             options: {
                 responsive: true,
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
+                hover: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                },
                 plugins: {
-                    legend: { labels: { color: legendColor } }
+                    legend: { labels: { color: legendColor } },
+                    tooltip: buildSystemChartTooltip()
                 },
                 scales: {
                     x: { ticks: { color: axisColor }, grid: { color: gridColor } },
@@ -300,6 +370,7 @@
     }
 
     let financialRankingChart = null;
+    let financialRankingMode = 'balance';
 
     const isDashboardMobile = function () {
         return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
@@ -411,6 +482,61 @@
         });
     };
 
+    const updateFinancialRankingMode = function (mode) {
+        if (!financialRankingChart) {
+            createFinancialCharts();
+        }
+
+        if (!financialRankingChart) {
+            return;
+        }
+
+        const nextMode = mode === 'expense' ? 'expense' : 'balance';
+        const toggle = document.getElementById('financialSummaryRankingToggle');
+        const values = nextMode === 'expense' ? summaryExpenseValues : summaryRankingBalances;
+        const labelsForMode = nextMode === 'expense' ? summaryExpenseLabels : summaryRankingLabels;
+        const chartHasData = labelsForMode.length > 0 && hasData([values]);
+
+        if (!chartHasData) {
+            return;
+        }
+
+        financialRankingMode = nextMode;
+        financialRankingChart.data.labels = labelsForMode;
+        financialRankingChart.data.datasets[0].label = nextMode === 'expense' ? 'Top Expenses' : 'Net Balance';
+        financialRankingChart.data.datasets[0].data = values;
+        financialRankingChart.data.datasets[0].backgroundColor = values.map(function (value) {
+            if (nextMode === 'expense') {
+                return 'rgba(248, 113, 113, 0.75)';
+            }
+            return value >= 0 ? 'rgba(52, 211, 153, 0.75)' : 'rgba(248, 113, 113, 0.72)';
+        });
+        financialRankingChart.data.datasets[0].borderColor = values.map(function (value) {
+            if (nextMode === 'expense') {
+                return 'rgba(220, 38, 38, 1)';
+            }
+            return value >= 0 ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)';
+        });
+        financialRankingChart.update();
+
+        if (toggle) {
+            toggle.textContent = nextMode === 'expense' ? 'Top Organizations by Expense' : 'Top Organizations by Net Balance';
+            toggle.setAttribute('aria-pressed', nextMode === 'expense' ? 'true' : 'false');
+        }
+    };
+
+    const initFinancialRankingToggle = function () {
+        document.addEventListener('click', function (event) {
+            const toggle = event.target instanceof Element ? event.target.closest('#financialSummaryRankingToggle') : null;
+            if (!toggle) {
+                return;
+            }
+
+            event.preventDefault();
+            updateFinancialRankingMode(financialRankingMode === 'balance' ? 'expense' : 'balance');
+        });
+    };
+
     const applyThemeToCharts = function () {
         const dark = document.body.classList.contains('theme-dark');
         const nextAxis = dark ? '#a7f3d0' : '#065f46';
@@ -431,6 +557,14 @@
             financialRankingChart.options.scales.x.ticks.color = nextAxis;
             financialRankingChart.options.scales.y.ticks.color = nextAxis;
             financialRankingChart.options.scales.x.grid.color = nextGrid;
+            if (financialRankingMode === 'expense') {
+                financialRankingChart.data.datasets[0].backgroundColor = financialRankingChart.data.datasets[0].data.map(function () {
+                    return 'rgba(248, 113, 113, 0.75)';
+                });
+                financialRankingChart.data.datasets[0].borderColor = financialRankingChart.data.datasets[0].data.map(function () {
+                    return 'rgba(220, 38, 38, 1)';
+                });
+            }
             financialRankingChart.update();
         }
     };
@@ -660,6 +794,8 @@
 
     initTransactionHistoryFilters();
     initDashboardProgressBars();
+    initDashboardRankingToggle();
+    initFinancialRankingToggle();
 
     openOrganizations.forEach(function (button) {
         button.addEventListener('click', function () {
