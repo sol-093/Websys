@@ -40,7 +40,7 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
         </div>
 
         <?php if ($slideCount === 0): ?>
-            <p class="text-sm text-gray-600">No active announcements right now.</p>
+            <p class="section-helper-copy">No active announcements right now.</p>
         <?php else: ?>
             <div class="relative">
                 <?php foreach ($slides as $index => $slideItems): ?>
@@ -59,7 +59,7 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1">
+                                    <div class="text-xs text-slate-500 mt-1">
                                         <?= e($item['organization_name']) ?> · 
                                         <?= e(date('F d, Y', strtotime((string)$item['created_at']))) ?> 
                                         <?php if (!empty($item['expires_at'])): ?>
@@ -193,8 +193,8 @@ function handleOrganizationsPage(PDO $db, array $user): void
                         <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                         <div>
                             <div class="font-medium"><?= e($org['name']) ?></div>
-                            <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
-                            <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                            <p class="text-sm text-slate-600"><?= e($org['description']) ?></p>
+                            <div class="text-xs text-slate-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
                             <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
                         </div>
                     </div>

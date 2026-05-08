@@ -53,7 +53,7 @@ function handleAdminStudentsPage(PDO $db): void
                     No student records matched that search.
                 </div>
             <?php else: ?>
-                <div class="table-wrapper">
+                <div class="table-wrapper hidden lg:block">
                     <table class="hidden md:table w-full min-w-[640px] text-sm">
                     <thead>
                     <tr class="border-b text-left">
@@ -123,8 +123,8 @@ function handleAdminRequestsPage(PDO $db): void
             <h1 class="text-xl font-semibold mb-1 icon-label"><?= uiIcon('requests', 'ui-icon') ?><span>Owner Requests for Transaction Edit/Delete</span></h1>
             <p class="section-helper-copy">Review finance change requests and leave a decision trail for owners.</p>
         </div>
-        <div class="table-wrapper">
-            <table class="hidden md:table w-full min-w-[1040px] text-sm table-fixed">
+        <div class="table-wrapper hidden lg:block">
+            <table class="hidden lg:table w-full min-w-[1040px] text-sm table-fixed">
             <thead>
             <tr class="border-b text-left">
                 <th class="py-3 px-4 w-[14%]">Org</th>
@@ -155,7 +155,7 @@ function handleAdminRequestsPage(PDO $db): void
                     <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words">
                         <?php if ($req['action_type'] === 'update'): ?>
                             <div class="text-xs">Type: <?= e((string) $req['proposed_type']) ?></div>
-                            <div class="text-xs">Amount: ₱<?= number_format((float) $req['proposed_amount'], 2) ?></div>
+                            <div class="text-xs">Amount: &#8369;<?= number_format((float) $req['proposed_amount'], 2) ?></div>
                             <div class="text-xs">Date: <?= e(date('F d, Y', strtotime((string)$req['proposed_transaction_date']))) ?></div>
                             <div class="text-xs">Desc: <?= e((string) $req['proposed_description']) ?></div>
                         <?php else: ?>
@@ -191,7 +191,7 @@ function handleAdminRequestsPage(PDO $db): void
             </tbody>
             </table>
         </div>
-        <div class="md:hidden space-y-3">
+        <div class="lg:hidden space-y-3">
             <?php foreach ($requests as $req): ?>
                 <?php $requestStatus = strtolower((string) $req['status']); ?>
                 <article class="admin-mobile-card rounded-xl border border-emerald-200/40 bg-white/10 p-3">
@@ -211,7 +211,7 @@ function handleAdminRequestsPage(PDO $db): void
                         <div class="admin-mobile-meta leading-relaxed break-words">
                             <?php if ($req['action_type'] === 'update'): ?>
                                 <div>Type: <?= e((string) $req['proposed_type']) ?></div>
-                                <div>Amount: ₱<?= number_format((float) $req['proposed_amount'], 2) ?></div>
+                                <div>Amount: &#8369;<?= number_format((float) $req['proposed_amount'], 2) ?></div>
                                 <div>Date: <?= e((string) $req['proposed_transaction_date']) ?></div>
                                 <div>Desc: <?= e((string) $req['proposed_description']) ?></div>
                             <?php else: ?>
@@ -415,11 +415,11 @@ function handleAdminAuditPage(PDO $db, array $user): void
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
             <div>
                 <h2 class="text-lg font-semibold">Audit Logs</h2>
-                <p class="text-sm text-gray-600">Review who changed what, when it happened, and the context stored with each event.</p>
+                <p class="section-helper-copy">Review who changed what, when it happened, and the context stored with each event.</p>
             </div>
             <form method="get" class="transparency-toolbar flex flex-wrap items-center gap-2">
                 <input type="hidden" name="page" value="admin_audit" />
-                <label class="text-sm text-gray-600" for="days">Last</label>
+                <label class="text-sm text-slate-600" for="days">Last</label>
                 <select name="days" id="days" class="themed-field themed-select px-2 py-1 text-sm" onchange="this.form.submit()">
                     <?php foreach ([1, 3, 7, 14, 30, 90] as $opt): ?>
                         <option value="<?= $opt ?>" <?= $days === $opt ? 'selected' : '' ?>><?= $opt ?> days</option>
@@ -459,7 +459,7 @@ function handleAdminAuditPage(PDO $db, array $user): void
         <?php if (!$logs): ?>
             <div class="empty-state-panel">No audit entries in the selected range.</div>
         <?php else: ?>
-            <div class="table-wrapper">
+            <div class="table-wrapper hidden lg:block">
                 <table class="audit-log-table hidden md:table w-full min-w-[1180px] text-sm">
                     <thead>
                         <tr class="border-b">
@@ -678,7 +678,7 @@ function handleMyOrgAdminPage(PDO $db): void
                 <button class="owner-manage-secondary-btn inline-flex items-center justify-center rounded-md px-2.5 py-1.5 text-xs"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Filter</span></span></button>
             </form>
 
-            <div class="table-wrapper">
+            <div class="table-wrapper hidden lg:block">
                 <table class="w-full min-w-[640px] text-sm">
                 <thead>
                 <tr class="text-left border-b">
@@ -1164,7 +1164,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                 <span class="text-[11px] px-2 py-0.5 rounded-md border border-emerald-300/30 bg-emerald-500/10 text-emerald-800">Owned</span>
             <?php endif; ?>
         </h2>
-        <p class="text-gray-600 mb-3"><?= e((string) ($org['description'] ?? '')) ?></p>
+        <p class="text-slate-600 mb-3"><?= e((string) ($org['description'] ?? '')) ?></p>
 
         <div class="mb-4 rounded-lg border border-emerald-300/25 bg-white/10 p-3">
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -1187,7 +1187,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             <input type="hidden" name="page" value="my_org">
             <input type="hidden" name="org_id" value="<?= (int) $selectedOrgId ?>">
             <div>
-                <label class="block text-xs text-gray-600 mb-1">Type</label>
+                <label class="block text-xs text-slate-600 mb-1">Type</label>
                 <select name="tx_type" class="border rounded px-2.5 py-1.5 text-xs">
                     <option value="all" <?= $txTypeFilter === 'all' ? 'selected' : '' ?>>All</option>
                     <option value="income" <?= $txTypeFilter === 'income' ? 'selected' : '' ?>>Income</option>
@@ -1195,7 +1195,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
                 </select>
             </div>
             <div>
-                <label class="block text-xs text-gray-600 mb-1">Date</label>
+                <label class="block text-xs text-slate-600 mb-1">Date</label>
                 <select name="tx_sort" class="border rounded px-2.5 py-1.5 text-xs">
                     <option value="desc" <?= $txDateSort === 'desc' ? 'selected' : '' ?>>Newest first</option>
                     <option value="asc" <?= $txDateSort === 'asc' ? 'selected' : '' ?>>Oldest first</option>
@@ -1366,7 +1366,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
             </script>
         <?php endif; ?>
 
-        <div class="table-wrapper">
+        <div class="table-wrapper hidden lg:block">
             <table class="w-full min-w-[640px] text-sm">
             <thead>
             <tr class="text-left border-b">
@@ -1608,7 +1608,7 @@ function handleAdminOrgsPage(PDO $db): void
                 </tbody>
                 </table>
             </div>
-            <div class="lg:hidden space-y-3">
+            <div class="md:hidden space-y-3">
                 <?php foreach ($orgs as $org): ?>
                     <?php
                         $orgSearchText = strtolower(trim(

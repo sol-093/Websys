@@ -305,7 +305,7 @@ WORK GUIDE:
                                 <?php if (!empty($tx['receipt_path'])): ?>
                                     <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
                                 <?php else: ?>
-                                    <span class="text-gray-400">-</span>
+                                    <span class="text-slate-400">-</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -370,8 +370,8 @@ WORK GUIDE:
                             <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                             <div>
                                 <div class="font-medium"><?= e($org['name']) ?></div>
-                                <p class="text-sm text-gray-600"><?= e($org['description']) ?></p>
-                                <div class="text-xs text-gray-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                <p class="text-sm text-slate-600"><?= e($org['description']) ?></p>
+                                <div class="text-xs text-slate-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
                                 <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
                             </div>
                         </div>
@@ -431,7 +431,7 @@ WORK GUIDE:
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500"><?= e($item['organization_name']) ?> &middot; <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
+                        <div class="text-xs text-slate-500"><?= e($item['organization_name']) ?> &middot; <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
                         <div class="text-sm mt-1"><?= e($item['content']) ?></div>
                         <?php if (($user['role'] ?? '') === 'admin'): ?>
                             <form method="post" class="mt-2">
@@ -447,7 +447,7 @@ WORK GUIDE:
                     </div>
                 <?php endforeach; ?>
                 <?php if (count($announcements) === 0): ?>
-                    <p class="text-sm text-gray-600">No active announcements right now.</p>
+                    <p class="section-helper-copy">No active announcements right now.</p>
                 <?php endif; ?>
             </div>
         </div>

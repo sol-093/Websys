@@ -3862,6 +3862,7 @@
             }
 
             body:not(.theme-dark) .dashboard-kicker,
+            body:not(.theme-dark) .dashboard-trend-kicker,
             body:not(.theme-dark) .dashboard-stamp,
             body:not(.theme-dark) .dashboard-metric-label,
             body:not(.theme-dark) .dashboard-section-copy,
