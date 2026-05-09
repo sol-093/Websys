@@ -246,32 +246,36 @@ function handleLoginAction(PDO $db): void
         redirect('?page=login');
     }
 
-    $stmt = $db->prepare('SELECT * FROM users WHERE email = ? LIMIT 1');
-    $stmt->execute([$email]);
-    $candidate = $stmt->fetch();
+    $auth = new Involve\Services\AuthService(new Involve\Repositories\AuthRepository($db));
+    $result = $auth->authenticate($email, $password);
 
-    if (!$candidate || !password_verify($password, $candidate['password_hash'])) {
+    if (!$result['ok'] && ($result['error'] ?? '') === 'invalid_credentials') {
         rateLimitIncrement($loginRateKey, 300);
         setFlash('error', 'Invalid credentials.');
         redirect('?page=login');
     }
 
-    $accountStatus = (string) ($candidate['account_status'] ?? 'active');
-    if ($accountStatus === 'suspended') {
+    if (!$result['ok'] && ($result['error'] ?? '') === 'suspended') {
         setFlash('error', 'Your account has been suspended. Please contact the administrator.');
         redirect('?page=login');
     }
     
-    if ($accountStatus === 'banned') {
+    if (!$result['ok'] && ($result['error'] ?? '') === 'banned') {
         setFlash('error', 'Your account has been banned. Please contact the administrator.');
         redirect('?page=login');
     }
 
-    $emailVerified = (int) ($candidate['email_verified'] ?? 1);
-    if ($emailVerified === 0) {
+    if (!$result['ok'] && ($result['error'] ?? '') === 'email_unverified') {
         setFlash('error', 'Please verify your email address before logging in. Check your email for the verification link.');
-        $_SESSION['pending_verification_email'] = $email;
+        $_SESSION['pending_verification_email'] = (string) ($result['pending_verification_email'] ?? $email);
         redirect('?page=login&show_resend=1');
+    }
+
+    $candidate = $result['user'] ?? null;
+    if (!is_array($candidate)) {
+        rateLimitIncrement($loginRateKey, 300);
+        setFlash('error', 'Invalid credentials.');
+        redirect('?page=login');
     }
 
     rateLimitClear($loginRateKey);

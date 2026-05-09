@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 function buildOwnerWorkspaceData(PDO $db, array $user): array
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $ownedOrganizations = getOwnedOrganizations((int) $user['id']);
     if (count($ownedOrganizations) === 0) {
         setFlash('error', 'No organization is assigned to your account yet.');
@@ -1713,14 +1713,28 @@ function handleMyOrgBudgetPage(PDO $db, array $user): void
                         <input type="hidden" name="page" value="my_org_budget">
                         <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
                         <div class="min-w-0 flex-1 space-y-2">
-                            <label for="budgetSelect" class="text-sm font-medium text-slate-700">Selected budget</label>
-                            <select id="budgetSelect" name="budget_id" class="w-full border rounded px-3 py-2">
-                                <?php foreach ($budgets as $budget): ?>
-                                    <option value="<?= (int) $budget['id'] ?>" <?= $selectedBudget && (int) $selectedBudget['id'] === (int) $budget['id'] ? 'selected' : '' ?>>
-                                        <?= e((string) $budget['title']) ?> · <?= e(ucfirst((string) $budget['status'])) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label for="budgetSelectButton" class="text-sm font-medium text-slate-700">Selected budget</label>
+                            <div class="relative w-full" data-dropdown-wrapper>
+                                <input type="hidden" name="budget_id" data-dropdown-value value="<?= (int) ($selectedBudget['id'] ?? $budgets[0]['id']) ?>">
+                                <button type="button" id="budgetSelectButton" data-dropdown-toggle="budgetSelectMenu" aria-expanded="false" class="w-full flex items-center justify-between gap-3 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 transition-colors">
+                                    <span data-dropdown-label class="truncate"><?= e((string) ($selectedBudget['title'] ?? $budgets[0]['title'])) ?> - <?= e(ucfirst((string) ($selectedBudget['status'] ?? $budgets[0]['status']))) ?></span>
+                                </button>
+                                <div id="budgetSelectMenu" data-dropdown-menu class="absolute left-0 top-full mt-2 hidden w-full overflow-hidden rounded border z-20 backdrop-blur-md" aria-labelledby="budgetSelectButton">
+                                    <ul class="max-h-64 overflow-y-auto themed-scroll">
+                                        <?php foreach ($budgets as $budget): ?>
+                                            <?php
+                                                $budgetLabel = (string) $budget['title'] . ' - ' . ucfirst((string) $budget['status']);
+                                                $isSelectedBudget = $selectedBudget && (int) $selectedBudget['id'] === (int) $budget['id'];
+                                            ?>
+                                            <li>
+                                                <button type="button" data-dropdown-option data-active="<?= $isSelectedBudget ? 'true' : 'false' ?>" data-option-value="<?= (int) $budget['id'] ?>" data-option-label="<?= e($budgetLabel) ?>" class="block w-full rounded px-3 py-2 text-left transition-colors">
+                                                    <?= e($budgetLabel) ?>
+                                                </button>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         <button class="owner-manage-secondary-btn px-4 py-2 rounded-md">View</button>
                     </form>

@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 function handleCreateBudgetAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
 
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $orgId);
@@ -45,7 +45,7 @@ function handleCreateBudgetAction(PDO $db, array $user): void
 
 function handleAddBudgetLineItemAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
 
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $budgetId = (int) ($_POST['budget_id'] ?? 0);
@@ -72,7 +72,7 @@ function handleAddBudgetLineItemAction(PDO $db, array $user): void
 
 function handleUpdateBudgetStatusAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
 
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $budgetId = (int) ($_POST['budget_id'] ?? 0);
@@ -96,7 +96,7 @@ function handleUpdateBudgetStatusAction(PDO $db, array $user): void
 
 function handleExportOwnerBudgetAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
 
     $orgId = (int) ($_GET['org_id'] ?? 0);
     $budgetId = (int) ($_GET['budget_id'] ?? 0);
@@ -208,7 +208,7 @@ function handleExportOwnerBudgetAction(PDO $db, array $user): void
 
 function handleSubmitExpenseRequestAction(PDO $db, array $user, array $config): void
 {
-    requireRole(['owner']);
+    requirePermission('submit_expense_requests');
 
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $lineItemId = (int) ($_POST['budget_line_item_id'] ?? 0);
@@ -246,7 +246,7 @@ function handleSubmitExpenseRequestAction(PDO $db, array $user, array $config): 
 
 function handleProcessExpenseRequestAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('approve_expense_requests');
 
     $requestId = (int) ($_POST['request_id'] ?? 0);
     $decision = (string) ($_POST['decision'] ?? '');

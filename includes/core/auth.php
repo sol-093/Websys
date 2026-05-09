@@ -23,21 +23,17 @@ function currentUser(): ?array
         return null;
     }
 
-    $stmt = db()->prepare('SELECT id, name, email, role, onboarding_done, institute, program, year_level, section, profile_picture_path, profile_picture_crop_x, profile_picture_crop_y, profile_picture_zoom, email_verified, account_status, created_at FROM users WHERE id = ?');
-    $stmt->execute([(int) $_SESSION['user_id']]);
-    $user = $stmt->fetch();
+    $users = new Involve\Repositories\AuthRepository(db());
+    $user = $users->findSessionUserById((int) $_SESSION['user_id']);
     if (!$user) {
         return null;
     }
 
     if (($user['role'] ?? '') === 'owner') {
-        $ownerCheck = db()->prepare('SELECT COUNT(*) FROM organizations WHERE owner_id = ?');
-        $ownerCheck->execute([(int) $user['id']]);
-        $ownedCount = (int) $ownerCheck->fetchColumn();
+        $ownedCount = $users->countOwnedOrganizations((int) $user['id']);
 
         if ($ownedCount === 0) {
-            $downgrade = db()->prepare("UPDATE users SET role = 'student' WHERE id = ?");
-            $downgrade->execute([(int) $user['id']]);
+            $users->downgradeUserToStudent((int) $user['id']);
             $user['role'] = 'student';
         }
     }
@@ -57,6 +53,30 @@ function requireRole(array $roles): void
 {
     $user = currentUser();
     if (!$user || !in_array($user['role'], $roles, true)) {
+        setFlash('error', 'You are not authorized to access that page.');
+        redirect('?page=dashboard');
+    }
+}
+
+function permissionGate(): Involve\Auth\PermissionGate
+{
+    static $gate = null;
+
+    if (!$gate instanceof Involve\Auth\PermissionGate) {
+        $gate = Involve\Auth\PermissionGate::fromConfigPath(dirname(__DIR__, 2) . '/config/permissions.php');
+    }
+
+    return $gate;
+}
+
+function can(string $permission, ?array $user = null): bool
+{
+    return permissionGate()->allows($permission, $user ?? currentUser());
+}
+
+function requirePermission(string $permission): void
+{
+    if (!can($permission)) {
         setFlash('error', 'You are not authorized to access that page.');
         redirect('?page=dashboard');
     }

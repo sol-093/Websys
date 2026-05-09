@@ -55,7 +55,7 @@ function assertOwnerAssignmentEligibility(PDO $db, int $orgId, int $ownerId): vo
 
 function handleCreateOrgAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('manage_organizations');
     $config = require dirname(__DIR__, 2) . '/core/config.php';
     $name = trim((string) ($_POST['name'] ?? ''));
     $description = trim((string) ($_POST['description'] ?? ''));
@@ -118,7 +118,7 @@ function handleCreateOrgAction(PDO $db, array $user): void
 
 function handleUpdateOrgAdminAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('manage_organizations');
     $config = require dirname(__DIR__, 2) . '/core/config.php';
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $ownerId = (int) ($_POST['owner_id'] ?? 0);
@@ -239,7 +239,7 @@ function handleUpdateOrgAdminAction(PDO $db, array $user): void
 
 function handleDeleteOrgAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('manage_organizations');
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $stmt = $db->prepare('DELETE FROM organizations WHERE id = ?');
     $stmt->execute([$orgId]);
@@ -250,7 +250,7 @@ function handleDeleteOrgAction(PDO $db, array $user): void
 
 function handleAssignOwnerAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('assign_owners');
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $ownerId = (int) ($_POST['owner_id'] ?? 0);
 
@@ -291,7 +291,7 @@ function handleAssignOwnerAction(PDO $db, array $user): void
 
 function handleRespondOwnerAssignmentAction(PDO $db, array $user): void
 {
-    requireRole(['student', 'owner']);
+    requirePermission('join_organizations');
     $assignmentId = (int) ($_POST['assignment_id'] ?? 0);
     $decision = (string) ($_POST['decision'] ?? 'decline');
 
@@ -346,7 +346,7 @@ function handleRespondOwnerAssignmentAction(PDO $db, array $user): void
 
 function handleJoinOrgAction(PDO $db, array $user): void
 {
-    requireRole(['student', 'owner']);
+    requirePermission('join_organizations');
     $orgId = (int) ($_POST['org_id'] ?? 0);
 
     $orgStmt = $db->prepare('SELECT id, org_category, target_institute, target_program FROM organizations WHERE id = ? LIMIT 1');
@@ -394,7 +394,7 @@ function handleJoinOrgAction(PDO $db, array $user): void
 
 function handleProcessTxChangeRequestAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('approve_transactions');
     $requestId = (int) ($_POST['request_id'] ?? 0);
     $decision = (string) ($_POST['decision'] ?? 'reject');
     $adminNote = trim((string) ($_POST['admin_note'] ?? ''));
@@ -453,7 +453,7 @@ function handleProcessTxChangeRequestAction(PDO $db, array $user): void
 
 function handleRespondJoinRequestAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $requestId = (int) ($_POST['request_id'] ?? 0);
     $decision = (string) ($_POST['decision'] ?? 'decline');
@@ -508,7 +508,7 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
 
 function handleRemoveOrganizationMemberAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $orgId = (int) ($_POST['org_id'] ?? 0);
     $memberUserId = (int) ($_POST['member_user_id'] ?? 0);
 

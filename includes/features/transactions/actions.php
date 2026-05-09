@@ -27,7 +27,7 @@ declare(strict_types=1);
 // ================================================
 function handleUpdateMyOrgAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $config = require dirname(__DIR__, 2) . '/core/config.php';
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
@@ -70,7 +70,7 @@ function handleUpdateMyOrgAction(PDO $db, array $user): void
 // ================================================
 function handleAddAnnouncementAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     if (!$org) {
@@ -108,7 +108,7 @@ function handleAddAnnouncementAction(PDO $db, array $user): void
 
 function handleDeleteAnnouncementAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     $id = (int) ($_POST['announcement_id'] ?? 0);
@@ -122,7 +122,7 @@ function handleDeleteAnnouncementAction(PDO $db, array $user): void
 
 function handlePinAnnouncementAdminAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('view_admin');
     $announcementId = (int) ($_POST['announcement_id'] ?? 0);
     $returnPage = (string) ($_POST['return_page'] ?? 'announcements');
     if (!in_array($returnPage, ['announcements', 'dashboard'], true)) {
@@ -161,7 +161,7 @@ function handlePinAnnouncementAdminAction(PDO $db, array $user): void
 
 function handleUnpinAnnouncementAdminAction(PDO $db, array $user): void
 {
-    requireRole(['admin']);
+    requirePermission('view_admin');
     $announcementId = (int) ($_POST['announcement_id'] ?? 0);
     $returnPage = (string) ($_POST['return_page'] ?? 'announcements');
     if (!in_array($returnPage, ['announcements', 'dashboard'], true)) {
@@ -190,7 +190,7 @@ function handleUnpinAnnouncementAdminAction(PDO $db, array $user): void
 // ================================================
 function handleAddTransactionAction(PDO $db, array $user, array $config): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     if (!$org) {
@@ -228,7 +228,7 @@ function handleAddTransactionAction(PDO $db, array $user, array $config): void
 
 function handleUpdateTransactionAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     if (!$org) {
@@ -279,7 +279,7 @@ function handleUpdateTransactionAction(PDO $db, array $user): void
 
 function handleDeleteTransactionAction(PDO $db, array $user): void
 {
-    requireRole(['owner']);
+    requirePermission('manage_own_organization');
     $selectedOrgId = (int) ($_POST['org_id'] ?? 0);
     $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
     $txId = (int) ($_POST['tx_id'] ?? 0);

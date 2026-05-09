@@ -20,37 +20,17 @@ declare(strict_types=1);
 
 function buildDashboardViewData(PDO $db, array $user, array $config, string $announcementCutoff, string $recentReportCutoffDate): array
 {
-    $orgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
-    $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
-    $membershipStmt->execute([(int) $user['id']]);
-    $joinedIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+    $dashboardRepository = Involve\Repositories\DashboardRepository::fromConnection($db);
+    $orgs = $dashboardRepository->organizationsForDashboard();
+    $joinedIds = $dashboardRepository->membershipIdsForUser((int) $user['id']);
     $orgs = sortOrganizationsForDashboardPanel($orgs, $user, $joinedIds);
 
-    $requestStmt = $db->prepare('SELECT organization_id, status FROM organization_join_requests WHERE user_id = ?');
-    $requestStmt->execute([(int) $user['id']]);
-    $joinRequestStatus = [];
-    foreach ($requestStmt->fetchAll() as $req) {
-        $joinRequestStatus[(int) $req['organization_id']] = (string) $req['status'];
-    }
+    $joinRequestStatus = $dashboardRepository->joinRequestStatusForUser((int) $user['id']);
 
     $activeAnnouncementCutoff = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
-    $announcementsStmt = $db->prepare('SELECT a.*, o.name AS organization_name
-        FROM announcements a
-        JOIN organizations o ON o.id = a.organization_id
-        WHERE (a.expires_at IS NULL OR a.expires_at >= ?)
-        ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC
-        LIMIT 30');
-    $announcementsStmt->execute([$activeAnnouncementCutoff]);
-    $announcements = $announcementsStmt->fetchAll();
+    $announcements = $dashboardRepository->activeAnnouncements($activeAnnouncementCutoff, 30);
 
-    $transactionsStmt = $db->prepare('SELECT t.*, o.name AS organization_name, o.logo_path AS organization_logo_path, o.logo_crop_x AS organization_logo_crop_x, o.logo_crop_y AS organization_logo_crop_y, o.logo_zoom AS organization_logo_zoom
-        FROM financial_transactions t
-        JOIN organizations o ON o.id = t.organization_id
-        WHERE t.transaction_date >= ?
-        ORDER BY t.transaction_date DESC, t.id DESC
-        LIMIT 8');
-    $transactionsStmt->execute([$recentReportCutoffDate]);
-    $transactions = $transactionsStmt->fetchAll();
+    $transactions = $dashboardRepository->recentTransactions($recentReportCutoffDate, 8);
 
     $visibleOrganizationIds = array_values(array_unique(array_map(static fn(array $org): int => (int) $org['id'], $orgs)));
     $summary = [];
@@ -60,36 +40,48 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $budgetFlowCriticalLineCount = 0;
     $budgetFlowWatchLineCount = 0;
     if (count($visibleOrganizationIds) > 0) {
-        $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
-        $summaryStmt = $db->prepare("SELECT o.id, o.name, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom,
-            COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
-            COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
-            FROM organizations o
-            LEFT JOIN financial_transactions t ON t.organization_id = o.id
-            WHERE o.id IN ($summaryPlaceholders)
-            GROUP BY o.id, o.name, o.logo_path
-            ORDER BY o.name");
-        $summaryStmt->execute($visibleOrganizationIds);
-        $summary = $summaryStmt->fetchAll();
+        $aggregateData = cacheRemember('dashboard:aggregates:' . md5(implode(',', $visibleOrganizationIds)), 60, static function () use ($db, $visibleOrganizationIds): array {
+            return queryProfile('dashboard.aggregate_sections', static function () use ($db, $visibleOrganizationIds): array {
+                $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
+                $summaryStmt = $db->prepare("SELECT o.id, o.name, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom,
+                    COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
+                    COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
+                    FROM organizations o
+                    LEFT JOIN financial_transactions t ON t.organization_id = o.id
+                    WHERE o.id IN ($summaryPlaceholders)
+                    GROUP BY o.id, o.name, o.logo_path
+                    ORDER BY o.name");
+                $summaryStmt->execute($visibleOrganizationIds);
 
-        $pendingExpenseStmt = $db->prepare("SELECT COUNT(*) FROM expense_requests WHERE organization_id IN ($summaryPlaceholders) AND status = 'pending'");
-        $pendingExpenseStmt->execute($visibleOrganizationIds);
-        $budgetFlowPendingExpenseRequestCount = (int) $pendingExpenseStmt->fetchColumn();
+                $pendingExpenseStmt = $db->prepare("SELECT COUNT(*) FROM expense_requests WHERE organization_id IN ($summaryPlaceholders) AND status = 'pending'");
+                $pendingExpenseStmt->execute($visibleOrganizationIds);
 
-        $activeBudgetStmt = $db->prepare("SELECT COUNT(*) FROM budgets WHERE organization_id IN ($summaryPlaceholders) AND status = 'active'");
-        $activeBudgetStmt->execute($visibleOrganizationIds);
-        $budgetFlowActiveBudgetCount = (int) $activeBudgetStmt->fetchColumn();
+                $activeBudgetStmt = $db->prepare("SELECT COUNT(*) FROM budgets WHERE organization_id IN ($summaryPlaceholders) AND status = 'active'");
+                $activeBudgetStmt->execute($visibleOrganizationIds);
 
-        $budgetLineUsageStmt = $db->prepare("SELECT bli.allocated_amount, bli.spent_amount,
-                COALESCE(SUM(CASE WHEN er.status = 'pending' THEN er.amount ELSE 0 END), 0) AS pending_amount
-            FROM budget_line_items bli
-            JOIN budgets b ON b.id = bli.budget_id
-            LEFT JOIN expense_requests er ON er.budget_line_item_id = bli.id
-            WHERE b.organization_id IN ($summaryPlaceholders)
-              AND b.status = 'active'
-            GROUP BY bli.id, bli.allocated_amount, bli.spent_amount");
-        $budgetLineUsageStmt->execute($visibleOrganizationIds);
-        foreach ($budgetLineUsageStmt->fetchAll() ?: [] as $lineUsage) {
+                $budgetLineUsageStmt = $db->prepare("SELECT bli.allocated_amount, bli.spent_amount,
+                        COALESCE(SUM(CASE WHEN er.status = 'pending' THEN er.amount ELSE 0 END), 0) AS pending_amount
+                    FROM budget_line_items bli
+                    JOIN budgets b ON b.id = bli.budget_id
+                    LEFT JOIN expense_requests er ON er.budget_line_item_id = bli.id
+                    WHERE b.organization_id IN ($summaryPlaceholders)
+                      AND b.status = 'active'
+                    GROUP BY bli.id, bli.allocated_amount, bli.spent_amount");
+                $budgetLineUsageStmt->execute($visibleOrganizationIds);
+
+                return [
+                    'summary' => $summaryStmt->fetchAll() ?: [],
+                    'pending_expense_count' => (int) $pendingExpenseStmt->fetchColumn(),
+                    'active_budget_count' => (int) $activeBudgetStmt->fetchColumn(),
+                    'line_usage' => $budgetLineUsageStmt->fetchAll() ?: [],
+                ];
+            });
+        });
+
+        $summary = $aggregateData['summary'];
+        $budgetFlowPendingExpenseRequestCount = (int) $aggregateData['pending_expense_count'];
+        $budgetFlowActiveBudgetCount = (int) $aggregateData['active_budget_count'];
+        foreach ($aggregateData['line_usage'] as $lineUsage) {
             $allocated = (float) ($lineUsage['allocated_amount'] ?? 0);
             if ($allocated <= 0) {
                 continue;
@@ -105,10 +97,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         }
     }
 
-    $kpi = $db->query("SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
-        FROM financial_transactions")->fetch();
+    $kpi = $dashboardRepository->financialTotals();
 
     $kpiIncome = (float) ($kpi['income'] ?? 0);
     $kpiExpense = (float) ($kpi['expense'] ?? 0);
@@ -118,29 +107,34 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $previousMonthStart = $monthStart->modify('-1 month');
     $nextMonthStart = $monthStart->modify('+1 month');
 
-    $kpiMonthlyStmt = $db->prepare("SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_current,
-        COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_previous,
-        COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS income_previous_count,
-        COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_current,
-        COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_previous
-        , COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS expense_previous_count
-        FROM financial_transactions");
-    $kpiMonthlyStmt->execute([
-        $monthStart->format('Y-m-d'),
-        $nextMonthStart->format('Y-m-d'),
-        $previousMonthStart->format('Y-m-d'),
-        $monthStart->format('Y-m-d'),
-        $previousMonthStart->format('Y-m-d'),
-        $monthStart->format('Y-m-d'),
-        $monthStart->format('Y-m-d'),
-        $nextMonthStart->format('Y-m-d'),
-        $previousMonthStart->format('Y-m-d'),
-        $monthStart->format('Y-m-d'),
-        $previousMonthStart->format('Y-m-d'),
-        $monthStart->format('Y-m-d'),
-    ]);
-    $kpiMonthly = $kpiMonthlyStmt->fetch();
+    $kpiMonthly = cacheRemember('dashboard:kpi_monthly:' . $monthStart->format('Y-m-d'), 60, static function () use ($db, $monthStart, $nextMonthStart, $previousMonthStart): array|false {
+        return queryProfile('dashboard.kpi_monthly', static function () use ($db, $monthStart, $nextMonthStart, $previousMonthStart): array|false {
+            $kpiMonthlyStmt = $db->prepare("SELECT
+                COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_current,
+                COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_previous,
+                COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS income_previous_count,
+                COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_current,
+                COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_previous
+                , COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS expense_previous_count
+                FROM financial_transactions");
+            $kpiMonthlyStmt->execute([
+                $monthStart->format('Y-m-d'),
+                $nextMonthStart->format('Y-m-d'),
+                $previousMonthStart->format('Y-m-d'),
+                $monthStart->format('Y-m-d'),
+                $previousMonthStart->format('Y-m-d'),
+                $monthStart->format('Y-m-d'),
+                $monthStart->format('Y-m-d'),
+                $nextMonthStart->format('Y-m-d'),
+                $previousMonthStart->format('Y-m-d'),
+                $monthStart->format('Y-m-d'),
+                $previousMonthStart->format('Y-m-d'),
+                $monthStart->format('Y-m-d'),
+            ]);
+
+            return $kpiMonthlyStmt->fetch();
+        });
+    });
 
     $incomeCurrentMonthTotal = (float) ($kpiMonthly['income_current'] ?? 0);
     $incomePreviousMonthTotal = (float) ($kpiMonthly['income_previous'] ?? 0);

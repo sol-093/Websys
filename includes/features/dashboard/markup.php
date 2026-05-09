@@ -142,7 +142,12 @@ WORK GUIDE:
                     <div class="dashboard-metric-label">Announcement highlights</div>
                 </div>
             </div>
-            <canvas id="trendChart" height="112"></canvas>
+            <canvas id="trendChart" height="112" class="<?= $trendPointCount > 0 ? '' : 'hidden' ?>"></canvas>
+            <div id="trendChartEmptyState" data-chart-empty-state="1" class="dashboard-empty-state <?= $trendPointCount > 0 ? 'hidden' : '' ?>">
+                <div class="dashboard-empty-icon"><?= uiIcon('chart', 'ui-icon') ?></div>
+                <div class="dashboard-empty-title">No trend data yet</div>
+                <p class="dashboard-empty-copy">Income and expense movement will appear here once financial reports are recorded.</p>
+            </div>
             <p id="trendChartFallback" class="hidden mt-3 rounded border border-amber-300/40 bg-amber-500/15 px-3 py-2 text-sm text-amber-100" role="status">
                 The trend graph is temporarily unavailable. Dashboard data remains up to date below.
             </p>
@@ -210,7 +215,11 @@ WORK GUIDE:
                     </div>
                 <?php endforeach; ?>
                 <?php if (count($latestAnnouncementsPreview) === 0 && count($activityPreview) === 0): ?>
-                    <p class="dashboard-section-copy">No recent announcements or activity items are available.</p>
+                    <div class="dashboard-empty-state dashboard-empty-state-compact">
+                        <div class="dashboard-empty-icon"><?= uiIcon('announce', 'ui-icon') ?></div>
+                        <div class="dashboard-empty-title">No live activity yet</div>
+                        <p class="dashboard-empty-copy">Announcements, approvals, and audit activity will show here as the workspace starts moving.</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -224,49 +233,57 @@ WORK GUIDE:
                 <button type="button" id="openOrganizationsModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
             </div>
             <div class="space-y-2">
-                <?php foreach ($dashboardOrganizationsPreview as $org): ?>
-                    <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between">
-                        <div class="flex items-start gap-3 text-left">
-                            <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
-                            <div>
-                                <div class="dashboard-feed-title"><?= e($org['name']) ?></div>
-                                <div class="dashboard-feed-body mt-1"><?= e($org['description']) ?></div>
-                                <div class="dashboard-feed-meta mt-2">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
-                                <div class="dashboard-feed-meta mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
-                            </div>
-                        </div>
-                        <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
-                            <form method="post">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="join_org">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <?php
-                                    $orgId = (int) $org['id'];
-                                    $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
-                                    $isJoined = in_array($orgId, $joinedIds, true);
-                                    $canJoin = canUserJoinOrganization($org, $user);
-                                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
-                                    if (!$canJoin) {
-                                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
-                                        $label = getJoinRestrictionLabel($org);
-                                    } elseif ($isJoined) {
-                                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
-                                        $label = 'Joined';
-                                    } elseif ($requestStatus === 'pending') {
-                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-white-900';
-                                        $label = 'Requested';
-                                    } else {
-                                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
-                                        $label = 'Request Join';
-                                    }
-                                ?>
-                                <button class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
-                                    <span><?= $label ?></span>
-                                </button>
-                            </form>
-                        <?php endif; ?>
+                <?php if (count($dashboardOrganizationsPreview) === 0): ?>
+                    <div class="dashboard-empty-state dashboard-empty-state-compact">
+                        <div class="dashboard-empty-icon"><?= uiIcon('orgs', 'ui-icon') ?></div>
+                        <div class="dashboard-empty-title">No organizations yet</div>
+                        <p class="dashboard-empty-copy">Created organizations and join eligibility will appear here.</p>
                     </div>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach ($dashboardOrganizationsPreview as $org): ?>
+                        <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between">
+                            <div class="flex items-start gap-3 text-left">
+                                <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                                <div>
+                                    <div class="dashboard-feed-title"><?= e($org['name']) ?></div>
+                                    <div class="dashboard-feed-body mt-1"><?= e($org['description']) ?></div>
+                                    <div class="dashboard-feed-meta mt-2">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                    <div class="dashboard-feed-meta mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                                </div>
+                            </div>
+                            <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                                <form method="post">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="join_org">
+                                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                    <?php
+                                        $orgId = (int) $org['id'];
+                                        $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                                        $isJoined = in_array($orgId, $joinedIds, true);
+                                        $canJoin = canUserJoinOrganization($org, $user);
+                                        $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                        if (!$canJoin) {
+                                            $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                            $label = getJoinRestrictionLabel($org);
+                                        } elseif ($isJoined) {
+                                            $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                            $label = 'Joined';
+                                        } elseif ($requestStatus === 'pending') {
+                                            $btnClass = 'bg-amber-500/25 border-amber-300/50 text-white-900';
+                                            $label = 'Requested';
+                                        } else {
+                                            $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                            $label = 'Request Join';
+                                        }
+                                    ?>
+                                    <button class="inline-flex items-center justify-center whitespace-nowrap min-w-[5rem] px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                        <span><?= $label ?></span>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -281,41 +298,49 @@ WORK GUIDE:
                     <span class="dashboard-mobile-only">Showing <?= min(5, $recentReportCount) ?> latest items</span>
                 </div>
             </div>
-            <div class="table-wrapper">
-                <table class="dashboard-table dashboard-recent-reports-table w-full text-sm table-fixed">
-                    <thead>
-                    <tr class="border-b text-left">
-                        <th class="py-2 w-[20%]">Date</th>
-                        <th class="w-[30%]">Organization</th>
-                        <th class="w-[16%]">Type</th>
-                        <th class="w-[20%]">Amount</th>
-                        <th class="w-[14%]">Receipt</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($transactions as $index => $tx): ?>
-                        <tr class="border-b <?= $index >= 5 ? 'dashboard-mobile-trim' : '' ?>">
-                            <td class="py-2"><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></td>
-                            <td>
-                                <span class="inline-flex items-center gap-2">
-                                    <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
-                                    <span><?= e($tx['organization_name']) ?></span>
-                                </span>
-                            </td>
-                            <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
-                            <td>&#8369;<?= number_format((float) $tx['amount'], 2) ?></td>
-                            <td>
-                                <?php if (!empty($tx['receipt_path'])): ?>
-                                    <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
-                                <?php else: ?>
-                                    <span class="text-slate-400">-</span>
-                                <?php endif; ?>
-                            </td>
+            <?php if (count($transactions) === 0): ?>
+                <div class="dashboard-empty-state">
+                    <div class="dashboard-empty-icon"><?= uiIcon('folder', 'ui-icon') ?></div>
+                    <div class="dashboard-empty-title">No recent reports yet</div>
+                    <p class="dashboard-empty-copy">Income and expense entries with receipts will show here after organizations record transactions.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-wrapper">
+                    <table class="dashboard-table dashboard-recent-reports-table w-full text-sm table-fixed">
+                        <thead>
+                        <tr class="border-b text-left">
+                            <th class="py-2 w-[20%]">Date</th>
+                            <th class="w-[30%]">Organization</th>
+                            <th class="w-[16%]">Type</th>
+                            <th class="w-[20%]">Amount</th>
+                            <th class="w-[14%]">Receipt</th>
                         </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($transactions as $index => $tx): ?>
+                            <tr class="border-b <?= $index >= 5 ? 'dashboard-mobile-trim' : '' ?>">
+                                <td class="py-2"><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></td>
+                                <td>
+                                    <span class="inline-flex items-center gap-2">
+                                        <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
+                                        <span><?= e($tx['organization_name']) ?></span>
+                                    </span>
+                                </td>
+                                <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
+                                <td>&#8369;<?= number_format((float) $tx['amount'], 2) ?></td>
+                                <td>
+                                    <?php if (!empty($tx['receipt_path'])): ?>
+                                        <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
+                                    <?php else: ?>
+                                        <span class="text-slate-400">-</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="glass dashboard-panel xl:col-span-12 p-4 md:p-4 overflow-hidden">
@@ -326,37 +351,45 @@ WORK GUIDE:
                 </div>
                 <button type="button" id="openFinancialSummaryModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View charts</span></span></button>
             </div>
-            <div class="table-wrapper">
-                <table class="dashboard-table dashboard-summary-table w-full text-sm table-fixed">
-                    <thead>
-                    <tr class="border-b text-left">
-                        <th class="py-2 pr-4 w-[46%]">Organization</th>
-                        <th class="py-2 pr-3 w-[18%]">Income</th>
-                        <th class="py-2 pr-3 w-[18%]">Expense</th>
-                        <th class="py-2 w-[18%]">Balance</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($summary as $row): ?>
-                        <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
-                        <tr class="border-b">
-                            <td class="py-2 pr-4">
-                                <span class="inline-flex items-center gap-2">
-                                    <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
-                                    <span><?= e($row['name']) ?></span>
-                                </span>
-                            </td>
-                            <td class="py-2 pr-3 text-green-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_income'], 2) ?></td>
-                            <td class="py-2 pr-3 text-red-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></td>
-                            <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">&#8369;<?= number_format($balance, 2) ?></td>
+            <?php if (count($summaryAll) === 0): ?>
+                <div class="dashboard-empty-state">
+                    <div class="dashboard-empty-icon"><?= uiIcon('chart', 'ui-icon') ?></div>
+                    <div class="dashboard-empty-title">No organization summary yet</div>
+                    <p class="dashboard-empty-copy">Financial totals will appear once organizations and transaction records exist.</p>
+                </div>
+            <?php else: ?>
+                <div class="table-wrapper">
+                    <table class="dashboard-table dashboard-summary-table w-full text-sm table-fixed">
+                        <thead>
+                        <tr class="border-b text-left">
+                            <th class="py-2 pr-4 w-[46%]">Organization</th>
+                            <th class="py-2 pr-3 w-[18%]">Income</th>
+                            <th class="py-2 pr-3 w-[18%]">Expense</th>
+                            <th class="py-2 w-[18%]">Balance</th>
                         </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <div class="pt-3">
-                <?php renderPagination($summaryPagination); ?>
-            </div>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($summary as $row): ?>
+                            <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
+                            <tr class="border-b">
+                                <td class="py-2 pr-4">
+                                    <span class="inline-flex items-center gap-2">
+                                        <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
+                                        <span><?= e($row['name']) ?></span>
+                                    </span>
+                                </td>
+                                <td class="py-2 pr-3 text-green-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_income'], 2) ?></td>
+                                <td class="py-2 pr-3 text-red-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></td>
+                                <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">&#8369;<?= number_format($balance, 2) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pt-3">
+                    <?php renderPagination($summaryPagination); ?>
+                </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -367,49 +400,57 @@ WORK GUIDE:
                 <button type="button" id="closeOrganizationsModal" class="px-2 py-1 rounded border text-sm">Close</button>
             </div>
             <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
-                <?php foreach ($orgs as $org): ?>
-                    <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
-                        <div class="flex items-start gap-3 text-left">
-                            <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
-                            <div>
-                                <div class="font-medium"><?= e($org['name']) ?></div>
-                                <p class="text-sm text-slate-600"><?= e($org['description']) ?></p>
-                                <div class="text-xs text-slate-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
-                                <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
-                            </div>
-                        </div>
-                        <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
-                            <form method="post">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="join_org">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <?php
-                                    $orgId = (int) $org['id'];
-                                    $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
-                                    $isJoined = in_array($orgId, $joinedIds, true);
-                                    $canJoin = canUserJoinOrganization($org, $user);
-                                    $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
-                                    if (!$canJoin) {
-                                        $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
-                                        $label = getJoinRestrictionLabel($org);
-                                    } elseif ($isJoined) {
-                                        $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
-                                        $label = 'Joined';
-                                    } elseif ($requestStatus === 'pending') {
-                                        $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
-                                        $label = 'Requested';
-                                    } else {
-                                        $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
-                                        $label = 'Request Join';
-                                    }
-                                ?>
-                                <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
-                                    <?= $label ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
+                <?php if (count($orgs) === 0): ?>
+                    <div class="dashboard-empty-state">
+                        <div class="dashboard-empty-icon"><?= uiIcon('orgs', 'ui-icon') ?></div>
+                        <div class="dashboard-empty-title">No organizations yet</div>
+                        <p class="dashboard-empty-copy">Create an organization to populate this directory.</p>
                     </div>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach ($orgs as $org): ?>
+                        <div class="border rounded p-3 flex flex-col md:flex-row justify-between items-center md:items-start gap-2 text-center md:text-left">
+                            <div class="flex items-start gap-3 text-left">
+                                <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'md', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
+                                <div>
+                                    <div class="font-medium"><?= e($org['name']) ?></div>
+                                    <p class="text-sm text-slate-600"><?= e($org['description']) ?></p>
+                                    <div class="text-xs text-slate-500 mt-1">Owner: <?= e($org['owner_name'] ?? 'Unassigned') ?></div>
+                                    <div class="text-xs text-emerald-800 mt-1"><?= e(getOrganizationVisibilityLabel($org)) ?></div>
+                                </div>
+                            </div>
+                            <?php if (in_array($user['role'], ['student', 'owner'], true)): ?>
+                                <form method="post">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="join_org">
+                                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                    <?php
+                                        $orgId = (int) $org['id'];
+                                        $requestStatus = (string) ($joinRequestStatus[$orgId] ?? '');
+                                        $isJoined = in_array($orgId, $joinedIds, true);
+                                        $canJoin = canUserJoinOrganization($org, $user);
+                                        $disabled = $isJoined || $requestStatus === 'pending' || !$canJoin;
+                                        if (!$canJoin) {
+                                            $btnClass = 'bg-slate-200/40 border-slate-300/60 text-slate-600';
+                                            $label = getJoinRestrictionLabel($org);
+                                        } elseif ($isJoined) {
+                                            $btnClass = 'bg-white/10 border-emerald-200/30 text-slate-700';
+                                            $label = 'Joined';
+                                        } elseif ($requestStatus === 'pending') {
+                                            $btnClass = 'bg-amber-500/25 border-amber-300/50 text-amber-900';
+                                            $label = 'Requested';
+                                        } else {
+                                            $btnClass = 'bg-emerald-500/25 border-emerald-300/50 text-emerald-900 hover:bg-emerald-500/35';
+                                            $label = 'Request Join';
+                                        }
+                                    ?>
+                                    <button class="px-3 py-1 rounded text-xs border backdrop-blur-md <?= $btnClass ?>" <?= $disabled ? 'disabled' : '' ?>>
+                                        <?= $label ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -421,36 +462,41 @@ WORK GUIDE:
                 <button type="button" id="closeAnnouncementsModal" class="px-2 py-1 rounded border text-sm">Close</button>
             </div>
             <div class="p-4 space-y-3 max-h-[74vh] overflow-y-auto themed-scroll pr-1">
-                <?php foreach ($announcements as $item): ?>
-                    <div class="border rounded p-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <div class="font-medium"><?= e($item['title']) ?></div>
-                            <div class="flex items-center gap-1">
-                                <?php if (trim((string) ($item['label'] ?? '')) !== ''): ?>
-                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40"><?= e((string) $item['label']) ?></span>
-                                <?php endif; ?>
-                                <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
-                                    <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <div class="text-xs text-slate-500"><?= e($item['organization_name']) ?> &middot; <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
-                        <div class="text-sm mt-1"><?= e($item['content']) ?></div>
-                        <?php if (($user['role'] ?? '') === 'admin'): ?>
-                            <form method="post" class="mt-2">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
-                                <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
-                                <input type="hidden" name="return_page" value="dashboard">
-                                <button class="px-2 py-1 rounded text-xs border">
-                                    <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
                 <?php if (count($announcements) === 0): ?>
-                    <p class="section-helper-copy">No active announcements right now.</p>
+                    <div class="dashboard-empty-state">
+                        <div class="dashboard-empty-icon"><?= uiIcon('announce', 'ui-icon') ?></div>
+                        <div class="dashboard-empty-title">No active announcements</div>
+                        <p class="dashboard-empty-copy">Announcements will appear here when organizations publish updates.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($announcements as $item): ?>
+                        <div class="border rounded p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="font-medium"><?= e($item['title']) ?></div>
+                                <div class="flex items-center gap-1">
+                                    <?php if (trim((string) ($item['label'] ?? '')) !== ''): ?>
+                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-300/40"><?= e((string) $item['label']) ?></span>
+                                    <?php endif; ?>
+                                    <?php if ((int) ($item['is_pinned'] ?? 0) === 1): ?>
+                                        <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/25 border border-amber-300/40">Important</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="text-xs text-slate-500"><?= e($item['organization_name']) ?> &middot; <?= e($formatAnnouncementExpiry((string) ($item['expires_at'] ?? null))) ?></div>
+                            <div class="text-sm mt-1"><?= e($item['content']) ?></div>
+                            <?php if (($user['role'] ?? '') === 'admin'): ?>
+                                <form method="post" class="mt-2">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="<?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'unpin_announcement_admin' : 'pin_announcement_admin' ?>">
+                                    <input type="hidden" name="announcement_id" value="<?= (int) $item['id'] ?>">
+                                    <input type="hidden" name="return_page" value="dashboard">
+                                    <button class="px-2 py-1 rounded text-xs border">
+                                        <?= (int) ($item['is_pinned'] ?? 0) === 1 ? 'Unpin' : 'Pin as Important' ?>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </div>

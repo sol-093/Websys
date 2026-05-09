@@ -163,6 +163,71 @@ function redirect(string $url): void
     exit;
 }
 
+function appConfig(): array
+{
+    static $config = null;
+
+    if ($config === null) {
+        $config = require __DIR__ . '/config.php';
+    }
+
+    return $config;
+}
+
+function appCache(): Involve\Support\Cache\FileCache
+{
+    static $cache = null;
+
+    if ($cache === null) {
+        $config = appConfig();
+        $cacheConfig = $config['cache'] ?? [];
+        $cache = new Involve\Support\Cache\FileCache(
+            (string) ($cacheConfig['path'] ?? dirname(__DIR__, 2) . '/storage/cache'),
+            (bool) ($cacheConfig['enabled'] ?? true)
+        );
+    }
+
+    return $cache;
+}
+
+function cacheRemember(string $key, int $ttlSeconds, callable $callback): mixed
+{
+    return appCache()->remember($key, $ttlSeconds, $callback);
+}
+
+function cacheForget(string $key): void
+{
+    appCache()->forget($key);
+}
+
+function cacheForgetByPrefix(string $prefix): void
+{
+    appCache()->forgetByPrefix($prefix);
+}
+
+function invalidatePerformanceCaches(): void
+{
+    foreach (['dashboard:', 'public:', 'organizations:', 'admin_budget:'] as $prefix) {
+        cacheForgetByPrefix($prefix);
+    }
+}
+
+function queryProfile(string $label, callable $callback): mixed
+{
+    static $profiler = null;
+
+    if ($profiler === null) {
+        $config = appConfig();
+        $performance = $config['performance'] ?? [];
+        $profiler = new Involve\Support\QueryProfiler(
+            (bool) ($performance['query_profiler_enabled'] ?? false),
+            (int) ($performance['slow_query_ms'] ?? 150)
+        );
+    }
+
+    return $profiler->profile($label, $callback);
+}
+
 function setFlash(string $type, string $message): void
 {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];

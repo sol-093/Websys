@@ -34,9 +34,14 @@ function handleLogoutPage(): void
 
 function handleHomePage(PDO $db, ?array $user): void
 {
-    $orgCount = (int) $db->query('SELECT COUNT(*) FROM organizations')->fetchColumn();
-    $memberCount = (int) $db->query("SELECT COUNT(*) FROM users WHERE role IN ('student','owner')")->fetchColumn();
-    $announcementCount = (int) $db->query('SELECT COUNT(*) FROM announcements')->fetchColumn();
+    $counts = cacheRemember('public:home_counts', 300, static fn(): array => queryProfile('public.home_counts', static fn(): array => [
+        'organizations' => (int) $db->query('SELECT COUNT(*) FROM organizations')->fetchColumn(),
+        'members' => (int) $db->query("SELECT COUNT(*) FROM users WHERE role IN ('student','owner')")->fetchColumn(),
+        'announcements' => (int) $db->query('SELECT COUNT(*) FROM announcements')->fetchColumn(),
+    ]));
+    $orgCount = (int) $counts['organizations'];
+    $memberCount = (int) $counts['members'];
+    $announcementCount = (int) $counts['announcements'];
 
     renderHeader('Home');
     ?>

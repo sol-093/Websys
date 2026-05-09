@@ -142,20 +142,14 @@ function handleAnnouncementsPage(PDO $db, $user, string $announcementCutoff): vo
 
 function handleOrganizationsPage(PDO $db, array $user): void
 {
-    $allOrgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
+    $organizations = new Involve\Repositories\OrganizationRepository($db);
+    $allOrgs = cacheRemember('organizations:directory:all_with_owner_names', 60, fn(): array => $organizations->allWithOwnerNames());
 
-    $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
-    $membershipStmt->execute([(int) $user['id']]);
-    $memberOrganizationIds = array_map('intval', array_column($membershipStmt->fetchAll(), 'organization_id'));
+    $memberOrganizationIds = $organizations->membershipIdsForUser((int) $user['id']);
     $allOrgs = applyOrganizationVisibilityForUser($allOrgs, $user, $memberOrganizationIds);
     $joinedIds = $memberOrganizationIds;
 
-    $requestStmt = $db->prepare('SELECT organization_id, status FROM organization_join_requests WHERE user_id = ?');
-    $requestStmt->execute([(int) $user['id']]);
-    $joinRequestStatus = [];
-    foreach ($requestStmt->fetchAll() as $req) {
-        $joinRequestStatus[(int) $req['organization_id']] = (string) $req['status'];
-    }
+    $joinRequestStatus = $organizations->joinRequestStatusForUser((int) $user['id']);
 
     renderHeader('Organizations');
     ?>

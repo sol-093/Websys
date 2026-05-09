@@ -336,6 +336,7 @@ function initializeDatabaseSqlite(PDO $pdo): void
     ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureBudgetFlowSchema($pdo);
+    ensurePerformanceIndexes($pdo);
     ensureDefaultAdmin($pdo);
     normalizeLegacyUploadPaths($pdo);
 }
@@ -563,6 +564,7 @@ function initializeDatabaseMySql(PDO $pdo): void
     ensureProfileMediaColumns($pdo);
     ensureAuthEnhancementTables($pdo);
     ensureBudgetFlowSchema($pdo);
+    ensurePerformanceIndexes($pdo);
     ensureDefaultAdmin($pdo);
     normalizeLegacyUploadPaths($pdo);
 }
@@ -975,6 +977,47 @@ function createIndexIfNotExists(PDO $pdo, string $table, string $indexName, stri
     }
 
     $pdo->exec('CREATE INDEX ' . $indexName . ' ON ' . $table . ' (' . $columns . ')');
+}
+
+function createIndexIfColumnsExist(PDO $pdo, string $table, string $indexName, array $columns): void
+{
+    foreach ($columns as $column) {
+        if (!tableColumnExists($pdo, $table, (string) $column)) {
+            return;
+        }
+    }
+
+    createIndexIfNotExists($pdo, $table, $indexName, implode(', ', $columns));
+}
+
+function ensurePerformanceIndexes(PDO $pdo): void
+{
+    createIndexIfColumnsExist($pdo, 'financial_transactions', 'idx_tx_org_date_id', ['organization_id', 'transaction_date', 'id']);
+    createIndexIfColumnsExist($pdo, 'financial_transactions', 'idx_tx_date_created', ['transaction_date', 'created_at']);
+    createIndexIfColumnsExist($pdo, 'financial_transactions', 'idx_tx_type_date', ['type', 'transaction_date']);
+
+    createIndexIfColumnsExist($pdo, 'announcements', 'idx_ann_org_exp_created', ['organization_id', 'expires_at', 'created_at']);
+    createIndexIfColumnsExist($pdo, 'announcements', 'idx_ann_pinned_created', ['is_pinned', 'pinned_at', 'created_at']);
+
+    createIndexIfColumnsExist($pdo, 'organization_members', 'idx_org_members_user_org', ['user_id', 'organization_id']);
+    createIndexIfColumnsExist($pdo, 'organization_members', 'idx_org_members_org_joined', ['organization_id', 'joined_at']);
+
+    createIndexIfColumnsExist($pdo, 'organization_join_requests', 'idx_join_user_status_updated', ['user_id', 'status', 'updated_at']);
+    createIndexIfColumnsExist($pdo, 'organization_join_requests', 'idx_join_org_status_created', ['organization_id', 'status', 'created_at']);
+
+    createIndexIfColumnsExist($pdo, 'owner_assignments', 'idx_owner_student_status_created', ['student_id', 'status', 'created_at']);
+    createIndexIfColumnsExist($pdo, 'owner_assignments', 'idx_owner_org_status', ['organization_id', 'status']);
+
+    createIndexIfColumnsExist($pdo, 'transaction_change_requests', 'idx_txcr_org_status_created', ['organization_id', 'status', 'created_at']);
+    createIndexIfColumnsExist($pdo, 'transaction_change_requests', 'idx_txcr_requested_status_updated', ['requested_by', 'status', 'updated_at']);
+    createIndexIfColumnsExist($pdo, 'transaction_change_requests', 'idx_txcr_tx_action_status', ['transaction_id', 'action_type', 'status']);
+
+    createIndexIfColumnsExist($pdo, 'audit_logs', 'idx_audit_user_created', ['user_id', 'created_at']);
+    createIndexIfColumnsExist($pdo, 'audit_logs', 'idx_audit_created_id', ['created_at', 'id']);
+    createIndexIfColumnsExist($pdo, 'audit_logs', 'idx_audit_entity', ['entity_type', 'entity_id']);
+
+    createIndexIfColumnsExist($pdo, 'security_notifications', 'idx_security_user_created', ['user_id', 'created_at']);
+    createIndexIfColumnsExist($pdo, 'security_notifications', 'idx_security_user_event_created', ['user_id', 'event_type', 'created_at']);
 }
 
 function ensureAuthEnhancementColumns(PDO $pdo): void

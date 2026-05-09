@@ -20,17 +20,12 @@ declare(strict_types=1);
 
 function getOwnedOrganizations(int $ownerId): array
 {
-    $stmt = db()->prepare('SELECT * FROM organizations WHERE owner_id = ? ORDER BY name ASC');
-    $stmt->execute([$ownerId]);
-
-    return $stmt->fetchAll() ?: [];
+    return (new Involve\Repositories\OrganizationRepository(db()))->ownedByUser($ownerId);
 }
 
 function getOwnedOrganizationById(int $ownerId, int $organizationId): ?array
 {
-    $stmt = db()->prepare('SELECT * FROM organizations WHERE owner_id = ? AND id = ? LIMIT 1');
-    $stmt->execute([$ownerId, $organizationId]);
-    $org = $stmt->fetch();
+    $org = (new Involve\Repositories\OrganizationRepository(db()))->ownedByUserAndId($ownerId, $organizationId);
 
     return $org ?: null;
 }

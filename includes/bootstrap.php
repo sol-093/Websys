@@ -233,6 +233,16 @@ try {
     error_log('[websys] Database bootstrap failed: ' . $e->getMessage());
 
     http_response_code(500);
+
+    if (defined('INVOLVE_API_REQUEST') && INVOLVE_API_REQUEST === true) {
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode([
+            'ok' => false,
+            'error' => 'Application startup error.',
+        ], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     header('Content-Type: text/html; charset=UTF-8');
 
     $debug = strtolower((string) getenv('APP_DEBUG'));

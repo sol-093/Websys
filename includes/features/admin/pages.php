@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 function handleAdminStudentsPage(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('view_admin');
     $q = trim((string) ($_GET['q'] ?? ''));
 
     if ($q !== '') {
@@ -106,7 +106,7 @@ function handleAdminStudentsPage(PDO $db): void
 
 function handleAdminRequestsPage(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('approve_transactions');
 
     $requests = $db->query("SELECT r.*, o.name AS organization_name, o.logo_path AS organization_logo_path, o.logo_crop_x AS organization_logo_crop_x, o.logo_crop_y AS organization_logo_crop_y, o.logo_zoom AS organization_logo_zoom, u.name AS requester_name, u.profile_picture_path AS requester_profile_picture_path, u.profile_picture_crop_x AS requester_profile_picture_crop_x, u.profile_picture_crop_y AS requester_profile_picture_crop_y, u.profile_picture_zoom AS requester_profile_picture_zoom
         FROM transaction_change_requests r
@@ -551,7 +551,7 @@ function sendAdminExcelReport(string $filename, string $title, array $filters, a
 
 function handleExportExpenseRequestsAction(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('approve_expense_requests');
 
     $format = (string) ($_GET['format'] ?? 'xls');
     if (!in_array($format, ['csv', 'xls'], true)) {
@@ -643,7 +643,7 @@ function handleExportExpenseRequestsAction(PDO $db): void
 
 function handleAdminExpenseRequestsPage(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('approve_expense_requests');
 
     [$statusFilter, $organizationFilter] = normalizeAdminExpenseRequestFilters();
     $filters = buildAdminExpenseRequestQueryFilters($statusFilter, $organizationFilter);
@@ -999,6 +999,9 @@ function normalizeAdminBudgetOverviewFilters(): array
 
 function fetchAdminBudgetOverviewRows(PDO $db, string $statusFilter, int $organizationFilter): array
 {
+    $cacheKey = 'admin_budget:overview:' . $statusFilter . ':' . $organizationFilter;
+
+    return cacheRemember($cacheKey, 60, static function () use ($db, $statusFilter, $organizationFilter): array {
     $sql = "SELECT b.*, o.name AS organization_name, u.name AS owner_name,
                    COALESCE((SELECT SUM(allocated_amount) FROM budget_line_items bli WHERE bli.budget_id = b.id), 0) AS allocated_total,
                    COALESCE((SELECT SUM(spent_amount) FROM budget_line_items bli WHERE bli.budget_id = b.id), 0) AS spent_total,
@@ -1033,14 +1036,18 @@ function fetchAdminBudgetOverviewRows(PDO $db, string $statusFilter, int $organi
     }
 
     $sql .= ' ORDER BY b.period_start DESC, b.id DESC';
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-    return $stmt->fetchAll() ?: [];
+    return queryProfile('admin.budget_overview', static function () use ($db, $sql, $params): array {
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll() ?: [];
+    });
+    });
 }
 
 function handleExportBudgetOverviewAction(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('view_admin');
 
     $format = (string) ($_GET['format'] ?? 'xls');
     if (!in_array($format, ['csv', 'xls'], true)) {
@@ -1167,7 +1174,7 @@ function handleExportBudgetOverviewAction(PDO $db): void
 
 function handleAdminBudgetOverviewPage(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('view_admin');
 
     [$statusFilter, $organizationFilter] = normalizeAdminBudgetOverviewFilters();
     $organizations = $db->query('SELECT id, name FROM organizations ORDER BY name ASC')->fetchAll() ?: [];
@@ -1420,7 +1427,7 @@ function handleAdminBudgetOverviewPage(PDO $db): void
 function handleAdminAuditPage(PDO $db, array $user): void
 {
     requireLogin();
-    if (($user['role'] ?? '') !== 'admin') {
+    if (!can('view_audit_logs', $user)) {
         setFlash('error', 'Admin access required.');
         redirect('?page=dashboard');
     }
@@ -2104,7 +2111,7 @@ function handleMyOrgAdminPage(PDO $db): void
 
 function handleMyOrgUserOverviewPage(PDO $db, array $user): void
 {
-    requireRole(['owner', 'student']);
+    requirePermission('join_organizations');
 
     $orgs = $db->query('SELECT o.*, u.name AS owner_name FROM organizations o LEFT JOIN users u ON u.id = o.owner_id ORDER BY o.name ASC')->fetchAll();
     $membershipStmt = $db->prepare('SELECT organization_id FROM organization_members WHERE user_id = ?');
@@ -2471,7 +2478,7 @@ function handleMyOrgUserOverviewPage(PDO $db, array $user): void
 
 function handleAdminOrgsPage(PDO $db): void
 {
-    requireRole(['admin']);
+    requirePermission('manage_organizations');
     $instituteOptions = getInstituteOptions();
     $programInstituteMap = getProgramInstituteMap();
     $programOptions = array_keys($programInstituteMap);

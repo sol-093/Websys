@@ -99,6 +99,14 @@ return [
         'sqlite_path' => (string) $env('DB_SQLITE_PATH', dirname(__DIR__, 2) . '/storage/database.sqlite'),
     ],
     'app_name' => (string) $env('APP_NAME', 'INVOLVE'),
+    'cache' => [
+        'enabled' => $envBool('CACHE_ENABLED', true),
+        'path' => (string) $env('CACHE_PATH', dirname(__DIR__, 2) . '/storage/cache'),
+    ],
+    'performance' => [
+        'query_profiler_enabled' => $envBool('QUERY_PROFILER_ENABLED', false),
+        'slow_query_ms' => (int) $env('SLOW_QUERY_MS', 150),
+    ],
     'upload_dir' => dirname(__DIR__, 2) . '/uploads',
     'google_oauth' => [
         'client_id' => (string) $env('GOOGLE_CLIENT_ID', ''),

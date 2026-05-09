@@ -53,6 +53,30 @@ csrfMiddleware();
 
 if (isPost()) {
     $action = $_POST['action'] ?? '';
+    $cacheInvalidatingActions = [
+        'create_org',
+        'update_org_admin',
+        'delete_org',
+        'assign_owner',
+        'respond_owner_assignment',
+        'join_org',
+        'respond_join_request',
+        'remove_org_member',
+        'update_my_org',
+        'add_announcement',
+        'delete_announcement',
+        'pin_announcement_admin',
+        'unpin_announcement_admin',
+        'add_transaction',
+        'update_transaction',
+        'delete_transaction',
+        'process_tx_change_request',
+        'create_budget',
+        'add_budget_line_item',
+        'update_budget_status',
+        'submit_expense_request',
+        'process_expense_request',
+    ];
 
     if ($action === 'register') {
         handleRegisterAction($db);
@@ -74,9 +98,13 @@ if (isPost()) {
         handleResetPasswordAction($db);
     }
 
-    // Authenticated POST actions are gated here; privileged handlers add requireRole() locally.
+    // Authenticated POST actions are gated here; privileged handlers add requirePermission() locally.
     requireLogin();
     $user = currentUser();
+
+    if (in_array($action, $cacheInvalidatingActions, true)) {
+        invalidatePerformanceCaches();
+    }
 
     if ($action === 'change_password') {
         if (($user['role'] ?? '') === 'admin') {
