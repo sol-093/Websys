@@ -84,9 +84,13 @@ $envBool = static function (string $key, bool $default = false) use ($env): bool
 
 $smtpUser = trim((string) $env('SMTP_USER', ''));
 $smtpFrom = trim((string) $env('SMTP_FROM', $smtpUser !== '' ? $smtpUser : 'noreply@campus.local'));
+$settingsPath = dirname(__DIR__, 2) . '/config/settings.php';
+$settings = is_file($settingsPath) ? require $settingsPath : [];
+$branding = is_array($settings['branding'] ?? null) ? $settings['branding'] : [];
 
 return [
     'timezone' => (string) $env('APP_TIMEZONE', 'Asia/Manila'),
+    'environment' => (string) $env('APP_ENV', 'production'),
     'db' => [
         // Local env override with XAMPP-friendly fallback defaults.
         'driver' => (string) $env('DB_DRIVER', 'mysql'),
@@ -98,7 +102,8 @@ return [
         'bootstrap_database' => $envBool('DB_BOOTSTRAP_DATABASE', true),
         'sqlite_path' => (string) $env('DB_SQLITE_PATH', dirname(__DIR__, 2) . '/storage/database.sqlite'),
     ],
-    'app_name' => (string) $env('APP_NAME', 'INVOLVE'),
+    'app_name' => (string) $env('APP_NAME', (string) ($branding['app_name'] ?? 'INVOLVE')),
+    'settings' => $settings,
     'cache' => [
         'enabled' => $envBool('CACHE_ENABLED', true),
         'path' => (string) $env('CACHE_PATH', dirname(__DIR__, 2) . '/storage/cache'),
@@ -118,7 +123,7 @@ return [
         'user' => $smtpUser,
         'pass' => trim((string) $env('SMTP_PASS', '')),
         'from' => $smtpFrom,
-        'from_name' => (string) $env('SMTP_FROM_NAME', (string) $env('APP_NAME', 'INVOLVE')),
+        'from_name' => (string) $env('SMTP_FROM_NAME', (string) ($branding['mail_from_name'] ?? (string) $env('APP_NAME', 'INVOLVE'))),
     ],
     'base_url' => (string) $env('BASE_URL', (string) $env('APP_URL', '')),
 ];

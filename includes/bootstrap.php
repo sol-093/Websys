@@ -40,8 +40,10 @@ function sendSecurityHeaders(): void
     header('X-Frame-Options: DENY');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
-    header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://accounts.google.com; frame-ancestors 'none'");
+    $headerConfig = require __DIR__ . '/core/config.php';
+    $security = $headerConfig['settings']['security'] ?? [];
+    header('Permissions-Policy: ' . (string) ($security['permissions_policy'] ?? 'camera=(), microphone=(), geolocation=()'));
+    header('Content-Security-Policy: ' . (string) ($security['csp'] ?? "default-src 'self'; frame-ancestors 'none'"));
 
     $https = (string) ($_SERVER['HTTPS'] ?? '');
     if ($https !== '' && strtolower($https) !== 'off') {
@@ -59,6 +61,16 @@ function handleGlobalSearchAction(PDO $db): void
         echo json_encode(['results' => []], JSON_UNESCAPED_SLASHES);
         exit;
     }
+
+    $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $rate = getConfiguredRateLimit('search');
+    $rateKey = 'search:' . (int) ($user['id'] ?? 0) . ':' . $clientIp;
+    if (rateLimitIsBlocked($rateKey, $rate['attempts'], $rate['window'])) {
+        http_response_code(429);
+        echo json_encode(['results' => [], 'error' => 'Too many searches. Please wait a moment and try again.'], JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+    rateLimitIncrement($rateKey, $rate['window']);
 
     $query = trim((string) ($_GET['q'] ?? ''));
     if (mb_strlen($query) < 2) {

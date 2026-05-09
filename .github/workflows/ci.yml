@@ -36,5 +36,8 @@ jobs:
           DB_BOOTSTRAP_DATABASE: '1'
           CACHE_PATH: storage/cache/testing
 
+      - name: Static Analysis
+        run: composer analyse
+
       - name: Security Audit
         run: composer audit

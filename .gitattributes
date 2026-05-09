@@ -1,0 +1,12 @@
+.env export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.github export-ignore
+.vscode export-ignore
+.venv export-ignore
+docs/reference export-ignore
+scripts/seed export-ignore
+scripts/tests export-ignore
+tests export-ignore
+phpunit.xml export-ignore
+phpstan.neon export-ignore

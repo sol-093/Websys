@@ -51,6 +51,55 @@ final class OrganizationRepository
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    public function activeAnnouncementsForOrganization(int $organizationId, string $activeCutoff): array
+    {
+        return $this->profile('organizations.active_announcements_for_organization', function () use ($organizationId, $activeCutoff): array {
+            $stmt = $this->db->prepare('SELECT * FROM announcements WHERE organization_id = ? AND (expires_at IS NULL OR expires_at >= ?) ORDER BY id DESC');
+            $stmt->execute([$organizationId, $activeCutoff]);
+
+            return $stmt->fetchAll() ?: [];
+        });
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function pendingJoinRequestsForOrganization(int $organizationId): array
+    {
+        return $this->profile('organizations.pending_join_requests_for_organization', function () use ($organizationId): array {
+            $stmt = $this->db->prepare("SELECT r.id, r.created_at, u.name, u.email, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom
+                FROM organization_join_requests r
+                JOIN users u ON u.id = r.user_id
+                WHERE r.organization_id = ? AND r.status = 'pending'
+                ORDER BY r.created_at DESC");
+            $stmt->execute([$organizationId]);
+
+            return $stmt->fetchAll() ?: [];
+        });
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function membersForOrganization(int $organizationId): array
+    {
+        return $this->profile('organizations.members_for_organization', function () use ($organizationId): array {
+            $stmt = $this->db->prepare('SELECT u.id, u.name, u.email, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom, om.joined_at,
+                CASE WHEN o.owner_id = u.id THEN 1 ELSE 0 END AS is_owner
+                FROM organization_members om
+                JOIN users u ON u.id = om.user_id
+                JOIN organizations o ON o.id = om.organization_id
+                WHERE om.organization_id = ?
+                ORDER BY CASE WHEN o.owner_id = u.id THEN 0 ELSE 1 END, u.name ASC');
+            $stmt->execute([$organizationId]);
+
+            return $stmt->fetchAll() ?: [];
+        });
+    }
+
+    /**
      * @return list<int>
      */
     public function membershipIdsForUser(int $userId): array

@@ -30,8 +30,9 @@ function handleSecureUpload(array $file, string $uploadDir): string|false
         return false;
     }
 
+    $uploadSettings = appConfig()['settings']['uploads'] ?? [];
     $size = (int) ($file['size'] ?? 0);
-    $maxBytes = 8 * 1024 * 1024;
+    $maxBytes = (int) ($uploadSettings['max_generic_bytes'] ?? (8 * 1024 * 1024));
     if ($size <= 0 || $size > $maxBytes) {
         setFlash('error', 'File size exceeds the 8MB upload limit.');
         return false;
@@ -88,7 +89,8 @@ function handleProfileImageUpload(array $file, string $uploadDir, string $filena
     }
 
     $size = (int) ($file['size'] ?? 0);
-    $maxBytes = 3 * 1024 * 1024;
+    $uploadSettings = appConfig()['settings']['uploads'] ?? [];
+    $maxBytes = (int) ($uploadSettings['max_image_bytes'] ?? (3 * 1024 * 1024));
     if ($size <= 0 || $size > $maxBytes) {
         setFlash('error', 'Image size must be between 1 byte and 3MB.');
         return false;
@@ -105,6 +107,19 @@ function handleProfileImageUpload(array $file, string $uploadDir, string $filena
 
     if (!isset($allowedMimeToExtension[$mimeType])) {
         setFlash('error', 'Only JPG, PNG, GIF, or WEBP images are allowed.');
+        return false;
+    }
+
+    $imageSize = @getimagesize((string) $file['tmp_name']);
+    if (!is_array($imageSize)) {
+        setFlash('error', 'Uploaded image could not be inspected.');
+        return false;
+    }
+
+    $maxWidth = (int) ($uploadSettings['image_max_width'] ?? 4096);
+    $maxHeight = (int) ($uploadSettings['image_max_height'] ?? 4096);
+    if ((int) ($imageSize[0] ?? 0) <= 0 || (int) ($imageSize[1] ?? 0) <= 0 || (int) $imageSize[0] > $maxWidth || (int) $imageSize[1] > $maxHeight) {
+        setFlash('error', 'Image dimensions are too large. Please upload an image up to ' . $maxWidth . 'x' . $maxHeight . ' pixels.');
         return false;
     }
 

@@ -347,6 +347,29 @@ function rateLimitClear(string $key): void
     }
 }
 
+function getConfiguredRateLimit(string $name): array
+{
+    $config = appConfig();
+    $limits = $config['settings']['security']['rate_limits'] ?? [];
+    $limit = is_array($limits[$name] ?? null) ? $limits[$name] : [];
+
+    return [
+        'attempts' => max(1, (int) ($limit['attempts'] ?? 10)),
+        'window' => max(1, (int) ($limit['window'] ?? 60)),
+    ];
+}
+
+function rateLimitOrRedirect(string $key, string $limitName, string $message, string $redirectUrl): void
+{
+    $limit = getConfiguredRateLimit($limitName);
+    if (rateLimitIsBlocked($key, $limit['attempts'], $limit['window'])) {
+        setFlash('error', $message);
+        redirect($redirectUrl);
+    }
+
+    rateLimitIncrement($key, $limit['window']);
+}
+
 function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
 {
     if (empty($file['name']) || empty($file['tmp_name']) || !is_uploaded_file((string) $file['tmp_name'])) {
@@ -358,7 +381,8 @@ function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
         return ['path' => null, 'error' => 'Receipt upload failed. Please try again.'];
     }
 
-    $maxBytes = 5 * 1024 * 1024;
+    $uploadSettings = appConfig()['settings']['uploads'] ?? [];
+    $maxBytes = (int) ($uploadSettings['max_receipt_bytes'] ?? (5 * 1024 * 1024));
     $size = (int) ($file['size'] ?? 0);
     if ($size <= 0 || $size > $maxBytes) {
         return ['path' => null, 'error' => 'Receipt must be between 1 byte and 5MB.'];
@@ -372,12 +396,14 @@ function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $mimeType = (string) $finfo->file((string) $file['tmp_name']);
-    $allowedMimeMap = [
-        'jpg' => ['image/jpeg'],
-        'jpeg' => ['image/jpeg'],
-        'png' => ['image/png'],
-        'pdf' => ['application/pdf'],
-    ];
+    $allowedMimeMap = is_array($uploadSettings['allowed_receipt_mimes'] ?? null)
+        ? $uploadSettings['allowed_receipt_mimes']
+        : [
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'png' => ['image/png'],
+            'pdf' => ['application/pdf'],
+        ];
 
     if (!in_array($mimeType, $allowedMimeMap[$extension], true)) {
         return ['path' => null, 'error' => 'Receipt content does not match the selected file type.'];
@@ -436,5 +462,39 @@ function auditLog(?int $userId, string $action, string $entityType = 'system', ?
             substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? 'unknown'), 0, 500),
         ]);
     } catch (Throwable $e) {
+    }
+}
+
+function logEvent(string $type, string $message, array $metadata = [], ?int $userId = null, string $entityType = 'system', ?int $entityId = null): void
+{
+    $details = $message;
+    if ($metadata !== []) {
+        $details .= ' | ' . json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    $resolvedUserId = $userId ?? (int) ($_SESSION['user_id'] ?? 0);
+    auditLog($resolvedUserId > 0 ? $resolvedUserId : null, $type, $entityType, $entityId, $details);
+}
+
+function withTransaction(PDO $db, callable $callback): mixed
+{
+    $startedHere = !$db->inTransaction();
+    if ($startedHere) {
+        $db->beginTransaction();
+    }
+
+    try {
+        $result = $callback();
+        if ($startedHere) {
+            $db->commit();
+        }
+
+        return $result;
+    } catch (Throwable $e) {
+        if ($startedHere && $db->inTransaction()) {
+            $db->rollBack();
+        }
+
+        throw $e;
     }
 }

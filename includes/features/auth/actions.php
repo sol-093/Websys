@@ -142,28 +142,29 @@ function handleRegisterAction(PDO $db): void
     $privacyConsent = (string) ($_POST['privacy_consent'] ?? '') === '1';
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $registerRateKey = 'register:' . strtolower($email) . ':' . $clientIp;
+    $registerRate = getConfiguredRateLimit('register');
     $programOptions = getProgramOptions();
     $institute = getInstituteForProgram($program);
 
-    if (rateLimitIsBlocked($registerRateKey, 5, 300)) {
+    if (rateLimitIsBlocked($registerRateKey, $registerRate['attempts'], $registerRate['window'])) {
         setFlash('error', 'Too many registration attempts. Please wait a few minutes and try again.');
         redirect('?page=register');
     }
 
     if ($name === '' || $email === '' || $password === '' || $program === '' || $section === '') {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', 'Please fill all registration fields.');
         redirect('?page=register');
     }
 
     if (!in_array($program, $programOptions, true) || $institute === null) {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', 'Please select a valid program.');
         redirect('?page=register');
     }
 
     if (!preg_match('/^[A-Za-z0-9\- ]{1,40}$/', $section)) {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', 'Please enter a valid year and section.');
         redirect('?page=register');
     }
@@ -173,20 +174,20 @@ function handleRegisterAction(PDO $db): void
     }
 
     if (!$privacyConsent) {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', 'You must agree to the Data Privacy Consent before registering.');
         redirect('?page=register');
     }
 
     $passwordStrengthError = validatePasswordStrength($password);
     if ($passwordStrengthError !== null) {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', $passwordStrengthError);
         redirect('?page=register');
     }
 
     if ($password !== $confirmPassword) {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', 'Passwords do not match.');
         redirect('?page=register');
     }
@@ -228,7 +229,7 @@ function handleRegisterAction(PDO $db): void
         );
         redirect('?page=login');
     } catch (Throwable $e) {
-        rateLimitIncrement($registerRateKey, 300);
+        rateLimitIncrement($registerRateKey, $registerRate['window']);
         setFlash('error', 'Email already exists.');
         redirect('?page=register');
     }
@@ -241,7 +242,8 @@ function handleLoginAction(PDO $db): void
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $loginRateKey = 'login:' . strtolower($email) . ':' . $clientIp;
 
-    if (rateLimitIsBlocked($loginRateKey, 5, 300)) {
+    $loginRate = getConfiguredRateLimit('login');
+    if (rateLimitIsBlocked($loginRateKey, $loginRate['attempts'], $loginRate['window'])) {
         setFlash('error', 'Too many login attempts. Please wait a few minutes and try again.');
         redirect('?page=login');
     }
@@ -250,7 +252,7 @@ function handleLoginAction(PDO $db): void
     $result = $auth->authenticate($email, $password);
 
     if (!$result['ok'] && ($result['error'] ?? '') === 'invalid_credentials') {
-        rateLimitIncrement($loginRateKey, 300);
+        rateLimitIncrement($loginRateKey, $loginRate['window']);
         setFlash('error', 'Invalid credentials.');
         redirect('?page=login');
     }
@@ -273,7 +275,7 @@ function handleLoginAction(PDO $db): void
 
     $candidate = $result['user'] ?? null;
     if (!is_array($candidate)) {
-        rateLimitIncrement($loginRateKey, 300);
+        rateLimitIncrement($loginRateKey, $loginRate['window']);
         setFlash('error', 'Invalid credentials.');
         redirect('?page=login');
     }
@@ -366,7 +368,8 @@ function handleResendVerificationAction(PDO $db): void
     $clientIp = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
     $resendRateKey = 'resend_verification:' . strtolower($email) . ':' . $clientIp;
 
-    if (rateLimitIsBlocked($resendRateKey, 3, 3600)) {
+    $resendRate = getConfiguredRateLimit('verification_resend');
+    if (rateLimitIsBlocked($resendRateKey, $resendRate['attempts'], $resendRate['window'])) {
         setFlash('error', 'Too many verification emails sent. Please try again later.');
         redirect('?page=login');
     }
@@ -390,7 +393,7 @@ function handleResendVerificationAction(PDO $db): void
             $updateStmt->execute([$activationTokenHash, $activationExpires, (int) $user['id']]);
 
             $emailSent = sendActivationEmail($user['email'], $user['name'], $activationToken);
-            rateLimitIncrement($resendRateKey, 3600);
+            rateLimitIncrement($resendRateKey, $resendRate['window']);
 
             auditLog((int) $user['id'], 'auth.resend_verification', 'user', (int) $user['id'], $emailSent ? 'Verification email resent' : 'Verification email resend failed');
             if (!$emailSent) {
@@ -423,7 +426,8 @@ function handleForgotPasswordAction(PDO $db): void
     }
     
     // Rate limit: 3 requests per hour
-    if (rateLimitIsBlocked($forgotRateKey, 3, 3600)) {
+    $forgotRate = getConfiguredRateLimit('password_reset');
+    if (rateLimitIsBlocked($forgotRateKey, $forgotRate['attempts'], $forgotRate['window'])) {
         setFlash('error', 'Too many password reset requests. Please try again later.');
         redirect('?page=forgot_password');
     }
@@ -441,7 +445,7 @@ function handleForgotPasswordAction(PDO $db): void
     if ($user && in_array($user['account_status'] ?? 'active', ['active', 'pending'], true)) {
         $lastPasswordResetAt = (string) ($user['password_reset_at'] ?? '');
         if ($lastPasswordResetAt !== '' && strtotime($lastPasswordResetAt . ' +7 days') > time()) {
-            rateLimitIncrement($forgotRateKey, 3600);
+            rateLimitIncrement($forgotRateKey, $forgotRate['window']);
             auditLog((int) $user['id'], 'auth.forgot_password_cooldown', 'user', (int) $user['id'], 'Password reset request blocked by 7-day cooldown');
             setFlash('success', 'If your account exists and is eligible, a password reset link has been sent to your email.');
             redirect('?page=login');
@@ -458,7 +462,7 @@ function handleForgotPasswordAction(PDO $db): void
         
         // Send password reset email
         $emailSent = sendPasswordResetEmail($user['email'], $user['name'], $resetToken);
-        rateLimitIncrement($forgotRateKey, 3600);
+        rateLimitIncrement($forgotRateKey, $forgotRate['window']);
         
         auditLog((int) $user['id'], 'auth.forgot_password', 'user', (int) $user['id'], $emailSent ? 'Password reset requested' : 'Password reset requested, email failed');
         if (!$emailSent) {

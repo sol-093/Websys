@@ -2,10 +2,10 @@
 
 ## Summary
 - **Version:** 1.2.1
-- **Updated:** May 5, 2026
+- **Updated:** May 9, 2026
 - **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
-- **Phase 1 transparency features:** user notification center and expanded admin audit filtering
+- **Current modernization:** PSR-4 app classes, granular permissions, JSON API foundation, file cache, PHPUnit, and CI
 
 ## Version History
 - **1.2.1** (May 1, 2026): INVOLVE brand asset integration, About page brand refresh, responsive navbar logo updates, and PDF export template background support
@@ -53,17 +53,25 @@ php scripts/seed/seed_extra_dummy_reports.php
 4. Run the repository regression script:
 
 ```bash
-php scripts/tests/test_organization_helpers.php
+composer test
+```
+
+5. Run static analysis for PSR-4 classes:
+
+```bash
+composer analyse
 ```
 
 ### Configuration
 - Main runtime config: `includes/core/config.php`
+- Central app settings: `config/settings.php`
+- Safe environment template: `.env.example`
 - Database bootstrap and compatibility: `includes/core/db.php`
 - Upload destination: `uploads/`
 - SMTP/OAuth values are read from environment variables and config.
 - Keep `APP_DEBUG=false` for normal local demos; only enable `APP_DEBUG=true` when you intentionally need detailed startup/debug output.
 - Set mail credentials in `.env` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, and `SMTP_FROM_NAME` when you want verification or password reset emails to send.
-- Navbar logo image paths are set inline in `includes/core/layout.php` and currently map light mode to `uploads/assets/involvelogo dark.png` and dark mode to `uploads/assets/involvelogo light.png`.
+- Navbar logo image paths are configured in `config/settings.php`.
 - INVOLVE brand image assets live in `uploads/assets/`; active navbar and About page logo styles are defined in `includes/core/layout.php`.
 - Account emails currently use text-based `involve` header branding for broader email-client compatibility.
 - Transaction PDF exports use `uploads/assets/pdftemplate.png` as the page background template.
@@ -76,6 +84,8 @@ php scripts/tests/test_organization_helpers.php
 - `includes/shared/`: shared UI helpers split out of the layout shell
 - `includes/core/`: auth/session guards, config, DB bootstrap, layout shell, generic helpers
 - `includes/lib/`: reusable domain and utility helpers
+- `src/`: PSR-4 classes for repositories, services, auth, cache, API, and support utilities
+- `api/`: JSON endpoints that use the current session and CSRF model
 - `?page=notifications`: persistent request/security update feed and personal audit timeline for logged-in users
 - `?page=admin_audit`: admin-only audit review with search, family filters, and source details
 
@@ -94,6 +104,8 @@ websys/
 |   |-- lib/                   # Reusable domain helpers
 |   |-- routes/                # Page and action dispatch
 |   `-- shared/                # Shared UI helpers
+|-- src/                       # Composer-autoloaded Involve classes
+|-- api/                       # JSON endpoints
 |-- scripts/                   # Maintenance, seed, and test scripts
 |-- uploads/                   # Writable upload storage and bundled media
 |   |-- assets/                 # Bundled logos, page images, and PDF template
@@ -113,7 +125,8 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - `includes/core/layout.php`: shared shell and layout markup
 - `includes/shared/ui.php`: shared breadcrumbs, empty states, and skeleton UI helpers
 - `includes/core/db.php`: database bootstrap and compatibility initialization
-- `includes/core/mailer.php`: PHPMailer transport configuration and send helpers
+- `includes/lib/email.php`: Composer PHPMailer-backed email templates and send helpers
+- `config/settings.php`: central branding, upload, pagination, PDF, feature, and security settings
 - `includes/features/transactions/actions.php`: content mutations and transaction PDF export generation
 - `includes/features/dashboard/page.php`: dashboard page controller
 - `includes/features/dashboard/markup.php`: dashboard markup partials
@@ -127,8 +140,11 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - [Function Analysis](docs/reference/FUNCTION_ANALYSIS.md)
 - [Changelog (Baseline Comparison)](docs/reference/CHANGELOG_2026-04-06.md)
 - [Source Folder Guide](includes/README.md)
+- [Architecture Baseline](docs/architecture/ARCHITECTURE_BASELINE.md)
+- [Production Deployment Checklist](docs/reference/PRODUCTION_DEPLOYMENT_CHECKLIST.md)
 
 ## Maintenance
 - Keep behavior changes and documentation updates in the same change set.
 - Prefer extending the layered structure instead of adding new top-level patterns.
 - Use prepared statements, CSRF checks, and role guards for all mutating/authenticated flows.
+- Use `git archive` or the deployment checklist for production packages so local `.env`, IDE files, test scripts, and seed scripts are excluded.

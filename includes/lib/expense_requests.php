@@ -21,68 +21,12 @@ declare(strict_types=1);
 
 function getExpenseRequests(PDO $db, array $filters = []): array
 {
-    $sql = "SELECT er.*, o.name AS organization_name, b.title AS budget_title, bli.category_name AS line_item_name,
-                   requester.name AS requested_by_name, reviewer.name AS reviewed_by_name
-            FROM expense_requests er
-            JOIN organizations o ON o.id = er.organization_id
-            JOIN budgets b ON b.id = er.budget_id
-            JOIN budget_line_items bli ON bli.id = er.budget_line_item_id
-            LEFT JOIN users requester ON requester.id = er.requested_by
-            LEFT JOIN users reviewer ON reviewer.id = er.reviewed_by
-            WHERE 1 = 1";
-    $params = [];
-
-    if (!empty($filters['organization_id'])) {
-        $sql .= ' AND er.organization_id = ?';
-        $params[] = (int) $filters['organization_id'];
-    }
-
-    if (!empty($filters['budget_id'])) {
-        $sql .= ' AND er.budget_id = ?';
-        $params[] = (int) $filters['budget_id'];
-    }
-
-    if (!empty($filters['requested_by'])) {
-        $sql .= ' AND er.requested_by = ?';
-        $params[] = (int) $filters['requested_by'];
-    }
-
-    if (!empty($filters['status']) && in_array((string) $filters['status'], ['pending', 'approved', 'rejected'], true)) {
-        $sql .= ' AND er.status = ?';
-        $params[] = (string) $filters['status'];
-    }
-
-    $limit = isset($filters['limit']) ? max(1, min(200, (int) $filters['limit'])) : 100;
-    $sql .= ' ORDER BY er.created_at DESC, er.id DESC LIMIT ' . $limit;
-
-    $stmt = $db->prepare($sql);
-    $stmt->execute($params);
-
-    return $stmt->fetchAll() ?: [];
+    return (new Involve\Repositories\ExpenseRequestRepository($db))->all($filters);
 }
 
 function getExpenseRequestById(PDO $db, int $requestId): ?array
 {
-    if ($requestId <= 0) {
-        return null;
-    }
-
-    $stmt = $db->prepare(
-        "SELECT er.*, o.name AS organization_name, b.title AS budget_title, bli.category_name AS line_item_name,
-                requester.name AS requested_by_name, reviewer.name AS reviewed_by_name
-         FROM expense_requests er
-         JOIN organizations o ON o.id = er.organization_id
-         JOIN budgets b ON b.id = er.budget_id
-         JOIN budget_line_items bli ON bli.id = er.budget_line_item_id
-         LEFT JOIN users requester ON requester.id = er.requested_by
-         LEFT JOIN users reviewer ON reviewer.id = er.reviewed_by
-         WHERE er.id = ?
-         LIMIT 1"
-    );
-    $stmt->execute([$requestId]);
-    $request = $stmt->fetch();
-
-    return $request ?: null;
+    return (new Involve\Repositories\ExpenseRequestRepository($db))->find($requestId);
 }
 
 function validateExpenseRequestAgainstAllocation(PDO $db, int $organizationId, int $budgetLineItemId, float $amount, ?int $excludeRequestId = null, bool $enforceBudgetWindow = true): array
@@ -148,22 +92,7 @@ function createExpenseRequest(PDO $db, int $organizationId, int $budgetLineItemI
     }
 
     $budget = $validation['budget'];
-    $stmt = $db->prepare(
-        'INSERT INTO expense_requests (organization_id, budget_id, budget_line_item_id, requested_by, amount, description, receipt_path, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    );
-    $stmt->execute([
-        $organizationId,
-        (int) $budget['id'],
-        $budgetLineItemId,
-        $requestedBy,
-        round($amount, 2),
-        $description,
-        $receiptPath !== '' ? $receiptPath : null,
-        'pending',
-    ]);
-
-    $requestId = (int) $db->lastInsertId();
+    $requestId = (new Involve\Repositories\ExpenseRequestRepository($db))->create($organizationId, (int) $budget['id'], $budgetLineItemId, $requestedBy, $amount, $description, $receiptPath);
     auditLog($requestedBy, 'budget.expense_request_submit', 'expense_request', $requestId, 'Submitted expense request for approval');
     queueBudgetExpenseRequestSubmittedNotifications($db, $requestId);
 
@@ -181,52 +110,34 @@ function approveExpenseRequest(PDO $db, int $requestId, int $reviewedBy, string 
         throw new InvalidArgumentException('An approval note is required.');
     }
 
-    $db->beginTransaction();
     try {
-        $request = lockExpenseRequestForDecision($db, $requestId);
-        if (!$request) {
-            throw new RuntimeException('Expense request not found.');
-        }
+        $repository = new Involve\Repositories\ExpenseRequestRepository($db);
+        $transactionId = withTransaction($db, static function () use ($db, $repository, $requestId, $adminNote, $reviewedBy): int {
+            $request = $repository->lockForDecision($requestId);
+            if (!$request) {
+                throw new RuntimeException('Expense request not found.');
+            }
 
-        if ((string) ($request['status'] ?? '') !== 'pending') {
-            throw new RuntimeException('Only pending expense requests can be approved.');
-        }
+            if ((string) ($request['status'] ?? '') !== 'pending') {
+                throw new RuntimeException('Only pending expense requests can be approved.');
+            }
 
-        $validation = validateExpenseRequestAgainstAllocation($db, (int) $request['organization_id'], (int) $request['budget_line_item_id'], (float) $request['amount'], $requestId, false);
-        if (!$validation['valid']) {
-            throw new RuntimeException((string) ($validation['error'] ?? 'Expense request is no longer valid.'));
-        }
+            $validation = validateExpenseRequestAgainstAllocation($db, (int) $request['organization_id'], (int) $request['budget_line_item_id'], (float) $request['amount'], $requestId, false);
+            if (!$validation['valid']) {
+                throw new RuntimeException((string) ($validation['error'] ?? 'Expense request is no longer valid.'));
+            }
 
-        $transactionStmt = $db->prepare(
-            'INSERT INTO financial_transactions (organization_id, type, amount, description, transaction_date, receipt_path, expense_request_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
-        );
-        $transactionStmt->execute([
-            (int) $request['organization_id'],
-            'expense',
-            round((float) $request['amount'], 2),
-            (string) $request['description'],
-            date('Y-m-d'),
-            $request['receipt_path'] !== null && $request['receipt_path'] !== '' ? (string) $request['receipt_path'] : null,
-            $requestId,
-        ]);
-        $transactionId = (int) $db->lastInsertId();
+            $transactionId = $repository->createExpenseTransactionForRequest($request, $requestId);
+            $repository->markApproved($requestId, $reviewedBy, $transactionId, $adminNote);
+            $repository->incrementLineSpent((int) $request['budget_line_item_id'], (float) $request['amount']);
 
-        $requestStmt = $db->prepare("UPDATE expense_requests SET status = 'approved', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, transaction_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $requestStmt->execute([$adminNote, $reviewedBy, $transactionId, $requestId]);
-
-        $lineStmt = $db->prepare('UPDATE budget_line_items SET spent_amount = spent_amount + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
-        $lineStmt->execute([round((float) $request['amount'], 2), (int) $request['budget_line_item_id']]);
-
-        $db->commit();
+            return $transactionId;
+        });
         auditLog($reviewedBy, 'budget.expense_request_approve', 'expense_request', $requestId, 'Approved expense request and created transaction #' . $transactionId . ': ' . $adminNote);
         queueBudgetExpenseRequestDecisionNotification($db, $requestId, 'budget_expense_request_approved', $adminNote);
 
         return $transactionId;
     } catch (Throwable $e) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
         throw $e;
     }
 }
@@ -238,44 +149,30 @@ function rejectExpenseRequest(PDO $db, int $requestId, int $reviewedBy, string $
         throw new InvalidArgumentException('A rejection note is required.');
     }
 
-    $db->beginTransaction();
     try {
-        $request = lockExpenseRequestForDecision($db, $requestId);
-        if (!$request) {
-            throw new RuntimeException('Expense request not found.');
-        }
+        $repository = new Involve\Repositories\ExpenseRequestRepository($db);
+        withTransaction($db, static function () use ($repository, $requestId, $adminNote, $reviewedBy): void {
+            $request = $repository->lockForDecision($requestId);
+            if (!$request) {
+                throw new RuntimeException('Expense request not found.');
+            }
 
-        if ((string) ($request['status'] ?? '') !== 'pending') {
-            throw new RuntimeException('Only pending expense requests can be rejected.');
-        }
+            if ((string) ($request['status'] ?? '') !== 'pending') {
+                throw new RuntimeException('Only pending expense requests can be rejected.');
+            }
 
-        $stmt = $db->prepare("UPDATE expense_requests SET status = 'rejected', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
-        $stmt->execute([$adminNote, $reviewedBy, $requestId]);
-
-        $db->commit();
+            $repository->markRejected($requestId, $reviewedBy, $adminNote);
+        });
         auditLog($reviewedBy, 'budget.expense_request_reject', 'expense_request', $requestId, 'Rejected expense request: ' . $adminNote);
         queueBudgetExpenseRequestDecisionNotification($db, $requestId, 'budget_expense_request_rejected', $adminNote);
     } catch (Throwable $e) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
         throw $e;
     }
 }
 
 function lockExpenseRequestForDecision(PDO $db, int $requestId): ?array
 {
-    $driver = (string) $db->getAttribute(PDO::ATTR_DRIVER_NAME);
-    $sql = 'SELECT * FROM expense_requests WHERE id = ? LIMIT 1';
-    if ($driver === 'mysql') {
-        $sql .= ' FOR UPDATE';
-    }
-
-    $stmt = $db->prepare($sql);
-    $stmt->execute([$requestId]);
-    $request = $stmt->fetch();
-
-    return $request ?: null;
+    return (new Involve\Repositories\ExpenseRequestRepository($db))->lockForDecision($requestId);
 }
 
 function renderExpenseRequestTimeline(array $request): void

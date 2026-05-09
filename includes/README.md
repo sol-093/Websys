@@ -27,7 +27,7 @@ This document explains how source code is organized and where new functionality 
 - Runtime startup is coordinated by `includes/bootstrap.php`.
 - Route rendering and action dispatch are coordinated by `includes/routes/pages.php` and `includes/routes/actions.php`.
 - Shared shell rendering is handled through `includes/core/layout.php`.
-- Email verification and forgot-password delivery use `includes/core/mailer.php` and `includes/lib/email.php`.
+- Email verification and forgot-password delivery use Composer PHPMailer through `includes/lib/email.php`.
 - Navbar logo source paths and footer branding are maintained in `includes/core/layout.php`.
 - Global layout styles and behavior are extracted to `assets/css/app.css`, `assets/js/theme-init.js`, and `assets/js/app.js`.
 

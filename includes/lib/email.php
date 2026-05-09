@@ -25,25 +25,8 @@ function ensurePhpMailerAvailable(): bool
         return true;
     }
 
-    $phpMailerDir = __DIR__ . '/PHPMailer-master/src';
-    $requiredFiles = [
-        $phpMailerDir . '/Exception.php',
-        $phpMailerDir . '/PHPMailer.php',
-        $phpMailerDir . '/SMTP.php',
-    ];
-
-    foreach ($requiredFiles as $file) {
-        if (!is_file($file)) {
-            error_log('PHPMailer fallback file missing: ' . $file);
-            return false;
-        }
-    }
-
-    foreach ($requiredFiles as $file) {
-        require_once $file;
-    }
-
-    return class_exists($mailerClass, false);
+    error_log('PHPMailer Composer dependency is unavailable. Run `composer install`.');
+    return false;
 }
 
 function emailHtml(string $value): string

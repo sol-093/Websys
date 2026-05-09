@@ -33,7 +33,7 @@ function handleCreateBudgetAction(PDO $db, array $user): void
     $totalAmount = (float) ($_POST['total_amount'] ?? 0);
 
     try {
-        $budgetId = createBudget($db, (int) $org['id'], (int) $user['id'], $title, $periodStart, $periodEnd, $totalAmount, 'draft');
+        $budgetId = withTransaction($db, static fn(): int => createBudget($db, (int) $org['id'], (int) $user['id'], $title, $periodStart, $periodEnd, $totalAmount, 'draft'));
         auditLog((int) $user['id'], 'budget.create', 'budget', $budgetId, 'Created draft budget: ' . $title);
         setFlash('success', 'Budget draft created.');
         redirect('?page=my_org_budget&org_id=' . (int) $org['id'] . '&budget_id=' . $budgetId);
@@ -60,7 +60,7 @@ function handleAddBudgetLineItemAction(PDO $db, array $user): void
     $allocatedAmount = (float) ($_POST['allocated_amount'] ?? 0);
 
     try {
-        $lineId = createBudgetLineItem($db, $budgetId, $categoryName, $description, $allocatedAmount);
+        $lineId = withTransaction($db, static fn(): int => createBudgetLineItem($db, $budgetId, $categoryName, $description, $allocatedAmount));
         auditLog((int) $user['id'], 'budget.line_create', 'budget_line_item', $lineId, 'Added budget line item: ' . $categoryName);
         setFlash('success', 'Budget line item added.');
     } catch (Throwable $e) {
@@ -84,7 +84,9 @@ function handleUpdateBudgetStatusAction(PDO $db, array $user): void
     }
 
     try {
-        updateBudgetStatus($db, $budgetId, $status);
+        withTransaction($db, static function () use ($db, $budgetId, $status): void {
+            updateBudgetStatus($db, $budgetId, $status);
+        });
         auditLog((int) $user['id'], 'budget.status_update', 'budget', $budgetId, 'Budget status changed to ' . $status);
         setFlash('success', 'Budget status updated.');
     } catch (Throwable $e) {
@@ -232,7 +234,7 @@ function handleSubmitExpenseRequestAction(PDO $db, array $user, array $config): 
     }
 
     try {
-        createExpenseRequest($db, (int) $org['id'], $lineItemId, (int) $user['id'], $amount, $description, $receiptPath);
+        withTransaction($db, static fn(): int => createExpenseRequest($db, (int) $org['id'], $lineItemId, (int) $user['id'], $amount, $description, $receiptPath));
         setFlash('success', 'Expense request submitted for admin approval.');
     } catch (Throwable $e) {
         if ($receiptPath !== null) {

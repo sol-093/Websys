@@ -41,10 +41,11 @@ function renderHeader(string $title = 'Dashboard'): void
     $isRegisterActive = $currentPage === 'register';
     $isAdminActive = in_array($currentPage, ['admin_orgs', 'admin_students', 'admin_requests', 'admin_expense_requests', 'admin_budget_overview', 'admin_audit'], true);
     $isAdmin = ($user['role'] ?? '') === 'admin';
+    $branding = is_array($config['settings']['branding'] ?? null) ? $config['settings']['branding'] : [];
     $navAppName = (string) $config['app_name'];
-    $faviconPath = 'uploads/assets/involvemoblight.png';
-    $logoLight = 'uploads/assets/involvelogo dark.png';
-    $logoDark = 'uploads/assets/involvelogo light.png';
+    $faviconPath = (string) ($branding['favicon'] ?? 'uploads/assets/involvemoblight.png');
+    $logoLight = (string) ($branding['logo_light'] ?? 'uploads/assets/involvelogo dark.png');
+    $logoDark = (string) ($branding['logo_dark'] ?? 'uploads/assets/involvelogo light.png');
     $showOnboarding = false;
     if ($user && ($user['role'] ?? '') === 'student' && (int) ($user['onboarding_done'] ?? 0) === 0) {
         $_SESSION['show_onboarding'] = true;

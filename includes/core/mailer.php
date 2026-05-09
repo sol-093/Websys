@@ -21,14 +21,13 @@ declare(strict_types=1);
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Include the PHPMailer library files
-require_once __DIR__ . '/../lib/PHPMailer-master/src/Exception.php';
-require_once __DIR__ . '/../lib/PHPMailer-master/src/PHPMailer.php';
-require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/../lib/PHPMailer-master/src/SMTP.php';
-
 function sendSystemEmail(string $recipientEmail, string $recipientName, string $subject, string $htmlBody): bool
 {
+    if (!class_exists(PHPMailer::class)) {
+        error_log('PHPMailer Composer dependency is unavailable. Run `composer install`.');
+        return false;
+    }
+
     $config = require __DIR__ . '/config.php';
     $smtp = $config['smtp'] ?? [];
 

@@ -25,18 +25,22 @@ if (($_GET['action'] ?? '') === 'search') {
 }
 
 if (($_GET['action'] ?? '') === 'export_transactions') {
+    rateLimitOrRedirect('export_transactions:' . (int) ($user['id'] ?? 0) . ':' . (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'export', 'Too many exports requested. Please wait a few minutes and try again.', '?page=dashboard');
     handleExportTransactionsAction($db, $user);
 }
 
 if (($_GET['action'] ?? '') === 'export_budget_overview') {
+    rateLimitOrRedirect('export_budget_overview:' . (int) ($user['id'] ?? 0) . ':' . (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'export', 'Too many exports requested. Please wait a few minutes and try again.', '?page=admin_budget_overview');
     handleExportBudgetOverviewAction($db);
 }
 
 if (($_GET['action'] ?? '') === 'export_expense_requests') {
+    rateLimitOrRedirect('export_expense_requests:' . (int) ($user['id'] ?? 0) . ':' . (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'export', 'Too many exports requested. Please wait a few minutes and try again.', '?page=admin_expense_requests');
     handleExportExpenseRequestsAction($db);
 }
 
 if (($_GET['action'] ?? '') === 'export_owner_budget') {
+    rateLimitOrRedirect('export_owner_budget:' . (int) ($user['id'] ?? 0) . ':' . (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'), 'export', 'Too many exports requested. Please wait a few minutes and try again.', '?page=my_org_budget');
     handleExportOwnerBudgetAction($db, $user);
 }
 

@@ -25,7 +25,10 @@ declare(strict_types=1);
 function buildOwnerWorkspaceData(PDO $db, array $user): array
 {
     requirePermission('manage_own_organization');
-    $ownedOrganizations = getOwnedOrganizations((int) $user['id']);
+    $organizationRepository = new Involve\Repositories\OrganizationRepository($db);
+    $transactionRepository = new Involve\Repositories\TransactionRepository($db);
+
+    $ownedOrganizations = $organizationRepository->ownedByUser((int) $user['id']);
     if (count($ownedOrganizations) === 0) {
         setFlash('error', 'No organization is assigned to your account yet.');
         redirect('?page=dashboard');
@@ -36,7 +39,7 @@ function buildOwnerWorkspaceData(PDO $db, array $user): array
         $selectedOrgId = (int) $ownedOrganizations[0]['id'];
     }
 
-    $org = getOwnedOrganizationById((int) $user['id'], $selectedOrgId);
+    $org = $organizationRepository->ownedByUserAndId((int) $user['id'], $selectedOrgId);
     if (!$org) {
         setFlash('error', 'Selected organization is not assigned to your account.');
         redirect('?page=my_org');
@@ -53,47 +56,19 @@ function buildOwnerWorkspaceData(PDO $db, array $user): array
     }
 
     $activeAnnouncementCutoff = (new DateTimeImmutable('now'))->format('Y-m-d H:i:s');
-    $announcementStmt = $db->prepare('SELECT * FROM announcements WHERE organization_id = ? AND (expires_at IS NULL OR expires_at >= ?) ORDER BY id DESC');
-    $announcementStmt->execute([(int) $org['id'], $activeAnnouncementCutoff]);
-    $allAnnouncements = $announcementStmt->fetchAll();
+    $allAnnouncements = $organizationRepository->activeAnnouncementsForOrganization((int) $org['id'], $activeAnnouncementCutoff);
     $announcementPreview = array_slice($allAnnouncements, 0, 3);
 
-    $joinRequestStmt = $db->prepare("SELECT r.id, r.created_at, u.name, u.email, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom
-        FROM organization_join_requests r
-        JOIN users u ON u.id = r.user_id
-        WHERE r.organization_id = ? AND r.status = 'pending'
-        ORDER BY r.created_at DESC");
-    $joinRequestStmt->execute([(int) $org['id']]);
-    $pendingJoinRequestsAll = $joinRequestStmt->fetchAll();
+    $pendingJoinRequestsAll = $organizationRepository->pendingJoinRequestsForOrganization((int) $org['id']);
     $pendingJoinPagination = paginateArray($pendingJoinRequestsAll, 'pg_myorg_join', 5);
 
-    $memberStmt = $db->prepare('SELECT u.id, u.name, u.email, u.profile_picture_path, u.profile_picture_crop_x, u.profile_picture_crop_y, u.profile_picture_zoom, om.joined_at,
-        CASE WHEN o.owner_id = u.id THEN 1 ELSE 0 END AS is_owner
-        FROM organization_members om
-        JOIN users u ON u.id = om.user_id
-        JOIN organizations o ON o.id = om.organization_id
-        WHERE om.organization_id = ?
-        ORDER BY CASE WHEN o.owner_id = u.id THEN 0 ELSE 1 END, u.name ASC');
-    $memberStmt->execute([(int) $org['id']]);
-    $orgMembersAll = $memberStmt->fetchAll();
+    $orgMembersAll = $organizationRepository->membersForOrganization((int) $org['id']);
     $orgMemberPagination = paginateArray($orgMembersAll, 'pg_myorg_members', 8);
 
-    $txSql = 'SELECT * FROM financial_transactions WHERE organization_id = ?';
-    $txParams = [(int) $org['id']];
-    if ($txTypeFilter !== 'all') {
-        $txSql .= ' AND type = ?';
-        $txParams[] = $txTypeFilter;
-    }
-    $txOrder = $txDateSort === 'asc' ? 'ASC' : 'DESC';
-    $txSql .= " ORDER BY transaction_date {$txOrder}, id {$txOrder}";
-    $txStmt = $db->prepare($txSql);
-    $txStmt->execute($txParams);
-    $transactionsAll = $txStmt->fetchAll();
+    $transactionsAll = $transactionRepository->forOrganization((int) $org['id'], $txTypeFilter, $txDateSort);
     $transactionsPagination = paginateArray($transactionsAll, 'pg_myorg_tx', 10);
 
-    $txRequestStmt = $db->prepare("SELECT * FROM transaction_change_requests WHERE organization_id = ? AND requested_by = ? ORDER BY created_at DESC LIMIT 20");
-    $txRequestStmt->execute([(int) $org['id'], (int) $user['id']]);
-    $myTxRequestsAll = $txRequestStmt->fetchAll();
+    $myTxRequestsAll = $transactionRepository->changeRequestsForOrganizationByRequester((int) $org['id'], (int) $user['id'], 20);
     $myTxRequestsPagination = paginateArray($myTxRequestsAll, 'pg_myorg_req', 8);
 
     return [
@@ -121,17 +96,16 @@ function renderOwnerWorkspaceHeader(array $org, string $currentPage): void
     $orgId = (int) ($org['id'] ?? 0);
     ?>
     <div id="owner-membership-requests" class="glass rounded-lg p-4">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-start lg:gap-8">
             <div>
                 <h1 class="text-xl font-semibold icon-label"><?= uiIcon('my-org', 'ui-icon') ?><span><?= e((string) ($org['name'] ?? 'My Organization')) ?></span></h1>
                 <p class="section-helper-copy">Focus on one workspace at a time.</p>
             </div>
-            <div class="grid w-full grid-cols-1 gap-2 text-xs sm:w-auto sm:grid-cols-2 lg:flex lg:flex-wrap">
-                <a href="?page=my_org_manage&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_manage' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Organization Management</a>
-                <a href="?page=my_org_members&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_members' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Membership Management</a>
-                <a href="?page=my_org_budget&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_budget' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Budget Workspace</a>
-                <a href="?page=my_org_finance&org_id=<?= $orgId ?>" class="inline-flex w-full items-center justify-center rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_finance' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Financial Management</a>
-                <a href="?page=my_org&org_id=<?= $orgId ?>" class="hidden md:inline-flex w-auto self-start whitespace-nowrap rounded-md border border-slate-300/30 bg-white/10 px-2 py-2 text-xs text-slate-700 transition-colors hover:bg-white/15">Back</a>
+            <div class="grid w-full grid-cols-1 gap-2 text-xs sm:grid-cols-2 lg:flex lg:w-auto lg:flex-nowrap lg:justify-start lg:pt-1">
+                <a href="?page=my_org_manage&org_id=<?= $orgId ?>" class="inline-flex w-full shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_manage' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Organization Management</a>
+                <a href="?page=my_org_members&org_id=<?= $orgId ?>" class="inline-flex w-full shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_members' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Membership Management</a>
+                <a href="?page=my_org_budget&org_id=<?= $orgId ?>" class="inline-flex w-full shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_budget' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Budget Workspace</a>
+                <a href="?page=my_org_finance&org_id=<?= $orgId ?>" class="inline-flex w-full shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center transition-colors sm:w-auto lg:justify-start <?= $currentPage === 'my_org_finance' ? 'border-emerald-300/30 bg-emerald-500/10 text-emerald-800' : 'border-slate-300/30 bg-white/10 text-slate-700 hover:bg-white/15' ?>">Financial Management</a>
             </div>
         </div>
     </div>

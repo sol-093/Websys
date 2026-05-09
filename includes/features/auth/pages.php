@@ -106,6 +106,11 @@ function handleHomePage(PDO $db, ?array $user): void
 
 function handleAboutPage(?array $user): void
 {
+    $config = appConfig();
+    $branding = is_array($config['settings']['branding'] ?? null) ? $config['settings']['branding'] : [];
+    $logoLight = (string) ($branding['logo_light'] ?? 'uploads/assets/involvelogo dark.png');
+    $logoDark = (string) ($branding['logo_dark'] ?? 'uploads/assets/involvelogo light.png');
+
     renderHeader('About');
     $teamMembers = [
         [
@@ -157,8 +162,8 @@ function handleAboutPage(?array $user): void
                 About the Platform
             </div>
             <h1 class="about-logo" aria-label="INVOLVE Student Organization Management and Budget Transparency System">
-                <img src="uploads/assets/involvelogo dark.png" alt="" class="about-logo-img nav-logo-light">
-                <img src="uploads/assets/involvelogo light.png" alt="" class="about-logo-img nav-logo-dark">
+                <img src="<?= e($logoLight) ?>" alt="" class="about-logo-img nav-logo-light">
+                <img src="<?= e($logoDark) ?>" alt="" class="about-logo-img nav-logo-dark">
             </h1>
             <p class="mt-5 text-slate-600 max-w-3xl text-base md:text-lg about-copy">
                 A campus platform focused on responsible governance, transparent budgeting, and better collaboration between students and organization leaders.

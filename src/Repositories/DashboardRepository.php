@@ -51,19 +51,7 @@ final class DashboardRepository
     {
         $cacheBucket = substr($activeCutoff, 0, 16);
 
-        return $this->remember('dashboard:active_announcements:' . $cacheBucket . ':' . $limit, 60, function () use ($activeCutoff, $limit): array {
-            return $this->profile('dashboard.active_announcements', function () use ($activeCutoff, $limit): array {
-                $stmt = $this->db->prepare('SELECT a.*, o.name AS organization_name
-                    FROM announcements a
-                    JOIN organizations o ON o.id = a.organization_id
-                    WHERE (a.expires_at IS NULL OR a.expires_at >= ?)
-                    ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC
-                    LIMIT ' . max(1, $limit));
-                $stmt->execute([$activeCutoff]);
-
-                return $stmt->fetchAll() ?: [];
-            });
-        });
+        return $this->remember('dashboard:active_announcements:' . $cacheBucket . ':' . $limit, 60, fn() => (new AnnouncementRepository($this->db))->activeWithOrganization($activeCutoff, $limit));
     }
 
     /**
