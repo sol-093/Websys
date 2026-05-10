@@ -31,6 +31,39 @@ final class AnnouncementRepository
     }
 
     /**
+     * @return array{items: list<array<string, mixed>>, total: int}
+     */
+    public function activeList(string $activeCutoff, string $query = '', int $limit = 25, int $offset = 0): array
+    {
+        return $this->profile('announcements.active_list', function () use ($activeCutoff, $query, $limit, $offset): array {
+            $where = 'WHERE (a.expires_at IS NULL OR a.expires_at >= ?)';
+            $params = [$activeCutoff];
+            $query = trim($query);
+            if ($query !== '') {
+                $where .= ' AND (a.title LIKE ? OR a.content LIKE ? OR o.name LIKE ?)';
+                $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $query) . '%';
+                array_push($params, $like, $like, $like);
+            }
+
+            $countStmt = $this->db->prepare("SELECT COUNT(*) FROM announcements a JOIN organizations o ON o.id = a.organization_id $where");
+            $countStmt->execute($params);
+
+            $stmt = $this->db->prepare("SELECT a.*, o.name AS organization_name
+                FROM announcements a
+                JOIN organizations o ON o.id = a.organization_id
+                $where
+                ORDER BY a.is_pinned DESC, COALESCE(a.pinned_at, a.created_at) DESC, a.created_at DESC, a.id DESC
+                LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset));
+            $stmt->execute($params);
+
+            return [
+                'items' => $stmt->fetchAll() ?: [],
+                'total' => (int) $countStmt->fetchColumn(),
+            ];
+        });
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function activeForOrganization(int $organizationId, string $activeCutoff): array

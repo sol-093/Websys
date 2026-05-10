@@ -1639,9 +1639,6 @@ function handleMyOrgAdminPage(PDO $db): void
             <button type="button" id="adminOrgSearchButton" class="owner-manage-primary-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md px-4 py-2">
                 <?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Search Organizations</span>
             </button>
-            <button type="submit" class="owner-manage-secondary-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md px-4 py-2">
-                <?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span>
-            </button>
         </form>
 
         <?php if ($org): ?>

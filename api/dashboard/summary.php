@@ -24,16 +24,14 @@ if ($ids === []) {
     ApiList::send([], 0, $pagination);
 }
 
-$placeholders = implode(',', array_fill(0, count($ids), '?'));
-$stmt = $db->prepare("SELECT o.id, o.name,
-    COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
-    COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
-    FROM organizations o
-    LEFT JOIN financial_transactions t ON t.organization_id = o.id
-    WHERE o.id IN ($placeholders)
-    GROUP BY o.id, o.name
-    ORDER BY o.name");
-$stmt->execute($ids);
-$items = $stmt->fetchAll() ?: [];
+$items = array_map(
+    static fn(array $row): array => [
+        'id' => (int) $row['id'],
+        'name' => (string) $row['name'],
+        'total_income' => (float) $row['total_income'],
+        'total_expense' => (float) $row['total_expense'],
+    ],
+    Involve\Repositories\DashboardRepository::fromConnection($db)->aggregateSections($ids)['summary']
+);
 
 ApiList::send(array_slice($items, $pagination['offset'], $pagination['per_page']), count($items), $pagination);

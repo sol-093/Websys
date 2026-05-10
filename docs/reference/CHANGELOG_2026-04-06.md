@@ -2,10 +2,12 @@
 
 ## Summary
 - **Baseline reference date:** April 6, 2026
-- **Document updated:** May 5, 2026
+- **Document updated:** May 10, 2026
 - **Scope:** High-level grouped change summary after the April 6 baseline
 
 ## Version History
+- **1.3.0-dev** (May 10, 2026): repository-backed API/list modernization, expanded repository test coverage, architecture documentation refresh, and generated cache/deployment guidance
+- **1.2.1** (May 1, 2026): INVOLVE brand asset integration, About page brand refresh, responsive navbar logo updates, and PDF export template background support
 - **1.2.0** (May 1, 2026): PHPMailer-backed verification/reset flows, stricter one-use reset tokens, reset cooldown tracking, navbar branding/logo and hover motion
 - **1.1.3** (April 27, 2026): documentation cleanup, consistent layout, upload control visual alignment
 - **1.1.1** (April 6, 2026): footer and navigation presentation refinements, responsive usability updates

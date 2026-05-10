@@ -1,13 +1,14 @@
 # INVOLVE Student Organization Management and Budget Transparency System
 
 ## Summary
-- **Version:** 1.2.1
-- **Updated:** May 9, 2026
+- **Version:** 1.3.0-dev
+- **Updated:** May 10, 2026
 - **Stack:** PHP 8.2+, PDO, MySQL/SQLite, Tailwind CSS, Vanilla JS
 - **Entry point:** `index.php`
-- **Current modernization:** PSR-4 app classes, granular permissions, JSON API foundation, file cache, PHPUnit, and CI
+- **Current modernization:** PSR-4 app classes, repository-backed API/list endpoints, granular permissions, JSON API foundation, file cache, PHPUnit, PHPStan, and CI
 
 ## Version History
+- **1.3.0-dev** (May 10, 2026): architecture modernization in progress with repository-backed API/list endpoints, expanded PHPUnit/PHPStan coverage, documentation baseline refresh, and clearer separation of source changes from generated cache artifacts
 - **1.2.1** (May 1, 2026): INVOLVE brand asset integration, About page brand refresh, responsive navbar logo updates, and PDF export template background support
 - **1.2.0** (May 1, 2026): PHPMailer-backed verification/reset flows, one-use password reset hardening, reset cooldown tracking, navbar logo and hover polish
 - **1.1.3** (April 27, 2026): documentation standardization, UI consistency pass, upload control polish
@@ -62,6 +63,13 @@ composer test
 composer analyse
 ```
 
+6. Check dependency metadata and security advisories:
+
+```bash
+composer validate --strict
+composer audit
+```
+
 ### Configuration
 - Main runtime config: `includes/core/config.php`
 - Central app settings: `config/settings.php`
@@ -86,6 +94,7 @@ composer analyse
 - `includes/lib/`: reusable domain and utility helpers
 - `src/`: PSR-4 classes for repositories, services, auth, cache, API, and support utilities
 - `api/`: JSON endpoints that use the current session and CSRF model
+- Repository-backed API/list endpoints currently cover dashboard activity/reports/summary, organizations, announcements, admin audit/organizations/transactions, owner members/join requests/transactions, and notification feeds.
 - `?page=notifications`: persistent request/security update feed and personal audit timeline for logged-in users
 - `?page=admin_audit`: admin-only audit review with search, family filters, and source details
 
@@ -98,6 +107,7 @@ websys/
 |-- database/                  # Schema/reference database files
 |   `-- schema.sql
 |-- docs/                      # Architecture and reference documentation
+|-- config/                    # Settings and permission matrices
 |-- includes/                  # Application PHP code
 |   |-- core/                  # Auth, config, DB, helpers, layout
 |   |-- features/              # Feature pages, actions, workflows, data
@@ -106,6 +116,7 @@ websys/
 |   `-- shared/                # Shared UI helpers
 |-- src/                       # Composer-autoloaded Involve classes
 |-- api/                       # JSON endpoints
+|-- storage/                   # Runtime cache and test storage, not deployment source
 |-- scripts/                   # Maintenance, seed, and test scripts
 |-- uploads/                   # Writable upload storage and bundled media
 |   |-- assets/                 # Bundled logos, page images, and PDF template
@@ -126,6 +137,8 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - `includes/shared/ui.php`: shared breadcrumbs, empty states, and skeleton UI helpers
 - `includes/core/db.php`: database bootstrap and compatibility initialization
 - `includes/lib/email.php`: Composer PHPMailer-backed email templates and send helpers
+- `src/Repositories/*Repository.php`: SQL/data access layer for migrated dashboard, organization, transaction, budget, announcement, audit, and notification flows
+- `api/list_helpers.php`: shared API pagination/filter response helpers
 - `config/settings.php`: central branding, upload, pagination, PDF, feature, and security settings
 - `includes/features/transactions/actions.php`: content mutations and transaction PDF export generation
 - `includes/features/dashboard/page.php`: dashboard page controller
@@ -141,10 +154,12 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - [Changelog (Baseline Comparison)](docs/reference/CHANGELOG_2026-04-06.md)
 - [Source Folder Guide](includes/README.md)
 - [Architecture Baseline](docs/architecture/ARCHITECTURE_BASELINE.md)
+- [Current Modernization Status](docs/reference/CURRENT_MODERNIZATION_STATUS.md)
 - [Production Deployment Checklist](docs/reference/PRODUCTION_DEPLOYMENT_CHECKLIST.md)
 
 ## Maintenance
 - Keep behavior changes and documentation updates in the same change set.
 - Prefer extending the layered structure instead of adding new top-level patterns.
 - Use prepared statements, CSRF checks, and role guards for all mutating/authenticated flows.
+- Keep generated cache files under `storage/cache/` out of review/commit sets; only `storage/cache/.gitkeep` should be tracked.
 - Use `git archive` or the deployment checklist for production packages so local `.env`, IDE files, test scripts, and seed scripts are excluded.

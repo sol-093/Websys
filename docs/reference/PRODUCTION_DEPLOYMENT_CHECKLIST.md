@@ -5,7 +5,7 @@ Use this checklist before packaging or publishing INVOLVE.
 ## Exclude From Deployment
 - `.git/`, `.env`, `.venv/`, `.vscode/`, `.phpunit.cache/`
 - `tests/`, `scripts/tests/`, demo seed scripts under `scripts/seed/`
-- local database files, temporary cache files, logs, and unneeded IDE metadata
+- `storage/cache/phpstan/`, `storage/cache/testing/`, local database files, temporary cache files, logs, and unneeded IDE metadata
 
 The repository includes `.gitattributes` export rules so `git archive` excludes common development-only paths.
 
@@ -15,12 +15,14 @@ The repository includes `.gitattributes` export rules so `git archive` excludes 
 - Configure MySQL credentials, SMTP credentials, `APP_URL`/`BASE_URL`, and Google OAuth only when used.
 - Ensure `uploads/`, `uploads/users/`, `uploads/organizations/`, `uploads/receipts/`, and `storage/cache/` are writable by PHP but not executable.
 - Run `composer install --no-dev --prefer-dist --no-progress --optimize-autoloader`.
+- Run `composer dump-autoload --optimize` if dependencies were installed or copied through a deployment process that did not generate optimized autoload files.
 
 ## Preflight Checks
 - Run `composer validate --strict`.
 - Run PHP lint on tracked PHP files.
 - Run PHPUnit in CI before deploying.
 - Run `composer audit`.
+- Review `git status --short` before packaging and avoid deploying generated PHPStan/file-cache artifacts from `storage/cache/`.
 - Confirm security headers are present in a browser/network inspector.
 - Confirm login, dashboard, organization, budgeting, transaction, announcement, and export flows still work.
 

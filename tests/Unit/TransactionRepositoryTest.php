@@ -15,6 +15,7 @@ final class TransactionRepositoryTest extends TestCase
         $db = new PDO('sqlite::memory:');
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->createSchema($db);
+        $db->prepare('INSERT INTO organizations (id, name) VALUES (?, ?)')->execute([4, 'JPCS']);
 
         $repository = new TransactionRepository($db);
         $transactionId = $repository->create(4, 'income', 1500.25, 'Membership dues', '2026-05-09', 'uploads/receipts/dues.pdf');
@@ -33,10 +34,66 @@ final class TransactionRepositoryTest extends TestCase
 
         $requests = $repository->changeRequestsForOrganizationByRequester(4, 7);
         self::assertCount(2, $requests);
+
+        $adminRequests = $repository->changeRequestList('pending', 10, 0);
+        self::assertSame(2, $adminRequests['total']);
+        self::assertSame('JPCS', $adminRequests['items'][0]['organization_name']);
+
+        $reports = $repository->listWithOrganization('Membership', 10, 0);
+        self::assertSame(1, $reports['total']);
+        self::assertSame('JPCS', $reports['items'][0]['organization_name']);
+
+        $ownerList = $repository->listForOrganization(4, 10, 0);
+        self::assertSame(1, $ownerList['total']);
+        self::assertSame('Membership dues', $ownerList['items'][0]['description']);
+
+        $pendingUpdate = $repository->pendingChangeRequest($updateRequestId);
+        self::assertNotNull($pendingUpdate);
+        $repository->applyApprovedChangeRequest($pendingUpdate);
+        $repository->markChangeRequestDecision($updateRequestId, 'approved', 'Approved update');
+
+        $updated = $db->query('SELECT type, amount, description, transaction_date FROM financial_transactions WHERE id = ' . $transactionId)->fetch();
+        self::assertSame('expense', $updated['type']);
+        self::assertSame(800.0, (float) $updated['amount']);
+        self::assertSame('Venue correction', $updated['description']);
+        self::assertSame('2026-05-10', $updated['transaction_date']);
+        self::assertNull($repository->pendingChangeRequest($updateRequestId));
+
+        $repository->markChangeRequestDecision($deleteRequestId, 'rejected', 'Keep record');
+        self::assertNull($repository->pendingChangeRequest($deleteRequestId));
+    }
+
+    public function testApprovedDeleteChangeRequestRemovesTransaction(): void
+    {
+        $db = new PDO('sqlite::memory:');
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->createSchema($db);
+
+        $repository = new TransactionRepository($db);
+        $transactionId = $repository->create(4, 'expense', 450.00, 'Snacks', '2026-05-09');
+        $deleteRequestId = $repository->requestDelete($transactionId, 4, 7);
+
+        $pendingDelete = $repository->pendingChangeRequest($deleteRequestId);
+        self::assertNotNull($pendingDelete);
+        $repository->applyApprovedChangeRequest($pendingDelete);
+        $repository->markChangeRequestDecision($deleteRequestId, 'approved', 'Remove duplicate');
+
+        self::assertFalse($repository->existsForOrganization($transactionId, 4));
+        self::assertNull($repository->pendingChangeRequest($deleteRequestId));
     }
 
     private function createSchema(PDO $db): void
     {
+        $db->exec('CREATE TABLE organizations (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL
+        )');
+
+        $db->exec('CREATE TABLE users (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL
+        )');
+
         $db->exec('CREATE TABLE financial_transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organization_id INTEGER NOT NULL,
@@ -59,8 +116,11 @@ final class TransactionRepositoryTest extends TestCase
             proposed_description TEXT NULL,
             proposed_transaction_date TEXT NULL,
             status TEXT NOT NULL,
+            admin_note TEXT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NULL
         )');
+
+        $db->prepare('INSERT INTO users (id, name) VALUES (?, ?)')->execute([7, 'Owner']);
     }
 }

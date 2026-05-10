@@ -8,5 +8,6 @@ docs/reference export-ignore
 scripts/seed export-ignore
 scripts/tests export-ignore
 tests export-ignore
+storage/cache export-ignore
 phpunit.xml export-ignore
 phpstan.neon export-ignore

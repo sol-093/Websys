@@ -20,19 +20,6 @@ $status = (string) ($_GET['status'] ?? 'pending');
 if (!in_array($status, ['pending', 'approved', 'declined', 'all'], true)) {
     $status = 'pending';
 }
-$whereStatus = $status === 'all' ? '' : ' AND ojr.status = ?';
-$params = $status === 'all' ? [$organizationId] : [$organizationId, $status];
+$requests = (new Involve\Repositories\OrganizationRepository($db))->joinRequestList($organizationId, $status, $pagination['per_page'], $pagination['offset']);
 
-$countStmt = $db->prepare("SELECT COUNT(*) FROM organization_join_requests ojr WHERE ojr.organization_id = ?$whereStatus");
-$countStmt->execute($params);
-$total = (int) $countStmt->fetchColumn();
-
-$stmt = $db->prepare("SELECT ojr.*, u.name, u.email, u.institute, u.program, u.year_level, u.section
-    FROM organization_join_requests ojr
-    JOIN users u ON u.id = ojr.user_id
-    WHERE ojr.organization_id = ?$whereStatus
-    ORDER BY ojr.created_at DESC
-    LIMIT {$pagination['per_page']} OFFSET {$pagination['offset']}");
-$stmt->execute($params);
-
-ApiList::send($stmt->fetchAll() ?: [], $total, $pagination, ['organization_id' => $organizationId, 'status' => $status]);
+ApiList::send($requests['items'], $requests['total'], $pagination, ['organization_id' => $organizationId, 'status' => $status]);

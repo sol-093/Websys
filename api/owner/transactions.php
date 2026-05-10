@@ -17,14 +17,6 @@ if (!$organization) {
 }
 
 $pagination = apiListParams();
-$countStmt = $db->prepare('SELECT COUNT(*) FROM financial_transactions WHERE organization_id = ?');
-$countStmt->execute([$organizationId]);
-$total = (int) $countStmt->fetchColumn();
+$transactions = (new Involve\Repositories\TransactionRepository($db))->listForOrganization($organizationId, $pagination['per_page'], $pagination['offset']);
 
-$stmt = $db->prepare("SELECT * FROM financial_transactions
-    WHERE organization_id = ?
-    ORDER BY transaction_date DESC, id DESC
-    LIMIT {$pagination['per_page']} OFFSET {$pagination['offset']}");
-$stmt->execute([$organizationId]);
-
-ApiList::send($stmt->fetchAll() ?: [], $total, $pagination, ['organization_id' => $organizationId]);
+ApiList::send($transactions['items'], $transactions['total'], $pagination, ['organization_id' => $organizationId]);

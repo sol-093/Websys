@@ -26,6 +26,10 @@ final class AnnouncementRepositoryTest extends TestCase
         self::assertCount(2, $active);
         self::assertSame('JPCS', $active[0]['organization_name']);
 
+        $list = $repository->activeList('2026-05-09 00:00:00', 'Dues', 10, 0);
+        self::assertSame(1, $list['total']);
+        self::assertSame('Dues Reminder', $list['items'][0]['title']);
+
         self::assertTrue($repository->exists($firstId));
         $repository->pinExclusive($secondId);
         self::assertSame($secondId, (int) $db->query('SELECT id FROM announcements WHERE is_pinned = 1')->fetchColumn());

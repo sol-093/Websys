@@ -16,16 +16,6 @@ if (!getOwnedOrganizationById((int) $user['id'], $organizationId)) {
 }
 
 $pagination = apiListParams();
-$countStmt = $db->prepare('SELECT COUNT(*) FROM organization_members WHERE organization_id = ?');
-$countStmt->execute([$organizationId]);
-$total = (int) $countStmt->fetchColumn();
+$members = (new Involve\Repositories\OrganizationRepository($db))->memberList($organizationId, $pagination['per_page'], $pagination['offset']);
 
-$stmt = $db->prepare("SELECT om.*, u.name, u.email, u.institute, u.program, u.year_level, u.section
-    FROM organization_members om
-    JOIN users u ON u.id = om.user_id
-    WHERE om.organization_id = ?
-    ORDER BY om.joined_at DESC
-    LIMIT {$pagination['per_page']} OFFSET {$pagination['offset']}");
-$stmt->execute([$organizationId]);
-
-ApiList::send($stmt->fetchAll() ?: [], $total, $pagination, ['organization_id' => $organizationId]);
+ApiList::send($members['items'], $members['total'], $pagination, ['organization_id' => $organizationId]);

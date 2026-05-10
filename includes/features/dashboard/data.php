@@ -40,43 +40,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $budgetFlowCriticalLineCount = 0;
     $budgetFlowWatchLineCount = 0;
     if (count($visibleOrganizationIds) > 0) {
-        $aggregateData = cacheRemember('dashboard:aggregates:' . md5(implode(',', $visibleOrganizationIds)), 60, static function () use ($db, $visibleOrganizationIds): array {
-            return queryProfile('dashboard.aggregate_sections', static function () use ($db, $visibleOrganizationIds): array {
-                $summaryPlaceholders = implode(',', array_fill(0, count($visibleOrganizationIds), '?'));
-                $summaryStmt = $db->prepare("SELECT o.id, o.name, o.logo_path, o.logo_crop_x, o.logo_crop_y, o.logo_zoom,
-                    COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
-                    COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
-                    FROM organizations o
-                    LEFT JOIN financial_transactions t ON t.organization_id = o.id
-                    WHERE o.id IN ($summaryPlaceholders)
-                    GROUP BY o.id, o.name, o.logo_path
-                    ORDER BY o.name");
-                $summaryStmt->execute($visibleOrganizationIds);
-
-                $pendingExpenseStmt = $db->prepare("SELECT COUNT(*) FROM expense_requests WHERE organization_id IN ($summaryPlaceholders) AND status = 'pending'");
-                $pendingExpenseStmt->execute($visibleOrganizationIds);
-
-                $activeBudgetStmt = $db->prepare("SELECT COUNT(*) FROM budgets WHERE organization_id IN ($summaryPlaceholders) AND status = 'active'");
-                $activeBudgetStmt->execute($visibleOrganizationIds);
-
-                $budgetLineUsageStmt = $db->prepare("SELECT bli.allocated_amount, bli.spent_amount,
-                        COALESCE(SUM(CASE WHEN er.status = 'pending' THEN er.amount ELSE 0 END), 0) AS pending_amount
-                    FROM budget_line_items bli
-                    JOIN budgets b ON b.id = bli.budget_id
-                    LEFT JOIN expense_requests er ON er.budget_line_item_id = bli.id
-                    WHERE b.organization_id IN ($summaryPlaceholders)
-                      AND b.status = 'active'
-                    GROUP BY bli.id, bli.allocated_amount, bli.spent_amount");
-                $budgetLineUsageStmt->execute($visibleOrganizationIds);
-
-                return [
-                    'summary' => $summaryStmt->fetchAll() ?: [],
-                    'pending_expense_count' => (int) $pendingExpenseStmt->fetchColumn(),
-                    'active_budget_count' => (int) $activeBudgetStmt->fetchColumn(),
-                    'line_usage' => $budgetLineUsageStmt->fetchAll() ?: [],
-                ];
-            });
-        });
+        $aggregateData = $dashboardRepository->aggregateSections($visibleOrganizationIds);
 
         $summary = $aggregateData['summary'];
         $budgetFlowPendingExpenseRequestCount = (int) $aggregateData['pending_expense_count'];
@@ -104,37 +68,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $kpiBalance = $kpiIncome - $kpiExpense;
 
     $monthStart = new DateTimeImmutable('first day of this month 00:00:00');
-    $previousMonthStart = $monthStart->modify('-1 month');
-    $nextMonthStart = $monthStart->modify('+1 month');
-
-    $kpiMonthly = cacheRemember('dashboard:kpi_monthly:' . $monthStart->format('Y-m-d'), 60, static function () use ($db, $monthStart, $nextMonthStart, $previousMonthStart): array|false {
-        return queryProfile('dashboard.kpi_monthly', static function () use ($db, $monthStart, $nextMonthStart, $previousMonthStart): array|false {
-            $kpiMonthlyStmt = $db->prepare("SELECT
-                COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_current,
-                COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS income_previous,
-                COALESCE(SUM(CASE WHEN type = 'income' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS income_previous_count,
-                COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_current,
-                COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_previous
-                , COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS expense_previous_count
-                FROM financial_transactions");
-            $kpiMonthlyStmt->execute([
-                $monthStart->format('Y-m-d'),
-                $nextMonthStart->format('Y-m-d'),
-                $previousMonthStart->format('Y-m-d'),
-                $monthStart->format('Y-m-d'),
-                $previousMonthStart->format('Y-m-d'),
-                $monthStart->format('Y-m-d'),
-                $monthStart->format('Y-m-d'),
-                $nextMonthStart->format('Y-m-d'),
-                $previousMonthStart->format('Y-m-d'),
-                $monthStart->format('Y-m-d'),
-                $previousMonthStart->format('Y-m-d'),
-                $monthStart->format('Y-m-d'),
-            ]);
-
-            return $kpiMonthlyStmt->fetch();
-        });
-    });
+    $kpiMonthly = $dashboardRepository->monthlyKpi($monthStart);
 
     $incomeCurrentMonthTotal = (float) ($kpiMonthly['income_current'] ?? 0);
     $incomePreviousMonthTotal = (float) ($kpiMonthly['income_previous'] ?? 0);
@@ -150,32 +84,10 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $expenses_delta_pct = (($expenseCurrentMonthTotal - $expensePreviousMonthTotal) / max($expensePreviousMonthTotal, 1)) * 100;
     $balance_delta_pct = (($balanceCurrentMonthTotal - $balancePreviousMonthTotal) / max($balancePreviousMonthTotal, 1)) * 100;
 
-    $activityStmt = $db->prepare("SELECT 'announcement' AS type, title AS label, created_at, organization_id FROM announcements WHERE created_at >= ?
-        UNION ALL
-        SELECT 'transaction' AS type, description AS label, created_at, organization_id FROM financial_transactions WHERE transaction_date >= ?
-        ORDER BY created_at DESC
-        LIMIT 16");
-    $activityStmt->execute([$announcementCutoff, $recentReportCutoffDate]);
-    $activity = $activityStmt->fetchAll();
+    $activity = $dashboardRepository->recentActivity($announcementCutoff, $recentReportCutoffDate);
 
     $dbDriver = (string) (($config['db']['driver'] ?? 'sqlite'));
-    if ($dbDriver === 'mysql') {
-        $trendRows = $db->query("SELECT DATE_FORMAT(transaction_date, '%Y-%m') AS month,
-            COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
-            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
-            FROM financial_transactions
-            GROUP BY DATE_FORMAT(transaction_date, '%Y-%m')
-            ORDER BY month DESC
-            LIMIT 6")->fetchAll();
-    } else {
-        $trendRows = $db->query("SELECT strftime('%Y-%m', transaction_date) AS month,
-            COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
-            COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
-            FROM financial_transactions
-            GROUP BY strftime('%Y-%m', transaction_date)
-            ORDER BY month DESC
-            LIMIT 6")->fetchAll();
-    }
+    $trendRows = $dashboardRepository->monthlyTrendRows($dbDriver);
 
     $trendRows = array_reverse($trendRows);
     $trendLabels = array_map(static fn(array $r): string => (string) $r['month'], $trendRows);
@@ -218,18 +130,12 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
 
     $pendingAssignments = [];
     if (in_array($user['role'], ['student', 'owner'], true)) {
-        $stmt = $db->prepare("SELECT oa.id, oa.created_at, o.id AS organization_id, o.name AS organization_name
-            FROM owner_assignments oa
-            JOIN organizations o ON o.id = oa.organization_id
-            WHERE oa.student_id = ? AND oa.status = 'pending'
-            ORDER BY oa.created_at DESC");
-        $stmt->execute([(int) $user['id']]);
-        $pendingAssignments = $stmt->fetchAll();
+        $pendingAssignments = $dashboardRepository->pendingAssignmentsForStudent((int) $user['id']);
     }
 
     $pendingAssignmentsPagination = paginateArray($pendingAssignments, 'pg_dash_assign', 2);
     $pendingAssignments = $pendingAssignmentsPagination['items'];
-    $pendingTransactionRequestCount = (int) $db->query("SELECT COUNT(*) FROM transaction_change_requests WHERE status = 'pending'")->fetchColumn();
+    $pendingTransactionRequestCount = $dashboardRepository->pendingTransactionRequestCount();
     $dashboardOrganizationsPreview = array_slice($orgs, 0, 3);
     $summaryAll = $summary;
     $summaryPagination = paginateArray($summaryAll, 'pg_dash_summary', 4);

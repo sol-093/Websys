@@ -55,6 +55,61 @@ final class TransactionRepository
     }
 
     /**
+     * @return array{items: list<array<string, mixed>>, total: int}
+     */
+    public function listWithOrganization(string $query = '', int $limit = 25, int $offset = 0): array
+    {
+        return $this->profile('transactions.list_with_organization', function () use ($query, $limit, $offset): array {
+            $where = '';
+            $params = [];
+            $query = trim($query);
+            if ($query !== '') {
+                $where = 'WHERE t.description LIKE ? OR o.name LIKE ?';
+                $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $query) . '%';
+                $params = [$like, $like];
+            }
+
+            $countStmt = $this->db->prepare("SELECT COUNT(*) FROM financial_transactions t JOIN organizations o ON o.id = t.organization_id $where");
+            $countStmt->execute($params);
+
+            $stmt = $this->db->prepare("SELECT t.*, o.name AS organization_name
+                FROM financial_transactions t
+                JOIN organizations o ON o.id = t.organization_id
+                $where
+                ORDER BY t.transaction_date DESC, t.id DESC
+                LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset));
+            $stmt->execute($params);
+
+            return [
+                'items' => $stmt->fetchAll() ?: [],
+                'total' => (int) $countStmt->fetchColumn(),
+            ];
+        });
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int}
+     */
+    public function listForOrganization(int $organizationId, int $limit = 25, int $offset = 0): array
+    {
+        return $this->profile('transactions.list_for_organization', function () use ($organizationId, $limit, $offset): array {
+            $countStmt = $this->db->prepare('SELECT COUNT(*) FROM financial_transactions WHERE organization_id = ?');
+            $countStmt->execute([$organizationId]);
+
+            $stmt = $this->db->prepare('SELECT * FROM financial_transactions
+                WHERE organization_id = ?
+                ORDER BY transaction_date DESC, id DESC
+                LIMIT ' . max(1, $limit) . ' OFFSET ' . max(0, $offset));
+            $stmt->execute([$organizationId]);
+
+            return [
+                'items' => $stmt->fetchAll() ?: [],
+                'total' => (int) $countStmt->fetchColumn(),
+            ];
+        });
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function changeRequestsForOrganizationByRequester(int $organizationId, int $requesterId, int $limit = 20): array
@@ -64,6 +119,38 @@ final class TransactionRepository
             $stmt->execute([$organizationId, $requesterId]);
 
             return $stmt->fetchAll() ?: [];
+        });
+    }
+
+    /**
+     * @return array{items: list<array<string, mixed>>, total: int}
+     */
+    public function changeRequestList(string $status = '', int $limit = 25, int $offset = 0): array
+    {
+        return $this->profile('transactions.change_request_list', function () use ($status, $limit, $offset): array {
+            $where = '';
+            $params = [];
+            if (in_array($status, ['pending', 'approved', 'rejected'], true)) {
+                $where = 'WHERE tcr.status = ?';
+                $params[] = $status;
+            }
+
+            $countStmt = $this->db->prepare("SELECT COUNT(*) FROM transaction_change_requests tcr $where");
+            $countStmt->execute($params);
+
+            $stmt = $this->db->prepare("SELECT tcr.*, o.name AS organization_name, u.name AS requested_by_name
+                FROM transaction_change_requests tcr
+                JOIN organizations o ON o.id = tcr.organization_id
+                JOIN users u ON u.id = tcr.requested_by
+                $where
+                ORDER BY tcr.created_at DESC, tcr.id DESC
+                LIMIT " . max(1, $limit) . ' OFFSET ' . max(0, $offset));
+            $stmt->execute($params);
+
+            return [
+                'items' => $stmt->fetchAll() ?: [],
+                'total' => (int) $countStmt->fetchColumn(),
+            ];
         });
     }
 
@@ -123,6 +210,55 @@ final class TransactionRepository
         $stmt->execute([$transactionId, $organizationId, $requestedBy, 'delete', 'pending']);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function pendingChangeRequest(int $requestId): ?array
+    {
+        if ($requestId <= 0) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare('SELECT * FROM transaction_change_requests WHERE id = ? AND status = ? LIMIT 1');
+        $stmt->execute([$requestId, 'pending']);
+        $request = $stmt->fetch();
+
+        return $request ?: null;
+    }
+
+    /**
+     * @param array<string, mixed> $request
+     */
+    public function applyApprovedChangeRequest(array $request): void
+    {
+        if ((string) $request['action_type'] === 'update') {
+            $stmt = $this->db->prepare('UPDATE financial_transactions SET type = ?, amount = ?, description = ?, transaction_date = ? WHERE id = ? AND organization_id = ?');
+            $stmt->execute([
+                (string) $request['proposed_type'],
+                round((float) $request['proposed_amount'], 2),
+                (string) $request['proposed_description'],
+                (string) $request['proposed_transaction_date'],
+                (int) $request['transaction_id'],
+                (int) $request['organization_id'],
+            ]);
+
+            return;
+        }
+
+        $stmt = $this->db->prepare('DELETE FROM financial_transactions WHERE id = ? AND organization_id = ?');
+        $stmt->execute([(int) $request['transaction_id'], (int) $request['organization_id']]);
+    }
+
+    public function markChangeRequestDecision(int $requestId, string $status, string $adminNote): void
+    {
+        if (!in_array($status, ['approved', 'rejected'], true)) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $stmt->execute([$status, $adminNote, $requestId]);
     }
 
     /**
