@@ -181,7 +181,7 @@ WORK GUIDE:
             </div>
         </div>
 
-        <div id="dashboardAnnouncementsSection" class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+        <div id="dashboardAnnouncementsSection" class="glass dashboard-panel xl:col-span-5 p-4 md:p-4" data-dashboard-autofit-panel>
             <div class="flex items-center justify-between gap-3 mb-3">
                 <div>
                     <h2 class="dashboard-section-title">Live activity</h2>
@@ -189,10 +189,10 @@ WORK GUIDE:
                 </div>
                 <button type="button" id="openAnnouncementsModalQuick" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
             </div>
-            <div class="space-y-2">
-                <?php foreach ($latestAnnouncementsPreview as $item): ?>
+            <div class="space-y-2" data-dashboard-autofit-list>
+                <?php foreach ($latestAnnouncementsPreview as $index => $item): ?>
                     <?php $feedDotClass = (int) ($item['is_pinned'] ?? 0) === 1 ? 'dashboard-feed-dot warn' : 'dashboard-feed-dot'; ?>
-                    <div class="dashboard-feed-item">
+                    <div class="dashboard-feed-item <?= $index >= (int) $dashboardAnnouncementPreviewBaseLimit ? 'hidden dashboard-autofit-extra' : '' ?>" data-dashboard-autofit-item>
                         <span class="<?= e($feedDotClass) ?>"></span>
                         <div>
                             <div class="dashboard-feed-title flex items-center gap-2"><?= e($item['title']) ?>
@@ -205,8 +205,9 @@ WORK GUIDE:
                         </div>
                     </div>
                 <?php endforeach; ?>
-                <?php foreach ($activityPreview as $item): ?>
-                    <div class="dashboard-feed-item">
+                <?php foreach ($activityPreview as $index => $item): ?>
+                    <?php $activityOffset = count($latestAnnouncementsPreview) + $index; ?>
+                    <div class="dashboard-feed-item <?= $activityOffset >= ((int) $dashboardAnnouncementPreviewBaseLimit + (int) $dashboardActivityPreviewBaseLimit) ? 'hidden dashboard-autofit-extra' : '' ?>" data-dashboard-autofit-item>
                         <span class="dashboard-feed-dot"></span>
                         <div>
                             <div class="dashboard-feed-title"><?= e($item['label']) ?></div>
@@ -224,7 +225,7 @@ WORK GUIDE:
             </div>
         </div>
 
-        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4">
+        <div class="glass dashboard-panel xl:col-span-5 p-4 md:p-4" data-dashboard-autofit-panel>
             <div class="flex items-center justify-between mb-3">
                 <div>
                     <h2 class="dashboard-section-title">Organizations</h2>
@@ -232,7 +233,7 @@ WORK GUIDE:
                 </div>
                 <button type="button" id="openOrganizationsModal" class="text-xs underline text-indigo-100"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View all</span></span></button>
             </div>
-            <div class="space-y-2">
+            <div class="space-y-2" data-dashboard-autofit-list>
                 <?php if (count($dashboardOrganizationsPreview) === 0): ?>
                     <div class="dashboard-empty-state dashboard-empty-state-compact">
                         <div class="dashboard-empty-icon"><?= uiIcon('orgs', 'ui-icon') ?></div>
@@ -240,8 +241,8 @@ WORK GUIDE:
                         <p class="dashboard-empty-copy">Created organizations and join eligibility will appear here.</p>
                     </div>
                 <?php else: ?>
-                    <?php foreach ($dashboardOrganizationsPreview as $org): ?>
-                        <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between">
+                    <?php foreach ($dashboardOrganizationsPreview as $index => $org): ?>
+                        <div class="dashboard-feed-item flex-col lg:flex-row lg:items-start lg:justify-between <?= $index >= (int) $dashboardOrganizationPreviewBaseLimit ? 'hidden dashboard-autofit-extra' : '' ?>" data-dashboard-autofit-item>
                             <div class="flex items-start gap-3 text-left">
                                 <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'sm', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                                 <div>
@@ -305,40 +306,34 @@ WORK GUIDE:
                     <p class="dashboard-empty-copy">Income and expense entries with receipts will show here after organizations record transactions.</p>
                 </div>
             <?php else: ?>
-                <div class="table-wrapper">
-                    <table class="dashboard-table dashboard-recent-reports-table w-full text-sm table-fixed">
-                        <thead>
-                        <tr class="border-b text-left">
-                            <th class="py-2 w-[20%]">Date</th>
-                            <th class="w-[30%]">Organization</th>
-                            <th class="w-[16%]">Type</th>
-                            <th class="w-[20%]">Amount</th>
-                            <th class="w-[14%]">Receipt</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($transactions as $index => $tx): ?>
-                            <tr class="border-b <?= $index >= 5 ? 'dashboard-mobile-trim' : '' ?>">
-                                <td class="py-2"><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></td>
-                                <td>
-                                    <span class="inline-flex items-center gap-2">
-                                        <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
-                                        <span><?= e($tx['organization_name']) ?></span>
-                                    </span>
-                                </td>
-                                <td class="<?= $tx['type'] === 'income' ? 'text-green-700' : 'text-red-700' ?>"><?= e($tx['type']) ?></td>
-                                <td>&#8369;<?= number_format((float) $tx['amount'], 2) ?></td>
-                                <td>
-                                    <?php if (!empty($tx['receipt_path'])): ?>
-                                        <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
-                                    <?php else: ?>
-                                        <span class="text-slate-400">-</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="dashboard-report-list">
+                    <div class="dashboard-report-row dashboard-report-head" aria-hidden="true">
+                        <div>Date</div>
+                        <div>Organization</div>
+                        <div>Type</div>
+                        <div>Amount</div>
+                        <div>Receipt</div>
+                    </div>
+                    <?php foreach ($transactions as $index => $tx): ?>
+                        <div class="dashboard-report-row <?= $index >= 5 ? 'dashboard-mobile-trim' : '' ?>">
+                            <div><?= e(date('F d, Y', strtotime((string)$tx['transaction_date']))) ?></div>
+                            <div>
+                                <span class="inline-flex items-center gap-2">
+                                    <?= renderProfileMedia((string) ($tx['organization_name'] ?? ''), (string) ($tx['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($tx['organization_logo_crop_x'] ?? 50), (float) ($tx['organization_logo_crop_y'] ?? 50), (float) ($tx['organization_logo_zoom'] ?? 1)) ?>
+                                    <span><?= e($tx['organization_name']) ?></span>
+                                </span>
+                            </div>
+                            <div class="<?= $tx['type'] === 'income' ? 'text-green-300' : 'text-red-300' ?>"><?= e($tx['type']) ?></div>
+                            <div>&#8369;<?= number_format((float) $tx['amount'], 2) ?></div>
+                            <div>
+                                <?php if (!empty($tx['receipt_path'])): ?>
+                                    <a class="text-indigo-100 underline" target="_blank" href="<?= e($tx['receipt_path']) ?>"><span class="icon-label"><?= uiIcon('open', 'ui-icon ui-icon-sm') ?><span>Open</span></span></a>
+                                <?php else: ?>
+                                    <span class="text-slate-400">-</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -358,33 +353,27 @@ WORK GUIDE:
                     <p class="dashboard-empty-copy">Financial totals will appear once organizations and transaction records exist.</p>
                 </div>
             <?php else: ?>
-                <div class="table-wrapper">
-                    <table class="dashboard-table dashboard-summary-table w-full text-sm table-fixed">
-                        <thead>
-                        <tr class="border-b text-left">
-                            <th class="py-2 pr-4 w-[46%]">Organization</th>
-                            <th class="py-2 pr-3 w-[18%]">Income</th>
-                            <th class="py-2 pr-3 w-[18%]">Expense</th>
-                            <th class="py-2 w-[18%]">Balance</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <?php foreach ($summary as $row): ?>
-                            <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
-                            <tr class="border-b">
-                                <td class="py-2 pr-4">
-                                    <span class="inline-flex items-center gap-2">
-                                        <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
-                                        <span><?= e($row['name']) ?></span>
-                                    </span>
-                                </td>
-                                <td class="py-2 pr-3 text-green-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_income'], 2) ?></td>
-                                <td class="py-2 pr-3 text-red-700 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></td>
-                                <td class="py-2 whitespace-nowrap <?= $balance >= 0 ? 'text-green-800' : 'text-red-800' ?>">&#8369;<?= number_format($balance, 2) ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                <div class="dashboard-report-list dashboard-summary-list">
+                    <div class="dashboard-report-row dashboard-summary-row dashboard-report-head" aria-hidden="true">
+                        <div>Organization</div>
+                        <div>Income</div>
+                        <div>Expense</div>
+                        <div>Balance</div>
+                    </div>
+                    <?php foreach ($summary as $row): ?>
+                        <?php $balance = (float) $row['total_income'] - (float) $row['total_expense']; ?>
+                        <div class="dashboard-report-row dashboard-summary-row">
+                            <div>
+                                <span class="inline-flex items-center gap-2">
+                                    <?= renderProfileMedia((string) ($row['name'] ?? ''), (string) ($row['logo_path'] ?? ''), 'organization', 'xs', (float) ($row['logo_crop_x'] ?? 50), (float) ($row['logo_crop_y'] ?? 50), (float) ($row['logo_zoom'] ?? 1)) ?>
+                                    <span><?= e($row['name']) ?></span>
+                                </span>
+                            </div>
+                            <div class="text-green-300 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_income'], 2) ?></div>
+                            <div class="text-red-300 whitespace-nowrap">&#8369;<?= number_format((float) $row['total_expense'], 2) ?></div>
+                            <div class="whitespace-nowrap <?= $balance >= 0 ? 'text-green-300' : 'text-red-300' ?>">&#8369;<?= number_format($balance, 2) ?></div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
                 <div class="pt-3">
                     <?php renderPagination($summaryPagination); ?>
@@ -523,6 +512,13 @@ WORK GUIDE:
                         <div class="dashboard-metric-label">Net balance (all organizations)</div>
                     </div>
                 </div>
+                <?php if (count($summaryRankingRows) === 0): ?>
+                    <div class="dashboard-empty-state">
+                        <div class="dashboard-empty-icon"><?= uiIcon('chart', 'ui-icon') ?></div>
+                        <div class="dashboard-empty-title">No financial health data yet</div>
+                        <p class="dashboard-empty-copy">Chart rankings will appear once organizations have income and expense records.</p>
+                    </div>
+                <?php else: ?>
                 <div class="grid xl:grid-cols-2 gap-2">
                     <div class="glass p-2 w-full h-full flex flex-col">
                         <h4 class="dashboard-section-title">Top Organizations by Net Balance</h4>
@@ -659,6 +655,7 @@ WORK GUIDE:
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

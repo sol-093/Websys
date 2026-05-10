@@ -80,7 +80,7 @@ function renderHeader(string $title = 'Dashboard'): void
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="assets/css/app.css?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/css/app.css')) ?>">
     </head>
-    <body class="min-h-screen <?= $user ? 'is-authenticated' : '' ?>" data-flash="<?= e($flashMessage) ?>" data-flash-type="<?= e($flashType) ?>" data-csrf-token="<?= e(csrfToken()) ?>" data-show-onboarding="<?= !empty($_SESSION['show_onboarding']) ? '1' : '0' ?>" data-onboarding-user-suffix="<?= e((string) (($user['id'] ?? '') !== '' ? (int) $user['id'] : 'guest')) ?>">
+    <body class="min-h-screen page-<?= e(preg_replace('/[^a-z0-9_-]/i', '-', $currentPage) ?: 'home') ?> <?= $user ? 'is-authenticated' : '' ?>" data-flash="<?= e($flashMessage) ?>" data-flash-type="<?= e($flashType) ?>" data-csrf-token="<?= e(csrfToken()) ?>" data-show-onboarding="<?= !empty($_SESSION['show_onboarding']) ? '1' : '0' ?>" data-onboarding-user-suffix="<?= e((string) (($user['id'] ?? '') !== '' ? (int) $user['id'] : 'guest')) ?>">
         <script src="assets/js/theme-init.js?v=<?= e((string) @filemtime(__DIR__ . '/../../assets/js/theme-init.js')) ?>"></script>
         <nav id="appNav" class="glass fixed top-0 inset-x-0 z-50 mx-1.5 sm:mx-2.5 mt-1.5 text-slate-800">
             <div class="max-w-7xl mx-auto px-3 py-2">

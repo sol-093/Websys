@@ -51,6 +51,56 @@
 
     initDashboardLiveTimestamp();
 
+    const initDashboardAutoFitPanels = function () {
+        const panels = Array.from(document.querySelectorAll('[data-dashboard-autofit-panel]'));
+        if (panels.length === 0) {
+            return;
+        }
+
+        const fitPanel = function (panel) {
+            const extras = Array.from(panel.querySelectorAll('.dashboard-autofit-extra[data-dashboard-autofit-item]'));
+            if (extras.length === 0) {
+                return;
+            }
+
+            extras.forEach(function (item) {
+                item.classList.add('hidden');
+            });
+
+            const availableHeight = panel.clientHeight;
+            if (availableHeight <= 0) {
+                return;
+            }
+
+            for (const item of extras) {
+                item.classList.remove('hidden');
+                if (panel.scrollHeight > availableHeight + 4) {
+                    item.classList.add('hidden');
+                    break;
+                }
+            }
+        };
+
+        const fitAll = function () {
+            panels.forEach(fitPanel);
+        };
+
+        let resizeTimer = 0;
+        const scheduleFit = function () {
+            window.clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(function () {
+                window.requestAnimationFrame(fitAll);
+            }, 80);
+        };
+
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(fitAll);
+        });
+        window.addEventListener('resize', scheduleFit);
+    };
+
+    initDashboardAutoFitPanels();
+
     const canvas = document.getElementById('trendChart');
     if (!canvas) return;
 

@@ -136,15 +136,24 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
     $pendingAssignmentsPagination = paginateArray($pendingAssignments, 'pg_dash_assign', 2);
     $pendingAssignments = $pendingAssignmentsPagination['items'];
     $pendingTransactionRequestCount = $dashboardRepository->pendingTransactionRequestCount();
-    $dashboardOrganizationsPreview = array_slice($orgs, 0, 3);
-    $summaryAll = $summary;
-    $summaryPagination = paginateArray($summaryAll, 'pg_dash_summary', 4);
-    $summary = $summaryPagination['items'];
-    $activityPagination = paginateArray($activity, 'pg_dash_activity', 2);
-    $activity = $activityPagination['items'];
-    $latestAnnouncementsPreview = array_slice($announcements, 0, 3);
-    $activityPreview = array_slice($activity, 0, 2);
+
+    $dashboardOrganizationPreviewBaseLimit = 3;
+    $dashboardOrganizationPreviewMaxLimit = 10;
+    $dashboardAnnouncementPreviewBaseLimit = 3;
+    $dashboardAnnouncementPreviewMaxLimit = 8;
+    $dashboardActivityPreviewBaseLimit = 2;
+    $dashboardActivityPreviewMaxLimit = 6;
+    $dashboardSummaryPreviewLimit = 4;
     $recentReportsDisplayLimit = 8;
+
+    $dashboardOrganizationsPreview = array_slice($orgs, 0, $dashboardOrganizationPreviewMaxLimit);
+    $summaryAll = $summary;
+    $summaryPagination = paginateArray($summaryAll, 'pg_dash_summary', $dashboardSummaryPreviewLimit);
+    $summary = $summaryPagination['items'];
+    $activityPagination = paginateArray($activity, 'pg_dash_activity', $dashboardActivityPreviewMaxLimit);
+    $activity = $activityPagination['items'];
+    $latestAnnouncementsPreview = array_slice($announcements, 0, $dashboardAnnouncementPreviewMaxLimit);
+    $activityPreview = array_slice($activity, 0, $dashboardActivityPreviewMaxLimit);
     $transactions = array_slice($transactions, 0, $recentReportsDisplayLimit);
     $dashboardTimestamp = (new DateTimeImmutable('now'))->format('l, F j, Y | g:i A');
     $expenseRatio = $kpiIncome > 0 ? (int) min(100, round(($kpiExpense / $kpiIncome) * 100)) : 0;
@@ -243,6 +252,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'budgetFlowPendingExpenseRequestCount',
         'budgetFlowWatchLineCount',
         'dashboardOrganizationsPreview',
+        'dashboardOrganizationPreviewBaseLimit',
         'dashboardTimestamp',
         'expenseRatio',
         'healthyMonthCount',
@@ -259,6 +269,8 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'kpiExpense',
         'kpiIncome',
         'latestAnnouncementCount',
+        'dashboardAnnouncementPreviewBaseLimit',
+        'dashboardActivityPreviewBaseLimit',
         'latestAnnouncementsPreview',
         'latestTrendDelta',
         'latestTrendDirectionLabel',
@@ -269,6 +281,7 @@ function buildDashboardViewData(PDO $db, array $user, array $config, string $ann
         'pendingAssignmentCount',
         'pendingAssignments',
         'pendingAssignmentsPagination',
+        'pendingTransactionRequestCount',
         'expensePreviousMonthCount',
         'expensePreviousMonthTotal',
         'expenses_delta_pct',

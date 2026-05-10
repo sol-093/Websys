@@ -144,6 +144,12 @@
                 flex: 1 0 auto;
             }
 
+            body.page-dashboard main {
+                flex: 0 0 auto;
+                min-height: auto;
+                padding-bottom: 0.75rem !important;
+            }
+
             body.theme-dark {
                 background:
                     linear-gradient(145deg, rgba(1, 25, 18, 0.84) 0%, rgba(2, 38, 31, 0.9) 46%, rgba(4, 55, 45, 0.96) 100%),
@@ -184,9 +190,73 @@
             }
 
             .table-wrapper {
+                position: relative;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 border-radius: inherit;
+            }
+
+            .table-wrapper::after,
+            .table-shell::after,
+            .dashboard-table-shell::after,
+            .owner-budget-table-wrap::after {
+                content: '';
+                display: block;
+                width: 100%;
+                height: 1px;
+                margin-top: -1px;
+                background: rgba(110, 231, 183, 0.42);
+                pointer-events: none;
+            }
+
+            .table-shell,
+            .dashboard-table-shell,
+            .owner-budget-table-wrap {
+                position: relative;
+                width: 100%;
+                max-width: 100%;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table-shell > table:not(.charts-css),
+            .table-wrapper > table:not(.charts-css),
+            .dashboard-table:not(.charts-css),
+            .compact-table:not(.charts-css),
+            .owner-budget-table:not(.charts-css) {
+                width: 100%;
+                min-width: 100%;
+                border-collapse: collapse;
+                border-spacing: 0;
+                border-bottom: 0;
+            }
+
+            .table-shell > table:not(.charts-css) th,
+            .table-shell > table:not(.charts-css) td,
+            .table-wrapper > table:not(.charts-css) th,
+            .table-wrapper > table:not(.charts-css) td,
+            .dashboard-table:not(.charts-css) th,
+            .dashboard-table:not(.charts-css) td,
+            .compact-table:not(.charts-css) th,
+            .compact-table:not(.charts-css) td,
+            .owner-budget-table:not(.charts-css) th,
+            .owner-budget-table:not(.charts-css) td {
+                border-bottom: 1px solid rgba(110, 231, 183, 0.42);
+                background-clip: padding-box;
+            }
+
+            .table-shell > table:not(.charts-css) tbody tr:last-child th,
+            .table-shell > table:not(.charts-css) tbody tr:last-child td,
+            .table-wrapper > table:not(.charts-css) tbody tr:last-child th,
+            .table-wrapper > table:not(.charts-css) tbody tr:last-child td,
+            .dashboard-table:not(.charts-css) tbody tr:last-child th,
+            .dashboard-table:not(.charts-css) tbody tr:last-child td,
+            .compact-table:not(.charts-css) tbody tr:last-child th,
+            .compact-table:not(.charts-css) tbody tr:last-child td,
+            .owner-budget-table:not(.charts-css) tbody tr:last-child th,
+            .owner-budget-table:not(.charts-css) tbody tr:last-child td {
+                border-bottom-color: transparent;
             }
 
             .modal-panel,
@@ -1577,11 +1647,24 @@
    ================================================ */
 
             .app-footer {
+                flex-shrink: 0;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative;
+                z-index: 20;
                 margin-top: 1.25rem;
+                padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
                 border-top: 1px solid rgba(16, 185, 129, 0.24);
                 background: rgba(255, 255, 255, 0.55);
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
+                overflow: visible;
+            }
+
+            body.page-dashboard .app-footer {
+                margin-top: 0.75rem;
+                margin-bottom: 0;
             }
 
             .app-footer-link {
@@ -1630,6 +1713,7 @@
                 justify-content: space-between;
                 flex-wrap: wrap;
                 gap: 0.5rem;
+                min-height: 3rem;
                 border-top-color: rgba(16, 185, 129, 0.16);
             }
 
@@ -3883,6 +3967,18 @@
             .dashboard-shell {
                 max-width: 1320px;
                 margin: 0 auto;
+                padding-bottom: 1.25rem;
+            }
+
+            .dashboard-shell-empty {
+                padding-bottom: 3rem;
+            }
+
+            .dashboard-footer-spacer {
+                display: block;
+                height: 2.5rem;
+                width: 100%;
+                flex: 0 0 auto;
             }
 
             @media (min-width: 1280px) {
@@ -4160,12 +4256,14 @@
 
             .dashboard-report-row {
                 display: grid;
+                width: 100%;
                 grid-template-columns: minmax(6.5rem, 0.9fr) minmax(13rem, 1.8fr) minmax(6rem, 0.75fr) minmax(7rem, 0.85fr) minmax(5.5rem, 0.7fr);
                 align-items: center;
                 gap: 1rem;
                 border-bottom: 1px solid rgba(110, 231, 183, 0.48);
                 padding: 0.58rem 0;
                 color: #f0fdf4;
+                box-sizing: border-box;
             }
 
             .dashboard-summary-row {
@@ -4210,20 +4308,21 @@
 
             .dashboard-recent-reports-table th,
             .dashboard-recent-reports-table td {
-                border-bottom: 0;
-                box-shadow: inset 0 -1px 0 rgba(110, 231, 183, 0.58);
+                border-bottom: 1px solid rgba(110, 231, 183, 0.58);
+                box-shadow: none;
                 position: relative;
                 z-index: 1;
             }
 
             .dashboard-recent-reports-table tbody tr:nth-last-child(2) td {
-                box-shadow: none;
+                border-bottom: 1px solid rgba(110, 231, 183, 0.58);
             }
 
             .dashboard-recent-reports-table .dashboard-recent-reports-end-line td {
                 height: 1px;
                 padding: 0 !important;
-                box-shadow: inset 0 1px 0 rgba(110, 231, 183, 0.58);
+                border-bottom: 0;
+                box-shadow: none;
                 line-height: 0;
             }
 
@@ -4988,6 +5087,21 @@
                 border-color: rgba(16, 185, 129, 0.28) !important;
             }
 
+            body:not(.theme-dark) .table-shell > table:not(.charts-css),
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css),
+            body:not(.theme-dark) .dashboard-table:not(.charts-css),
+            body:not(.theme-dark) .compact-table:not(.charts-css),
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) {
+                border-bottom-color: transparent;
+            }
+
+            body:not(.theme-dark) .table-wrapper::after,
+            body:not(.theme-dark) .table-shell::after,
+            body:not(.theme-dark) .dashboard-table-shell::after,
+            body:not(.theme-dark) .owner-budget-table-wrap::after {
+                background: rgba(16, 185, 129, 0.34);
+            }
+
             body:not(.theme-dark) .dashboard-recent-reports-table thead tr,
             body:not(.theme-dark) .dashboard-recent-reports-table tbody tr {
                 border-bottom-color: transparent;
@@ -4995,11 +5109,13 @@
 
             body:not(.theme-dark) .dashboard-recent-reports-table th,
             body:not(.theme-dark) .dashboard-recent-reports-table td {
-                box-shadow: inset 0 -1px 0 rgba(16, 185, 129, 0.34);
+                border-bottom-color: rgba(16, 185, 129, 0.34);
+                box-shadow: none;
             }
 
             body:not(.theme-dark) .dashboard-recent-reports-table .dashboard-recent-reports-end-line td {
-                box-shadow: inset 0 1px 0 rgba(16, 185, 129, 0.34);
+                border-bottom: 0;
+                box-shadow: none;
             }
 
             body:not(.theme-dark) .dashboard-shell .text-green-300,
