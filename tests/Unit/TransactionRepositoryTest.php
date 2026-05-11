@@ -21,6 +21,7 @@ final class TransactionRepositoryTest extends TestCase
         $transactionId = $repository->create(4, 'income', 1500.25, 'Membership dues', '2026-05-09', 'uploads/receipts/dues.pdf');
 
         self::assertTrue($repository->existsForOrganization($transactionId, 4));
+        self::assertTrue($repository->activeExistsForOrganization($transactionId, 4));
         self::assertFalse($repository->existsForOrganization($transactionId, 99));
 
         $updateRequestId = $repository->requestUpdate($transactionId, 4, 7, 'expense', 800.00, 'Venue correction', '2026-05-10');
@@ -84,7 +85,11 @@ final class TransactionRepositoryTest extends TestCase
         self::assertNotEmpty($voided['voided_at']);
         self::assertSame('Remove duplicate', $voided['void_reason']);
         self::assertSame(0.0, (float) $repository->totalsByType()['expense']);
+        self::assertFalse($repository->activeExistsForOrganization($transactionId, 4));
         self::assertNull($repository->pendingChangeRequest($deleteRequestId));
+
+        $this->expectException(\RuntimeException::class);
+        $repository->requestDelete($transactionId, 4, 7);
     }
 
     private function createSchema(PDO $db): void

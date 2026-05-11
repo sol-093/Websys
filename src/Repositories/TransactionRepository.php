@@ -174,6 +174,18 @@ final class TransactionRepository
         return (bool) $stmt->fetch();
     }
 
+    public function activeExistsForOrganization(int $transactionId, int $organizationId): bool
+    {
+        if ($transactionId <= 0 || $organizationId <= 0) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare('SELECT id FROM financial_transactions WHERE id = ? AND organization_id = ? AND is_voided = 0 LIMIT 1');
+        $stmt->execute([$transactionId, $organizationId]);
+
+        return (bool) $stmt->fetch();
+    }
+
     public function hasPendingChangeRequest(int $transactionId, string $actionType): bool
     {
         if ($transactionId <= 0 || !in_array($actionType, ['update', 'delete'], true)) {
@@ -188,6 +200,10 @@ final class TransactionRepository
 
     public function requestUpdate(int $transactionId, int $organizationId, int $requestedBy, string $type, float $amount, string $description, string $transactionDate): int
     {
+        if (!$this->activeExistsForOrganization($transactionId, $organizationId)) {
+            throw new \RuntimeException('Voided transactions cannot be updated.');
+        }
+
         $stmt = $this->db->prepare('INSERT INTO transaction_change_requests (transaction_id, organization_id, requested_by, action_type, proposed_type, proposed_amount, proposed_description, proposed_transaction_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
             $transactionId,
@@ -206,6 +222,10 @@ final class TransactionRepository
 
     public function requestDelete(int $transactionId, int $organizationId, int $requestedBy): int
     {
+        if (!$this->activeExistsForOrganization($transactionId, $organizationId)) {
+            throw new \RuntimeException('Voided transactions cannot be deleted again.');
+        }
+
         $stmt = $this->db->prepare('INSERT INTO transaction_change_requests (transaction_id, organization_id, requested_by, action_type, status) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute([$transactionId, $organizationId, $requestedBy, 'delete', 'pending']);
 

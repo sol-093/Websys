@@ -274,6 +274,11 @@ function handleUpdateTransactionAction(PDO $db, array $user): void
         redirect('?page=my_org_finance&org_id=' . (int) $org['id'] . '#tx-history');
     }
 
+    if (!$transactions->activeExistsForOrganization($txId, (int) $org['id'])) {
+        setFlash('error', 'Voided transactions cannot be updated.');
+        redirect('?page=my_org_finance&org_id=' . (int) $org['id'] . '#tx-history');
+    }
+
     if ($transactions->hasPendingChangeRequest($txId, 'update')) {
         setFlash('error', 'An update request for this transaction is already pending.');
         redirect('?page=my_org_finance&org_id=' . (int) $org['id'] . '#tx-history');
@@ -300,6 +305,11 @@ function handleDeleteTransactionAction(PDO $db, array $user): void
     if ($org) {
         if (!$transactions->existsForOrganization($txId, (int) $org['id'])) {
             setFlash('error', 'Transaction not found.');
+            redirect('?page=my_org_finance&org_id=' . (int) $org['id'] . '#tx-history');
+        }
+
+        if (!$transactions->activeExistsForOrganization($txId, (int) $org['id'])) {
+            setFlash('error', 'Voided transactions cannot be deleted again.');
             redirect('?page=my_org_finance&org_id=' . (int) $org['id'] . '#tx-history');
         }
 
