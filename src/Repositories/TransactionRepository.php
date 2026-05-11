@@ -237,11 +237,24 @@ final class TransactionRepository
      */
     public function pendingChangeRequest(int $requestId): ?array
     {
+        return $this->pendingChangeRequestForDecision($requestId, false);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function pendingChangeRequestForDecision(int $requestId, bool $lock = true): ?array
+    {
         if ($requestId <= 0) {
             return null;
         }
 
-        $stmt = $this->db->prepare('SELECT * FROM transaction_change_requests WHERE id = ? AND status = ? LIMIT 1');
+        $sql = 'SELECT * FROM transaction_change_requests WHERE id = ? AND status = ? LIMIT 1';
+        if ($lock && (string) $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $sql .= ' FOR UPDATE';
+        }
+
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([$requestId, 'pending']);
         $request = $stmt->fetch();
 
@@ -264,7 +277,15 @@ final class TransactionRepository
                 (int) $request['organization_id'],
             ]);
 
+            if ($stmt->rowCount() < 1) {
+                throw new \RuntimeException('Transaction is no longer active.');
+            }
+
             return;
+        }
+
+        if ((string) $request['action_type'] !== 'delete') {
+            throw new \RuntimeException('Unsupported transaction change request.');
         }
 
         $reason = trim((string) ($voidReason ?? ''));
@@ -274,6 +295,10 @@ final class TransactionRepository
 
         $stmt = $this->db->prepare('UPDATE financial_transactions SET is_voided = 1, voided_at = CURRENT_TIMESTAMP, void_reason = ? WHERE id = ? AND organization_id = ? AND is_voided = 0');
         $stmt->execute([$reason, (int) $request['transaction_id'], (int) $request['organization_id']]);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Transaction is no longer active.');
+        }
     }
 
     public function markChangeRequestDecision(int $requestId, string $status, string $adminNote): void
@@ -282,8 +307,12 @@ final class TransactionRepository
             return;
         }
 
-        $stmt = $this->db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
-        $stmt->execute([$status, $adminNote, $requestId]);
+        $stmt = $this->db->prepare('UPDATE transaction_change_requests SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = ?');
+        $stmt->execute([$status, $adminNote, $requestId, 'pending']);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Transaction change request is no longer pending.');
+        }
     }
 
     /**

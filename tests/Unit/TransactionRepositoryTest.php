@@ -92,6 +92,26 @@ final class TransactionRepositoryTest extends TestCase
         $repository->requestDelete($transactionId, 4, 7);
     }
 
+    public function testApprovedChangeRequestRequiresActiveTransaction(): void
+    {
+        $db = new PDO('sqlite::memory:');
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->createSchema($db);
+
+        $repository = new TransactionRepository($db);
+        $transactionId = $repository->create(4, 'expense', 450.00, 'Snacks', '2026-05-09');
+        $deleteRequestId = $repository->requestDelete($transactionId, 4, 7);
+        $db->prepare('UPDATE financial_transactions SET is_voided = 1 WHERE id = ?')->execute([$transactionId]);
+
+        $pendingDelete = $repository->pendingChangeRequestForDecision($deleteRequestId);
+        self::assertNotNull($pendingDelete);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Transaction is no longer active.');
+
+        $repository->applyApprovedChangeRequest($pendingDelete, 'Remove duplicate');
+    }
+
     private function createSchema(PDO $db): void
     {
         $db->exec('CREATE TABLE organizations (

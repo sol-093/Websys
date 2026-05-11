@@ -356,14 +356,13 @@ function handleProcessTxChangeRequestAction(PDO $db, array $user): void
         redirect('?page=admin_requests');
     }
 
-    $request = $transactions->pendingChangeRequest($requestId);
-    if (!$request) {
-        setFlash('error', 'Request is no longer pending.');
-        redirect('?page=admin_requests');
-    }
-
     try {
-        withTransaction($db, static function () use ($transactions, $decision, $request, $adminNote, $requestId): void {
+        withTransaction($db, static function () use ($transactions, $decision, $adminNote, $requestId): void {
+            $request = $transactions->pendingChangeRequestForDecision($requestId);
+            if (!$request) {
+                throw new RuntimeException('Request is no longer pending.');
+            }
+
             if ($decision === 'approve') {
                 $transactions->applyApprovedChangeRequest($request, $adminNote);
                 $transactions->markChangeRequestDecision($requestId, 'approved', $adminNote);
