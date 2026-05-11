@@ -155,6 +155,25 @@ final class OrganizationRepositoryTest extends TestCase
         self::assertFalse($repository->isMember(8, 12));
     }
 
+    public function testJoinRequestDecisionRequiresPendingStatus(): void
+    {
+        $db = new PDO('sqlite::memory:');
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->createSchema($db);
+
+        $db->prepare('INSERT INTO organizations (id, name, org_category, target_institute, target_program) VALUES (?, ?, ?, ?, ?)')->execute([8, 'JPCS', 'collegewide', null, null]);
+        $db->prepare('INSERT INTO users (id, name) VALUES (?, ?)')->execute([12, 'Student']);
+
+        $repository = new OrganizationRepository($db);
+        $requestId = $repository->createJoinRequest(8, 12);
+        $repository->markJoinRequestDecision($requestId, 'declined');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Join request is no longer pending.');
+
+        $repository->markJoinRequestDecision($requestId, 'approved');
+    }
+
     public function testOwnerAssignmentHelpers(): void
     {
         $db = new PDO('sqlite::memory:');
@@ -190,6 +209,25 @@ final class OrganizationRepositoryTest extends TestCase
         $repository->clearOwnerAssignment(8);
         self::assertSame(0, (int) $db->query('SELECT COUNT(*) FROM owner_assignments WHERE organization_id = 8')->fetchColumn());
         self::assertNull($db->query('SELECT owner_id FROM organizations WHERE id = 8')->fetchColumn());
+    }
+
+    public function testOwnerAssignmentDecisionRequiresPendingStatus(): void
+    {
+        $db = new PDO('sqlite::memory:');
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->createSchema($db);
+
+        $db->prepare('INSERT INTO organizations (id, name, org_category, target_institute, target_program) VALUES (?, ?, ?, ?, ?)')->execute([8, 'JPCS', 'collegewide', null, null]);
+        $db->prepare('INSERT INTO users (id, name, role, institute, program) VALUES (?, ?, ?, ?, ?)')->execute([12, 'Student', 'student', 'Institute of Computing and Digital Innovations', 'BS Information Systems']);
+
+        $repository = new OrganizationRepository($db);
+        $assignmentId = $repository->createPendingOwnerAssignment(8, 12);
+        $repository->markOwnerAssignmentDecision($assignmentId, 'declined');
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Owner assignment is no longer pending.');
+
+        $repository->markOwnerAssignmentDecision($assignmentId, 'accepted');
     }
 
     private function createSchema(PDO $db): void

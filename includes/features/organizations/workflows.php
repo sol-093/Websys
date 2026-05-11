@@ -275,14 +275,13 @@ function handleRespondOwnerAssignmentAction(PDO $db, array $user): void
         redirect('?page=dashboard');
     }
 
-    $assignment = $organizations->pendingOwnerAssignmentForStudent($assignmentId, (int) $user['id']);
-    if (!$assignment) {
-        setFlash('error', 'Assignment is no longer available.');
-        redirect('?page=dashboard');
-    }
-
     try {
-        withTransaction($db, static function () use ($db, $organizations, $decision, $assignmentId, $assignment, $user): void {
+        withTransaction($db, static function () use ($db, $organizations, $decision, $assignmentId, $user): void {
+            $assignment = $organizations->pendingOwnerAssignmentForDecision($assignmentId, (int) $user['id']);
+            if (!$assignment) {
+                throw new RuntimeException('Assignment is no longer available.');
+            }
+
             if ($decision === 'accept') {
                 $organizations->markOwnerAssignmentDecision($assignmentId, 'accepted');
                 $organizations->setOwner((int) $assignment['organization_id'], (int) $user['id']);
@@ -399,14 +398,13 @@ function handleRespondJoinRequestAction(PDO $db, array $user): void
         redirect('?page=my_org_members&org_id=' . $orgId);
     }
 
-    $request = $organizations->pendingJoinRequest($requestId, $orgId);
-    if (!$request) {
-        setFlash('error', 'Request is no longer pending.');
-        redirect('?page=my_org_members&org_id=' . $orgId);
-    }
-
     try {
-        withTransaction($db, static function () use ($db, $organizations, $decision, $requestId, $orgId, $request): void {
+        withTransaction($db, static function () use ($db, $organizations, $decision, $requestId, $orgId): void {
+            $request = $organizations->pendingJoinRequestForDecision($requestId, $orgId);
+            if (!$request) {
+                throw new RuntimeException('Request is no longer pending.');
+            }
+
             if ($decision === 'approve') {
                 $organizations->markJoinRequestDecision($requestId, 'approved');
                 ensureOrganizationMember($db, $orgId, (int) $request['user_id']);

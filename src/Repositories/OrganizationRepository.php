@@ -399,11 +399,24 @@ final class OrganizationRepository
      */
     public function pendingJoinRequest(int $requestId, int $organizationId): ?array
     {
+        return $this->pendingJoinRequestForDecision($requestId, $organizationId, false);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function pendingJoinRequestForDecision(int $requestId, int $organizationId, bool $lock = true): ?array
+    {
         if ($requestId <= 0 || $organizationId <= 0) {
             return null;
         }
 
-        $stmt = $this->db->prepare('SELECT * FROM organization_join_requests WHERE id = ? AND organization_id = ? AND status = ? LIMIT 1');
+        $sql = 'SELECT * FROM organization_join_requests WHERE id = ? AND organization_id = ? AND status = ? LIMIT 1';
+        if ($lock && (string) $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $sql .= ' FOR UPDATE';
+        }
+
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([$requestId, $organizationId, 'pending']);
         $request = $stmt->fetch();
 
@@ -416,8 +429,12 @@ final class OrganizationRepository
             return;
         }
 
-        $stmt = $this->db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
-        $stmt->execute([$status, $requestId]);
+        $stmt = $this->db->prepare('UPDATE organization_join_requests SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = ?');
+        $stmt->execute([$status, $requestId, 'pending']);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Join request is no longer pending.');
+        }
     }
 
     public function clearOwnerAssignment(int $organizationId): void
@@ -448,11 +465,24 @@ final class OrganizationRepository
      */
     public function pendingOwnerAssignmentForStudent(int $assignmentId, int $studentId): ?array
     {
+        return $this->pendingOwnerAssignmentForDecision($assignmentId, $studentId, false);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function pendingOwnerAssignmentForDecision(int $assignmentId, int $studentId, bool $lock = true): ?array
+    {
         if ($assignmentId <= 0 || $studentId <= 0) {
             return null;
         }
 
-        $stmt = $this->db->prepare('SELECT * FROM owner_assignments WHERE id = ? AND student_id = ? AND status = ? LIMIT 1');
+        $sql = 'SELECT * FROM owner_assignments WHERE id = ? AND student_id = ? AND status = ? LIMIT 1';
+        if ($lock && (string) $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+            $sql .= ' FOR UPDATE';
+        }
+
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([$assignmentId, $studentId, 'pending']);
         $assignment = $stmt->fetch();
 
@@ -465,8 +495,12 @@ final class OrganizationRepository
             return;
         }
 
-        $stmt = $this->db->prepare('UPDATE owner_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
-        $stmt->execute([$status, $assignmentId]);
+        $stmt = $this->db->prepare('UPDATE owner_assignments SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = ?');
+        $stmt->execute([$status, $assignmentId, 'pending']);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Owner assignment is no longer pending.');
+        }
     }
 
     public function setOwner(int $organizationId, int $ownerId): void
