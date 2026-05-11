@@ -627,6 +627,7 @@ flowchart TB
 - Mutating web actions use CSRF validation.
 - Role and permission checks are enforced through `can()` and `requirePermission()`.
 - Uploads validate size, original extension, MIME type, and image dimensions where applicable.
+- Profile and organization images are decoded and re-saved before storage; receipt files keep their validated original payload for audit visibility.
 - Financial transaction delete approvals void records instead of removing rows.
 - Voided transactions remain visible but are excluded from active totals and blocked from further update/delete requests.
 - Audit logs and notifications are written around critical workflows.

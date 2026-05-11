@@ -13,6 +13,7 @@ The repository includes `.gitattributes` export rules so `git archive` excludes 
 - Create a production `.env` from `.env.example`; never copy local credentials.
 - Set `APP_ENV=production` and `APP_DEBUG=false`.
 - Configure MySQL credentials, SMTP credentials, `APP_URL`/`BASE_URL`, and Google OAuth only when used.
+- Enable required PHP extensions: the production PDO database driver, `fileinfo`, and `gd`.
 - Ensure `uploads/`, `uploads/users/`, `uploads/organizations/`, `uploads/receipts/`, and `storage/cache/` are writable by PHP but not executable.
 - Run `composer install --no-dev --prefer-dist --no-progress --optimize-autoloader`.
 - Run `composer dump-autoload --optimize` if dependencies were installed or copied through a deployment process that did not generate optimized autoload files.
@@ -29,5 +30,6 @@ The repository includes `.gitattributes` export rules so `git archive` excludes 
 ## Post-Deploy Checks
 - Confirm `.env` is not web-accessible.
 - Confirm uploaded receipts/images are not executable.
+- Confirm profile and organization image uploads work after deployment; this verifies the GD reprocessing path.
 - Confirm cache files are created under `storage/cache/`.
 - Review PHP and web server logs after the first real user session.

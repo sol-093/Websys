@@ -76,6 +76,7 @@ composer audit
 - Safe environment template: `.env.example`
 - Database bootstrap and compatibility: `includes/core/db.php`
 - Upload destination: `uploads/`
+- Required PHP extensions: PDO driver for the selected database, `fileinfo`, and `gd` for server-side profile/organization image reprocessing.
 - SMTP/OAuth values are read from environment variables and config.
 - Keep `APP_DEBUG=false` for normal local demos; only enable `APP_DEBUG=true` when you intentionally need detailed startup/debug output.
 - Set mail credentials in `.env` with `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, and `SMTP_FROM_NAME` when you want verification or password reset emails to send.
@@ -83,6 +84,7 @@ composer audit
 - INVOLVE brand image assets live in `uploads/assets/`; active navbar and About page logo styles are defined in `includes/core/layout.php`.
 - Account emails currently use text-based `involve` header branding for broader email-client compatibility.
 - Transaction PDF exports use `uploads/assets/pdftemplate.png` as the page background template.
+- User profile and organization logo uploads are decoded and re-saved server-side before storage to strip embedded metadata and reject malformed image files.
 
 ### Architecture Snapshot
 - `index.php`: thin web entry point that loads bootstrap and route dispatchers

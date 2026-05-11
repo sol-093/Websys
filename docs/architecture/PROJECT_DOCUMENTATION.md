@@ -88,6 +88,7 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - Migrated SQL-heavy paths should use repository classes under `src/Repositories/`.
 - Repository coverage currently includes auth, organizations, transactions, dashboard data, budgets, expense requests, announcements, audit logs, and notification workflow updates.
 - Uploaded receipts/media are stored in `uploads/`, with bundled media in `uploads/assets/`, user profile pictures in `uploads/users/`, organization profile images in `uploads/organizations/`, and receipts in `uploads/receipts/`.
+- User profile pictures and organization logos are decoded and re-saved through GD before storage so uploaded image metadata and malformed image payloads are not preserved. Receipt PDFs/images keep the receipt validation path and are not re-encoded.
 - Compatibility migrations include `password_reset_at` for forgot-password reset cooldown enforcement.
 
 ### Route and Feature Domains
