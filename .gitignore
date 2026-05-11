@@ -39,3 +39,6 @@ Thumbs.db
 !/uploads/receipts/
 /uploads/receipts/*
 !/uploads/receipts/.htaccess
+docs/architecture/mermaid/lvl2dfd.png
+docs/architecture/mermaid/lvl3dfd.png
+docs/architecture/mermaid/student_org_system.png
