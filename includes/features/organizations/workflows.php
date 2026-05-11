@@ -365,7 +365,7 @@ function handleProcessTxChangeRequestAction(PDO $db, array $user): void
     try {
         withTransaction($db, static function () use ($transactions, $decision, $request, $adminNote, $requestId): void {
             if ($decision === 'approve') {
-                $transactions->applyApprovedChangeRequest($request);
+                $transactions->applyApprovedChangeRequest($request, $adminNote);
                 $transactions->markChangeRequestDecision($requestId, 'approved', $adminNote);
                 return;
             }

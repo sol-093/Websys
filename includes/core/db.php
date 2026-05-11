@@ -217,6 +217,9 @@ function initializeDatabaseSqlite(PDO $pdo): void
         transaction_date TEXT NOT NULL,
         receipt_path TEXT NULL,
         expense_request_id INTEGER NULL,
+        is_voided INTEGER NOT NULL DEFAULT 0,
+        voided_at TEXT NULL,
+        void_reason TEXT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
     );
@@ -413,6 +416,9 @@ function initializeDatabaseMySql(PDO $pdo): void
         transaction_date DATE NOT NULL,
         receipt_path VARCHAR(255) NULL,
         expense_request_id INT NULL,
+        is_voided TINYINT(1) NOT NULL DEFAULT 0,
+        voided_at DATETIME NULL,
+        void_reason TEXT NULL,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_tx_org FOREIGN KEY (organization_id)
             REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -616,6 +622,27 @@ function ensureBudgetFlowSchema(PDO $pdo): void
         'expense_request_id',
         'expense_request_id INT NULL',
         'expense_request_id INTEGER NULL'
+    );
+    addColumnIfNotExists(
+        $pdo,
+        'financial_transactions',
+        'is_voided',
+        'is_voided TINYINT(1) NOT NULL DEFAULT 0',
+        'is_voided INTEGER NOT NULL DEFAULT 0'
+    );
+    addColumnIfNotExists(
+        $pdo,
+        'financial_transactions',
+        'voided_at',
+        'voided_at DATETIME NULL',
+        'voided_at TEXT NULL'
+    );
+    addColumnIfNotExists(
+        $pdo,
+        'financial_transactions',
+        'void_reason',
+        'void_reason TEXT NULL',
+        'void_reason TEXT NULL'
     );
 
     if ($driver === 'mysql') {

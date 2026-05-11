@@ -231,10 +231,10 @@ final class TransactionRepository
     /**
      * @param array<string, mixed> $request
      */
-    public function applyApprovedChangeRequest(array $request): void
+    public function applyApprovedChangeRequest(array $request, ?string $voidReason = null): void
     {
         if ((string) $request['action_type'] === 'update') {
-            $stmt = $this->db->prepare('UPDATE financial_transactions SET type = ?, amount = ?, description = ?, transaction_date = ? WHERE id = ? AND organization_id = ?');
+            $stmt = $this->db->prepare('UPDATE financial_transactions SET type = ?, amount = ?, description = ?, transaction_date = ? WHERE id = ? AND organization_id = ? AND is_voided = 0');
             $stmt->execute([
                 (string) $request['proposed_type'],
                 round((float) $request['proposed_amount'], 2),
@@ -247,8 +247,13 @@ final class TransactionRepository
             return;
         }
 
-        $stmt = $this->db->prepare('DELETE FROM financial_transactions WHERE id = ? AND organization_id = ?');
-        $stmt->execute([(int) $request['transaction_id'], (int) $request['organization_id']]);
+        $reason = trim((string) ($voidReason ?? ''));
+        if ($reason === '') {
+            $reason = 'Approved delete request';
+        }
+
+        $stmt = $this->db->prepare('UPDATE financial_transactions SET is_voided = 1, voided_at = CURRENT_TIMESTAMP, void_reason = ? WHERE id = ? AND organization_id = ? AND is_voided = 0');
+        $stmt->execute([$reason, (int) $request['transaction_id'], (int) $request['organization_id']]);
     }
 
     public function markChangeRequestDecision(int $requestId, string $status, string $adminNote): void
@@ -269,7 +274,8 @@ final class TransactionRepository
         return $this->profile('transactions.totals_by_type', fn() => $this->db->query("SELECT
                 COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
                 COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
-                FROM financial_transactions")->fetch());
+                FROM financial_transactions
+                WHERE is_voided = 0")->fetch());
     }
 
     private function profile(string $label, callable $callback): mixed

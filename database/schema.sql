@@ -77,6 +77,9 @@ CREATE TABLE IF NOT EXISTS financial_transactions (
     transaction_date DATE NOT NULL,
     receipt_path VARCHAR(255) NULL,
     expense_request_id INT NULL,
+    is_voided TINYINT(1) NOT NULL DEFAULT 0,
+    voided_at DATETIME NULL,
+    void_reason TEXT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_tx_org FOREIGN KEY (organization_id)
         REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,

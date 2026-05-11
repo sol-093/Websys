@@ -94,7 +94,7 @@ final class DashboardRepository
                     COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) AS total_income,
                     COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) AS total_expense
                     FROM organizations o
-                    LEFT JOIN financial_transactions t ON t.organization_id = o.id
+                    LEFT JOIN financial_transactions t ON t.organization_id = o.id AND t.is_voided = 0
                     WHERE o.id IN ($placeholders)
                     GROUP BY o.id, o.name, o.logo_path
                     ORDER BY o.name");
@@ -143,7 +143,8 @@ final class DashboardRepository
                     COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_current,
                     COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN amount ELSE 0 END), 0) AS expense_previous,
                     COALESCE(SUM(CASE WHEN type = 'expense' AND transaction_date >= ? AND transaction_date < ? THEN 1 ELSE 0 END), 0) AS expense_previous_count
-                    FROM financial_transactions");
+                    FROM financial_transactions
+                    WHERE is_voided = 0");
                 $stmt->execute([
                     $monthStart->format('Y-m-d'),
                     $nextMonthStart->format('Y-m-d'),
@@ -227,6 +228,7 @@ final class DashboardRepository
                     COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
                     COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
                     FROM financial_transactions
+                    WHERE is_voided = 0
                     GROUP BY DATE_FORMAT(transaction_date, '%Y-%m')
                     ORDER BY month DESC
                     LIMIT 6")->fetchAll() ?: [];
@@ -236,6 +238,7 @@ final class DashboardRepository
                 COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) AS income,
                 COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) AS expense
                 FROM financial_transactions
+                WHERE is_voided = 0
                 GROUP BY strftime('%Y-%m', transaction_date)
                 ORDER BY month DESC
                 LIMIT 6")->fetchAll() ?: [];

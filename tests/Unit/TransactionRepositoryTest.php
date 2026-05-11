@@ -63,7 +63,7 @@ final class TransactionRepositoryTest extends TestCase
         self::assertNull($repository->pendingChangeRequest($deleteRequestId));
     }
 
-    public function testApprovedDeleteChangeRequestRemovesTransaction(): void
+    public function testApprovedDeleteChangeRequestVoidsTransaction(): void
     {
         $db = new PDO('sqlite::memory:');
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -75,10 +75,15 @@ final class TransactionRepositoryTest extends TestCase
 
         $pendingDelete = $repository->pendingChangeRequest($deleteRequestId);
         self::assertNotNull($pendingDelete);
-        $repository->applyApprovedChangeRequest($pendingDelete);
+        $repository->applyApprovedChangeRequest($pendingDelete, 'Remove duplicate');
         $repository->markChangeRequestDecision($deleteRequestId, 'approved', 'Remove duplicate');
 
-        self::assertFalse($repository->existsForOrganization($transactionId, 4));
+        self::assertTrue($repository->existsForOrganization($transactionId, 4));
+        $voided = $db->query('SELECT is_voided, voided_at, void_reason FROM financial_transactions WHERE id = ' . $transactionId)->fetch();
+        self::assertSame(1, (int) $voided['is_voided']);
+        self::assertNotEmpty($voided['voided_at']);
+        self::assertSame('Remove duplicate', $voided['void_reason']);
+        self::assertSame(0.0, (float) $repository->totalsByType()['expense']);
         self::assertNull($repository->pendingChangeRequest($deleteRequestId));
     }
 
@@ -102,6 +107,9 @@ final class TransactionRepositoryTest extends TestCase
             description TEXT NOT NULL,
             transaction_date TEXT NOT NULL,
             receipt_path TEXT NULL,
+            is_voided INTEGER NOT NULL DEFAULT 0,
+            voided_at TEXT NULL,
+            void_reason TEXT NULL,
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )');
 
