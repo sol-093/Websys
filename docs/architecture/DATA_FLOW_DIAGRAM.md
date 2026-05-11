@@ -16,6 +16,7 @@ The diagrams below are embedded in this Markdown file and also available as stan
 - [Level 0 Context](mermaid/dfd-level-0-context.mmd)
 - [Level 1 Major Processes](mermaid/dfd-level-1-major-processes.mmd)
 - [Level 2 Finance Approval](mermaid/dfd-level-2-finance-approval.mmd)
+- [Level 3 Clean System Overview](mermaid/dfd-level-3-clean-system.mmd)
 - [Level 3 Void Transaction](mermaid/dfd-level-3-void-transaction.mmd)
 
 ## External Entities
