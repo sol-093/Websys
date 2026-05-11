@@ -1,0 +1,72 @@
+flowchart TB
+    Owner[Organization Owner]
+    Admin[System Admin]
+    Files[Browser / File System]
+
+    P31((3.1 Create / Activate Budget))
+    P32((3.2 Add Budget Lines))
+    P33((3.3 Submit Expense Request))
+    P34((3.4 Review Expense Request))
+    P35((3.5 Create Linked Expense Transaction))
+    P36((3.6 Record Manual Transaction))
+    P37((3.7 Request Transaction Update / Delete))
+    P38((3.8 Approve / Reject Transaction Change))
+    P39((3.9 Void Transaction))
+
+    D7[(D7 Budgets and Lines)]
+    D8[(D8 Expense Requests)]
+    D9[(D9 Financial Transactions)]
+    D10[(D10 Transaction Change Requests)]
+    D11[(D11 Audit Logs)]
+    D12[(D12 Security Notifications)]
+    D13[(D13 Upload Storage)]
+    D14[(D14 Runtime Cache)]
+
+    Owner --> P31
+    P31 --> D7
+    P31 --> D11
+    P31 --> D14
+
+    Owner --> P32
+    P32 --> D7
+    P32 --> D11
+    P32 --> D14
+
+    Owner -->|amount, line, receipt| P33
+    Files -->|receipt upload| P33
+    P33 --> D8
+    P33 --> D13
+    P33 --> D11
+    P33 --> D12
+
+    Admin -->|approve/reject| P34
+    P34 --> D8
+    P34 --> D11
+    P34 --> D12
+
+    P34 -->|approved request| P35
+    P35 --> D7
+    P35 --> D9
+    P35 --> D8
+    P35 --> D14
+
+    Owner -->|manual income/expense + receipt| P36
+    Files -->|receipt upload| P36
+    P36 --> D9
+    P36 --> D13
+    P36 --> D11
+    P36 --> D14
+
+    Owner -->|update/delete request| P37
+    P37 --> D10
+    P37 --> D11
+    P37 --> D12
+
+    Admin -->|approval decision| P38
+    P38 --> D10
+    P38 --> D11
+    P38 --> D12
+
+    P38 -->|approved delete| P39
+    P39 --> D9
+    P39 --> D14

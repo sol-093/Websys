@@ -1,0 +1,18 @@
+flowchart LR
+    Student[Student]
+    Owner[Organization Owner]
+    Admin[System Admin]
+    OAuth[Google OAuth Provider]
+    Mail[Email/SMTP Provider]
+    Files[Browser / File System]
+
+    System((INVOLVE System))
+
+    Student -->|registration, login, joins, profile updates, views| System
+    Owner -->|organization updates, announcements, budgets, transactions, requests| System
+    Admin -->|organization admin, approvals, audit review, exports| System
+    OAuth -->|identity callback| System
+    System -->|OAuth request| OAuth
+    System -->|verification/reset emails| Mail
+    Files -->|uploads| System
+    System -->|PDF/CSV downloads, rendered pages, JSON| Files

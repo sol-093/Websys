@@ -1,0 +1,38 @@
+flowchart TB
+    Owner[Organization Owner]
+    Admin[System Admin]
+
+    P321((3.2.1 Select Active Transaction))
+    P322((3.2.2 Validate Ownership and Active Status))
+    P323((3.2.3 Create Delete Change Request))
+    P324((3.2.4 Notify Admin / Record Audit))
+    P325((3.2.5 Admin Reviews Request))
+    P326((3.2.6 Approve or Reject Request))
+    P327((3.2.7 Void Transaction Instead of Deleting))
+    P328((3.2.8 Notify Owner / Exclude from Active Totals))
+
+    D9[(Financial Transactions)]
+    D10[(Transaction Change Requests)]
+    D11[(Audit Logs)]
+    D12[(Security Notifications)]
+    D14[(Runtime Cache)]
+
+    Owner --> P321
+    P321 --> P322
+    P322 --> D9
+    P322 -->|active transaction| P323
+    P323 --> D10
+    P323 --> P324
+    P324 --> D11
+    P324 --> D12
+
+    Admin --> P325
+    P325 --> D10
+    P325 --> P326
+    P326 --> D10
+    P326 --> D11
+    P326 -->|approved delete| P327
+    P327 -->|set is_voided, voided_at, void_reason| D9
+    P327 --> P328
+    P328 --> D12
+    P328 --> D14

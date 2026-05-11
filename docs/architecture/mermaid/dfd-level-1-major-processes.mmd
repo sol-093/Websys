@@ -1,0 +1,107 @@
+flowchart TB
+    Student[Student]
+    Owner[Organization Owner]
+    Admin[System Admin]
+    OAuth[Google OAuth]
+    Mail[SMTP Provider]
+    Files[Browser / File System]
+
+    P1((1.0 Authentication and Account))
+    P2((2.0 Organization Management))
+    P3((3.0 Membership and Ownership))
+    P4((4.0 Announcements))
+    P5((5.0 Budget and Expense Requests))
+    P6((6.0 Financial Transactions))
+    P7((7.0 Admin Review and Audit))
+    P8((8.0 Notifications and Activity Feeds))
+    P9((9.0 Reports, Exports, and API Lists))
+    P10((10.0 Upload Handling))
+
+    D1[(D1 Users)]
+    D2[(D2 Sessions and Tokens)]
+    D3[(D3 Organizations)]
+    D4[(D4 Memberships and Requests)]
+    D5[(D5 Owner Assignments)]
+    D6[(D6 Announcements)]
+    D7[(D7 Budgets and Lines)]
+    D8[(D8 Expense Requests)]
+    D9[(D9 Financial Transactions)]
+    D10[(D10 Transaction Change Requests)]
+    D11[(D11 Audit Logs)]
+    D12[(D12 Security Notifications)]
+    D13[(D13 Upload Storage)]
+    D14[(D14 Runtime Cache)]
+
+    Student --> P1
+    Owner --> P1
+    Admin --> P1
+    OAuth --> P1
+    P1 --> D1
+    P1 --> D2
+    P1 --> Mail
+
+    Student --> P2
+    Owner --> P2
+    Admin --> P2
+    P2 --> D3
+    P2 --> D11
+
+    Student --> P3
+    Owner --> P3
+    Admin --> P3
+    P3 --> D4
+    P3 --> D5
+    P3 --> D11
+    P3 --> D12
+
+    Owner --> P4
+    Admin --> P4
+    P4 --> D6
+    P4 --> D11
+    P4 --> D14
+
+    Owner --> P5
+    Admin --> P5
+    P5 --> D7
+    P5 --> D8
+    P5 --> D9
+    P5 --> D11
+    P5 --> D12
+
+    Owner --> P6
+    Admin --> P6
+    P6 --> D9
+    P6 --> D10
+    P6 --> D11
+    P6 --> D12
+
+    Admin --> P7
+    P7 --> D8
+    P7 --> D10
+    P7 --> D11
+
+    Student --> P8
+    Owner --> P8
+    Admin --> P8
+    P8 --> D6
+    P8 --> D10
+    P8 --> D11
+    P8 --> D12
+
+    Student --> P9
+    Owner --> P9
+    Admin --> P9
+    P9 --> D3
+    P9 --> D6
+    P9 --> D7
+    P9 --> D8
+    P9 --> D9
+    P9 --> D11
+    P9 --> D14
+    P9 --> Files
+
+    Student --> P10
+    Owner --> P10
+    Admin --> P10
+    P10 --> D13
+    P10 --> D11

@@ -133,6 +133,7 @@ http://localhost:8000/index.php
 
 ## Related Docs
 - [Repository Overview](../../README.md)
+- [Data Flow Diagram](DATA_FLOW_DIAGRAM.md)
 - [Function Analysis](../reference/FUNCTION_ANALYSIS.md)
 - [Change Summary](../reference/CHANGELOG_2026-04-06.md)
 - [Source Layer Guide](../../includes/README.md)
