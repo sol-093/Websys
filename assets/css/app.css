@@ -222,6 +222,7 @@
 
             .table-shell > table:not(.charts-css),
             .table-wrapper > table:not(.charts-css),
+            .glass table:not(.charts-css),
             .dashboard-table:not(.charts-css),
             .compact-table:not(.charts-css),
             .owner-budget-table:not(.charts-css) {
@@ -229,27 +230,103 @@
                 min-width: 100%;
                 border-collapse: collapse;
                 border-spacing: 0;
-                border-bottom: 0;
+                border-bottom: 1px solid rgba(110, 231, 183, 0.42);
+                color: #f0fdf4;
+                font-size: 0.875rem;
+            }
+
+            .system-grid-table:not(.charts-css) {
+                display: block;
+                table-layout: auto !important;
+            }
+
+            .system-grid-table:not(.charts-css) thead,
+            .system-grid-table:not(.charts-css) tbody {
+                display: block;
+                width: 100%;
+            }
+
+            .system-grid-table:not(.charts-css) tr {
+                display: grid;
+                width: 100%;
+                grid-template-columns: var(--system-grid-columns, repeat(var(--system-grid-count, 1), minmax(0, 1fr)));
+                align-items: start;
+                gap: 0;
+                box-sizing: border-box;
+            }
+
+            .system-grid-table:not(.charts-css) th,
+            .system-grid-table:not(.charts-css) td {
+                display: block;
+                min-width: 0;
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+                overflow-wrap: anywhere;
+            }
+
+            .glass table:not(.charts-css) thead th,
+            .table-shell > table:not(.charts-css) thead th,
+            .table-wrapper > table:not(.charts-css) thead th,
+            .dashboard-table:not(.charts-css) thead th,
+            .compact-table:not(.charts-css) thead th,
+            .owner-budget-table:not(.charts-css) thead th {
+                color: rgba(236, 253, 245, 0.8);
+                font-size: 0.7rem;
+                font-weight: 600;
+                letter-spacing: 0;
+                text-align: left;
             }
 
             .table-shell > table:not(.charts-css) th,
             .table-shell > table:not(.charts-css) td,
             .table-wrapper > table:not(.charts-css) th,
             .table-wrapper > table:not(.charts-css) td,
+            .glass table:not(.charts-css) th,
+            .glass table:not(.charts-css) td,
             .dashboard-table:not(.charts-css) th,
             .dashboard-table:not(.charts-css) td,
             .compact-table:not(.charts-css) th,
             .compact-table:not(.charts-css) td,
             .owner-budget-table:not(.charts-css) th,
             .owner-budget-table:not(.charts-css) td {
-                border-bottom: 1px solid rgba(110, 231, 183, 0.42);
+                border-bottom: 0;
                 background-clip: padding-box;
+                padding-top: 0.58rem;
+                padding-bottom: 0.58rem;
             }
+
+            .glass table:not(.charts-css) thead tr,
+            .glass table:not(.charts-css) tbody tr,
+            .table-shell > table:not(.charts-css) thead tr,
+            .table-shell > table:not(.charts-css) tbody tr,
+            .table-wrapper > table:not(.charts-css) thead tr,
+            .table-wrapper > table:not(.charts-css) tbody tr,
+            .dashboard-table:not(.charts-css) thead tr,
+            .dashboard-table:not(.charts-css) tbody tr,
+            .compact-table:not(.charts-css) thead tr,
+            .compact-table:not(.charts-css) tbody tr,
+            .owner-budget-table:not(.charts-css) thead tr,
+            .owner-budget-table:not(.charts-css) tbody tr {
+                border-bottom: 0 !important;
+                box-shadow: inset 0 -1px 0 rgba(110, 231, 183, 0.42);
+            }
+
+            .glass table:not(.charts-css) tbody tr:last-child,
+            .table-shell > table:not(.charts-css) tbody tr:last-child,
+            .table-wrapper > table:not(.charts-css) tbody tr:last-child,
+            .dashboard-table:not(.charts-css) tbody tr:last-child,
+            .compact-table:not(.charts-css) tbody tr:last-child,
+            .owner-budget-table:not(.charts-css) tbody tr:last-child {
+                box-shadow: none;
+            }
+
 
             .table-shell > table:not(.charts-css) tbody tr:last-child th,
             .table-shell > table:not(.charts-css) tbody tr:last-child td,
             .table-wrapper > table:not(.charts-css) tbody tr:last-child th,
             .table-wrapper > table:not(.charts-css) tbody tr:last-child td,
+            .glass table:not(.charts-css) tbody tr:last-child th,
+            .glass table:not(.charts-css) tbody tr:last-child td,
             .dashboard-table:not(.charts-css) tbody tr:last-child th,
             .dashboard-table:not(.charts-css) tbody tr:last-child td,
             .compact-table:not(.charts-css) tbody tr:last-child th,
@@ -2823,6 +2900,26 @@
                 border-radius: 0.85rem;
             }
 
+            .admin-mobile-card,
+            .tx-mobile-card,
+            .transparency-entry {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .admin-mobile-card::after,
+            .tx-mobile-card::after,
+            .transparency-entry::after {
+                content: '';
+                position: absolute;
+                left: 1rem;
+                right: 1rem;
+                bottom: 0;
+                height: 1px;
+                background: rgba(110, 231, 183, 0.42);
+                pointer-events: none;
+            }
+
             .admin-mobile-title {
                 font-size: 0.92rem;
                 line-height: 1.4;
@@ -4250,24 +4347,89 @@
             }
 
             .dashboard-report-list {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
                 width: 100%;
                 overflow: hidden;
             }
 
             .dashboard-report-row {
+                position: relative;
                 display: grid;
                 width: 100%;
                 grid-template-columns: minmax(6.5rem, 0.9fr) minmax(13rem, 1.8fr) minmax(6rem, 0.75fr) minmax(7rem, 0.85fr) minmax(5.5rem, 0.7fr);
                 align-items: center;
                 gap: 1rem;
-                border-bottom: 1px solid rgba(110, 231, 183, 0.48);
+                border-bottom: 0;
                 padding: 0.58rem 0;
                 color: #f0fdf4;
                 box-sizing: border-box;
             }
 
+            .dashboard-report-row::after {
+                content: "";
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                height: 1px;
+                background: rgba(110, 231, 183, 0.48);
+                pointer-events: none;
+            }
+
             .dashboard-summary-row {
                 grid-template-columns: minmax(15rem, 2.2fr) minmax(7rem, 0.85fr) minmax(7rem, 0.85fr) minmax(7rem, 0.85fr);
+            }
+
+            .admin-request-row {
+                grid-template-columns:
+                    minmax(8rem, 1.05fr)
+                    minmax(8rem, 1.05fr)
+                    minmax(5.5rem, 0.7fr)
+                    minmax(12rem, 1.6fr)
+                    minmax(6.5rem, 0.85fr)
+                    minmax(12rem, 1.55fr)
+                    minmax(7rem, 0.9fr);
+            }
+
+            .admin-org-grid-row {
+                grid-template-columns:
+                    minmax(12rem, 1.3fr)
+                    minmax(18rem, 2fr)
+                    minmax(7rem, 0.8fr)
+                    minmax(10rem, 1.15fr)
+                    minmax(6.5rem, 0.75fr);
+            }
+
+            .admin-expense-request-row {
+                grid-template-columns:
+                    minmax(8.5rem, 0.95fr)
+                    minmax(7.25rem, 0.82fr)
+                    minmax(8.75rem, 1fr)
+                    minmax(10rem, 1.12fr)
+                    minmax(6.75rem, 0.72fr)
+                    minmax(6rem, 0.65fr)
+                    minmax(9rem, 1fr)
+                    minmax(7.75rem, 0.85fr);
+            }
+
+            .admin-budget-overview-row {
+                grid-template-columns:
+                    minmax(11.5rem, 1.05fr)
+                    minmax(10rem, 0.92fr)
+                    minmax(9.5rem, 0.88fr)
+                    minmax(14rem, 1.35fr)
+                    minmax(14rem, 1.28fr);
+            }
+
+            .admin-audit-row {
+                grid-template-columns:
+                    minmax(9.5rem, 0.95fr)
+                    minmax(8rem, 0.82fr)
+                    minmax(9rem, 0.95fr)
+                    minmax(6.5rem, 0.65fr)
+                    minmax(11rem, 1.1fr)
+                    minmax(15rem, 1.5fr);
             }
 
             .dashboard-report-head {
@@ -5089,16 +5251,72 @@
 
             body:not(.theme-dark) .table-shell > table:not(.charts-css),
             body:not(.theme-dark) .table-wrapper > table:not(.charts-css),
+            body:not(.theme-dark) .glass table:not(.charts-css),
             body:not(.theme-dark) .dashboard-table:not(.charts-css),
             body:not(.theme-dark) .compact-table:not(.charts-css),
             body:not(.theme-dark) .owner-budget-table:not(.charts-css) {
+                border-bottom-color: rgba(16, 185, 129, 0.34);
+                color: #1f2937;
+            }
+
+            body:not(.theme-dark) .glass table:not(.charts-css) thead th,
+            body:not(.theme-dark) .table-shell > table:not(.charts-css) thead th,
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css) thead th,
+            body:not(.theme-dark) .dashboard-table:not(.charts-css) thead th,
+            body:not(.theme-dark) .compact-table:not(.charts-css) thead th,
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) thead th {
+                color: #1f2937;
+            }
+
+            body:not(.theme-dark) .glass table:not(.charts-css) th,
+            body:not(.theme-dark) .glass table:not(.charts-css) td,
+            body:not(.theme-dark) .table-shell > table:not(.charts-css) th,
+            body:not(.theme-dark) .table-shell > table:not(.charts-css) td,
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css) th,
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css) td,
+            body:not(.theme-dark) .dashboard-table:not(.charts-css) th,
+            body:not(.theme-dark) .dashboard-table:not(.charts-css) td,
+            body:not(.theme-dark) .compact-table:not(.charts-css) th,
+            body:not(.theme-dark) .compact-table:not(.charts-css) td,
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) th,
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) td {
                 border-bottom-color: transparent;
+            }
+
+            body:not(.theme-dark) .glass table:not(.charts-css) thead tr,
+            body:not(.theme-dark) .glass table:not(.charts-css) tbody tr,
+            body:not(.theme-dark) .table-shell > table:not(.charts-css) thead tr,
+            body:not(.theme-dark) .table-shell > table:not(.charts-css) tbody tr,
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css) thead tr,
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css) tbody tr,
+            body:not(.theme-dark) .dashboard-table:not(.charts-css) thead tr,
+            body:not(.theme-dark) .dashboard-table:not(.charts-css) tbody tr,
+            body:not(.theme-dark) .compact-table:not(.charts-css) thead tr,
+            body:not(.theme-dark) .compact-table:not(.charts-css) tbody tr,
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) thead tr,
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) tbody tr {
+                box-shadow: inset 0 -1px 0 rgba(16, 185, 129, 0.34);
+            }
+
+            body:not(.theme-dark) .glass table:not(.charts-css) tbody tr:last-child,
+            body:not(.theme-dark) .table-shell > table:not(.charts-css) tbody tr:last-child,
+            body:not(.theme-dark) .table-wrapper > table:not(.charts-css) tbody tr:last-child,
+            body:not(.theme-dark) .dashboard-table:not(.charts-css) tbody tr:last-child,
+            body:not(.theme-dark) .compact-table:not(.charts-css) tbody tr:last-child,
+            body:not(.theme-dark) .owner-budget-table:not(.charts-css) tbody tr:last-child {
+                box-shadow: none;
             }
 
             body:not(.theme-dark) .table-wrapper::after,
             body:not(.theme-dark) .table-shell::after,
             body:not(.theme-dark) .dashboard-table-shell::after,
             body:not(.theme-dark) .owner-budget-table-wrap::after {
+                background: rgba(16, 185, 129, 0.34);
+            }
+
+            body:not(.theme-dark) .admin-mobile-card::after,
+            body:not(.theme-dark) .tx-mobile-card::after,
+            body:not(.theme-dark) .transparency-entry::after {
                 background: rgba(16, 185, 129, 0.34);
             }
 

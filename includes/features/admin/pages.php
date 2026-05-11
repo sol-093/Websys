@@ -126,20 +126,16 @@ function handleAdminRequestsPage(PDO $db): void
             </div>
             <a href="?page=admin_expense_requests" class="owner-manage-secondary-btn inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm sm:w-auto">Back to Expense Requests</a>
         </div>
-        <div class="table-wrapper hidden lg:block">
-            <table class="hidden lg:table w-full min-w-[1040px] text-sm table-fixed">
-            <thead>
-            <tr class="border-b text-left">
-                <th class="py-3 px-4 w-[14%]">Org</th>
-                <th class="py-3 px-4 w-[14%]">Requester</th>
-                <th class="py-3 px-4 w-[10%]">Action</th>
-                <th class="py-3 px-4 w-[20%]">Proposal</th>
-                <th class="py-3 px-4 w-[12%]">Status</th>
-                <th class="py-3 px-4 w-[18%]">Admin Note</th>
-                <th class="py-3 px-4 w-[12%]">Decision</th>
-            </tr>
-            </thead>
-            <tbody>
+        <div class="dashboard-report-list admin-request-list hidden lg:block">
+            <div class="dashboard-report-row admin-request-row dashboard-report-head" aria-hidden="true">
+                <div>Org</div>
+                <div>Requester</div>
+                <div>Action</div>
+                <div>Proposal</div>
+                <div>Status</div>
+                <div>Admin Note</div>
+                <div>Decision</div>
+            </div>
             <?php foreach ($requests as $req): ?>
                 <?php
                     $requestStatus = strtolower((string) $req['status']);
@@ -154,23 +150,23 @@ function handleAdminRequestsPage(PDO $db): void
                     $requestActionClass = 'tx-request-action-badge tx-request-action-' . preg_replace('/[^a-z]/', '', $requestAction);
                     $requestActionIcon = $requestAction === 'delete' ? 'delete' : 'edit';
                 ?>
-                <tr class="border-b align-top">
-                    <td class="py-4 px-4 align-top break-words">
+                <div class="dashboard-report-row admin-request-row">
+                    <div class="break-words">
                         <span class="inline-flex items-center gap-2">
                             <?= renderProfileMedia((string) ($req['organization_name'] ?? ''), (string) ($req['organization_logo_path'] ?? ''), 'organization', 'xs', (float) ($req['organization_logo_crop_x'] ?? 50), (float) ($req['organization_logo_crop_y'] ?? 50), (float) ($req['organization_logo_zoom'] ?? 1)) ?>
                             <span><?= e($req['organization_name']) ?></span>
                         </span>
-                    </td>
-                    <td class="py-4 px-4 align-top break-words">
+                    </div>
+                    <div class="break-words">
                         <span class="inline-flex items-center gap-2">
                             <?= renderProfileMedia((string) ($req['requester_name'] ?? ''), (string) ($req['requester_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($req['requester_profile_picture_crop_x'] ?? 50), (float) ($req['requester_profile_picture_crop_y'] ?? 50), (float) ($req['requester_profile_picture_zoom'] ?? 1)) ?>
                             <span><?= e($req['requester_name']) ?></span>
                         </span>
-                    </td>
-                    <td class="py-4 px-4 align-top break-words">
+                    </div>
+                    <div class="break-words">
                         <span class="<?= e($requestActionClass) ?> icon-badge"><?= uiIcon($requestActionIcon, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestAction)) ?></span>
-                    </td>
-                    <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words">
+                    </div>
+                    <div class="whitespace-normal leading-relaxed break-words">
                         <?php if ($req['action_type'] === 'update'): ?>
                             <div class="text-xs">Type: <?= e((string) $req['proposed_type']) ?></div>
                             <div class="text-xs">Amount: &#8369;<?= number_format((float) $req['proposed_amount'], 2) ?></div>
@@ -179,12 +175,12 @@ function handleAdminRequestsPage(PDO $db): void
                         <?php else: ?>
                             <div class="text-xs">Delete transaction #<?= (int) $req['transaction_id'] ?></div>
                         <?php endif; ?>
-                    </td>
-                    <td class="py-4 px-4 align-top break-words">
+                    </div>
+                    <div class="break-words">
                         <span class="<?= e($requestStatusClass) ?> icon-badge"><?= uiIcon($requestStatusIcon, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span>
-                    </td>
-                    <td class="py-4 px-4 align-top whitespace-normal leading-relaxed break-words"><?= e((string) ($req['admin_note'] ?? '')) ?></td>
-                    <td class="py-4 px-4 align-top">
+                    </div>
+                    <div class="whitespace-normal leading-relaxed break-words"><?= e((string) ($req['admin_note'] ?? '')) ?></div>
+                    <div>
                         <?php if ($requestStatus === 'pending'): ?>
                             <div class="flex flex-wrap gap-1.5 text-xs">
                                 <button type="button" data-tx-request-open data-request-id="<?= (int) $req['id'] ?>" data-request-action="approve" class="request-decision-btn request-decision-btn-approve">
@@ -197,11 +193,9 @@ function handleAdminRequestsPage(PDO $db): void
                         <?php else: ?>
                             <span class="text-xs text-slate-500 whitespace-nowrap">Processed</span>
                         <?php endif; ?>
-                    </td>
-                </tr>
+                    </div>
+                </div>
             <?php endforeach; ?>
-            </tbody>
-            </table>
         </div>
         <div class="lg:hidden space-y-3">
             <?php foreach ($requests as $req): ?>
@@ -701,63 +695,49 @@ function handleAdminExpenseRequestsPage(PDO $db): void
         <?php if ($requests === []): ?>
             <div class="empty-state-panel">No expense requests match the selected filters.</div>
         <?php else: ?>
-            <div class="table-wrapper hidden xl:block">
-                <table class="w-full min-w-[1180px] text-sm table-fixed">
-                    <colgroup>
-                        <col class="w-[14%]">
-                        <col class="w-[13%]">
-                        <col class="w-[16%]">
-                        <col class="w-[16%]">
-                        <col class="w-[10%]">
-                        <col class="w-[9%]">
-                        <col class="w-[13%]">
-                        <col class="w-[9%]">
-                    </colgroup>
-                    <thead>
-                    <tr class="border-b text-left">
-                        <th class="py-3 px-3">Organization</th>
-                        <th class="py-3 px-3">Requester</th>
-                        <th class="py-3 px-3">Budget Line</th>
-                        <th class="py-3 px-3">Description</th>
-                        <th class="py-3 px-3">Amount</th>
-                        <th class="py-3 px-3">Status</th>
-                        <th class="py-3 px-3">Admin Note</th>
-                        <th class="py-3 px-3">Decision</th>
-                    </tr>
-                    </thead>
-                    <tbody>
+            <div class="dashboard-report-list admin-expense-request-list hidden xl:block">
+                <div class="dashboard-report-row admin-expense-request-row dashboard-report-head" aria-hidden="true">
+                    <div>Organization</div>
+                    <div>Requester</div>
+                    <div>Budget Line</div>
+                    <div>Description</div>
+                    <div>Amount</div>
+                    <div>Status</div>
+                    <div>Admin Note</div>
+                    <div>Decision</div>
+                </div>
                     <?php foreach ($requests as $request): ?>
                         <?php
                             $requestStatus = strtolower((string) ($request['status'] ?? 'pending'));
                             $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $requestStatus);
                         ?>
-                        <tr class="border-b align-top">
-                            <td class="py-4 px-3 break-words">
+                        <div class="dashboard-report-row admin-expense-request-row">
+                            <div class="break-words">
                                 <div class="font-medium"><?= e((string) ($request['organization_name'] ?? 'Organization')) ?></div>
                                 <div class="mt-1 text-xs text-slate-500"><?= e(date('F d, Y', strtotime((string) $request['created_at']))) ?></div>
-                            </td>
-                            <td class="py-4 px-3 break-words"><?= e((string) ($request['requested_by_name'] ?? 'Owner')) ?></td>
-                            <td class="py-4 px-3 break-words">
+                            </div>
+                            <div class="break-words"><?= e((string) ($request['requested_by_name'] ?? 'Owner')) ?></div>
+                            <div class="break-words">
                                 <div class="font-medium"><?= e((string) ($request['line_item_name'] ?? 'Budget line')) ?></div>
                                 <div class="mt-1 text-xs text-slate-500"><?= e((string) ($request['budget_title'] ?? 'Budget')) ?></div>
-                            </td>
-                            <td class="py-4 px-3 break-words">
+                            </div>
+                            <div class="break-words">
                                 <div><?= e((string) $request['description']) ?></div>
                                 <?php if (!empty($request['receipt_path'])): ?>
                                     <a href="<?= e((string) $request['receipt_path']) ?>" target="_blank" class="mt-2 inline-flex text-xs underline">Open receipt</a>
                                 <?php endif; ?>
-                            </td>
-                            <td class="py-4 px-3 whitespace-nowrap font-medium">PHP<?= number_format((float) $request['amount'], 2) ?></td>
-                            <td class="py-4 px-3"><span class="<?= e($statusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
+                            </div>
+                            <div class="whitespace-nowrap font-medium">PHP<?= number_format((float) $request['amount'], 2) ?></div>
+                            <div><span class="<?= e($statusClass) ?> icon-badge"><?= uiIcon(match ($requestStatus) {
                                 'approved' => 'approved',
                                 'rejected' => 'rejected',
                                 'pending' => 'pending',
                                 default => 'default',
-                            }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span></td>
-                            <td class="py-4 px-3 break-words">
+                            }, 'ui-icon ui-icon-sm') ?><?= e(ucfirst($requestStatus)) ?></span></div>
+                            <div class="break-words">
                                 <?php renderExpenseRequestTimeline($request); ?>
-                            </td>
-                            <td class="py-4 px-3">
+                            </div>
+                            <div>
                                 <?php if ($requestStatus === 'pending'): ?>
                                     <div class="flex flex-wrap gap-1.5">
                                         <button type="button" class="request-decision-btn request-decision-btn-approve" data-expense-approve-open data-request-id="<?= (int) $request['id'] ?>" data-request-title="<?= e((string) ($request['organization_name'] ?? 'Organization') . ' - ' . (string) ($request['line_item_name'] ?? 'Budget line')) ?>"><span class="icon-label"><?= uiIcon('approved', 'ui-icon ui-icon-sm') ?><span>Approve</span></span></button>
@@ -766,11 +746,9 @@ function handleAdminExpenseRequestsPage(PDO $db): void
                                 <?php else: ?>
                                     <span class="text-xs text-slate-500">Processed</span>
                                 <?php endif; ?>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
-                    </tbody>
-                </table>
             </div>
 
             <div class="xl:hidden space-y-3">
@@ -1275,25 +1253,14 @@ function handleAdminBudgetOverviewPage(PDO $db): void
             <?php if ($budgets === []): ?>
                 <div class="empty-state-panel">No budgets match the selected filters.</div>
             <?php else: ?>
-                <div class="table-wrapper hidden xl:block">
-                    <table class="w-full min-w-[1180px] text-sm table-fixed">
-                        <colgroup>
-                            <col class="w-[20%]">
-                            <col class="w-[18%]">
-                            <col class="w-[16%]">
-                            <col class="w-[25%]">
-                            <col class="w-[21%]">
-                        </colgroup>
-                        <thead>
-                        <tr class="border-b text-left">
-                            <th class="py-3 px-3">Organization</th>
-                            <th class="py-3 px-3">Budget</th>
-                            <th class="py-3 px-3 text-center">Budget Details</th>
-                            <th class="py-3 px-3">Usage</th>
-                            <th class="py-3 px-3 text-center">Requests</th>
-                        </tr>
-                        </thead>
-                        <tbody>
+                <div class="dashboard-report-list admin-budget-overview-list hidden xl:block">
+                    <div class="dashboard-report-row admin-budget-overview-row dashboard-report-head" aria-hidden="true">
+                        <div>Organization</div>
+                        <div>Budget</div>
+                        <div>Budget Details</div>
+                        <div>Usage</div>
+                        <div>Requests</div>
+                    </div>
                         <?php foreach ($budgets as $budget): ?>
                             <?php
                                 $allocated = (float) ($budget['allocated_total'] ?? 0);
@@ -1307,8 +1274,8 @@ function handleAdminBudgetOverviewPage(PDO $db): void
                                 $status = strtolower((string) ($budget['status'] ?? ''));
                                 $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
                             ?>
-                            <tr class="border-b align-middle">
-                                <td class="py-4 px-3 break-words">
+                            <div class="dashboard-report-row admin-budget-overview-row">
+                                <div class="break-words">
                                     <div class="flex items-start gap-2">
                                         <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"></span>
                                         <div class="min-w-0">
@@ -1316,12 +1283,12 @@ function handleAdminBudgetOverviewPage(PDO $db): void
                                             <div class="mt-1 text-xs text-slate-500">Owner: <?= e(trim((string) ($budget['owner_name'] ?? '')) !== '' ? (string) $budget['owner_name'] : 'Unassigned') ?></div>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="py-4 px-3 break-words">
+                                </div>
+                                <div class="break-words">
                                     <div class="font-semibold"><?= e($formatMoney((float) ($budget['total_amount'] ?? 0))) ?></div>
                                     <div class="mt-1 font-medium"><?= e((string) ($budget['title'] ?? 'Budget')) ?></div>
-                                </td>
-                                <td class="py-4 px-3 text-xs">
+                                </div>
+                                <div class="text-xs">
                                     <div class="flex w-full flex-col items-center justify-center gap-1.5 text-center">
                                         <span class="inline-flex min-w-[7.5rem] justify-center rounded-md border border-slate-300/30 bg-white/10 px-3 py-1 text-sm font-medium text-slate-200"><?= (int) ($budget['line_count'] ?? 0) ?> totals</span>
                                         <?php if ((int) ($budget['critical_line_count'] ?? 0) > 0): ?>
@@ -1333,8 +1300,8 @@ function handleAdminBudgetOverviewPage(PDO $db): void
                                             <?= e(date('M d, Y', strtotime((string) $budget['period_start']))) ?> - <?= e(date('M d, Y', strtotime((string) $budget['period_end']))) ?>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="py-4 px-3">
+                                </div>
+                                <div>
                                     <div class="mb-2 flex items-center justify-between gap-3 text-xs">
                                         <span class="text-slate-400">Allocated</span>
                                         <span class="font-semibold text-slate-100"><?= e($formatMoney($allocated)) ?></span>
@@ -1352,18 +1319,16 @@ function handleAdminBudgetOverviewPage(PDO $db): void
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                </td>
-                                <td class="py-4 px-3">
+                                </div>
+                                <div>
                                     <div class="grid w-full grid-cols-2 gap-1.5 text-[11px] font-semibold leading-tight">
                                         <span class="col-span-2 whitespace-nowrap rounded border border-emerald-300/35 bg-emerald-400/10 px-2 py-1 text-center text-emerald-300 <?= (int) ($budget['approved_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['approved_request_count'] ?? 0) ?> Approved</span>
                                         <span class="whitespace-nowrap rounded border border-amber-300/35 bg-amber-400/10 px-2 py-1 text-center text-amber-300 <?= (int) ($budget['pending_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['pending_request_count'] ?? 0) ?> Pending</span>
                                         <span class="whitespace-nowrap rounded border border-rose-300/35 bg-rose-400/10 px-2 py-1 text-center text-rose-300 <?= (int) ($budget['rejected_request_count'] ?? 0) === 0 ? 'opacity-45' : '' ?>"><?= (int) ($budget['rejected_request_count'] ?? 0) ?> Rejected</span>
                                     </div>
-                                </td>
-                            </tr>
+                                </div>
+                            </div>
                         <?php endforeach; ?>
-                        </tbody>
-                    </table>
                 </div>
 
                 <div class="xl:hidden space-y-3">
@@ -1539,37 +1504,31 @@ function handleAdminAuditPage(PDO $db, array $user): void
         <?php if (!$logs): ?>
             <div class="empty-state-panel">No audit entries in the selected range.</div>
         <?php else: ?>
-            <div class="table-wrapper hidden lg:block">
-                <table class="audit-log-table hidden md:table w-full min-w-[1180px] text-sm">
-                    <thead>
-                        <tr class="border-b">
-                            <th class="text-left py-2 pr-3">Time</th>
-                            <th class="text-left py-2 pr-3">Actor</th>
-                            <th class="text-left py-2 pr-3">Action</th>
-                            <th class="text-left py-2 pr-3">Entity</th>
-                            <th class="text-left py-2 pr-3">Source</th>
-                            <th class="text-left py-2 pr-3">Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div class="dashboard-report-list admin-audit-list hidden lg:block">
+                <div class="dashboard-report-row admin-audit-row dashboard-report-head" aria-hidden="true">
+                    <div>Time</div>
+                    <div>Actor</div>
+                    <div>Action</div>
+                    <div>Entity</div>
+                    <div>Source</div>
+                    <div>Details</div>
+                </div>
                         <?php foreach ($logs as $log): ?>
-                            <tr class="audit-log-row border-b align-top">
-                                <td class="py-2 pr-3 whitespace-nowrap"><?= e((string) $log['created_at']) ?></td>
-                                <td class="py-2 pr-3"><?= e($log['actor_name'] ?: ('User#' . (int) $log['user_id'])) ?></td>
-                                <td class="py-2 pr-3">
+                            <div class="dashboard-report-row admin-audit-row audit-log-row">
+                                <div class="whitespace-nowrap"><?= e((string) $log['created_at']) ?></div>
+                                <div><?= e($log['actor_name'] ?: ('User#' . (int) $log['user_id'])) ?></div>
+                                <div>
                                     <div class="font-medium"><?= e(formatAuditActionLabel((string) $log['action'])) ?></div>
                                     <div class="text-xs text-slate-500 uppercase tracking-wide"><?= e(getAuditActionFamily((string) $log['action'])) ?></div>
-                                </td>
-                                <td class="py-2 pr-3"><?= e((string) ($log['entity_type'] ?? '-')) ?><?= $log['entity_id'] !== null ? ' #' . (int) $log['entity_id'] : '' ?></td>
-                                <td class="py-2 pr-3">
+                                </div>
+                                <div><?= e((string) ($log['entity_type'] ?? '-')) ?><?= $log['entity_id'] !== null ? ' #' . (int) $log['entity_id'] : '' ?></div>
+                                <div>
                                     <div class="text-xs text-slate-600"><?= e((string) ($log['ip_address'] ?? 'unknown')) ?></div>
                                     <div class="text-xs text-slate-500 break-words max-w-xs"><?= e((string) ($log['user_agent'] ?? '')) ?></div>
-                                </td>
-                                <td class="py-2 pr-3 break-words max-w-xl"><?= e($log['details'] ?? '') ?></td>
-                            </tr>
+                                </div>
+                                <div class="break-words max-w-xl"><?= e($log['details'] ?? '') ?></div>
+                            </div>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
             </div>
             <div class="md:hidden space-y-3">
                 <?php foreach ($logs as $log): ?>
@@ -2617,18 +2576,14 @@ function handleAdminOrgsPage(PDO $db): void
                     <input type="search" id="adminOrgInlineSearch" inputmode="search" placeholder="Search organization, owner, visibility, or description..." class="themed-field w-full py-2 pl-10 pr-3">
                 </div>
             </div>
-            <div class="table-wrapper hidden lg:block">
-                <table class="hidden lg:table w-full text-sm table-fixed">
-                <thead>
-                <tr class="text-left border-b">
-                    <th class="py-3 px-3 w-[22%]">Name</th>
-                    <th class="py-3 px-3 w-[38%]">Description</th>
-                    <th class="py-3 px-3 w-[16%]">Visibility</th>
-                    <th class="py-3 px-3 w-[14%]">Owner</th>
-                    <th class="py-3 px-3 w-[10%]">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
+            <div class="dashboard-report-list admin-org-list hidden lg:block">
+                <div class="dashboard-report-row admin-org-grid-row dashboard-report-head" aria-hidden="true">
+                    <div>Name</div>
+                    <div>Description</div>
+                    <div>Visibility</div>
+                    <div>Owner</div>
+                    <div>Actions</div>
+                </div>
                 <?php foreach ($orgs as $org): ?>
                     <?php
                         $orgSearchText = strtolower(trim(
@@ -2638,18 +2593,18 @@ function handleAdminOrgsPage(PDO $db): void
                             (string) getOrganizationVisibilityLabel($org)
                         ));
                     ?>
-                    <tr class="border-b align-top admin-org-row" data-org-search="<?= e($orgSearchText) ?>">
-                        <td class="py-4 px-3 font-medium break-words leading-relaxed">
+                    <div class="dashboard-report-row admin-org-grid-row admin-org-row" data-org-search="<?= e($orgSearchText) ?>">
+                        <div class="font-medium break-words leading-relaxed">
                             <span class="inline-flex items-center gap-2">
                                 <?= renderProfileMedia((string) ($org['name'] ?? ''), (string) ($org['logo_path'] ?? ''), 'organization', 'xs', (float) ($org['logo_crop_x'] ?? 50), (float) ($org['logo_crop_y'] ?? 50), (float) ($org['logo_zoom'] ?? 1)) ?>
                                 <span><?= e($org['name']) ?></span>
                             </span>
-                        </td>
-                        <td class="py-4 px-3 break-words leading-relaxed"><?= e($org['description']) ?></td>
-                        <td class="py-4 px-3">
+                        </div>
+                        <div class="break-words leading-relaxed"><?= e($org['description']) ?></div>
+                        <div>
                             <span class="text-xs leading-5"><?= e(getOrganizationVisibilityLabel($org)) ?></span>
-                        </td>
-                        <td class="py-4 px-3">
+                        </div>
+                        <div>
                             <div class="space-y-2">
                                 <div class="text-sm font-medium inline-flex items-center gap-2">
                                     <?= renderProfileMedia((string) ($org['owner_name'] ?? 'Unassigned'), (string) ($org['owner_profile_picture_path'] ?? ''), 'user', 'xs', (float) ($org['owner_profile_picture_crop_x'] ?? 50), (float) ($org['owner_profile_picture_crop_y'] ?? 50), (float) ($org['owner_profile_picture_zoom'] ?? 1)) ?>
@@ -2662,8 +2617,8 @@ function handleAdminOrgsPage(PDO $db): void
                                     </div>
                                 <?php endif; ?>
                             </div>
-                        </td>
-                        <td class="py-4 px-3">
+                        </div>
+                        <div>
                             <button
                                 type="button"
                                 data-org-edit-open
@@ -2679,11 +2634,9 @@ function handleAdminOrgsPage(PDO $db): void
                             >
                                 <?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Update</span>
                             </button>
-                        </td>
-                    </tr>
+                        </div>
+                    </div>
                 <?php endforeach; ?>
-                </tbody>
-                </table>
             </div>
             <div class="md:hidden space-y-3">
                 <?php foreach ($orgs as $org): ?>
