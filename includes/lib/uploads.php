@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Involve\Support\Uploads\StoredUploadPath;
+
 /*
  * ================================================
  * INVOLVE - UPLOAD HELPERS
@@ -160,28 +162,5 @@ function handleProfileImageUpload(array $file, string $uploadDir, string $filena
 
 function deleteStoredUpload(?string $path): void
 {
-    $normalized = trim((string) $path);
-    if (str_starts_with($normalized, 'public/uploads/')) {
-        $normalized = 'uploads/' . substr($normalized, strlen('public/uploads/'));
-    }
-
-    if ($normalized === '' || !str_starts_with($normalized, 'uploads/')) {
-        return;
-    }
-
-    $relativePath = substr($normalized, strlen('uploads/'));
-    $relativePath = str_replace('\\', '/', $relativePath);
-    if ($relativePath === '' || str_contains($relativePath, '..')) {
-        return;
-    }
-
-    $pathParts = array_filter(explode('/', $relativePath), static fn (string $part): bool => $part !== '');
-    if (empty($pathParts)) {
-        return;
-    }
-
-    $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $pathParts);
-    if (is_file($absolutePath)) {
-        @unlink($absolutePath);
-    }
+    StoredUploadPath::fromPublicPath($path)?->deleteIfFile();
 }
