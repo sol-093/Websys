@@ -647,22 +647,11 @@ function handleUpdateProfileAction(PDO $db, array $user): void
     $institute = trim((string) ($user['institute'] ?? ''));
     $yearLevel = isset($user['year_level']) && $user['year_level'] !== '' ? (int) $user['year_level'] : null;
     $profilePicturePath = trim((string) ($user['profile_picture_path'] ?? ''));
+    $previousProfilePicturePath = $profilePicturePath;
     $profilePictureCropX = (float) ($_POST['profile_picture_crop_x'] ?? ($user['profile_picture_crop_x'] ?? 50));
     $profilePictureCropY = (float) ($_POST['profile_picture_crop_y'] ?? ($user['profile_picture_crop_y'] ?? 50));
     $profilePictureZoom = (float) ($_POST['profile_picture_zoom'] ?? ($user['profile_picture_zoom'] ?? 1));
 
-    if (isset($_FILES['profile_picture']) && !empty($_FILES['profile_picture']['name'])) {
-        $uploadedProfilePicture = handleProfileImageUpload($_FILES['profile_picture'], (string) $config['upload_dir'], 'user_');
-        if ($uploadedProfilePicture === false) {
-            redirect('?page=profile');
-        }
-
-        if ($profilePicturePath !== '' && $profilePicturePath !== $uploadedProfilePicture) {
-            deleteStoredUpload($profilePicturePath);
-        }
-        $profilePicturePath = $uploadedProfilePicture;
-    }
-    
     if ($email === '') {
         setFlash('error', 'Email is required.');
         redirect('?page=profile');
@@ -682,63 +671,104 @@ function handleUpdateProfileAction(PDO $db, array $user): void
             setFlash('error', 'This email is already in use by another account.');
             redirect('?page=profile');
         }
+    }
 
-        $activationToken = bin2hex(random_bytes(32));
-        $activationTokenHash = hash('sha256', $activationToken);
-        $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
-
-        $updateStmt = $db->prepare('
-            UPDATE users 
-            SET name = ?, 
-                email = ?, 
-                institute = ?,
-                program = ?,
-                section = ?,
-                year_level = ?,
-                profile_picture_path = ?,
-                profile_picture_crop_x = ?,
-                profile_picture_crop_y = ?,
-                profile_picture_zoom = ?,
-                email_verified = 0, 
-                activation_token = ?, 
-                activation_expires = ?
-            WHERE id = ?
-        ');
-        $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, $activationTokenHash, $activationExpires, (int) $user['id']]);
-
-        $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
-        if ($removedMemberships !== []) {
-            queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
+    if (isset($_FILES['profile_picture']) && !empty($_FILES['profile_picture']['name'])) {
+        $uploadedProfilePicture = handleProfileImageUpload($_FILES['profile_picture'], (string) $config['upload_dir'], 'user_');
+        if ($uploadedProfilePicture === false) {
+            redirect('?page=profile');
         }
 
-        $emailSent = sendActivationEmail($email, $name, $activationToken);
-        if (!$emailSent) {
-            error_log('Verification email failed after profile email change for user id ' . (int) $user['id'] . ' (' . $email . ').');
+        $profilePicturePath = $uploadedProfilePicture;
+    }
+
+    if ($emailChanged) {
+        $profileUpdateCommitted = false;
+        try {
+            $activationToken = bin2hex(random_bytes(32));
+            $activationTokenHash = hash('sha256', $activationToken);
+            $activationExpires = date('Y-m-d H:i:s', strtotime('+24 hours'));
+
+            withTransaction($db, static function () use ($db, $name, $email, $institute, $program, $section, $yearLevel, $profilePicturePath, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, $activationTokenHash, $activationExpires, $user): void {
+                $updateStmt = $db->prepare('
+                    UPDATE users
+                    SET name = ?,
+                        email = ?,
+                        institute = ?,
+                        program = ?,
+                        section = ?,
+                        year_level = ?,
+                        profile_picture_path = ?,
+                        profile_picture_crop_x = ?,
+                        profile_picture_crop_y = ?,
+                        profile_picture_zoom = ?,
+                        email_verified = 0,
+                        activation_token = ?,
+                        activation_expires = ?
+                    WHERE id = ?
+                ');
+                $updateStmt->execute([$name, $email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, $activationTokenHash, $activationExpires, (int) $user['id']]);
+
+                $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
+                if ($removedMemberships !== []) {
+                    queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
+                }
+            });
+            $profileUpdateCommitted = true;
+
+            $emailSent = sendActivationEmail($email, $name, $activationToken);
+            if (!$emailSent) {
+                error_log('Verification email failed after profile email change for user id ' . (int) $user['id'] . ' (' . $email . ').');
+            }
+
+            auditLog((int) $user['id'], 'profile.email_change', 'user', (int) $user['id'], 'Email changed from ' . $user['email'] . ' to ' . $email);
+            if (isset($uploadedProfilePicture) && $uploadedProfilePicture !== false && $previousProfilePicturePath !== '' && $previousProfilePicturePath !== $uploadedProfilePicture) {
+                deleteStoredUpload($previousProfilePicturePath);
+            }
+
+            setFlash(
+                $emailSent ? 'success' : 'error',
+                $emailSent
+                    ? 'Profile updated. Please verify your new email address. A verification link has been sent to ' . htmlspecialchars($email) . '.'
+                    : 'Profile updated, but the verification email could not be sent. Please use resend verification from the login page or contact the administrator.'
+            );
+
+            session_destroy();
+            redirect('?page=login');
+        } catch (Throwable $e) {
+            if (!$profileUpdateCommitted && isset($uploadedProfilePicture) && $uploadedProfilePicture !== false) {
+                deleteStoredUpload($uploadedProfilePicture);
+            }
+
+            setFlash('error', 'Unable to update your profile right now.');
+            redirect('?page=profile');
         }
-
-        auditLog((int) $user['id'], 'profile.email_change', 'user', (int) $user['id'], 'Email changed from ' . $user['email'] . ' to ' . $email);
-
-        setFlash(
-            $emailSent ? 'success' : 'error',
-            $emailSent
-                ? 'Profile updated. Please verify your new email address. A verification link has been sent to ' . htmlspecialchars($email) . '.'
-                : 'Profile updated, but the verification email could not be sent. Please use resend verification from the login page or contact the administrator.'
-        );
-
-        session_destroy();
-        redirect('?page=login');
     } else {
-        $updateStmt = $db->prepare('UPDATE users SET email = ?, institute = ?, program = ?, section = ?, year_level = ?, profile_picture_path = ?, profile_picture_crop_x = ?, profile_picture_crop_y = ?, profile_picture_zoom = ? WHERE id = ?');
-        $updateStmt->execute([$email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, (int) $user['id']]);
+        try {
+            withTransaction($db, static function () use ($db, $email, $institute, $program, $section, $yearLevel, $profilePicturePath, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, $user): void {
+                $updateStmt = $db->prepare('UPDATE users SET email = ?, institute = ?, program = ?, section = ?, year_level = ?, profile_picture_path = ?, profile_picture_crop_x = ?, profile_picture_crop_y = ?, profile_picture_zoom = ? WHERE id = ?');
+                $updateStmt->execute([$email, $institute, $program, $section, $yearLevel, $profilePicturePath !== '' ? $profilePicturePath : null, $profilePictureCropX, $profilePictureCropY, $profilePictureZoom, (int) $user['id']]);
 
-        $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
-        if ($removedMemberships !== []) {
-            queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
+                $removedMemberships = removeIneligibleOrganizationMemberships($db, (int) $user['id'], $institute, $program);
+                if ($removedMemberships !== []) {
+                    queueMembershipRemovalNotification((int) $user['id'], $removedMemberships, 'program/institute update');
+                }
+            });
+
+            auditLog((int) $user['id'], 'profile.update', 'user', (int) $user['id'], 'Profile updated');
+            if (isset($uploadedProfilePicture) && $uploadedProfilePicture !== false && $previousProfilePicturePath !== '' && $previousProfilePicturePath !== $uploadedProfilePicture) {
+                deleteStoredUpload($previousProfilePicturePath);
+            }
+
+            setFlash('success', 'Profile updated successfully.');
+            redirect('?page=profile');
+        } catch (Throwable $e) {
+            if (isset($uploadedProfilePicture) && $uploadedProfilePicture !== false) {
+                deleteStoredUpload($uploadedProfilePicture);
+            }
+
+            setFlash('error', 'Unable to update your profile right now.');
+            redirect('?page=profile');
         }
-
-        auditLog((int) $user['id'], 'profile.update', 'user', (int) $user['id'], 'Profile updated');
-        
-        setFlash('success', 'Profile updated successfully.');
-        redirect('?page=profile');
     }
 }
