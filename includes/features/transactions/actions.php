@@ -359,7 +359,7 @@ function handleExportTransactionsAction(PDO $db, array $user): void
     }
 
     $txOrder = $txDateSort === 'asc' ? 'ASC' : 'DESC';
-    $sql = 'SELECT id, type, amount, description, transaction_date, receipt_path FROM financial_transactions WHERE organization_id = ?';
+    $sql = 'SELECT id, type, amount, description, transaction_date, receipt_path, is_voided, voided_at, void_reason FROM financial_transactions WHERE organization_id = ?';
     $params = [(int) $org['id']];
     if ($txTypeFilter !== 'all') {
         $sql .= ' AND type = ?';
@@ -438,9 +438,10 @@ function handleExportTransactionsAction(PDO $db, array $user): void
     foreach ($transactions as $index => $row) {
         $amount = (float) ($row['amount'] ?? 0);
         $type = strtolower((string) ($row['type'] ?? ''));
-        if ($type === 'income') {
+        $isVoided = (int) ($row['is_voided'] ?? 0) === 1;
+        if (!$isVoided && $type === 'income') {
             $incomeTotal += $amount;
-        } elseif ($type === 'expense') {
+        } elseif (!$isVoided && $type === 'expense') {
             $expenseTotal += $amount;
         }
 
@@ -448,6 +449,12 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         $receiptPath = trim((string) ($row['receipt_path'] ?? ''));
         $receiptName = $receiptPath !== '' ? basename(str_replace('\\', '/', $receiptPath)) : '-';
         $lineCount = max(1, count($descriptionLines));
+        $voidedNote = '';
+        if ($isVoided) {
+            $voidedDate = !empty($row['voided_at']) ? date('M d, Y', strtotime((string) $row['voided_at'])) : '';
+            $voidReason = trim((string) ($row['void_reason'] ?? ''));
+            $voidedNote = 'Voided' . ($voidedDate !== '' ? ' on ' . $voidedDate : '') . ($voidReason !== '' ? ' - ' . $voidReason : '');
+        }
 
         $tableRows[] = [
             'number' => $index + 1,
@@ -455,9 +462,11 @@ function handleExportTransactionsAction(PDO $db, array $user): void
             'date' => $truncateText((string) ($row['transaction_date'] ?? ''), 10),
             'type' => $type === 'income' ? 'Income' : 'Expense',
             'amount' => $formatAmount($amount),
+            'voided' => $isVoided,
+            'voided_note' => $truncateText($voidedNote, 48),
             'description_lines' => $descriptionLines,
             'receipt' => $truncateText($receiptName, 28),
-            'height' => 38 + ($lineCount * 10) + ($receiptName !== '-' ? 10 : 0),
+            'height' => 38 + ($lineCount * 10) + ($receiptName !== '-' ? 10 : 0) + ($isVoided ? 12 : 0),
         ];
     }
 
@@ -718,18 +727,31 @@ function handleExportTransactionsAction(PDO $db, array $user): void
         }
 
         foreach ($contentPages[$i] as $rowIndex => $row) {
-            $fill = $rowIndex % 2 === 0 ? [1, 1, 1] : [0.97, 0.99, 0.98];
+            $isVoided = !empty($row['voided']);
+            $fill = $isVoided ? [1.00, 0.96, 0.96] : ($rowIndex % 2 === 0 ? [1, 1, 1] : [0.97, 0.99, 0.98]);
             $stream .= $drawRect(58, $rowY, 479, (float) $row['height'], $fill, [0.88, 0.92, 0.90], 'GSTable');
             $stream .= $drawText(70, $rowY + 16, 'F1', 8, (string) $row['date'], [0.18, 0.24, 0.22]);
             $stream .= $drawText(133, $rowY + 16, 'F2', 8, (string) $row['type'], $row['type'] === 'Income' ? [0.06, 0.43, 0.22] : [0.60, 0.16, 0.12]);
+            if ($isVoided) {
+                $stream .= $drawText(133, $rowY + 28, 'F2', 7.1, 'Voided', [0.62, 0.12, 0.12]);
+            }
             $stream .= $drawText(193, $rowY + 15, 'F1', 8, '#' . $row['number'] . '  Tx ID ' . $row['id'], [0.42, 0.47, 0.44]);
             $descriptionY = $rowY + 27;
             foreach ($row['description_lines'] as $line) {
                 $stream .= $drawText(193, $descriptionY, 'F1', 8.3, (string) $line, [0.12, 0.17, 0.15]);
                 $descriptionY += 11;
             }
+            if ($isVoided && (string) $row['voided_note'] !== '') {
+                $stream .= $drawText(193, $descriptionY, 'F3', 7.2, (string) $row['voided_note'], [0.62, 0.12, 0.12]);
+                $descriptionY += 10;
+            }
             $stream .= $drawText(193, $descriptionY + 2, 'F3', 7.2, 'Receipt: ' . (string) $row['receipt'], [0.45, 0.50, 0.48]);
-            $stream .= $drawRightText(521, $rowY + 20, 'F2', 8.5, (string) $row['amount'], [0.10, 0.15, 0.13]);
+            $amountColor = $isVoided ? [0.62, 0.12, 0.12] : [0.10, 0.15, 0.13];
+            $stream .= $drawRightText(521, $rowY + 20, 'F2', 8.5, (string) $row['amount'], $amountColor);
+            if ($isVoided) {
+                $amountWidth = strlen((string) $row['amount']) * 8.5 * 0.52;
+                $stream .= $drawRect(521 - $amountWidth, $rowY + 16.5, $amountWidth, 0.7, [0.62, 0.12, 0.12], null);
+            }
             $rowY += (float) $row['height'];
         }
 

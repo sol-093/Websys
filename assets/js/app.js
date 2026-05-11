@@ -650,7 +650,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     var form = pendingForm;
                     allowSubmit = true;
-                    closeModal();
+                    modal.classList.add('hidden');
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.style.overflow = '';
+                    pendingForm = form;
                     if (typeof form.requestSubmit === 'function') {
                         form.requestSubmit();
                     } else {

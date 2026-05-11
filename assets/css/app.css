@@ -264,6 +264,31 @@
                 overflow-wrap: anywhere;
             }
 
+            .owner-transaction-table:not(.charts-css) thead th:nth-child(5),
+            .owner-transaction-table:not(.charts-css) tbody td:nth-child(5) {
+                text-align: left;
+            }
+
+            .owner-transaction-table:not(.charts-css) thead th:nth-child(6),
+            .owner-transaction-table:not(.charts-css) tbody td:nth-child(6) {
+                text-align: right;
+            }
+
+            .owner-transaction-actions-label,
+            .owner-transaction-actions-group {
+                width: 5.6rem;
+                max-width: 100%;
+                text-align: left;
+            }
+
+            .owner-transaction-actions-label {
+                display: inline-block;
+            }
+
+            .owner-transaction-actions-group {
+                margin-left: auto;
+            }
+
             .glass table:not(.charts-css) thead th,
             .table-shell > table:not(.charts-css) thead th,
             .table-wrapper > table:not(.charts-css) thead th,
@@ -2171,6 +2196,51 @@
                 color: #ffffff;
             }
 
+            .tx-row-voided {
+                background: rgba(254, 226, 226, 0.34);
+                color: #7f1d1d;
+            }
+
+            .tx-voided-badge {
+                border: 1px solid rgba(185, 28, 28, 0.5);
+                background: rgba(254, 226, 226, 0.92);
+                color: #7f1d1d;
+            }
+
+            .tx-voided-amount {
+                color: #b91c1c;
+                text-decoration: line-through;
+                text-decoration-thickness: 1.5px;
+            }
+
+            .tx-voided-note {
+                color: #991b1b;
+            }
+
+            body.theme-dark .tx-row-voided {
+                background: transparent;
+                color: rgba(254, 202, 202, 0.96);
+            }
+
+            body.theme-dark .tx-voided-badge {
+                border-color: rgba(248, 113, 113, 0.42);
+                background: rgba(127, 29, 29, 0.34);
+                color: #fecaca;
+            }
+
+            body.theme-dark .tx-voided-amount {
+                color: #fca5a5;
+            }
+
+            body.theme-dark .tx-voided-note {
+                color: #fecaca;
+            }
+
+            body.theme-dark .tx-mobile-card-voided {
+                border-color: rgba(248, 113, 113, 0.42);
+                background: rgba(127, 29, 29, 0.16);
+            }
+
             .tx-type-badge {
                 display: inline-flex;
                 align-items: center;
@@ -3666,28 +3736,38 @@
 
             .pagination-nav,
             .pagination-page {
-                border-color: rgba(16, 185, 129, 0.22);
-                background: rgba(255, 255, 255, 0.08);
-                color: #d1fae5;
+                border-color: rgba(5, 150, 105, 0.35);
+                background: rgba(236, 253, 245, 0.82);
+                color: #065f46;
+                font-weight: 600;
                 transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
             }
 
             .pagination-nav:hover,
             .pagination-page:hover {
-                background: rgba(16, 185, 129, 0.14);
-                border-color: rgba(52, 211, 153, 0.38);
-                color: #ecfdf5;
+                background: rgba(209, 250, 229, 0.96);
+                border-color: rgba(5, 150, 105, 0.52);
+                color: #064e3b;
             }
 
             .pagination-page.is-active {
                 background: rgba(16, 185, 129, 0.92);
                 border-color: rgba(110, 231, 183, 0.52);
-                color: #ecfdf5;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+                color: #ffffff;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
             }
 
             .pagination-status {
-                color: rgba(209, 250, 229, 0.82);
+                color: #065f46;
+                font-weight: 600;
+            }
+
+            .pagination-nav.opacity-40,
+            .pagination-page.opacity-40 {
+                opacity: 1;
+                border-color: rgba(5, 150, 105, 0.22);
+                background: rgba(255, 255, 255, 0.42);
+                color: rgba(6, 95, 70, 0.48);
             }
 
             .transparency-panel {
@@ -3877,6 +3957,14 @@
                 color: rgba(209, 250, 229, 0.76);
             }
 
+            body.theme-dark .pagination-nav.opacity-40,
+            body.theme-dark .pagination-page.opacity-40 {
+                opacity: 1;
+                border-color: rgba(110, 231, 183, 0.16);
+                background: rgba(255, 255, 255, 0.035);
+                color: rgba(209, 250, 229, 0.42);
+            }
+
             body.theme-dark .transparency-panel {
                 border-color: rgba(110, 231, 183, 0.24);
             }
@@ -3948,19 +4036,25 @@
             }
 
             .tx-request-action-badge {
-                border-radius: 999px;
-                padding: 2px 8px;
+                display: inline-flex;
+                align-items: center;
+                width: fit-content;
+                border-radius: 0.4rem;
+                padding: 0.28rem 0.62rem;
                 font-size: 11px;
                 font-weight: 600;
+                line-height: 1.2;
             }
 
             .tx-request-action-update {
+                border: 1px solid rgba(16, 185, 129, 0.26);
                 background: rgba(16, 185, 129, 0.18);
                 color: #065f46;
             }
 
             .tx-request-action-delete {
-                background: rgba(239, 68, 68, 0.18);
+                border: 1px solid rgba(185, 28, 28, 0.42);
+                background: rgba(254, 226, 226, 0.86);
                 color: #991b1b;
             }
 

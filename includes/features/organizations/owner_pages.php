@@ -1076,14 +1076,14 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                 <button data-filter-submit class="owner-manage-secondary-btn finance-filter-btn w-full rounded-md px-2.5 py-1.5 text-xs sm:w-auto"><span class="icon-label"><?= uiIcon('search', 'ui-icon ui-icon-sm') ?><span>Apply</span></span></button>
             </form>
             <div class="table-wrapper hidden md:block">
-                <table class="w-full text-sm table-fixed">
+                <table class="owner-transaction-table w-full text-sm table-fixed">
                     <colgroup>
                         <col class="w-[13%]">
                         <col class="w-[11%]">
                         <col class="w-[12%]">
                         <col class="w-[38%]">
                         <col class="w-[10%]">
-                        <col class="w-[16%]">
+                        <col class="w-[10rem]">
                     </colgroup>
                     <thead>
                     <tr class="text-left border-b border-emerald-400">
@@ -1091,13 +1091,14 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                         <th class="pr-4">Type</th>
                         <th class="pr-4">Amount</th>
                         <th class="pr-6">Description</th>
-                        <th class="pr-4 text-left">Receipt</th>
-                        <th class="text-right">Actions</th>
+                        <th class="pr-4">Receipt</th>
+                        <th><span class="owner-transaction-actions-label">Actions</span></th>
                     </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($transactions as $row): ?>
-                        <tr class="border-b border-emerald-300 align-top">
+                        <?php $isVoided = (int) ($row['is_voided'] ?? 0) === 1; ?>
+                        <tr class="border-b border-emerald-300 align-top <?= $isVoided ? 'tx-row-voided' : '' ?>">
                             <td class="py-3 pr-4 whitespace-nowrap"><?= e(date('F d, Y', strtotime((string) $row['transaction_date']))) ?></td>
                             <td class="py-3 pr-4 whitespace-nowrap">
                                 <?php $txType = strtolower((string) $row['type']); ?>
@@ -1105,39 +1106,56 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                                     <?= e($txType) ?>
                                 </span>
                             </td>
-                            <td class="py-3 pr-4 whitespace-nowrap font-medium">PHP<?= number_format((float) $row['amount'], 2) ?></td>
-                            <td class="py-3 pr-6 break-words"><?= e((string) $row['description']) ?></td>
-                            <td class="py-3 pr-4 text-left">
+                            <td class="py-3 pr-4 whitespace-nowrap font-medium">
+                                <?php if ($isVoided): ?>
+                                    <span class="tx-voided-amount block">PHP<?= number_format((float) $row['amount'], 2) ?></span>
+                                <?php else: ?>
+                                    PHP<?= number_format((float) $row['amount'], 2) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td class="py-3 pr-6 break-words">
+                                <div><?= e((string) $row['description']) ?></div>
+                                <?php if ($isVoided): ?>
+                                    <div class="tx-voided-note mt-1 text-xs">
+                                        Voided<?= !empty($row['voided_at']) ? ' on ' . e(date('F d, Y', strtotime((string) $row['voided_at']))) : '' ?><?= !empty($row['void_reason']) ? ' - ' . e((string) $row['void_reason']) : '' ?>
+                                    </div>
+                                <?php endif; ?>
+                            </td>
+                            <td class="py-3 pr-4">
                                 <?php if (!empty($row['receipt_path'])): ?>
                                     <a href="<?= e((string) $row['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view inline-flex items-center justify-center rounded-md px-3 py-2 text-sm"><span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View</span></span></a>
                                 <?php else: ?>
                                     <span class="text-gray-400">-</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="py-3 text-right">
-                                <div class="inline-flex w-full items-center justify-end gap-2">
-                                    <button
-                                        type="button"
-                                        class="tx-action-btn tx-action-btn-view inline-flex min-h-[2.4rem] min-w-[2.4rem] items-center justify-center rounded-md px-2"
-                                        data-tx-edit-open
-                                        data-tx-id="<?= (int) $row['id'] ?>"
-                                        data-tx-type="<?= e((string) $row['type']) ?>"
-                                        data-tx-amount="<?= e(number_format((float) $row['amount'], 2, '.', '')) ?>"
-                                        data-tx-date="<?= e((string) $row['transaction_date']) ?>"
-                                        data-tx-description="<?= e((string) $row['description']) ?>"
-                                        data-tx-receipt="<?= e((string) ($row['receipt_path'] ?? '')) ?>"
-                                        aria-label="Edit transaction details"
-                                    ><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?></button>
-                                    <form method="post" data-confirm-message="Delete transaction?">
-                                        <?= csrfField() ?>
-                                        <input type="hidden" name="action" value="delete_transaction">
-                                        <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                        <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                        <button class="tx-action-btn tx-action-btn-delete inline-flex min-h-[2.4rem] min-w-[2.4rem] items-center justify-center rounded-md px-2" aria-label="Request delete">
-                                            <?= uiIcon('delete', 'ui-icon ui-icon-sm') ?>
-                                        </button>
-                                    </form>
-                                </div>
+                            <td class="py-3">
+                                <?php if ($isVoided): ?>
+                                    <span class="tx-voided-badge owner-transaction-actions-group inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-semibold"><?= uiIcon('rejected', 'ui-icon ui-icon-xs') ?>Voided</span>
+                                <?php else: ?>
+                                    <div class="owner-transaction-actions-group inline-flex items-center justify-start gap-2">
+                                        <button
+                                            type="button"
+                                            class="tx-action-btn tx-action-btn-view inline-flex min-h-[2.4rem] min-w-[2.4rem] items-center justify-center rounded-md px-2"
+                                            data-tx-edit-open
+                                            data-tx-id="<?= (int) $row['id'] ?>"
+                                            data-tx-type="<?= e((string) $row['type']) ?>"
+                                            data-tx-amount="<?= e(number_format((float) $row['amount'], 2, '.', '')) ?>"
+                                            data-tx-date="<?= e((string) $row['transaction_date']) ?>"
+                                            data-tx-description="<?= e((string) $row['description']) ?>"
+                                            data-tx-receipt="<?= e((string) ($row['receipt_path'] ?? '')) ?>"
+                                            aria-label="Edit transaction details"
+                                        ><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?></button>
+                                        <form method="post" data-confirm-message="Delete transaction?">
+                                            <?= csrfField() ?>
+                                            <input type="hidden" name="action" value="delete_transaction">
+                                            <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                            <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
+                                            <button class="tx-action-btn tx-action-btn-delete inline-flex min-h-[2.4rem] min-w-[2.4rem] items-center justify-center rounded-md px-2" aria-label="Request delete">
+                                                <?= uiIcon('delete', 'ui-icon ui-icon-sm') ?>
+                                            </button>
+                                        </form>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -1146,45 +1164,62 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
             </div>
             <div class="mobile-cards md:hidden space-y-3">
                 <?php foreach ($transactions as $row): ?>
-                    <?php $type = (string) $row['type']; ?>
-                    <article class="tx-mobile-card rounded-lg border border-emerald-200 bg-white p-3 shadow-sm">
+                    <?php
+                        $type = (string) $row['type'];
+                        $isVoided = (int) ($row['is_voided'] ?? 0) === 1;
+                    ?>
+                    <article class="tx-mobile-card <?= $isVoided ? 'tx-mobile-card-voided' : '' ?> rounded-lg border border-emerald-200 bg-white p-3 shadow-sm">
                         <div class="flex items-start justify-between gap-2">
                             <div class="text-xs font-semibold uppercase tracking-wide text-slate-500"><?= e((string) $org['name']) ?></div>
-                            <span class="tx-mobile-type-badge inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold <?= $type === 'income' ? 'tx-mobile-type-income bg-emerald-100 text-emerald-700' : 'tx-mobile-type-expense bg-red-100 text-red-700' ?>"><?= e(ucfirst($type)) ?></span>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="tx-mobile-type-badge inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold <?= $type === 'income' ? 'tx-mobile-type-income bg-emerald-100 text-emerald-700' : 'tx-mobile-type-expense bg-red-100 text-red-700' ?>"><?= e(ucfirst($type)) ?></span>
+                                <?php if ($isVoided): ?>
+                                    <span class="tx-voided-badge inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold"><?= uiIcon('rejected', 'ui-icon ui-icon-xs') ?>Voided</span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <div class="mt-2 text-2xl font-bold leading-tight text-slate-900">PHP<?= number_format((float) $row['amount'], 2) ?></div>
+                        <div class="mt-2 text-2xl font-bold leading-tight <?= $isVoided ? 'tx-voided-amount' : 'text-slate-900' ?>">PHP<?= number_format((float) $row['amount'], 2) ?></div>
                         <div class="mt-2 text-xs text-slate-600"><?= e(date('F d, Y', strtotime((string) $row['transaction_date']))) ?></div>
                         <p class="mt-2 text-sm text-slate-700" style="display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                             <?= e((string) $row['description']) ?>
                         </p>
+                        <?php if ($isVoided): ?>
+                            <div class="tx-voided-note mt-2 text-xs">
+                                Voided<?= !empty($row['voided_at']) ? ' on ' . e(date('F d, Y', strtotime((string) $row['voided_at']))) : '' ?><?= !empty($row['void_reason']) ? ' - ' . e((string) $row['void_reason']) : '' ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="tx-mobile-actions mt-3 space-y-2">
                             <?php if (!empty($row['receipt_path'])): ?>
                                 <a href="<?= e((string) $row['receipt_path']) ?>" target="_blank" class="tx-action-btn tx-action-btn-view row-action-hit-target inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm">
                                     <span class="icon-label"><?= uiIcon('view', 'ui-icon ui-icon-sm') ?><span>View Receipt</span></span>
                                 </a>
                             <?php endif; ?>
-                            <button
-                                type="button"
-                                class="tx-action-btn tx-action-btn-update inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm"
-                                data-tx-edit-open
-                                data-tx-id="<?= (int) $row['id'] ?>"
-                                data-tx-type="<?= e((string) $row['type']) ?>"
-                                data-tx-amount="<?= e(number_format((float) $row['amount'], 2, '.', '')) ?>"
-                                data-tx-date="<?= e((string) $row['transaction_date']) ?>"
-                                data-tx-description="<?= e((string) $row['description']) ?>"
-                                data-tx-receipt="<?= e((string) ($row['receipt_path'] ?? '')) ?>"
-                            >
-                                <span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Edit Transaction</span></span>
-                            </button>
-                            <form method="post" data-confirm-message="Delete transaction?">
-                                <?= csrfField() ?>
-                                <input type="hidden" name="action" value="delete_transaction">
-                                <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
-                                <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
-                                <button class="row-action-hit-target tx-action-btn tx-action-btn-delete inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm">
-                                    <span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span>
+                            <?php if ($isVoided): ?>
+                                <span class="tx-voided-badge inline-flex w-full items-center justify-center gap-1 rounded-md px-3 py-2 text-sm font-semibold"><?= uiIcon('rejected', 'ui-icon ui-icon-sm') ?>Voided record</span>
+                            <?php else: ?>
+                                <button
+                                    type="button"
+                                    class="tx-action-btn tx-action-btn-update inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm"
+                                    data-tx-edit-open
+                                    data-tx-id="<?= (int) $row['id'] ?>"
+                                    data-tx-type="<?= e((string) $row['type']) ?>"
+                                    data-tx-amount="<?= e(number_format((float) $row['amount'], 2, '.', '')) ?>"
+                                    data-tx-date="<?= e((string) $row['transaction_date']) ?>"
+                                    data-tx-description="<?= e((string) $row['description']) ?>"
+                                    data-tx-receipt="<?= e((string) ($row['receipt_path'] ?? '')) ?>"
+                                >
+                                    <span class="icon-label"><?= uiIcon('edit', 'ui-icon ui-icon-sm') ?><span>Edit Transaction</span></span>
                                 </button>
-                            </form>
+                                <form method="post" data-confirm-message="Delete transaction?">
+                                    <?= csrfField() ?>
+                                    <input type="hidden" name="action" value="delete_transaction">
+                                    <input type="hidden" name="org_id" value="<?= (int) $org['id'] ?>">
+                                    <input type="hidden" name="tx_id" value="<?= (int) $row['id'] ?>">
+                                    <button class="row-action-hit-target tx-action-btn tx-action-btn-delete inline-flex w-full items-center justify-center rounded-md px-3 py-2 text-sm">
+                                        <span class="icon-label"><?= uiIcon('delete', 'ui-icon ui-icon-sm') ?><span>Request Delete</span></span>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
@@ -1215,12 +1250,14 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                         <?php
                             $status = strtolower((string) ($req['status'] ?? ''));
                             $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
+                            $requestAction = strtolower((string) ($req['action_type'] ?? 'update'));
+                            $requestActionClass = 'tx-request-action-badge ' . ($requestAction === 'delete' ? 'tx-request-action-delete' : 'tx-request-action-update');
                         ?>
                         <tr class="border-b border-emerald-300/25 align-top">
                             <td class="py-3 pr-3 whitespace-nowrap"><?= e(date('F d, Y', strtotime((string) $req['created_at']))) ?></td>
                             <td class="py-3 pr-3">
-                                <span class="inline-flex items-center rounded-md border border-slate-300/25 bg-white/10 px-2.5 py-1 text-xs font-medium text-slate-700 dark:border-emerald-300/15 dark:bg-emerald-950/20 dark:text-slate-200">
-                                    <?= e(ucwords(str_replace('_', ' ', (string) $req['action_type']))) ?>
+                                <span class="<?= e($requestActionClass) ?>">
+                                    <?= e(ucwords(str_replace('_', ' ', $requestAction))) ?>
                                 </span>
                             </td>
                             <td class="py-3 pr-3">
@@ -1251,12 +1288,14 @@ function handleMyOrgFinancePage(PDO $db, array $user, string $announcementCutoff
                     <?php
                         $status = strtolower((string) ($req['status'] ?? ''));
                         $statusClass = 'updates-status updates-status-' . preg_replace('/[^a-z]/', '', $status);
+                        $requestAction = strtolower((string) ($req['action_type'] ?? 'update'));
+                        $requestActionClass = 'tx-request-action-badge ' . ($requestAction === 'delete' ? 'tx-request-action-delete' : 'tx-request-action-update');
                     ?>
                     <article class="tx-request-card rounded-lg border border-emerald-200 bg-white/60 p-3 shadow-sm dark:border-emerald-300/15 dark:bg-emerald-950/20">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <div class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"><?= e(date('F d, Y', strtotime((string) $req['created_at']))) ?></div>
-                                <div class="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100"><?= e(ucwords(str_replace('_', ' ', (string) $req['action_type']))) ?></div>
+                                <div class="mt-1"><span class="<?= e($requestActionClass) ?>"><?= e(ucwords(str_replace('_', ' ', $requestAction))) ?></span></div>
                             </div>
                             <span class="<?= e($statusClass) ?> icon-badge"><?= uiIcon(match ($status) {
                                 'approved', 'accepted' => 'approved',
