@@ -23,6 +23,7 @@
   },
   "scripts": {
     "analyse": "phpstan analyse",
+    "doctor": "php scripts/tests/check_requirements.php",
     "lint": "php scripts/tests/lint_php.php",
     "test": "phpunit"
   }

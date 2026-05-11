@@ -19,6 +19,7 @@ The repository includes `.gitattributes` export rules so `git archive` excludes 
 - Run `composer dump-autoload --optimize` if dependencies were installed or copied through a deployment process that did not generate optimized autoload files.
 
 ## Preflight Checks
+- Run `composer doctor` to verify PHP extensions, supported PDO drivers, writable runtime folders, and upload execution guards.
 - Run `composer validate --strict`.
 - Run `composer lint` for tracked PHP files.
 - Run PHPUnit in CI before deploying.

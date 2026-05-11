@@ -51,25 +51,31 @@ php scripts/seed/seed_extra_dummy_data.php
 php scripts/seed/seed_extra_dummy_reports.php
 ```
 
-4. Run PHP lint:
+4. Run the environment preflight:
+
+```bash
+composer doctor
+```
+
+5. Run PHP lint:
 
 ```bash
 composer lint
 ```
 
-5. Run the repository regression script:
+6. Run the repository regression script:
 
 ```bash
 composer test
 ```
 
-6. Run static analysis for PSR-4 classes:
+7. Run static analysis for PSR-4 classes:
 
 ```bash
 composer analyse
 ```
 
-7. Check dependency metadata and security advisories:
+8. Check dependency metadata and security advisories:
 
 ```bash
 composer validate --strict

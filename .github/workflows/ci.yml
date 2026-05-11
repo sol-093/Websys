@@ -16,7 +16,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: pdo, pdo_sqlite, mbstring, openssl
+          extensions: pdo, pdo_sqlite, fileinfo, gd, mbstring, openssl
           coverage: none
 
       - name: Validate Composer
@@ -24,6 +24,9 @@ jobs:
 
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress
+
+      - name: Environment Preflight
+        run: composer doctor
 
       - name: PHP Lint
         run: composer lint
