@@ -132,20 +132,32 @@ final class ExpenseRequestRepository
 
     public function markApproved(int $requestId, int $reviewedBy, int $transactionId, string $adminNote): void
     {
-        $stmt = $this->db->prepare("UPDATE expense_requests SET status = 'approved', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, transaction_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE expense_requests SET status = 'approved', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, transaction_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'pending'");
         $stmt->execute([$adminNote, $reviewedBy, $transactionId, $requestId]);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Expense request is no longer pending.');
+        }
     }
 
     public function markRejected(int $requestId, int $reviewedBy, string $adminNote): void
     {
-        $stmt = $this->db->prepare("UPDATE expense_requests SET status = 'rejected', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE expense_requests SET status = 'rejected', admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'pending'");
         $stmt->execute([$adminNote, $reviewedBy, $requestId]);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Expense request is no longer pending.');
+        }
     }
 
     public function incrementLineSpent(int $budgetLineItemId, float $amount): void
     {
         $stmt = $this->db->prepare('UPDATE budget_line_items SET spent_amount = spent_amount + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         $stmt->execute([round($amount, 2), $budgetLineItemId]);
+
+        if ($stmt->rowCount() < 1) {
+            throw new \RuntimeException('Budget line item is no longer available.');
+        }
     }
 
     private function selectSql(): string

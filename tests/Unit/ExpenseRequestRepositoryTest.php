@@ -40,6 +40,46 @@ final class ExpenseRequestRepositoryTest extends TestCase
         self::assertSame(480.5, (float) $db->query('SELECT spent_amount FROM budget_line_items WHERE id = 17')->fetchColumn());
     }
 
+    public function testExpenseDecisionRequiresPendingRequest(): void
+    {
+        $db = new PDO('sqlite::memory:');
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->createSchema($db);
+        $this->seedBaseRows($db);
+
+        $repository = new ExpenseRequestRepository($db);
+        $requestId = $repository->create(3, 11, 17, 5, 480.50, 'Venue rental');
+        $db->prepare("UPDATE expense_requests SET status = 'approved' WHERE id = ?")->execute([$requestId]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Expense request is no longer pending.');
+
+        $repository->markRejected($requestId, 9, 'Too late');
+    }
+
+    public function testIncrementLineSpentRequiresExistingLine(): void
+    {
+        $db = new PDO('sqlite::memory:');
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->createSchema($db);
+
+        $repository = new ExpenseRequestRepository($db);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Budget line item is no longer available.');
+
+        $repository->incrementLineSpent(404, 100.00);
+    }
+
+    private function seedBaseRows(PDO $db): void
+    {
+        $db->prepare('INSERT INTO organizations (id, name) VALUES (?, ?)')->execute([3, 'JPCS']);
+        $db->prepare('INSERT INTO users (id, name) VALUES (?, ?)')->execute([5, 'Owner']);
+        $db->prepare('INSERT INTO users (id, name) VALUES (?, ?)')->execute([9, 'Admin']);
+        $db->prepare('INSERT INTO budgets (id, organization_id, title) VALUES (?, ?, ?)')->execute([11, 3, 'May Budget']);
+        $db->prepare('INSERT INTO budget_line_items (id, budget_id, category_name, spent_amount) VALUES (?, ?, ?, ?)')->execute([17, 11, 'Events', 0]);
+    }
+
     private function createSchema(PDO $db): void
     {
         $db->exec('CREATE TABLE organizations (
