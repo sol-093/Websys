@@ -48,6 +48,12 @@ function handleSecureUpload(array $file, string $uploadDir): string|false
         'image/webp' => 'webp',
         'application/pdf' => 'pdf',
     ];
+    $allowedOriginalExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
+
+    if (!uploadExtensionIsAllowed($file, $allowedOriginalExtensions)) {
+        setFlash('error', 'Only JPG, PNG, GIF, WEBP images or PDF files are allowed.');
+        return false;
+    }
 
     if (!isset($allowedMimeToExtension[$mimeType])) {
         setFlash('error', 'Only JPG, PNG, GIF, WEBP images or PDF files are allowed.');
@@ -104,6 +110,12 @@ function handleProfileImageUpload(array $file, string $uploadDir, string $filena
         'image/gif' => 'gif',
         'image/webp' => 'webp',
     ];
+    $allowedOriginalExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+    if (!uploadExtensionIsAllowed($file, $allowedOriginalExtensions)) {
+        setFlash('error', 'Only JPG, PNG, GIF, or WEBP images are allowed.');
+        return false;
+    }
 
     if (!isset($allowedMimeToExtension[$mimeType])) {
         setFlash('error', 'Only JPG, PNG, GIF, or WEBP images are allowed.');

@@ -370,6 +370,31 @@ function rateLimitOrRedirect(string $key, string $limitName, string $message, st
     rateLimitIncrement($key, $limit['window']);
 }
 
+function uploadOriginalExtension(array $file): string
+{
+    $name = trim((string) ($file['name'] ?? ''));
+    if ($name === '') {
+        return '';
+    }
+
+    return strtolower(pathinfo($name, PATHINFO_EXTENSION));
+}
+
+function uploadExtensionIsAllowed(array $file, array $allowedExtensions): bool
+{
+    $extension = uploadOriginalExtension($file);
+    if ($extension === '') {
+        return false;
+    }
+
+    $allowedExtensions = array_map(
+        static fn (mixed $value): string => strtolower((string) $value),
+        $allowedExtensions
+    );
+
+    return in_array($extension, $allowedExtensions, true);
+}
+
 function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
 {
     if (empty($file['name']) || empty($file['tmp_name']) || !is_uploaded_file((string) $file['tmp_name'])) {
@@ -388,9 +413,9 @@ function validateAndStoreReceiptUpload(array $file, string $uploadDir): array
         return ['path' => null, 'error' => 'Receipt must be between 1 byte and 5MB.'];
     }
 
-    $extension = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+    $extension = uploadOriginalExtension($file);
     $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
-    if (!in_array($extension, $allowedExtensions, true)) {
+    if (!uploadExtensionIsAllowed($file, $allowedExtensions)) {
         return ['path' => null, 'error' => 'Receipt file type is not allowed. Use JPG, PNG, or PDF.'];
     }
 
