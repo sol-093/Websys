@@ -1,107 +1,92 @@
-flowchart TB
+flowchart LR
     Student[Student]
     Owner[Organization Owner]
     Admin[System Admin]
     OAuth[Google OAuth]
     Mail[SMTP Provider]
-    Files[Browser / File System]
+    Files[Browser / Files]
 
-    P1((1.0 Authentication and Account))
-    P2((2.0 Organization Management))
-    P3((3.0 Membership and Ownership))
-    P4((4.0 Announcements))
-    P5((5.0 Budget and Expense Requests))
-    P6((6.0 Financial Transactions))
-    P7((7.0 Admin Review and Audit))
-    P8((8.0 Notifications and Activity Feeds))
-    P9((9.0 Reports, Exports, and API Lists))
-    P10((10.0 Upload Handling))
+    subgraph Inputs[External Actors]
+        Student
+        Owner
+        Admin
+        OAuth
+        Files
+    end
 
-    D1[(D1 Users)]
-    D2[(D2 Sessions and Tokens)]
-    D3[(D3 Organizations)]
-    D4[(D4 Memberships and Requests)]
-    D5[(D5 Owner Assignments)]
-    D6[(D6 Announcements)]
-    D7[(D7 Budgets and Lines)]
-    D8[(D8 Expense Requests)]
-    D9[(D9 Financial Transactions)]
-    D10[(D10 Transaction Change Requests)]
-    D11[(D11 Audit Logs)]
-    D12[(D12 Security Notifications)]
-    D13[(D13 Upload Storage)]
-    D14[(D14 Runtime Cache)]
+    subgraph Core[INVOLVE Major Processes]
+        P1((1.0 Account Access))
+        P2((2.0 Organization and Membership))
+        P3((3.0 Announcements and Activity))
+        P4((4.0 Budget and Expense Requests))
+        P5((5.0 Financial Transactions))
+        P6((6.0 Admin Review and Audit))
+        P7((7.0 Reports, Exports, and APIs))
+        P8((8.0 Upload Handling))
+    end
 
-    Student --> P1
-    Owner --> P1
-    Admin --> P1
-    OAuth --> P1
-    P1 --> D1
-    P1 --> D2
+    subgraph Stores[Data Stores]
+        S1[(Accounts and Sessions)]
+        S2[(Organizations and Membership)]
+        S3[(Announcements and Notifications)]
+        S4[(Budgets and Expense Requests)]
+        S5[(Transactions and Change Requests)]
+        S6[(Audit Logs)]
+        S7[(Upload Storage)]
+        S8[(Runtime Cache)]
+    end
+
+    Student -->|register, login, profile| P1
+    Owner -->|login, profile| P1
+    Admin -->|login, admin session| P1
+    OAuth -->|identity callback| P1
+    P1 --> S1
     P1 --> Mail
 
-    Student --> P2
-    Owner --> P2
-    Admin --> P2
-    P2 --> D3
-    P2 --> D11
+    Student -->|browse and join| P2
+    Owner -->|review members| P2
+    Admin -->|manage orgs and owners| P2
+    P2 --> S2
+    P2 --> S6
 
-    Student --> P3
-    Owner --> P3
-    Admin --> P3
-    P3 --> D4
-    P3 --> D5
-    P3 --> D11
-    P3 --> D12
+    Owner -->|create updates| P3
+    Admin -->|manage updates| P3
+    Student -->|view activity| P3
+    P3 --> S3
+    P3 --> S8
 
-    Owner --> P4
-    Admin --> P4
-    P4 --> D6
-    P4 --> D11
-    P4 --> D14
+    Owner -->|budget lines and expense requests| P4
+    Admin -->|approve or reject requests| P4
+    P4 --> S4
+    P4 --> S5
+    P4 --> S3
+    P4 --> S6
 
-    Owner --> P5
-    Admin --> P5
-    P5 --> D7
-    P5 --> D8
-    P5 --> D9
-    P5 --> D11
-    P5 --> D12
+    Owner -->|record or request changes| P5
+    Admin -->|approve transaction changes| P5
+    P5 --> S5
+    P5 --> S3
+    P5 --> S6
 
-    Owner --> P6
-    Admin --> P6
-    P6 --> D9
-    P6 --> D10
-    P6 --> D11
-    P6 --> D12
+    Admin -->|review decisions and logs| P6
+    P6 --> S4
+    P6 --> S5
+    P6 --> S6
 
-    Admin --> P7
-    P7 --> D8
-    P7 --> D10
-    P7 --> D11
+    Student -->|dashboard and public reads| P7
+    Owner -->|workspace reports| P7
+    Admin -->|admin reports and exports| P7
+    P7 --> S2
+    P7 --> S3
+    P7 --> S4
+    P7 --> S5
+    P7 --> S6
+    P7 --> S8
+    P7 --> Files
 
-    Student --> P8
-    Owner --> P8
-    Admin --> P8
-    P8 --> D6
-    P8 --> D10
-    P8 --> D11
-    P8 --> D12
-
-    Student --> P9
-    Owner --> P9
-    Admin --> P9
-    P9 --> D3
-    P9 --> D6
-    P9 --> D7
-    P9 --> D8
-    P9 --> D9
-    P9 --> D11
-    P9 --> D14
-    P9 --> Files
-
-    Student --> P10
-    Owner --> P10
-    Admin --> P10
-    P10 --> D13
-    P10 --> D11
+    Student -->|profile photo| P8
+    Owner -->|logos and receipts| P8
+    Admin -->|organization logos| P8
+    Files -->|selected files| P8
+    P8 --> S7
+    P8 --> S6
