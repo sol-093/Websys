@@ -109,6 +109,7 @@ Source folders under `includes/` now include `bootstrap.php`, `routes/`, `featur
 - Regression script:
   - `scripts/tests/test_organization_helpers.php`
 - Composer quality gates:
+  - `composer lint`
   - `composer validate --strict`
   - `composer test`
   - `composer analyse`

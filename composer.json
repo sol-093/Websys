@@ -23,6 +23,7 @@
   },
   "scripts": {
     "analyse": "phpstan analyse",
+    "lint": "php scripts/tests/lint_php.php",
     "test": "phpunit"
   }
 }

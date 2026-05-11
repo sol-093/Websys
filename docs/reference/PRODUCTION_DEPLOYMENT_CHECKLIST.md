@@ -20,7 +20,7 @@ The repository includes `.gitattributes` export rules so `git archive` excludes 
 
 ## Preflight Checks
 - Run `composer validate --strict`.
-- Run PHP lint on tracked PHP files.
+- Run `composer lint` for tracked PHP files.
 - Run PHPUnit in CI before deploying.
 - Run `composer audit`.
 - Review `git status --short` before packaging and avoid deploying generated PHPStan/file-cache artifacts from `storage/cache/`.
